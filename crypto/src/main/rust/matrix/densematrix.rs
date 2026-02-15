@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{Double, One, Presemiring, Square, Tensor, Zero};
+use crate::algebra::{Double, One, Square, Tensor, Zero};
 use crate::matrix::DenseVector;
 use alloc::vec;
 use alloc::vec::Vec;
@@ -175,19 +175,20 @@ impl<T> DenseMatrix<T> {
             elements,
         }
     }
-}
 
-impl<R: Presemiring> DenseMatrix<R> {
     /// The face-splitting product
-    pub fn row_tensor(&self, rps: &Self) -> Self {
+    pub fn row_tensor(&self, rps: &Self) -> Self
+    where
+        for<'a> &'a T: Mul<Output = T>,
+    {
         debug_assert!(self.rows == rps.rows);
         let rows = self.rows;
         let columns = self.columns * rps.columns;
-        let mut elements = Vec::<R>::with_capacity(rows * columns);
+        let mut elements = Vec::<T>::with_capacity(rows * columns);
         for i in 0..rows {
             for j in 0..self.columns {
                 for k in 0..rps.columns {
-                    elements.push(self[(i, j)] * rps[(i, k)])
+                    elements.push(&self[(i, j)] * &rps[(i, k)])
                 }
             }
         }
@@ -199,15 +200,18 @@ impl<R: Presemiring> DenseMatrix<R> {
     }
 
     /// The Khatri–Rao product
-    pub fn column_tensor(&self, rps: &Self) -> Self {
+    pub fn column_tensor(&self, rps: &Self) -> Self
+    where
+        for<'a> &'a T: Mul<Output = T>,
+    {
         debug_assert!(self.columns == rps.columns);
         let rows = self.rows * rps.rows;
         let columns = self.columns;
-        let mut elements = Vec::<R>::with_capacity(rows * columns);
+        let mut elements = Vec::<T>::with_capacity(rows * columns);
         for i in 0..self.rows {
             for j in 0..rps.rows {
                 for k in 0..columns {
-                    elements.push(self[(i, k)] * rps[(j, k)])
+                    elements.push(&self[(i, k)] * &rps[(j, k)])
                 }
             }
         }
@@ -440,7 +444,10 @@ where
     }
 }
 
-impl<R: Presemiring> Mul for DenseMatrix<R> {
+impl<T: Zero + AddAssign + Clone> Mul for DenseMatrix<T>
+where
+    for<'a> &'a T: Mul<Output = T>,
+{
     type Output = Self;
 
     #[inline]
@@ -449,49 +456,64 @@ impl<R: Presemiring> Mul for DenseMatrix<R> {
     }
 }
 
-impl<R: Presemiring> MulAssign for DenseMatrix<R> {
+impl<T: Zero + AddAssign + Clone> MulAssign for DenseMatrix<T>
+where
+    for<'a> &'a T: Mul<Output = T>,
+{
     #[inline]
     fn mul_assign(&mut self, rps: Self) {
         *self = &*self * &rps
     }
 }
 
-impl<R: Presemiring> Mul<&DenseMatrix<R>> for DenseMatrix<R> {
+impl<T: Zero + AddAssign + Clone> Mul<&DenseMatrix<T>> for DenseMatrix<T>
+where
+    for<'a> &'a T: Mul<Output = T>,
+{
     type Output = Self;
 
     #[inline]
-    fn mul(self, rps: &DenseMatrix<R>) -> Self::Output {
+    fn mul(self, rps: &DenseMatrix<T>) -> Self::Output {
         &self * rps
     }
 }
 
-impl<R: Presemiring> MulAssign<&DenseMatrix<R>> for DenseMatrix<R> {
+impl<T: Zero + AddAssign + Clone> MulAssign<&DenseMatrix<T>> for DenseMatrix<T>
+where
+    for<'a> &'a T: Mul<Output = T>,
+{
     #[inline]
-    fn mul_assign(&mut self, rps: &DenseMatrix<R>) {
+    fn mul_assign(&mut self, rps: &DenseMatrix<T>) {
         *self = &*self * rps
     }
 }
 
-impl<R: Presemiring> Mul<DenseMatrix<R>> for &DenseMatrix<R> {
-    type Output = DenseMatrix<R>;
+impl<T: Zero + AddAssign + Clone> Mul<DenseMatrix<T>> for &DenseMatrix<T>
+where
+    for<'a> &'a T: Mul<Output = T>,
+{
+    type Output = DenseMatrix<T>;
 
     #[inline]
-    fn mul(self, rps: DenseMatrix<R>) -> Self::Output {
+    fn mul(self, rps: DenseMatrix<T>) -> Self::Output {
         self * &rps
     }
 }
 
-impl<R: Presemiring> Mul for &DenseMatrix<R> {
-    type Output = DenseMatrix<R>;
+impl<T: Zero + AddAssign + Clone> Mul for &DenseMatrix<T>
+where
+    for<'a> &'a T: Mul<Output = T>,
+{
+    type Output = DenseMatrix<T>;
 
-    fn mul(self, rps: &DenseMatrix<R>) -> Self::Output {
+    fn mul(self, rps: &DenseMatrix<T>) -> Self::Output {
         debug_assert!(self.columns == rps.rows);
         // Iterative algorithm
-        let mut r = DenseMatrix::fill(self.rows, rps.columns, R::ZERO);
+        let mut r = DenseMatrix::fill(self.rows, rps.columns, T::ZERO);
         for i in 0..self.rows {
             for j in 0..rps.columns {
                 for k in 0..self.columns {
-                    r[(i, j)] += self[(i, k)] * rps[(k, j)];
+                    r[(i, j)] += &self[(i, k)] * &rps[(k, j)];
                 }
             }
         }
@@ -560,83 +582,110 @@ where
     }
 }
 
-impl<R: Presemiring> Mul<DenseVector<R>> for DenseMatrix<R> {
-    type Output = DenseVector<R>;
+impl<T: Sum> Mul<DenseVector<T>> for DenseMatrix<T>
+where
+    for<'a> &'a T: Mul<Output = T>,
+{
+    type Output = DenseVector<T>;
 
     #[inline]
-    fn mul(self, rps: DenseVector<R>) -> Self::Output {
+    fn mul(self, rps: DenseVector<T>) -> Self::Output {
         &self * &rps
     }
 }
 
-impl<R: Presemiring> Mul<&DenseVector<R>> for DenseMatrix<R> {
-    type Output = DenseVector<R>;
+impl<T: Sum> Mul<&DenseVector<T>> for DenseMatrix<T>
+where
+    for<'a> &'a T: Mul<Output = T>,
+{
+    type Output = DenseVector<T>;
 
     #[inline]
-    fn mul(self, rps: &DenseVector<R>) -> Self::Output {
+    fn mul(self, rps: &DenseVector<T>) -> Self::Output {
         &self * rps
     }
 }
 
-impl<R: Presemiring> Mul<DenseVector<R>> for &DenseMatrix<R> {
-    type Output = DenseVector<R>;
+impl<T: Sum> Mul<DenseVector<T>> for &DenseMatrix<T>
+where
+    for<'a> &'a T: Mul<Output = T>,
+{
+    type Output = DenseVector<T>;
 
     #[inline]
-    fn mul(self, rps: DenseVector<R>) -> Self::Output {
+    fn mul(self, rps: DenseVector<T>) -> Self::Output {
         self * &rps
     }
 }
 
-impl<R: Presemiring> Mul<&DenseVector<R>> for &DenseMatrix<R> {
-    type Output = DenseVector<R>;
+impl<T: Sum> Mul<&DenseVector<T>> for &DenseMatrix<T>
+where
+    for<'a> &'a T: Mul<Output = T>,
+{
+    type Output = DenseVector<T>;
 
-    fn mul(self, rps: &DenseVector<R>) -> Self::Output {
+    fn mul(self, rps: &DenseVector<T>) -> Self::Output {
         debug_assert!(self.columns == rps.dimension());
         (0..self.rows())
-            .map(|i| (0..self.columns()).map(|j| self[(i, j)] * rps[j]).sum())
+            .map(|i| (0..self.columns()).map(|j| &self[(i, j)] * &rps[j]).sum())
             .collect()
     }
 }
 
-impl<R: Presemiring> Mul<DenseMatrix<R>> for DenseVector<R> {
-    type Output = DenseVector<R>;
+impl<T: Sum> Mul<DenseMatrix<T>> for DenseVector<T>
+where
+    for<'a> &'a T: Mul<Output = T>,
+{
+    type Output = DenseVector<T>;
 
     #[inline]
-    fn mul(self, rps: DenseMatrix<R>) -> Self::Output {
+    fn mul(self, rps: DenseMatrix<T>) -> Self::Output {
         &self * &rps
     }
 }
 
-impl<R: Presemiring> Mul<&DenseMatrix<R>> for DenseVector<R> {
-    type Output = DenseVector<R>;
+impl<T: Sum> Mul<&DenseMatrix<T>> for DenseVector<T>
+where
+    for<'a> &'a T: Mul<Output = T>,
+{
+    type Output = DenseVector<T>;
 
     #[inline]
-    fn mul(self, rps: &DenseMatrix<R>) -> Self::Output {
+    fn mul(self, rps: &DenseMatrix<T>) -> Self::Output {
         &self * rps
     }
 }
 
-impl<R: Presemiring> Mul<DenseMatrix<R>> for &DenseVector<R> {
-    type Output = DenseVector<R>;
+impl<T: Sum> Mul<DenseMatrix<T>> for &DenseVector<T>
+where
+    for<'a> &'a T: Mul<Output = T>,
+{
+    type Output = DenseVector<T>;
 
     #[inline]
-    fn mul(self, rps: DenseMatrix<R>) -> Self::Output {
+    fn mul(self, rps: DenseMatrix<T>) -> Self::Output {
         self * &rps
     }
 }
 
-impl<R: Presemiring> Mul<&DenseMatrix<R>> for &DenseVector<R> {
-    type Output = DenseVector<R>;
+impl<T: Sum> Mul<&DenseMatrix<T>> for &DenseVector<T>
+where
+    for<'a> &'a T: Mul<Output = T>,
+{
+    type Output = DenseVector<T>;
 
-    fn mul(self, rps: &DenseMatrix<R>) -> Self::Output {
+    fn mul(self, rps: &DenseMatrix<T>) -> Self::Output {
         debug_assert!(self.dimension() == rps.rows);
         (0..rps.columns())
-            .map(|j| (0..rps.rows()).map(|i| self[i] * rps[(i, j)]).sum())
+            .map(|j| (0..rps.rows()).map(|i| &self[i] * &rps[(i, j)]).sum())
             .collect()
     }
 }
 
-impl<R: Presemiring> Square for DenseMatrix<R> {
+impl<T: Zero + AddAssign + Clone> Square for DenseMatrix<T>
+where
+    for<'a> &'a T: Mul<Output = T>,
+{
     type Output = Self;
 
     #[inline]
@@ -645,8 +694,11 @@ impl<R: Presemiring> Square for DenseMatrix<R> {
     }
 }
 
-impl<R: Presemiring> Square for &DenseMatrix<R> {
-    type Output = DenseMatrix<R>;
+impl<T: Zero + AddAssign + Clone> Square for &DenseMatrix<T>
+where
+    for<'a> &'a T: Mul<Output = T>,
+{
+    type Output = DenseMatrix<T>;
 
     #[inline]
     fn square(self) -> Self::Output {
@@ -654,8 +706,11 @@ impl<R: Presemiring> Square for &DenseMatrix<R> {
     }
 }
 
-impl<R: Presemiring> Tensor for DenseMatrix<R> {
-    type Output = DenseMatrix<R>;
+impl<T> Tensor for DenseMatrix<T>
+where
+    for<'a> &'a T: Mul<Output = T>,
+{
+    type Output = DenseMatrix<T>;
 
     #[inline]
     fn tensor(self, rps: Self) -> Self::Output {
@@ -663,8 +718,11 @@ impl<R: Presemiring> Tensor for DenseMatrix<R> {
     }
 }
 
-impl<R: Presemiring> Tensor<&Self> for DenseMatrix<R> {
-    type Output = DenseMatrix<R>;
+impl<T> Tensor<&Self> for DenseMatrix<T>
+where
+    for<'a> &'a T: Mul<Output = T>,
+{
+    type Output = DenseMatrix<T>;
 
     #[inline]
     fn tensor(self, rps: &Self) -> Self::Output {
@@ -672,28 +730,34 @@ impl<R: Presemiring> Tensor<&Self> for DenseMatrix<R> {
     }
 }
 
-impl<R: Presemiring> Tensor<DenseMatrix<R>> for &DenseMatrix<R> {
-    type Output = DenseMatrix<R>;
+impl<T> Tensor<DenseMatrix<T>> for &DenseMatrix<T>
+where
+    for<'a> &'a T: Mul<Output = T>,
+{
+    type Output = DenseMatrix<T>;
 
     #[inline]
-    fn tensor(self, rps: DenseMatrix<R>) -> Self::Output {
+    fn tensor(self, rps: DenseMatrix<T>) -> Self::Output {
         self.tensor(&rps)
     }
 }
 
-impl<R: Presemiring> Tensor for &DenseMatrix<R> {
-    type Output = DenseMatrix<R>;
+impl<T> Tensor for &DenseMatrix<T>
+where
+    for<'a> &'a T: Mul<Output = T>,
+{
+    type Output = DenseMatrix<T>;
 
     fn tensor(self, rps: Self) -> Self::Output {
         // Kronecker product
         let rows = self.rows * rps.rows;
         let columns = self.columns * rps.columns;
-        let mut elements = Vec::<R>::with_capacity(rows * columns);
+        let mut elements = Vec::<T>::with_capacity(rows * columns);
         for i in 0..self.rows {
             for j in 0..rps.rows {
                 for k in 0..self.columns {
                     for l in 0..rps.columns {
-                        elements.push(self[(i, k)] * rps[(j, l)])
+                        elements.push(&self[(i, k)] * &rps[(j, l)])
                     }
                 }
             }

@@ -15,8 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::Square;
-use crate::algebra::UnitalRing;
+use crate::algebra::{RingOps, Square, UnitalRing};
 use crate::matrix::DenseVector;
 use crate::polynomial::{MultilinearExtension, MultivariatePolynomial, Point, Polynomial};
 use alloc::vec::Vec;
@@ -35,7 +34,10 @@ impl<R: UnitalRing> BinarityPolynomial<R> {
         Self { coefficients }
     }
 
-    pub fn hypercube_with_var<const VAL: i8>(&self) -> DenseVector<R> {
+    pub fn hypercube_with_var<const VAL: i8>(&self) -> DenseVector<R>
+    where
+        for<'a> &'a R: RingOps<R>,
+    {
         let t = self.coefficients.hypercube_with_var::<VAL>();
         (&t).square() - t
     }
@@ -69,7 +71,10 @@ impl<R: UnitalRing> Polynomial for BinarityPolynomial<R> {
     type Point = Point<R>;
 }
 
-impl<R: UnitalRing> MultivariatePolynomial<R> for BinarityPolynomial<R> {
+impl<R: UnitalRing> MultivariatePolynomial<R> for BinarityPolynomial<R>
+where
+    for<'a> &'a R: RingOps<R>,
+{
     fn bind(&mut self, e: R) {
         self.coefficients.bind(e);
     }

@@ -159,10 +159,10 @@ impl<R: Ring, const N: usize> Add<FreeModule<R, N>> for &FreeModule<R, N> {
     }
 }
 
-impl<R: Ring, const N: usize> Add for &FreeModule<R, N> {
+impl<'a, R: Ring, const N: usize> Add<&'a FreeModule<R, N>> for &FreeModule<R, N> {
     type Output = FreeModule<R, N>;
 
-    fn add(self, rps: Self) -> Self::Output {
+    fn add(self, rps: &'a FreeModule<R, N>) -> Self::Output {
         Self::Output {
             components: array::from_fn(|i| self.components[i] + rps.components[i]),
         }
@@ -253,10 +253,10 @@ impl<R: Ring, const N: usize> Sub<FreeModule<R, N>> for &FreeModule<R, N> {
     }
 }
 
-impl<R: Ring, const N: usize> Sub for &FreeModule<R, N> {
+impl<'a, R: Ring, const N: usize> Sub<&'a FreeModule<R, N>> for &FreeModule<R, N> {
     type Output = FreeModule<R, N>;
 
-    fn sub(self, rps: Self) -> Self::Output {
+    fn sub(self, rps: &'a FreeModule<R, N>) -> Self::Output {
         Self::Output {
             components: array::from_fn(|i| self.components[i] - rps.components[i]),
         }

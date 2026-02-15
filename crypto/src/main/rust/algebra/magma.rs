@@ -36,29 +36,41 @@ pub trait Zero: LeftZero + RightZero {
     const ZERO: Self;
 }
 
+#[rustfmt::skip]
+pub trait AdditiveMagmaOps<M>
+    : Add<M, Output = M>
+    + for<'a> Add<&'a M, Output = M>
+    + Double<Output = M>
+{
+}
+
+#[rustfmt::skip]
+impl<M, T
+    : Add<M, Output = M>
+    + for<'a> Add<&'a M, Output = M>
+    + Double<Output = M>
+> AdditiveMagmaOps<M> for T {}
+
 /// A set that is closed under addition.
 #[rustfmt::skip]
 pub trait AdditiveMagma
     : Set
     + Sized
-    + Add<Output = Self>
+    + AdditiveMagmaOps<Self>
     + AddAssign
-    + Double<Output = Self>
-    + for<'a> Add<&'a Self, Output = Self>
     + for<'a> AddAssign<&'a Self>
 {
 }
 
 #[rustfmt::skip]
-impl<T
+impl<M
     : Set
     + Sized
-    + Add<Output = Self>
+    + AdditiveMagmaOps<M>
     + AddAssign
-    + Double<Output = Self>
-    + for<'a> Add<&'a Self, Output = Self>
     + for<'a> AddAssign<&'a Self>
-> AdditiveMagma for T {}
+> AdditiveMagma for M
+{}
 
 /// A marker for magmata with commutative addition.
 pub trait AdditiveCommutativeMagma: AdditiveMagma {}
@@ -81,29 +93,41 @@ pub trait One: LeftOne + RightOne {
     const ONE: Self;
 }
 
+#[rustfmt::skip]
+pub trait MultiplicativeMagmaOps<M>
+    : Mul<M, Output = M>
+    + for<'a> Mul<&'a M, Output = M>
+    + Square<Output = M>
+{
+}
+
+#[rustfmt::skip]
+impl<M, T
+    : Mul<M, Output = M>
+    + for<'a> Mul<&'a M, Output = M>
+    + Square<Output = M>
+> MultiplicativeMagmaOps<M> for T {}
+
 /// A set that is closed under multiplication.
 #[rustfmt::skip]
 pub trait MultiplicativeMagma
     : Set
     + Sized
-    + Mul<Output = Self>
+    + MultiplicativeMagmaOps<Self>
     + MulAssign
-    + Square<Output = Self>
-    + for<'a> Mul<&'a Self, Output = Self>
     + for<'a> MulAssign<&'a Self>
 {
 }
 
 #[rustfmt::skip]
-impl<T
+impl<M
     : Set
     + Sized
-    + Mul<Output = Self>
+    + MultiplicativeMagmaOps<Self>
     + MulAssign
-    + Square<Output = Self>
-    + for<'a> Mul<&'a Self, Output = Self>
     + for<'a> MulAssign<&'a Self>
-> MultiplicativeMagma for T {}
+> MultiplicativeMagma for M
+{}
 
 /// A marker for magmata with commutative multiplication.
 pub trait MultiplicativeCommutativeMagma: MultiplicativeMagma {}

@@ -185,10 +185,10 @@ impl Add<Field25519> for &Field25519 {
     }
 }
 
-impl Add for &Field25519 {
+impl<'a> Add<&'a Field25519> for &Field25519 {
     type Output = Field25519;
 
-    fn add(self, rps: Self) -> Self::Output {
+    fn add(self, rps: &'a Field25519) -> Self::Output {
         Self::Output {
             n: Self::Output::reduce_add(self.n + rps.n),
         }
@@ -293,10 +293,10 @@ impl Sub<Field25519> for &Field25519 {
     }
 }
 
-impl Sub for &Field25519 {
+impl<'a> Sub<&'a Field25519> for &Field25519 {
     type Output = Field25519;
 
-    fn sub(self, rps: Self) -> Self::Output {
+    fn sub(self, rps: &'a Field25519) -> Self::Output {
         let mut n = self.n - rps.n;
         if n >= Self::Output::MODULUS {
             n += Self::Output::MODULUS
@@ -349,10 +349,10 @@ impl Mul<Field25519> for &Field25519 {
     }
 }
 
-impl Mul for &Field25519 {
+impl<'a> Mul<&'a Field25519> for &Field25519 {
     type Output = Field25519;
 
-    fn mul(self, rps: Self) -> Self::Output {
+    fn mul(self, rps: &'a Field25519) -> Self::Output {
         Self::Output {
             n: Self::Output::reduce_mul(self.n.mul(rps.n)),
         }

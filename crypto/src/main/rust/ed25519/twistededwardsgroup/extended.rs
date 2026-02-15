@@ -152,11 +152,13 @@ impl<P: TwistedEdwardsGroupParams> Add<TwistedEdwardsGroupExtended<P>>
     }
 }
 
-impl<P: TwistedEdwardsGroupParams> Add for &TwistedEdwardsGroupExtended<P> {
+impl<'a, P: TwistedEdwardsGroupParams> Add<&'a TwistedEdwardsGroupExtended<P>>
+    for &TwistedEdwardsGroupExtended<P>
+{
     type Output = TwistedEdwardsGroupExtended<P>;
 
     #[inline]
-    fn add(self, rps: Self) -> Self::Output {
+    fn add(self, rps: &'a TwistedEdwardsGroupExtended<P>) -> Self::Output {
         *self + *rps
     }
 }
@@ -223,6 +225,19 @@ impl<P: TwistedEdwardsGroupParams> Neg for TwistedEdwardsGroupExtended<P> {
     }
 }
 
+impl<P: TwistedEdwardsGroupParams> Neg for &TwistedEdwardsGroupExtended<P> {
+    type Output = TwistedEdwardsGroupExtended<P>;
+
+    fn neg(self) -> Self::Output {
+        Self::Output {
+            x: -self.x,
+            y: self.y,
+            z: self.z,
+            t: -self.t,
+        }
+    }
+}
+
 impl<P: TwistedEdwardsGroupParams> Sub for TwistedEdwardsGroupExtended<P> {
     type Output = Self;
 
@@ -258,6 +273,28 @@ impl<P: TwistedEdwardsGroupParams> Sub<&Self> for TwistedEdwardsGroupExtended<P>
     #[inline]
     fn sub(self, rps: &Self) -> Self::Output {
         self - *rps
+    }
+}
+
+impl<P: TwistedEdwardsGroupParams> Sub<TwistedEdwardsGroupExtended<P>>
+    for &TwistedEdwardsGroupExtended<P>
+{
+    type Output = TwistedEdwardsGroupExtended<P>;
+
+    #[inline]
+    fn sub(self, rps: TwistedEdwardsGroupExtended<P>) -> Self::Output {
+        *self - rps
+    }
+}
+
+impl<'a, P: TwistedEdwardsGroupParams> Sub<&'a TwistedEdwardsGroupExtended<P>>
+    for &TwistedEdwardsGroupExtended<P>
+{
+    type Output = TwistedEdwardsGroupExtended<P>;
+
+    #[inline]
+    fn sub(self, rps: &'a TwistedEdwardsGroupExtended<P>) -> Self::Output {
+        *self - *rps
     }
 }
 

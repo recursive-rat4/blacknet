@@ -15,52 +15,79 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::Inv;
-use crate::algebra::{AdditiveMonoid, MultiplicativeMonoid};
+use crate::algebra::{
+    AdditiveMagmaOps, AdditiveMonoid, Inv, MultiplicativeMagmaOps, MultiplicativeMonoid,
+};
 use core::ops::{Div, DivAssign, Neg, Sub, SubAssign};
+
+#[rustfmt::skip]
+pub trait AdditiveGroupOps<G>
+    : AdditiveMagmaOps<G>
+    + Neg<Output = G>
+    + Sub<G, Output = G>
+    + for<'a> Sub<&'a G, Output = G>
+{
+}
+
+#[rustfmt::skip]
+impl<G, T
+    : AdditiveMagmaOps<G>
+    + Neg<Output = G>
+    + Sub<G, Output = G>
+    + for<'a> Sub<&'a G, Output = G>
+> AdditiveGroupOps<G> for T {}
 
 #[rustfmt::skip]
 pub trait AdditiveGroup
     : AdditiveMonoid
-    + Neg<Output = Self>
-    + Sub<Output = Self>
+    + AdditiveGroupOps<Self>
     + SubAssign
-    + for<'a> Sub<&'a Self, Output = Self>
     + for<'a> SubAssign<&'a Self>
     + Clone
 {
 }
 
 #[rustfmt::skip]
-impl<T
+impl<G
     : AdditiveMonoid
-    + Neg<Output = Self>
-    + Sub<Output = Self>
+    + AdditiveGroupOps<Self>
     + SubAssign
-    + for<'a> Sub<&'a Self, Output = Self>
     + for<'a> SubAssign<&'a Self>
     + Clone
-> AdditiveGroup for T {}
+> AdditiveGroup for G {}
+
+#[rustfmt::skip]
+pub trait MultiplicativeGroupOps<G>
+    : MultiplicativeMagmaOps<G>
+    + Inv<Output = G>
+    + Div<G, Output = G>
+    + for<'a> Div<&'a G, Output = G>
+{
+}
+
+#[rustfmt::skip]
+impl<G, T
+    : MultiplicativeMagmaOps<G>
+    + Inv<Output = G>
+    + Div<G, Output = G>
+    + for<'a> Div<&'a G, Output = G>
+> MultiplicativeGroupOps<G> for T {}
 
 #[rustfmt::skip]
 pub trait MultiplicativeGroup
     : MultiplicativeMonoid
-    + Inv<Output = Self>
-    + Div<Output = Self>
+    + MultiplicativeGroupOps<Self>
     + DivAssign
-    + for<'a> Div<&'a Self, Output = Self>
     + for<'a> DivAssign<&'a Self>
     + Clone
 {
 }
 
 #[rustfmt::skip]
-impl<T
+impl<G
     : MultiplicativeMonoid
-    + Inv<Output = Self>
-    + Div<Output = Self>
+    + MultiplicativeGroupOps<Self>
     + DivAssign
-    + for<'a> Div<&'a Self, Output = Self>
     + for<'a> DivAssign<&'a Self>
     + Clone
-> MultiplicativeGroup for T {}
+> MultiplicativeGroup for G {}

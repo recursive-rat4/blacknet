@@ -72,10 +72,10 @@ impl Add<Z2> for &Z2 {
     }
 }
 
-impl Add for &Z2 {
+impl<'a> Add<&'a Z2> for &Z2 {
     type Output = Z2;
 
-    fn add(self, rps: Self) -> Self::Output {
+    fn add(self, rps: &'a Z2) -> Self::Output {
         Self::Output { n: self.n ^ rps.n }
     }
 }
@@ -152,10 +152,10 @@ impl Sub<Z2> for &Z2 {
     }
 }
 
-impl Sub for &Z2 {
+impl<'a> Sub<&'a Z2> for &Z2 {
     type Output = Z2;
 
-    fn sub(self, rps: Self) -> Self::Output {
+    fn sub(self, rps: &'a Z2) -> Self::Output {
         Self::Output { n: self.n ^ rps.n }
     }
 }
@@ -196,10 +196,10 @@ impl Mul<Z2> for &Z2 {
     }
 }
 
-impl Mul for &Z2 {
+impl<'a> Mul<&'a Z2> for &Z2 {
     type Output = Z2;
 
-    fn mul(self, rps: Self) -> Self::Output {
+    fn mul(self, rps: &'a Z2) -> Self::Output {
         Self::Output { n: self.n & rps.n }
     }
 }

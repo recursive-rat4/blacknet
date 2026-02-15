@@ -105,10 +105,10 @@ impl Add<FermatField> for &FermatField {
     }
 }
 
-impl Add for &FermatField {
+impl<'a> Add<&'a FermatField> for &FermatField {
     type Output = FermatField;
 
-    fn add(self, rps: Self) -> Self::Output {
+    fn add(self, rps: &'a FermatField) -> Self::Output {
         Self::Output { n: self.n + rps.n }
     }
 }
@@ -181,10 +181,10 @@ impl Sub<FermatField> for &FermatField {
     }
 }
 
-impl Sub for &FermatField {
+impl<'a> Sub<&'a FermatField> for &FermatField {
     type Output = FermatField;
 
-    fn sub(self, rps: Self) -> Self::Output {
+    fn sub(self, rps: &'a FermatField) -> Self::Output {
         Self::Output { n: self.n - rps.n }
     }
 }
@@ -231,10 +231,10 @@ impl Mul<FermatField> for &FermatField {
     }
 }
 
-impl Mul for &FermatField {
+impl<'a> Mul<&'a FermatField> for &FermatField {
     type Output = FermatField;
 
-    fn mul(self, rps: Self) -> Self::Output {
+    fn mul(self, rps: &'a FermatField) -> Self::Output {
         Self::Output {
             n: Self::Output::reduce_mul(self.n as i64 * rps.n as i64),
         }

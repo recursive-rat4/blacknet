@@ -16,21 +16,41 @@
  */
 
 use crate::algebra::{
-    AdditiveAbelianGroup, AdditiveCyclicGroup, CommutativeAlgebra, CommutativeSemiring, Conjugate,
-    Inv, Module, Presemiring, Semiring, UnitalAlgebra,
+    AdditiveAbelianGroup, AdditiveCyclicGroup, AdditiveGroupOps, CommutativeAlgebra,
+    CommutativeSemiring, Conjugate, Inv, Module, MultiplicativeMagmaOps, Presemiring, Semiring,
+    UnitalAlgebra,
 };
 use crate::integer::{Integer, SignedInteger};
 use alloc::vec::Vec;
 use core::ops::{Index, IndexMut};
 
 #[rustfmt::skip]
-pub trait Ring
-    : Presemiring
-    + AdditiveAbelianGroup
+pub trait RingOps<R>
+    : AdditiveGroupOps<R>
+    + MultiplicativeMagmaOps<R>
 {
 }
 
-impl<R: Presemiring + AdditiveAbelianGroup> Ring for R {}
+#[rustfmt::skip]
+impl<R, T
+    : AdditiveGroupOps<R>
+    + MultiplicativeMagmaOps<R>
+> RingOps<R> for T {}
+
+#[rustfmt::skip]
+pub trait Ring
+    : Presemiring
+    + AdditiveAbelianGroup
+    + RingOps<Self>
+{
+}
+
+#[rustfmt::skip]
+impl<R
+    : Presemiring
+    + AdditiveAbelianGroup
+    + RingOps<Self>
+> Ring for R {}
 
 /// A ring with multiplicative identity.
 #[rustfmt::skip]

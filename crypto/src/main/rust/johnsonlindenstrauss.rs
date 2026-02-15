@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{IntegerRing, One};
+use crate::algebra::{IntegerRing, One, RingOps};
 use crate::matrix::{DenseMatrix, DenseVector};
 use crate::random::{BinaryUniformDistribution, Distribution, UniformGenerator};
 
@@ -36,7 +36,10 @@ impl<Z: IntegerRing> JohnsonLindenstrauss<Z> {
         Self { map }
     }
 
-    pub fn project(&self, point: &DenseVector<Z>) -> DenseVector<Z> {
+    pub fn project(&self, point: &DenseVector<Z>) -> DenseVector<Z>
+    where
+        for<'a> &'a Z: RingOps<Z>,
+    {
         &self.map * point
     }
 }

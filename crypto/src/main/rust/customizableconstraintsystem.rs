@@ -15,8 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::Semiring;
-use crate::algebra::UnitalRing;
+use crate::algebra::{Semiring, SemiringOps, UnitalRing};
 use crate::assigner::assigment::Assigment;
 use crate::constraintsystem::{ConstraintSystem, Error, Result};
 use crate::matrix::{DenseVector, SparseMatrix};
@@ -45,6 +44,13 @@ impl<R: Semiring> CustomizableConstraintSystem<R> {
             constants,
         }
     }
+
+    fn variables(&self) -> usize {
+        self.matrices
+            .first()
+            .map(SparseMatrix::columns)
+            .expect("Valid CCS")
+    }
 }
 
 impl<R: Semiring + Eq + Send + Sync> CustomizableConstraintSystem<R> {
@@ -66,7 +72,10 @@ impl<R: UnitalRing> From<R1CS<R>> for CustomizableConstraintSystem<R> {
     }
 }
 
-impl<R: Semiring + Eq + Send + Sync> ConstraintSystem<R> for CustomizableConstraintSystem<R> {
+impl<R: Semiring + Eq + Send + Sync> ConstraintSystem<R> for CustomizableConstraintSystem<R>
+where
+    for<'a> &'a R: SemiringOps<R>,
+{
     type Assigment = DenseVector<R>;
 
     fn degree(&self) -> usize {
@@ -85,10 +94,7 @@ impl<R: Semiring + Eq + Send + Sync> ConstraintSystem<R> for CustomizableConstra
     }
 
     fn variables(&self) -> usize {
-        self.matrices
-            .first()
-            .map(SparseMatrix::columns)
-            .expect("Valid CCS")
+        self.variables()
     }
 
     fn is_satisfied(&self, z: &DenseVector<R>) -> Result<R> {

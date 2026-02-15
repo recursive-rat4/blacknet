@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::Semiring;
+use crate::algebra::{Semiring, SemiringOps};
 use crate::assigner::assigment::Assigment;
 use crate::constraintsystem::{ConstraintSystem, Error, Result};
 use crate::matrix::{DenseVector, SparseMatrix};
@@ -36,6 +36,10 @@ impl<R: Semiring> R1CS<R> {
     pub const fn new(a: SparseMatrix<R>, b: SparseMatrix<R>, c: SparseMatrix<R>) -> Self {
         Self { a, b, c }
     }
+
+    const fn variables(&self) -> usize {
+        self.a.columns()
+    }
 }
 
 impl<R: Semiring + Eq + Send + Sync> R1CS<R> {
@@ -52,7 +56,10 @@ impl<R: Semiring> From<R1CS<R>> for (SparseMatrix<R>, SparseMatrix<R>, SparseMat
     }
 }
 
-impl<R: Semiring + Eq + Send + Sync> ConstraintSystem<R> for R1CS<R> {
+impl<R: Semiring + Eq + Send + Sync> ConstraintSystem<R> for R1CS<R>
+where
+    for<'a> &'a R: SemiringOps<R>,
+{
     type Assigment = DenseVector<R>;
 
     fn degree(&self) -> usize {
@@ -64,7 +71,7 @@ impl<R: Semiring + Eq + Send + Sync> ConstraintSystem<R> for R1CS<R> {
     }
 
     fn variables(&self) -> usize {
-        self.a.columns()
+        self.variables()
     }
 
     fn is_satisfied(&self, z: &DenseVector<R>) -> Result<R> {

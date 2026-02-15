@@ -182,10 +182,12 @@ impl<R: Ring, const N: usize, const NN: usize> Add<MatrixRing<R, N, NN>> for &Ma
     }
 }
 
-impl<R: Ring, const N: usize, const NN: usize> Add for &MatrixRing<R, N, NN> {
+impl<'a, R: Ring, const N: usize, const NN: usize> Add<&'a MatrixRing<R, N, NN>>
+    for &MatrixRing<R, N, NN>
+{
     type Output = MatrixRing<R, N, NN>;
 
-    fn add(self, rps: Self) -> Self::Output {
+    fn add(self, rps: &'a MatrixRing<R, N, NN>) -> Self::Output {
         Self::Output {
             elements: array::from_fn(|i| self.elements[i] + rps.elements[i]),
         }
@@ -276,10 +278,12 @@ impl<R: Ring, const N: usize, const NN: usize> Sub<MatrixRing<R, N, NN>> for &Ma
     }
 }
 
-impl<R: Ring, const N: usize, const NN: usize> Sub for &MatrixRing<R, N, NN> {
+impl<'a, R: Ring, const N: usize, const NN: usize> Sub<&'a MatrixRing<R, N, NN>>
+    for &MatrixRing<R, N, NN>
+{
     type Output = MatrixRing<R, N, NN>;
 
-    fn sub(self, rps: Self) -> Self::Output {
+    fn sub(self, rps: &'a MatrixRing<R, N, NN>) -> Self::Output {
         Self::Output {
             elements: array::from_fn(|i| self.elements[i] - rps.elements[i]),
         }
@@ -330,10 +334,12 @@ impl<R: Ring, const N: usize, const NN: usize> Mul<MatrixRing<R, N, NN>> for &Ma
     }
 }
 
-impl<R: Ring, const N: usize, const NN: usize> Mul for &MatrixRing<R, N, NN> {
+impl<'a, R: Ring, const N: usize, const NN: usize> Mul<&'a MatrixRing<R, N, NN>>
+    for &MatrixRing<R, N, NN>
+{
     type Output = MatrixRing<R, N, NN>;
 
-    fn mul(self, rps: Self) -> Self::Output {
+    fn mul(self, rps: &'a MatrixRing<R, N, NN>) -> Self::Output {
         // Iterative algorithm
         let mut m = Self::Output::ZERO;
         for i in 0..N {

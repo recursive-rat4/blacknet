@@ -15,11 +15,11 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{AdditiveGroup, Presemiring, Zero};
+use crate::algebra::{AdditiveGroup, Zero};
 use crate::matrix::{DenseMatrix, DenseVector};
 use alloc::vec;
 use alloc::vec::Vec;
-use core::iter::repeat_n;
+use core::iter::{Sum, repeat_n};
 use core::ops::{Mul, Neg};
 use serde::{Deserialize, Serialize};
 
@@ -103,10 +103,13 @@ impl<G: AdditiveGroup> Neg for SparseMatrix<G> {
     }
 }
 
-impl<R: Presemiring> Mul<&DenseVector<R>> for &SparseMatrix<R> {
-    type Output = DenseVector<R>;
+impl<T: Zero + Sum> Mul<&DenseVector<T>> for &SparseMatrix<T>
+where
+    for<'a> &'a T: Mul<Output = T>,
+{
+    type Output = DenseVector<T>;
 
-    fn mul(self, rps: &DenseVector<R>) -> Self::Output {
+    fn mul(self, rps: &DenseVector<T>) -> Self::Output {
         (0..self.rows())
             .map(|i| {
                 let row_start = self.r_index[i];
@@ -114,7 +117,7 @@ impl<R: Presemiring> Mul<&DenseVector<R>> for &SparseMatrix<R> {
                 (row_start..row_end)
                     .map(|j| {
                         let column = self.c_index[j];
-                        self.elements[j] * rps[column]
+                        &self.elements[j] * &rps[column]
                     })
                     .sum()
             })

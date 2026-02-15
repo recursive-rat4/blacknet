@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{Conjugate, Double, One, Presemiring, Set, Square, Tensor, Zero};
+use crate::algebra::{Conjugate, Double, One, Set, Square, Tensor, Zero};
 use crate::duplex::{Absorb, Duplex};
 use crate::matrix::DenseMatrix;
 use alloc::borrow::{Borrow, BorrowMut};
@@ -500,7 +500,7 @@ where
     }
 }
 
-impl<R: Presemiring> Square for DenseVector<R> {
+impl<T: Square<Output = T>> Square for DenseVector<T> {
     type Output = Self;
 
     fn square(self) -> Self::Output {
@@ -508,11 +508,14 @@ impl<R: Presemiring> Square for DenseVector<R> {
     }
 }
 
-impl<R: Presemiring> Square for &DenseVector<R> {
-    type Output = DenseVector<R>;
+impl<T> Square for &DenseVector<T>
+where
+    for<'a> &'a T: Square<Output = T>,
+{
+    type Output = DenseVector<T>;
 
     fn square(self) -> Self::Output {
-        self.into_iter().copied().map(Square::square).collect()
+        self.into_iter().map(Square::square).collect()
     }
 }
 
@@ -535,8 +538,11 @@ where
     }
 }
 
-impl<R: Presemiring> Tensor for DenseVector<R> {
-    type Output = DenseMatrix<R>;
+impl<T> Tensor for DenseVector<T>
+where
+    for<'a> &'a T: Mul<Output = T>,
+{
+    type Output = DenseMatrix<T>;
 
     #[inline]
     fn tensor(self, rps: Self) -> Self::Output {
@@ -544,8 +550,11 @@ impl<R: Presemiring> Tensor for DenseVector<R> {
     }
 }
 
-impl<R: Presemiring> Tensor<&Self> for DenseVector<R> {
-    type Output = DenseMatrix<R>;
+impl<T> Tensor<&Self> for DenseVector<T>
+where
+    for<'a> &'a T: Mul<Output = T>,
+{
+    type Output = DenseMatrix<T>;
 
     #[inline]
     fn tensor(self, rps: &Self) -> Self::Output {
@@ -553,40 +562,46 @@ impl<R: Presemiring> Tensor<&Self> for DenseVector<R> {
     }
 }
 
-impl<R: Presemiring> Tensor<DenseVector<R>> for &DenseVector<R> {
-    type Output = DenseMatrix<R>;
+impl<T> Tensor<DenseVector<T>> for &DenseVector<T>
+where
+    for<'a> &'a T: Mul<Output = T>,
+{
+    type Output = DenseMatrix<T>;
 
     #[inline]
-    fn tensor(self, rps: DenseVector<R>) -> Self::Output {
+    fn tensor(self, rps: DenseVector<T>) -> Self::Output {
         self.tensor(&rps)
     }
 }
 
-impl<R: Presemiring> Tensor for &DenseVector<R> {
-    type Output = DenseMatrix<R>;
+impl<T> Tensor for &DenseVector<T>
+where
+    for<'a> &'a T: Mul<Output = T>,
+{
+    type Output = DenseMatrix<T>;
 
     fn tensor(self, rps: Self) -> Self::Output {
         // Module tensor
         let rows = self.elements.len();
         let columns = rps.elements.len();
-        let mut elements = Vec::<R>::with_capacity(rows * columns);
+        let mut elements = Vec::<T>::with_capacity(rows * columns);
         for i in 0..rows {
             for j in 0..columns {
-                elements.push(self.elements[i] * rps.elements[j])
+                elements.push(&self.elements[i] * &rps.elements[j])
             }
         }
         DenseMatrix::new(rows, columns, elements)
     }
 }
 
-impl<S: Set, R: Presemiring + Absorb<S>> Absorb<S> for DenseVector<R> {
+impl<S: Set, T: Absorb<S>> Absorb<S> for DenseVector<T> {
     fn absorb_into(self, duplex: &mut (impl Duplex<S> + ?Sized)) {
         duplex.absorb_iter(self.elements.into_iter())
     }
 }
 
-impl<S: Set, R: Presemiring + Absorb<S>> Absorb<S> for &DenseVector<R> {
+impl<S: Set, T: Absorb<S> + Clone> Absorb<S> for &DenseVector<T> {
     fn absorb_into(self, duplex: &mut (impl Duplex<S> + ?Sized)) {
-        duplex.absorb_iter(self.elements.iter().copied())
+        duplex.absorb_iter(self.elements.iter().cloned())
     }
 }

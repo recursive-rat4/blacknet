@@ -133,10 +133,10 @@ impl Add<PervushinField> for &PervushinField {
     }
 }
 
-impl Add for &PervushinField {
+impl<'a> Add<&'a PervushinField> for &PervushinField {
     type Output = PervushinField;
 
-    fn add(self, rps: Self) -> Self::Output {
+    fn add(self, rps: &'a PervushinField) -> Self::Output {
         Self::Output {
             n: Self::Output::reduce_add(self.n + rps.n),
         }
@@ -223,10 +223,10 @@ impl Sub<PervushinField> for &PervushinField {
     }
 }
 
-impl Sub for &PervushinField {
+impl<'a> Sub<&'a PervushinField> for &PervushinField {
     type Output = PervushinField;
 
-    fn sub(self, rps: Self) -> Self::Output {
+    fn sub(self, rps: &'a PervushinField) -> Self::Output {
         Self::Output {
             n: Self::Output::reduce_add(self.n - rps.n),
         }
@@ -277,10 +277,10 @@ impl Mul<PervushinField> for &PervushinField {
     }
 }
 
-impl Mul for &PervushinField {
+impl<'a> Mul<&'a PervushinField> for &PervushinField {
     type Output = PervushinField;
 
-    fn mul(self, rps: Self) -> Self::Output {
+    fn mul(self, rps: &'a PervushinField) -> Self::Output {
         Self::Output {
             n: Self::Output::reduce_mul(self.n as i128 * rps.n as i128),
         }

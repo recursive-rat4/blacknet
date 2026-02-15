@@ -15,23 +15,47 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::MultiplicativeSemigroup;
 use crate::algebra::{
-    AdditiveCommutativeMonoid, MultiplicativeCommutativeMonoid, MultiplicativeMonoid,
+    AdditiveCommutativeMonoid, AdditiveMagmaOps, MultiplicativeCommutativeMonoid,
+    MultiplicativeMagmaOps, MultiplicativeMonoid, MultiplicativeSemigroup,
 };
 
-/// A generalization of [nonunital ring][`crate::algebra::Ring`] that doesn't require subtraction.
+#[rustfmt::skip]
+pub trait SemiringOps<R>
+    : AdditiveMagmaOps<R>
+    + MultiplicativeMagmaOps<R>
+{
+}
+
+#[rustfmt::skip]
+impl<R, T
+    : AdditiveMagmaOps<R>
+    + MultiplicativeMagmaOps<R>
+> SemiringOps<R> for T {}
+
+/// A generalization of [nonunital ring][`crate::algebra::Ring`]
+/// that doesn't require subtraction.
 #[rustfmt::skip]
 pub trait Presemiring
     : AdditiveCommutativeMonoid
     + MultiplicativeSemigroup
+    + SemiringOps<Self>
     + Copy
 {
 }
 
-impl<R: AdditiveCommutativeMonoid + MultiplicativeSemigroup + Copy> Presemiring for R {}
+#[rustfmt::skip]
+impl<R
+    : AdditiveCommutativeMonoid
+    + MultiplicativeSemigroup
+    + SemiringOps<Self>
+    + Copy
+> Presemiring for R
+{
+}
 
-/// A generalization of [unital ring][`crate::algebra::UnitalRing`] that doesn't require subtraction.
+/// A generalization of [unital ring][`crate::algebra::UnitalRing`]
+/// that doesn't require subtraction.
 #[rustfmt::skip]
 pub trait Semiring
     : Presemiring
