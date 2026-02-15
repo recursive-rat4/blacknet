@@ -114,7 +114,7 @@ pub struct DuplexImpl<
 }
 
 impl<
-    S: AdditiveGroup + From<i8>,
+    S: AdditiveGroup + Clone + From<i8>,
     const RATE: usize,
     const CAPACITY: usize,
     const WIDTH: usize,
@@ -164,7 +164,7 @@ impl<
 }
 
 impl<
-    S: AdditiveGroup + From<i8>,
+    S: AdditiveGroup + Clone + From<i8>,
     const RATE: usize,
     const CAPACITY: usize,
     const WIDTH: usize,
@@ -177,7 +177,7 @@ impl<
 }
 
 impl<
-    S: AdditiveGroup + From<i8>,
+    S: AdditiveGroup + Clone + From<i8>,
     const RATE: usize,
     const CAPACITY: usize,
     const WIDTH: usize,
@@ -219,7 +219,7 @@ impl<
 }
 
 impl<
-    S: AdditiveGroup + From<i8>,
+    S: AdditiveGroup + Clone + From<i8>,
     const RATE: usize,
     const CAPACITY: usize,
     const WIDTH: usize,

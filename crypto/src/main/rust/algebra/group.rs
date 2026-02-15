@@ -43,7 +43,6 @@ pub trait AdditiveGroup
     + AdditiveGroupOps<Self>
     + SubAssign
     + for<'a> SubAssign<&'a Self>
-    + Clone
 {
 }
 
@@ -53,7 +52,6 @@ impl<G
     + AdditiveGroupOps<Self>
     + SubAssign
     + for<'a> SubAssign<&'a Self>
-    + Clone
 > AdditiveGroup for G {}
 
 #[rustfmt::skip]
@@ -79,7 +77,6 @@ pub trait MultiplicativeGroup
     + MultiplicativeGroupOps<Self>
     + DivAssign
     + for<'a> DivAssign<&'a Self>
-    + Clone
 {
 }
 
@@ -89,5 +86,4 @@ impl<G
     + MultiplicativeGroupOps<Self>
     + DivAssign
     + for<'a> DivAssign<&'a Self>
-    + Clone
 > MultiplicativeGroup for G {}

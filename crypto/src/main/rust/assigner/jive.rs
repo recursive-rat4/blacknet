@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -16,7 +16,6 @@
  */
 
 use crate::algebra::AdditiveCyclicGroup;
-use crate::algebra::Presemiring;
 use crate::assigner::assigment::Assigment;
 use crate::assigner::compressionfunction::CompressionFunction;
 use crate::assigner::permutation::Permutation;
@@ -54,7 +53,7 @@ impl<
 
 impl<
     'a,
-    G: Presemiring + AdditiveCyclicGroup,
+    G: AdditiveCyclicGroup + Clone,
     const RANK: usize,
     const WIDTH: usize,
     P: Permutation<G, Domain = [G; WIDTH]>,
@@ -64,12 +63,14 @@ impl<
 
     fn compress(&self, a: Self::Hash, b: Self::Hash) -> Self::Hash {
         let mut state = [G::ZERO; WIDTH];
-        state[..WIDTH / 2].copy_from_slice(&a);
-        state[WIDTH / 2..].copy_from_slice(&b);
+        state[..WIDTH / 2].clone_from_slice(&a);
+        state[WIDTH / 2..].clone_from_slice(&b);
         P::permute(self.assigment, &mut state);
-        let mut hash = [G::ZERO; RANK];
+        let mut hash = a;
         for i in 0..RANK {
-            hash[i] = a[i] + b[i] + state[i] + state[i + RANK];
+            hash[i] += &b[i];
+            hash[i] += &state[i];
+            hash[i] += &state[i + RANK];
         }
         hash
     }
