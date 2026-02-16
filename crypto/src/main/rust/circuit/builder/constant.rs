@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Pavel Vasin
+ * Copyright (c) 2024-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -65,7 +65,7 @@ impl<R: Semiring> Add for Constant<R> {
 
 impl<R: Semiring> AddAssign for Constant<R> {
     fn add_assign(&mut self, rps: Self) {
-        *self = *self + rps
+        self.value += rps.value
     }
 }
 
@@ -95,7 +95,7 @@ impl<R: UnitalRing> Sub for Constant<R> {
 
 impl<R: UnitalRing> SubAssign for Constant<R> {
     fn sub_assign(&mut self, rps: Self) {
-        *self = *self - rps
+        self.value -= rps.value
     }
 }
 
@@ -109,7 +109,7 @@ impl<R: Semiring> Mul for Constant<R> {
 
 impl<R: Semiring> MulAssign for Constant<R> {
     fn mul_assign(&mut self, rps: Self) {
-        *self = *self * rps
+        self.value *= rps.value
     }
 }
 

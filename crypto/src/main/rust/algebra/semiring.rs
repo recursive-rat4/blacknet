@@ -63,7 +63,11 @@ pub trait Semiring
 {
 }
 
-impl<R: Presemiring + MultiplicativeMonoid> Semiring for R {}
+#[rustfmt::skip]
+impl<R
+    : Presemiring
+    + MultiplicativeMonoid
+> Semiring for R {}
 
 /// A marker for semirings with commutative multiplication.
 /// Semiring elements commute under addition by definition.

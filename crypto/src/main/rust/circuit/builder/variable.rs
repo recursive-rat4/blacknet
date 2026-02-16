@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Pavel Vasin
+ * Copyright (c) 2024-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -39,7 +39,6 @@ pub enum VariableKind {
 }
 
 /// An allocated variable.
-#[derive(Clone, Copy)]
 pub struct Variable<R: Semiring> {
     pub(super) kind: VariableKind,
     pub(super) number: usize,
@@ -67,6 +66,14 @@ impl<'a, R: Semiring + 'a> Expression<'a, R> for Variable<R> {
         1
     }
 }
+
+impl<R: Semiring> Clone for Variable<R> {
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+
+impl<R: Semiring> Copy for Variable<R> {}
 
 impl<R: Semiring> Debug for Variable<R> {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
