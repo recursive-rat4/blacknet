@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2025 Pavel Vasin
+ * Copyright (c) 2018-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -23,7 +23,7 @@ use alloc::format;
 pub trait TxData {
     fn process_impl(
         &self,
-        tx: Transaction,
+        tx: &Transaction,
         hash: Hash,
         data_index: u32,
         coin_tx: &mut (impl CoinTx + ?Sized),
@@ -47,6 +47,6 @@ pub trait TxData {
         account.credit(tx.fee())?;
         account.increment_seq();
         coin_tx.set_account(tx.from(), account);
-        self.process_impl(tx, hash, 0, coin_tx)
+        self.process_impl(&tx, hash, 0, coin_tx)
     }
 }

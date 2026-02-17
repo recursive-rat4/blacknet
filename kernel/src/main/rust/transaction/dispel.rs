@@ -35,7 +35,7 @@ impl Dispel {
 impl TxData for Dispel {
     fn process_impl(
         &self,
-        tx: Transaction,
+        tx: &Transaction,
         _hash: Hash,
         _data_index: u32,
         _coin_tx: &mut (impl CoinTx + ?Sized),

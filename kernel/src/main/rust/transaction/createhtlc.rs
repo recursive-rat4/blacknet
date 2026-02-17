@@ -79,7 +79,7 @@ impl CreateHTLC {
 impl TxData for CreateHTLC {
     fn process_impl(
         &self,
-        tx: Transaction,
+        tx: &Transaction,
         hash: Hash,
         data_index: u32,
         coin_tx: &mut (impl CoinTx + ?Sized),

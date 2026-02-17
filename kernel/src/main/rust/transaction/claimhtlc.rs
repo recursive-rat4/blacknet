@@ -45,7 +45,7 @@ impl ClaimHTLC {
 impl TxData for ClaimHTLC {
     fn process_impl(
         &self,
-        tx: Transaction,
+        tx: &Transaction,
         _hash: Hash,
         _data_index: u32,
         coin_tx: &mut (impl CoinTx + ?Sized),

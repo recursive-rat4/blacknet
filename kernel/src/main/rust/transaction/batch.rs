@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2025 Pavel Vasin
+ * Copyright (c) 2019-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -16,9 +16,12 @@
  */
 
 use crate::blake2b::Hash;
-use crate::error::Result;
-use crate::transaction::{CoinTx, Transaction, TxData, TxKind};
+use crate::error::{Error, Result};
+use crate::transaction::*;
+use alloc::borrow::ToOwned;
 use alloc::boxed::Box;
+use alloc::format;
+use blacknet_serialization::format::from_bytes;
 use serde::{Deserialize, Serialize};
 
 pub const MIN_SIZE: usize = 2;
@@ -35,7 +38,7 @@ impl Batchee {
         self.kind
     }
 
-    pub const fn raw_data(&self) -> &[u8] {
+    pub const fn data_bytes(&self) -> &[u8] {
         &self.data
     }
 }
@@ -62,11 +65,79 @@ impl Batch {
 impl TxData for Batch {
     fn process_impl(
         &self,
-        _tx: Transaction,
-        _hash: Hash,
-        _data_index: u32,
-        _coin_tx: &mut (impl CoinTx + ?Sized),
+        tx: &Transaction,
+        hash: Hash,
+        data_index: u32,
+        coin_tx: &mut (impl CoinTx + ?Sized),
     ) -> Result<()> {
-        todo!();
+        if data_index != 0 {
+            return Err(Error::Invalid(
+                "Batch is not permitted to contain Batch".to_owned(),
+            ));
+        }
+        let len = self.multi_data.len();
+        if !(MIN_SIZE..=MAX_SIZE).contains(&len) {
+            return Err(Error::Invalid(format!("Invalid Batch size {len}")));
+        }
+
+        for index in 0..len {
+            let kind = self.multi_data[index].kind();
+            let data_bytes = self.multi_data[index].data_bytes();
+            match kind {
+                TxKind::Transfer => {
+                    let data = from_bytes::<Transfer>(data_bytes, false)?;
+                    data.process_impl(tx, hash, (index + 1) as u32, coin_tx)?;
+                }
+                TxKind::Burn => {
+                    let data = from_bytes::<Burn>(data_bytes, false)?;
+                    data.process_impl(tx, hash, (index + 1) as u32, coin_tx)?;
+                }
+                TxKind::Lease => {
+                    let data = from_bytes::<Lease>(data_bytes, false)?;
+                    data.process_impl(tx, hash, (index + 1) as u32, coin_tx)?;
+                }
+                TxKind::CancelLease => {
+                    let data = from_bytes::<CancelLease>(data_bytes, false)?;
+                    data.process_impl(tx, hash, (index + 1) as u32, coin_tx)?;
+                }
+                TxKind::Blob => {
+                    let data = from_bytes::<Blob>(data_bytes, false)?;
+                    data.process_impl(tx, hash, (index + 1) as u32, coin_tx)?;
+                }
+                TxKind::CreateHTLC => {
+                    let data = from_bytes::<CreateHTLC>(data_bytes, false)?;
+                    data.process_impl(tx, hash, (index + 1) as u32, coin_tx)?;
+                }
+                TxKind::RefundHTLC => {
+                    let data = from_bytes::<RefundHTLC>(data_bytes, false)?;
+                    data.process_impl(tx, hash, (index + 1) as u32, coin_tx)?;
+                }
+                TxKind::CreateMultisig => {
+                    let data = from_bytes::<CreateMultisig>(data_bytes, false)?;
+                    data.process_impl(tx, hash, (index + 1) as u32, coin_tx)?;
+                }
+                TxKind::SpendMultisig => {
+                    let data = from_bytes::<SpendMultisig>(data_bytes, false)?;
+                    data.process_impl(tx, hash, (index + 1) as u32, coin_tx)?;
+                }
+                TxKind::WithdrawFromLease => {
+                    let data = from_bytes::<WithdrawFromLease>(data_bytes, false)?;
+                    data.process_impl(tx, hash, (index + 1) as u32, coin_tx)?;
+                }
+                TxKind::ClaimHTLC => {
+                    let data = from_bytes::<ClaimHTLC>(data_bytes, false)?;
+                    data.process_impl(tx, hash, (index + 1) as u32, coin_tx)?;
+                }
+                TxKind::Batch => {
+                    let data = from_bytes::<Batch>(data_bytes, false)?;
+                    data.process_impl(tx, hash, (index + 1) as u32, coin_tx)?;
+                }
+                TxKind::Generated => {
+                    return Err(Error::Invalid("Generated as individual tx".to_owned()));
+                }
+            }
+        }
+
+        Ok(())
     }
 }
