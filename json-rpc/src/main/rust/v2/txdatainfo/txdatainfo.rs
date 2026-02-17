@@ -47,7 +47,7 @@ impl TxDataInfo {
                 result.push(Self::single(
                     batchee.kind(),
                     index + 1,
-                    batchee.raw_data(),
+                    batchee.data_bytes(),
                     address_codec,
                 )?);
             }
