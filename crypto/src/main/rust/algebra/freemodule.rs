@@ -129,6 +129,16 @@ impl<R: Ring, const N: usize> IntoIterator for FreeModule<R, N> {
     }
 }
 
+impl<'a, R: Ring, const N: usize> IntoIterator for &'a FreeModule<R, N> {
+    type Item = &'a R;
+    type IntoIter = core::slice::Iter<'a, R>;
+
+    #[inline]
+    fn into_iter(self) -> Self::IntoIter {
+        self.components.iter()
+    }
+}
+
 impl<R: Ring, const N: usize> Add for FreeModule<R, N> {
     type Output = Self;
 
@@ -280,10 +290,10 @@ impl<R: Ring, const N: usize> SubAssign<&Self> for FreeModule<R, N> {
 impl<R: Ring, const N: usize> Mul<R> for FreeModule<R, N> {
     type Output = Self;
 
+    #[allow(clippy::op_ref)]
+    #[inline]
     fn mul(self, rps: R) -> Self::Output {
-        Self {
-            components: array::from_fn(|i| self.components[i] * rps),
-        }
+        self * &rps
     }
 }
 
@@ -300,10 +310,10 @@ impl<R: Ring, const N: usize> Mul<&R> for FreeModule<R, N> {
 impl<R: Ring, const N: usize> Mul<R> for &FreeModule<R, N> {
     type Output = FreeModule<R, N>;
 
+    #[allow(clippy::op_ref)]
+    #[inline]
     fn mul(self, rps: R) -> Self::Output {
-        Self::Output {
-            components: array::from_fn(|i| self.components[i] * rps),
-        }
+        self * &rps
     }
 }
 

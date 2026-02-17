@@ -42,6 +42,7 @@ pub trait Ring
     : Presemiring
     + AdditiveAbelianGroup
     + RingOps<Self>
+    + Copy
 {
 }
 
@@ -50,6 +51,7 @@ impl<R
     : Presemiring
     + AdditiveAbelianGroup
     + RingOps<Self>
+    + Copy
 > Ring for R {}
 
 /// A ring with multiplicative identity.

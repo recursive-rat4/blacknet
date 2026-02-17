@@ -40,7 +40,6 @@ pub trait Presemiring
     : AdditiveCommutativeMonoid
     + MultiplicativeSemigroup
     + SemiringOps<Self>
-    + Copy
 {
 }
 
@@ -49,7 +48,6 @@ impl<R
     : AdditiveCommutativeMonoid
     + MultiplicativeSemigroup
     + SemiringOps<Self>
-    + Copy
 > Presemiring for R
 {
 }
@@ -60,6 +58,7 @@ impl<R
 pub trait Semiring
     : Presemiring
     + MultiplicativeMonoid
+    + Copy
 {
 }
 
@@ -67,6 +66,7 @@ pub trait Semiring
 impl<R
     : Presemiring
     + MultiplicativeMonoid
+    + Copy
 > Semiring for R {}
 
 /// A marker for semirings with commutative multiplication.
