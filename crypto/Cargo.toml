@@ -161,6 +161,10 @@ name = "lpr"
 path = "src/test/rust/lpr.rs"
 
 [[test]]
+name = "maskingpolynomial"
+path = "src/test/rust/maskingpolynomial.rs"
+
+[[test]]
 name = "matrixring"
 path = "src/test/rust/matrixring.rs"
 

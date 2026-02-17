@@ -15,10 +15,12 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_crypto::algebra::{Double, IntegerRing, One, Zero};
+use blacknet_crypto::algebra::{IntegerRing, One, Zero};
 use blacknet_crypto::duplex::Duplex;
 use blacknet_crypto::lm::LMField;
-use blacknet_crypto::polynomial::{BinarityPolynomial, EqExtension, MultilinearExtension};
+use blacknet_crypto::polynomial::{
+    BinarityPolynomial, EqExtension, MaskingPolynomial, MultilinearExtension,
+};
 use blacknet_crypto::poseidon2lm::DuplexPoseidon2LM;
 use blacknet_crypto::random::{Distribution, UniformDistribution};
 use blacknet_crypto::sumcheck::SumCheck;
@@ -43,9 +45,23 @@ fn make_eq() -> (EqExtension<Z>, Z) {
     let mut coefficients = Vec::<Z>::with_capacity(VARS);
     (0..VARS).for_each(|_| {
         coefficients.push(i);
-        i = i.double();
+        i += Z::ONE;
     });
     (coefficients.into(), Z::ONE)
+}
+
+fn make_mask() -> (MaskingPolynomial<Z>, Z) {
+    let degree = 2;
+    let len = 1 + degree * VARS;
+    let mut i = Z::ONE;
+    let mut coefficients = Vec::<Z>::with_capacity(len);
+    (0..len).for_each(|_| {
+        coefficients.push(i);
+        i += Z::ONE;
+    });
+    let poly = MaskingPolynomial::new(coefficients, degree, VARS);
+    let sum = poly.sum();
+    (poly, sum)
 }
 
 fn make_mle() -> (MultilinearExtension<Z>, Z) {
@@ -104,6 +120,29 @@ fn criterion_benchmark(crit: &mut Criterion) {
         exceptional_set.reset();
         bench.iter(|| {
             let result = SC::verify(&eq, sum, &proof, &mut duplex, &mut exceptional_set);
+            duplex.reset();
+            exceptional_set.reset();
+            result.unwrap()
+        })
+    });
+
+    let (mask, sum) = black_box(make_mask());
+    crit.bench_function("SumCheck prove Mask", |bench| {
+        type SC = SumCheck<Z, MaskingPolynomial<Z>, D, E>;
+        bench.iter(|| {
+            let proof = SC::prove(mask.clone(), sum, &mut duplex, &mut exceptional_set);
+            duplex.reset();
+            exceptional_set.reset();
+            proof
+        })
+    });
+    crit.bench_function("SumCheck verify Mask", |bench| {
+        type SC = SumCheck<Z, MaskingPolynomial<Z>, D, E>;
+        let proof = SC::prove(mask.clone(), sum, &mut duplex, &mut exceptional_set);
+        duplex.reset();
+        exceptional_set.reset();
+        bench.iter(|| {
+            let result = SC::verify(&mask, sum, &proof, &mut duplex, &mut exceptional_set);
             duplex.reset();
             exceptional_set.reset();
             result.unwrap()
