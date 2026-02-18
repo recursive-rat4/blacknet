@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{Double, One, Square, Tensor, Zero};
+use crate::algebra::{Double, Square, Tensor, Zero};
 use crate::matrix::DenseVector;
 use alloc::vec;
 use alloc::vec::Vec;
@@ -152,22 +152,6 @@ impl<T> DenseMatrix<T> {
         Self {
             rows: self.columns,
             columns: self.rows,
-            elements,
-        }
-    }
-
-    /// The `n ⨉ n` multiplicative identity.
-    pub fn identity(n: usize) -> Self
-    where
-        T: One + Zero + Clone,
-    {
-        let mut elements = vec![T::ZERO; n * n];
-        for i in 0..n {
-            elements[i * n + i] = T::ONE;
-        }
-        Self {
-            rows: n,
-            columns: n,
             elements,
         }
     }

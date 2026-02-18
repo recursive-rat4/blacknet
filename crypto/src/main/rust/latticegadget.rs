@@ -17,7 +17,7 @@
 
 use crate::algebra::{IntegerRing, PolynomialRing, RingOps, Tensor};
 use crate::integer::Integer;
-use crate::matrix::{DenseMatrix, DenseVector};
+use crate::matrix::{DenseMatrix, DenseVector, IdentityMatrix};
 use alloc::vec;
 use alloc::vec::Vec;
 
@@ -102,7 +102,7 @@ where
     }
 
     let powers = DenseMatrix::<R>::new(1, n, powers);
-    let identity = DenseMatrix::<R>::identity(m);
+    let identity = IdentityMatrix::<R>::new(m);
     identity.tensor(powers)
 }
 

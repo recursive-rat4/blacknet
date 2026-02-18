@@ -133,6 +133,10 @@ name = "hypercube"
 path = "src/test/rust/hypercube.rs"
 
 [[test]]
+name = "identitymatrix"
+path = "src/test/rust/identitymatrix.rs"
+
+[[test]]
 name = "interpolation"
 path = "src/test/rust/interpolation.rs"
 

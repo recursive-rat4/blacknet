@@ -19,6 +19,7 @@
 
 mod densematrix;
 mod densevector;
+mod identitymatrix;
 mod sparsematrix;
 mod sparsevector;
 mod symmetricmatrix;
@@ -26,6 +27,7 @@ mod symmetrictridiagonalmatrix;
 
 pub use densematrix::DenseMatrix;
 pub use densevector::DenseVector;
+pub use identitymatrix::IdentityMatrix;
 pub use sparsematrix::{SparseMatrix, SparseMatrixBuilder};
 pub use sparsevector::SparseVector;
 pub use symmetricmatrix::SymmetricMatrix;
