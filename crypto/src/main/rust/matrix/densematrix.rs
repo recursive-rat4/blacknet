@@ -108,19 +108,15 @@ impl<T> DenseMatrix<T> {
     }
 
     /// Concatenate horizontally.
-    pub fn cat(&self, rps: &Self) -> Self
+    pub fn concat(&self, rps: &Self) -> Self
     where
         T: Clone,
     {
         debug_assert!(self.rows == rps.rows);
         let mut elements = Vec::<T>::with_capacity(self.rows * (self.columns + rps.columns));
         for i in 0..self.rows {
-            for j in 0..self.columns {
-                elements.push(self[(i, j)].clone())
-            }
-            for j in 0..rps.columns {
-                elements.push(rps[(i, j)].clone())
-            }
+            elements.extend_from_slice(&self.elements[i * self.columns..(i + 1) * self.columns]);
+            elements.extend_from_slice(&rps.elements[i * rps.columns..(i + 1) * rps.columns]);
         }
         Self {
             rows: self.rows,

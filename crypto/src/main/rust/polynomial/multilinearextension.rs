@@ -116,6 +116,15 @@ impl<R: UnitalRing> From<DenseVector<R>> for MultilinearExtension<R> {
     }
 }
 
+impl<R: UnitalRing> From<Point<R>> for MultilinearExtension<R> {
+    fn from(point: Point<R>) -> Self {
+        debug_assert!(point.dimension().is_power_of_two());
+        Self {
+            coefficients: point.into(),
+        }
+    }
+}
+
 impl<R: UnitalRing> From<MultilinearExtension<R>> for Vec<R> {
     #[inline]
     fn from(polynomial: MultilinearExtension<R>) -> Self {

@@ -22,7 +22,7 @@ use alloc::borrow::{Borrow, BorrowMut};
 use alloc::vec;
 use alloc::vec::Vec;
 use core::fmt::{Debug, Formatter, Result};
-use core::iter::{Sum, chain, repeat_n, zip};
+use core::iter::{Sum, repeat_n, zip};
 use core::ops::{
     Add, AddAssign, Deref, DerefMut, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign,
 };
@@ -86,11 +86,14 @@ impl<T> DenseVector<T> {
     }
 
     /// Concatenate horizontally.
-    pub fn cat(&self, rps: &Self) -> Self
+    pub fn concat(&self, rps: &Self) -> Self
     where
         T: Clone,
     {
-        chain(self, rps).cloned().collect()
+        let mut elements = Vec::<T>::with_capacity(self.elements.len() + rps.elements.len());
+        elements.extend_from_slice(&self.elements);
+        elements.extend_from_slice(&rps.elements);
+        Self { elements }
     }
 
     /// Compute the dot product.

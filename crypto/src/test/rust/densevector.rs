@@ -66,13 +66,13 @@ fn neg() {
 }
 
 #[test]
-fn cat() {
+fn concat() {
     let a = DenseVector::<R>::from([0, 1].map(R::from));
     let b = DenseVector::<R>::from([2, 3, 4].map(R::from));
     let c = DenseVector::<R>::from([0, 1, 2, 3, 4].map(R::from));
     let d = DenseVector::<R>::from([2, 3, 4, 0, 1].map(R::from));
-    assert_eq!(a.cat(&b), c);
-    assert_eq!(b.cat(&a), d);
+    assert_eq!(a.concat(&b), c);
+    assert_eq!(b.concat(&a), d);
 }
 
 #[test]

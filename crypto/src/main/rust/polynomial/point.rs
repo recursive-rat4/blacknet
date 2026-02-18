@@ -38,6 +38,16 @@ impl<S> Point<S> {
     pub const fn coordinates(&self) -> &Vec<S> {
         &self.coordinates
     }
+
+    pub fn concat(&self, rps: &Self) -> Self
+    where
+        S: Clone,
+    {
+        let mut coordinates = Vec::with_capacity(self.coordinates.len() + rps.coordinates.len());
+        coordinates.extend_from_slice(&self.coordinates);
+        coordinates.extend_from_slice(&rps.coordinates);
+        Self { coordinates }
+    }
 }
 
 impl<S, const N: usize> From<[S; N]> for Point<S> {

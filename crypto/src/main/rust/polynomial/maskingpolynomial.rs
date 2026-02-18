@@ -67,11 +67,21 @@ impl<R: UnitalRing> MaskingPolynomial<R> {
     }
 }
 
+impl<R: UnitalRing> From<MaskingPolynomial<R>> for (Vec<R>, usize, usize) {
+    fn from(polynomial: MaskingPolynomial<R>) -> Self {
+        (
+            polynomial.coefficients,
+            polynomial.degree,
+            polynomial.variables,
+        )
+    }
+}
+
 impl<R: UnitalRing> Polynomial for MaskingPolynomial<R> {
     type Point = Point<R>;
 }
 
-impl<R: UnitalRing + From<u8>> MultivariatePolynomial<R> for MaskingPolynomial<R> {
+impl<R: UnitalRing> MultivariatePolynomial<R> for MaskingPolynomial<R> {
     fn bind(&mut self, e: R) {
         self.variables -= 1;
         let new_len = self.coefficients.len() - self.degree;

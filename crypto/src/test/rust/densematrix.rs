@@ -203,7 +203,7 @@ fn column_tensor() {
 
 #[test]
 #[rustfmt::skip]
-fn cat() {
+fn concat() {
     let a = DenseMatrix::<R>::new(3, 2, [
         1, 3,
         1, 0,
@@ -219,7 +219,7 @@ fn cat() {
         1, 0, 7, 5,
         1, 2, 2, 1,
     ].map(R::from).into());
-    assert_eq!(a.cat(&b), c);
+    assert_eq!(a.concat(&b), c);
 }
 
 #[test]
