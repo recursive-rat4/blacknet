@@ -15,14 +15,13 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::Semiring;
-use crate::algebra::UnitalRing;
-use crate::algebra::{Double, Square};
+use crate::algebra::{Double, Semiring, Square, UnitalRing};
 use crate::circuit::builder::{
     Constant, Expression, LinearMonoid, LinearSpan, LinearTerm, Variable,
 };
 use alloc::collections::BTreeMap;
 use alloc::vec;
+use core::iter::Sum;
 use core::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
 /// Linear combination is a sum of linear terms.
@@ -537,5 +536,85 @@ impl<R: Semiring> Mul<&LinearMonoid<R>> for &LinearCombination<R> {
 
     fn mul(self, rps: &LinearMonoid<R>) -> Self::Output {
         self.clone() * rps.clone()
+    }
+}
+
+impl<R: Semiring> Sum<LinearTerm<R>> for LinearCombination<R> {
+    fn sum<I: Iterator<Item = LinearTerm<R>>>(iter: I) -> Self {
+        let mut lc = Self::new();
+        for i in iter {
+            lc += i
+        }
+        lc
+    }
+}
+
+impl<'a, R: Semiring> Sum<&'a LinearTerm<R>> for LinearCombination<R> {
+    fn sum<I: Iterator<Item = &'a LinearTerm<R>>>(iter: I) -> Self {
+        let mut lc = Self::new();
+        for i in iter {
+            lc += *i
+        }
+        lc
+    }
+}
+
+impl<R: Semiring> Sum<Constant<R>> for LinearCombination<R> {
+    fn sum<I: Iterator<Item = Constant<R>>>(iter: I) -> Self {
+        let mut lc = Self::new();
+        for i in iter {
+            lc += i
+        }
+        lc
+    }
+}
+
+impl<'a, R: Semiring> Sum<&'a Constant<R>> for LinearCombination<R> {
+    fn sum<I: Iterator<Item = &'a Constant<R>>>(iter: I) -> Self {
+        let mut lc = Self::new();
+        for i in iter {
+            lc += *i
+        }
+        lc
+    }
+}
+
+impl<R: Semiring> Sum<Variable<R>> for LinearCombination<R> {
+    fn sum<I: Iterator<Item = Variable<R>>>(iter: I) -> Self {
+        let mut lc = Self::new();
+        for i in iter {
+            lc += i
+        }
+        lc
+    }
+}
+
+impl<'a, R: Semiring> Sum<&'a Variable<R>> for LinearCombination<R> {
+    fn sum<I: Iterator<Item = &'a Variable<R>>>(iter: I) -> Self {
+        let mut lc = Self::new();
+        for i in iter {
+            lc += *i
+        }
+        lc
+    }
+}
+
+impl<R: Semiring> Sum for LinearCombination<R> {
+    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
+        let mut lc = Self::new();
+        for i in iter {
+            lc += i
+        }
+        lc
+    }
+}
+
+impl<'a, R: Semiring> Sum<&'a Self> for LinearCombination<R> {
+    fn sum<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
+        let mut lc = Self::new();
+        for i in iter {
+            lc += i
+        }
+        lc
     }
 }

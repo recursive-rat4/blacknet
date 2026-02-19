@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::Semiring;
+use crate::algebra::{Double, Semiring};
 use crate::circuit::builder::{CircuitBuilder, LinearCombination, VariableKind};
 use crate::duplex::{Absorb, Duplex};
 use alloc::vec::Vec;
@@ -54,12 +54,18 @@ impl<'a, 'b, R: Semiring + Eq> UnivariatePolynomial<'a, 'b, R> {
     }
 
     pub fn at_0_plus_1(&self) -> LinearCombination<R> {
-        if self.coefficients.is_empty() {
-            return LinearCombination::new();
+        match self.coefficients.len() {
+            0 => LinearCombination::new(),
+            1 => (&self.coefficients[0]).double(),
+            _ => {
+                (&self.coefficients[0]).double()
+                    + self
+                        .coefficients
+                        .iter()
+                        .skip(1)
+                        .sum::<LinearCombination<R>>()
+            }
         }
-        self.coefficients
-            .iter()
-            .fold(self.coefficients[0].clone(), Add::add)
     }
 }
 

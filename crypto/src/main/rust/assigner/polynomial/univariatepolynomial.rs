@@ -50,13 +50,11 @@ impl<'a, R: Semiring> UnivariatePolynomial<'a, R> {
     }
 
     pub fn at_0_plus_1(&self) -> R {
-        if self.coefficients.is_empty() {
-            return R::ZERO;
+        match self.coefficients.len() {
+            0 => R::ZERO,
+            1 => self.coefficients[0].double(),
+            _ => self.coefficients[0].double() + self.coefficients.iter().skip(1).sum::<R>(),
         }
-        self.coefficients
-            .iter()
-            .copied()
-            .fold(self.coefficients[0], Add::add)
     }
 
     pub const fn degree(&self) -> usize {
