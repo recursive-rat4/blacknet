@@ -48,8 +48,8 @@ fn test() {
     let m12 = DenseVector::from([z1, z2]);
     let m21 = DenseVector::from([z2, z1]);
     let m34 = DenseVector::from([z3, z4]);
-    let c12 = cs_inf.commit(&m12, &());
-    let c34 = cs_inf.commit(&m34, &());
+    let (c12, _) = cs_inf.commit(&m12);
+    let (c34, _) = cs_inf.commit(&m34);
 
     assert!(cs_inf.open(&c12, &m12, &()), "Opening");
     assert!(!cs_inf.open(&c34, &m12, &()), "Binding");

@@ -19,16 +19,17 @@
 pub trait CommitmentScheme<Message> {
     /// Result type.
     type Commitment;
-    /// Type of randomness to make commitment hiding.
-    type Randomness;
+    /// Type to open commitment.
+    type Opening;
 
     /// Commit to a message.
-    fn commit(&self, message: &Message, randomness: &Self::Randomness) -> Self::Commitment;
+    fn commit(&self, message: &Message) -> (Self::Commitment, Self::Opening);
+
     /// Open commitment.
     fn open(
         &self,
         commitment: &Self::Commitment,
         message: &Message,
-        randomness: &Self::Randomness,
+        opening: &Self::Opening,
     ) -> bool;
 }

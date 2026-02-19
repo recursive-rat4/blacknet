@@ -80,13 +80,13 @@ where
     for<'a, 'b> &'a DenseMatrix<R>: Mul<&'b Message, Output = DenseVector<R>>,
 {
     type Commitment = DenseVector<R>;
-    type Randomness = ();
+    type Opening = ();
 
-    fn commit(&self, m: &Message, _r: &()) -> DenseVector<R> {
-        &self.a * m
+    fn commit(&self, m: &Message) -> (DenseVector<R>, ()) {
+        (&self.a * m, ())
     }
 
-    fn open(&self, c: &DenseVector<R>, m: &Message, _r: &()) -> bool {
+    fn open(&self, c: &DenseVector<R>, m: &Message, _o: &()) -> bool {
         self.norm_bound.check(m) && &self.a * m == *c
     }
 }
@@ -97,13 +97,13 @@ where
     for<'a, 'b> &'a DenseMatrix<R>: Mul<&'b Message, Output = DenseVector<R>>,
 {
     type Commitment = DenseVector<R>;
-    type Randomness = ();
+    type Opening = ();
 
-    fn commit(&self, m: &Message, _r: &()) -> DenseVector<R> {
-        &self.a * m
+    fn commit(&self, m: &Message) -> (DenseVector<R>, ()) {
+        (&self.a * m, ())
     }
 
-    fn open(&self, c: &DenseVector<R>, m: &Message, _r: &()) -> bool {
+    fn open(&self, c: &DenseVector<R>, m: &Message, _o: &()) -> bool {
         self.norm_bound.check(m) && &self.a * m == *c
     }
 }
