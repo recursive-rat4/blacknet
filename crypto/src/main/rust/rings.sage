@@ -67,6 +67,9 @@ def compute_montgomery_reduce(number, modulus, montgomery_modulus, word_bits):
 def compute_montgomery_form(number, modulus, montgomery_modulus, square_montgomery_modulus, word_bits):
     return compute_montgomery_reduce(number * square_montgomery_modulus, modulus, montgomery_modulus, word_bits)
 
+def compute_montgomery_n(prime, word_bits):
+    return -pow(prime, -1, 2**word_bits) % 2**word_bits
+
 def compute_primitive_root_of_unity(prime, degree):
     roots = nthroot_mod(1, degree, prime, True)
     for root in roots:

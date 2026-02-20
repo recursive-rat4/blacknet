@@ -17,8 +17,10 @@
 
 mod edwards25519;
 mod field25519;
+mod scalar25519;
 mod twistededwardsgroup;
 
 pub use edwards25519::*;
-pub use field25519::*;
+pub use field25519::Field25519;
+pub use scalar25519::Scalar25519;
 pub use twistededwardsgroup::*;
