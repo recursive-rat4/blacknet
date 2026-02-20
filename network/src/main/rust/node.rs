@@ -204,7 +204,11 @@ impl Node {
     #[expect(unreachable_code)]
     pub fn is_initial_synchronization(&self) -> bool {
         self.block_fetcher.is_synchronizing()
-            && guess_initial_synchronization(todo!(), SystemClock::secs(), todo!())
+            && guess_initial_synchronization(
+                todo!(),
+                SystemClock::secs(),
+                self.coin_db.state().block_time(),
+            )
     }
 
     pub const fn block_db(&self) -> &Arc<BlockDB> {
