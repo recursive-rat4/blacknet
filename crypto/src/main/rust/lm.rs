@@ -22,7 +22,7 @@ use crate::algebra::{
     PolynomialRing, RightOne, RightZero, Set, Square, UnivariateRing, Zero, square_and_multiply,
 };
 use crate::convolution::{Binomial, Convolution, Negacyclic};
-use crate::integer::{Integer, bits_u64, bits_u128};
+use crate::integer::{Integer, bits_u64};
 use crate::polynomial::interpolation::InterpolationConsts;
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
@@ -590,7 +590,6 @@ impl LMField4 {
     const FR_3: LMField = LMField {
         n: 164394589713157382,
     };
-    const R1_FR: [bool; 121] = bits_u128(0x1000000000000043000000000000463);
 
     fn frobenius(mut self) -> Self {
         self[1] *= Self::FR_1;
@@ -606,7 +605,11 @@ impl Inv for LMField4 {
     fn inv(self) -> Self::Output {
         if self != Self::ZERO {
             // Feng and Itoh-Tsujii algorithm
-            let r1 = square_and_multiply(self.frobenius(), Self::R1_FR);
+            let mut r1 = self.frobenius();
+            for _ in 0..2 {
+                r1 *= self;
+                r1 = r1.frobenius();
+            }
             let r0 = (r1 * self).constant_term();
             Some((r1 / r0).expect("multiplicative group of subfield"))
         } else {
