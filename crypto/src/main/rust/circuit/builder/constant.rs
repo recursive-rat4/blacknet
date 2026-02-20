@@ -15,13 +15,12 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::Semiring;
-use crate::algebra::UnitalRing;
-use crate::algebra::{Double, Square};
+use crate::algebra::{Double, Semiring, Square, UnitalRing};
 use crate::circuit::builder::{
     Expression, LinearCombination, LinearMonoid, LinearSpan, LinearTerm, Variable,
 };
 use alloc::vec;
+use core::iter::{Product, Sum};
 use core::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
 /// A constant coefficient.
@@ -252,5 +251,37 @@ impl<R: Semiring> Mul<&LinearMonoid<R>> for Constant<R> {
 
     fn mul(self, rps: &LinearMonoid<R>) -> Self::Output {
         self * rps.clone()
+    }
+}
+
+impl<R: Semiring> Sum for Constant<R> {
+    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
+        Self {
+            value: iter.map(|constant| constant.value).sum(),
+        }
+    }
+}
+
+impl<'a, R: Semiring> Sum<&'a Self> for Constant<R> {
+    fn sum<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
+        Self {
+            value: iter.map(|constant| constant.value).sum(),
+        }
+    }
+}
+
+impl<R: Semiring> Product for Constant<R> {
+    fn product<I: Iterator<Item = Self>>(iter: I) -> Self {
+        Self {
+            value: iter.map(|constant| constant.value).product(),
+        }
+    }
+}
+
+impl<'a, R: Semiring> Product<&'a Self> for Constant<R> {
+    fn product<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
+        Self {
+            value: iter.map(|constant| constant.value).product(),
+        }
     }
 }

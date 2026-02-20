@@ -559,26 +559,6 @@ impl<'a, R: Semiring> Sum<&'a LinearTerm<R>> for LinearCombination<R> {
     }
 }
 
-impl<R: Semiring> Sum<Constant<R>> for LinearCombination<R> {
-    fn sum<I: Iterator<Item = Constant<R>>>(iter: I) -> Self {
-        let mut lc = Self::new();
-        for i in iter {
-            lc += i
-        }
-        lc
-    }
-}
-
-impl<'a, R: Semiring> Sum<&'a Constant<R>> for LinearCombination<R> {
-    fn sum<I: Iterator<Item = &'a Constant<R>>>(iter: I) -> Self {
-        let mut lc = Self::new();
-        for i in iter {
-            lc += *i
-        }
-        lc
-    }
-}
-
 impl<R: Semiring> Sum<Variable<R>> for LinearCombination<R> {
     fn sum<I: Iterator<Item = Variable<R>>>(iter: I) -> Self {
         let mut lc = Self::new();
