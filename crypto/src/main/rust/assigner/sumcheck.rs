@@ -37,7 +37,7 @@ impl<'a, R: UnitalRing> From<Vec<UnivariatePolynomial<'a, R>>> for Proof<'a, R> 
 pub struct SumCheck<
     'a,
     R: UnitalRing,
-    P: MultivariatePolynomial<R>,
+    P: MultivariatePolynomial<Coefficient = R, Point = Point<R>>,
     D: Duplex<R>,
     E: Distribution<'a, R, D, Output = R>,
 > {
@@ -50,7 +50,7 @@ pub struct SumCheck<
 impl<
     'a,
     R: UnitalRing,
-    P: MultivariatePolynomial<R>,
+    P: MultivariatePolynomial<Coefficient = R, Point = Point<R>>,
     D: Duplex<R>,
     E: Distribution<'a, R, D, Output = R>,
 > SumCheck<'a, R, P, D, E>

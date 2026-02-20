@@ -32,22 +32,6 @@ pub struct UnivariatePolynomial<R: Semiring> {
 }
 
 impl<R: Semiring> UnivariatePolynomial<R> {
-    pub fn evaluate(&self, point: R) -> R {
-        if self.coefficients.is_empty() {
-            return R::ZERO;
-        }
-        let mut sigma = self.coefficients[0];
-        let mut power = point;
-        for i in 1..self.coefficients.len() - 1 {
-            sigma += self.coefficients[i] * power;
-            power *= point;
-        }
-        if self.coefficients.len() > 1 {
-            sigma += self.coefficients[self.coefficients.len() - 1] * power;
-        }
-        sigma
-    }
-
     pub fn at_0_plus_1(&self) -> R {
         match self.coefficients.len() {
             0 => R::ZERO,
@@ -172,11 +156,28 @@ impl<'a, R: Semiring> IntoIterator for &'a UnivariatePolynomial<R> {
 }
 
 impl<R: Semiring> Polynomial for UnivariatePolynomial<R> {
+    type Coefficient = R;
     type Point = R;
+
+    fn point(&self, point: &R) -> R {
+        if self.coefficients.is_empty() {
+            return R::ZERO;
+        }
+        let mut sigma = self.coefficients[0];
+        let mut power = *point;
+        for i in 1..self.coefficients.len() - 1 {
+            sigma += self.coefficients[i] * power;
+            power *= point;
+        }
+        if self.coefficients.len() > 1 {
+            sigma += self.coefficients[self.coefficients.len() - 1] * power;
+        }
+        sigma
+    }
 }
 
 /// In monomial basis.
-impl<R: Semiring> InBasis<R> for UnivariatePolynomial<R> {
+impl<R: Semiring> InBasis for UnivariatePolynomial<R> {
     fn basis(&self, point: &R) -> DenseVector<R> {
         let n = self.coefficients.len();
         let mut powers = Vec::<R>::with_capacity(n);
@@ -198,7 +199,7 @@ impl<R: Semiring> InBasis<R> for UnivariatePolynomial<R> {
     }
 }
 
-impl<R: Semiring> TensorBasis<R> for UnivariatePolynomial<R> {
+impl<R: Semiring> TensorBasis for UnivariatePolynomial<R> {
     fn tensor_basis(&self, point: &R) -> (DenseVector<R>, DenseVector<R>) {
         let n = self.coefficients.len().isqrt();
         debug_assert!(self.coefficients.len() == n * n);

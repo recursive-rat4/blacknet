@@ -56,8 +56,8 @@ impl<R: UnitalRing> MaskingPolynomial<R> {
         k * (sigma.double() + sigmas)
     }
 
-    fn eval(univariate: &[R], point: R) -> R {
-        let mut power = point;
+    fn eval(univariate: &[R], point: &R) -> R {
+        let mut power = *point;
         let mut sigma = univariate[0] * power;
         for &coefficient in univariate.iter().skip(1) {
             power *= point;
@@ -78,25 +78,26 @@ impl<R: UnitalRing> From<MaskingPolynomial<R>> for (Vec<R>, usize, usize) {
 }
 
 impl<R: UnitalRing> Polynomial for MaskingPolynomial<R> {
+    type Coefficient = R;
     type Point = Point<R>;
-}
-
-impl<R: UnitalRing> MultivariatePolynomial<R> for MaskingPolynomial<R> {
-    fn bind(&mut self, e: R) {
-        self.variables -= 1;
-        let new_len = self.coefficients.len() - self.degree;
-        let univariate = &self.coefficients[new_len..];
-        let sigma = Self::eval(univariate, e);
-        self.coefficients[0] += sigma;
-        self.coefficients.truncate(new_len);
-    }
 
     fn point(&self, point: &Point<R>) -> R {
         let univariates = self.coefficients[1..].chunks_exact(self.degree).rev();
         self.coefficients[0]
             + zip(univariates, point)
-                .map(|(univariate, &coordinate)| Self::eval(univariate, coordinate))
+                .map(|(univariate, coordinate)| Self::eval(univariate, coordinate))
                 .sum::<R>()
+    }
+}
+
+impl<R: UnitalRing> MultivariatePolynomial for MaskingPolynomial<R> {
+    fn bind(&mut self, value: &R) {
+        self.variables -= 1;
+        let new_len = self.coefficients.len() - self.degree;
+        let univariate = &self.coefficients[new_len..];
+        let sigma = Self::eval(univariate, value);
+        self.coefficients[0] += sigma;
+        self.coefficients.truncate(new_len);
     }
 
     fn sum_with_var<const VAL: i8>(&self) -> R {
@@ -190,7 +191,7 @@ impl<R: UnitalRing> MultivariatePolynomial<R> for MaskingPolynomial<R> {
     }
 }
 
-impl<R: UnitalRing> InBasis<R> for MaskingPolynomial<R> {
+impl<R: UnitalRing> InBasis for MaskingPolynomial<R> {
     fn basis(&self, point: &Point<R>) -> DenseVector<R> {
         debug_assert!(self.variables == point.dimension());
         let n = self.coefficients.len();

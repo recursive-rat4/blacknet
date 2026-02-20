@@ -53,7 +53,7 @@ pub struct SumCheck<
     'a,
     'b,
     R: UnitalRing,
-    P: MultivariatePolynomial<R>,
+    P: MultivariatePolynomial<Coefficient = R>,
     D: Duplex<LinearCombination<R>>,
     E: Distribution<'a, 'b, R, D, Output = LinearCombination<R>>,
 > {
@@ -67,7 +67,7 @@ impl<
     'a,
     'b,
     R: UnitalRing + Eq,
-    P: MultivariatePolynomial<R>,
+    P: MultivariatePolynomial<Coefficient = R>,
     D: Duplex<LinearCombination<R>>,
     E: Distribution<'a, 'b, R, D, Output = LinearCombination<R>>,
 > SumCheck<'a, 'b, R, P, D, E>

@@ -22,7 +22,7 @@ use blacknet_crypto::circuit::builder::{CircuitBuilder, VariableKind};
 use blacknet_crypto::circuit::polynomial::UnivariatePolynomial as Circuit;
 use blacknet_crypto::constraintsystem::ConstraintSystem;
 use blacknet_crypto::matrix::DenseVector;
-use blacknet_crypto::polynomial::{InBasis, TensorBasis, UnivariatePolynomial};
+use blacknet_crypto::polynomial::{InBasis, Polynomial, TensorBasis, UnivariatePolynomial};
 
 type R = blacknet_crypto::pervushin::PervushinField;
 
@@ -71,11 +71,11 @@ fn evaluate() {
     let d = UnivariatePolynomial::from([2].map(R::from));
     let e = UnivariatePolynomial::<R>::default();
 
-    assert_eq!(a.evaluate(R::from(4)), R::from(398));
-    assert_eq!(b.evaluate(R::from(4)), R::from(78));
-    assert_eq!(c.evaluate(R::from(4)), R::from(14));
-    assert_eq!(d.evaluate(R::from(4)), R::from(2));
-    assert_eq!(e.evaluate(R::from(4)), R::ZERO);
+    assert_eq!(a.point(&R::from(4)), R::from(398));
+    assert_eq!(b.point(&R::from(4)), R::from(78));
+    assert_eq!(c.point(&R::from(4)), R::from(14));
+    assert_eq!(d.point(&R::from(4)), R::from(2));
+    assert_eq!(e.point(&R::from(4)), R::ZERO);
 
     assert_eq!(a.at_0_plus_1(), R::from(16));
     assert_eq!(b.at_0_plus_1(), R::from(11));
@@ -118,7 +118,7 @@ fn tensor_basis() {
 fn circuit_evaluate() {
     let p_plain = UnivariatePolynomial::from([2, 3, 4, 5, 6].map(R::from));
     let x_plain = R::from(7);
-    let y_plain = p_plain.evaluate(x_plain);
+    let y_plain = p_plain.point(&x_plain);
 
     let circuit = CircuitBuilder::<R>::new(2);
     let scope = circuit.scope("test");

@@ -19,7 +19,8 @@ use blacknet_crypto::algebra::Double;
 use blacknet_crypto::algebra::FreeModule;
 use blacknet_crypto::matrix::{DenseMatrix, DenseVector};
 use blacknet_crypto::polynomial::{
-    Hypercube, InBasis, MultilinearExtension, MultivariatePolynomial, Point, TensorBasis,
+    Hypercube, InBasis, MultilinearExtension, MultivariatePolynomial, Point, Polynomial,
+    TensorBasis,
 };
 use core::iter::zip;
 
@@ -78,39 +79,39 @@ fn bind() {
     let d = MultilinearExtension::from([4].map(R::from));
 
     let mut mle = a.clone();
-    mle.bind(R::from(0));
+    mle.bind(&R::from(0));
     assert_eq!(mle, b);
-    mle.bind(R::from(1));
+    mle.bind(&R::from(1));
     assert_eq!(mle, c);
-    mle.bind(R::from(1));
+    mle.bind(&R::from(1));
     assert_eq!(mle, d);
 
     mle = a.clone();
-    mle.bind(R::from(-2));
+    mle.bind(&R::from(-2));
     let evaluations = a.hypercube_with_var::<-2>();
     assert_eq!(evaluations.elements(), mle.hypercube());
     mle = a.clone();
-    mle.bind(R::from(-1));
+    mle.bind(&R::from(-1));
     let evaluations = a.hypercube_with_var::<-1>();
     assert_eq!(evaluations.elements(), mle.hypercube());
     mle = a.clone();
-    mle.bind(R::from(0));
+    mle.bind(&R::from(0));
     let evaluations = a.hypercube_with_var::<0>();
     assert_eq!(evaluations.elements(), mle.hypercube());
     mle = a.clone();
-    mle.bind(R::from(1));
+    mle.bind(&R::from(1));
     let evaluations = a.hypercube_with_var::<1>();
     assert_eq!(evaluations.elements(), mle.hypercube());
     mle = a.clone();
-    mle.bind(R::from(2));
+    mle.bind(&R::from(2));
     let evaluations = a.hypercube_with_var::<2>();
     assert_eq!(evaluations.elements(), mle.hypercube());
     mle = a.clone();
-    mle.bind(R::from(3));
+    mle.bind(&R::from(3));
     let evaluations = a.hypercube_with_var::<3>();
     assert_eq!(evaluations.elements(), mle.hypercube());
     mle = a.clone();
-    mle.bind(R::from(4));
+    mle.bind(&R::from(4));
     let evaluations = a.hypercube_with_var::<4>();
     assert_eq!(evaluations.elements(), mle.hypercube());
 }

@@ -68,20 +68,21 @@ impl<R: UnitalRing> From<DenseVector<R>> for BinarityPolynomial<R> {
 }
 
 impl<R: UnitalRing> Polynomial for BinarityPolynomial<R> {
+    type Coefficient = R;
     type Point = Point<R>;
-}
-
-impl<R: UnitalRing> MultivariatePolynomial<R> for BinarityPolynomial<R>
-where
-    for<'a> &'a R: RingOps<R>,
-{
-    fn bind(&mut self, e: R) {
-        self.coefficients.bind(e);
-    }
 
     fn point(&self, point: &Point<R>) -> R {
         let t = self.coefficients.point(point);
         t.square() - t
+    }
+}
+
+impl<R: UnitalRing> MultivariatePolynomial for BinarityPolynomial<R>
+where
+    for<'a> &'a R: RingOps<R>,
+{
+    fn bind(&mut self, value: &R) {
+        self.coefficients.bind(value);
     }
 
     fn sum_with_var<const VAL: i8>(&self) -> R {

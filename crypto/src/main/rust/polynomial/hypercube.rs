@@ -65,7 +65,7 @@ impl<R: Semiring> Hypercube<R> {
     }
 
     /// Sum a polynomial over a unit hypercube.
-    pub fn sum<P: MultivariatePolynomial<R>>(polynomial: &P) -> R {
+    pub fn sum<P: MultivariatePolynomial<Coefficient = R, Point = Point<R>>>(polynomial: &P) -> R {
         Hypercube::new(polynomial.variables())
             .iter_vertex()
             .map(|vertex| polynomial.point(&vertex))

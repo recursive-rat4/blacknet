@@ -110,14 +110,8 @@ impl<R: UnitalRing> From<Vec<R>> for EqExtension<R> {
 }
 
 impl<R: UnitalRing> Polynomial for EqExtension<R> {
+    type Coefficient = R;
     type Point = Point<R>;
-}
-
-impl<R: UnitalRing + From<u8>> MultivariatePolynomial<R> for EqExtension<R> {
-    fn bind(&mut self, e: R) {
-        self.z *= (self.coefficients[0] * e).double() - self.coefficients[0] - e + R::ONE;
-        self.coefficients.remove(0);
-    }
 
     fn point(&self, point: &Point<R>) -> R {
         debug_assert_eq!(self.coefficients.len(), point.dimension());
@@ -125,6 +119,13 @@ impl<R: UnitalRing + From<u8>> MultivariatePolynomial<R> for EqExtension<R> {
             * zip(&self.coefficients, point)
                 .map(|(&c, &p)| (c * p).double() - c - p + R::ONE)
                 .product::<R>()
+    }
+}
+
+impl<R: UnitalRing + From<u8>> MultivariatePolynomial for EqExtension<R> {
+    fn bind(&mut self, e: &R) {
+        self.z *= (self.coefficients[0] * e).double() - self.coefficients[0] - e + R::ONE;
+        self.coefficients.remove(0);
     }
 
     fn sum_with_var<const VAL: i8>(&self) -> R {

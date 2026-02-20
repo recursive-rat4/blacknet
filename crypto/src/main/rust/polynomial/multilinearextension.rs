@@ -193,21 +193,22 @@ impl<R: UnitalRing> IndexMut<usize> for MultilinearExtension<R> {
 }
 
 impl<R: UnitalRing> Polynomial for MultilinearExtension<R> {
+    type Coefficient = R;
     type Point = Point<R>;
-}
-
-impl<R: UnitalRing> MultivariatePolynomial<R> for MultilinearExtension<R> {
-    fn bind(&mut self, e: R) {
-        let new_len = self.coefficients.len() >> 1;
-        let (left, right) = self.coefficients.split_at_mut(new_len);
-        zip(left, right).for_each(|(l, r)| *l += (*r - *l) * e);
-        self.coefficients.truncate(new_len);
-    }
 
     fn point(&self, point: &Point<R>) -> R {
         debug_assert_eq!(self.coefficients.len(), 1 << point.dimension());
         let basis = EqExtension::basis(point);
         zip(&self.coefficients, basis).map(|(&c, b)| c * b).sum()
+    }
+}
+
+impl<R: UnitalRing> MultivariatePolynomial for MultilinearExtension<R> {
+    fn bind(&mut self, e: &R) {
+        let new_len = self.coefficients.len() >> 1;
+        let (left, right) = self.coefficients.split_at_mut(new_len);
+        zip(left, right).for_each(|(l, r)| *l += (*r - *l) * e);
+        self.coefficients.truncate(new_len);
     }
 
     fn sum_with_var<const VAL: i8>(&self) -> R {
@@ -240,14 +241,14 @@ impl<R: UnitalRing> MultivariatePolynomial<R> for MultilinearExtension<R> {
 }
 
 /// In Lagrange basis.
-impl<R: UnitalRing> InBasis<R> for MultilinearExtension<R> {
+impl<R: UnitalRing> InBasis for MultilinearExtension<R> {
     fn basis(&self, point: &Point<R>) -> DenseVector<R> {
         debug_assert_eq!(self.coefficients.len(), 1 << point.dimension());
         EqExtension::basis(point).into()
     }
 }
 
-impl<R: UnitalRing> TensorBasis<R> for MultilinearExtension<R> {
+impl<R: UnitalRing> TensorBasis for MultilinearExtension<R> {
     fn tensor_basis(&self, point: &Point<R>) -> (DenseVector<R>, DenseVector<R>) {
         debug_assert_eq!(self.coefficients.len(), 1 << point.dimension());
         let (left, right) = point.split_at(point.dimension() >> 1);

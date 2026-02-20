@@ -17,7 +17,9 @@
 
 use crate::algebra::UnitalRing;
 use crate::duplex::Duplex;
-use crate::polynomial::{MultivariatePolynomial, Point, UnivariatePolynomial, interpolation::*};
+use crate::polynomial::{
+    MultivariatePolynomial, Point, Polynomial, UnivariatePolynomial, interpolation::*,
+};
 use crate::random::Distribution;
 use alloc::vec::Vec;
 use core::marker::PhantomData;
@@ -57,7 +59,7 @@ impl<'a, R: UnitalRing> IntoIterator for &'a Proof<R> {
 
 pub struct SumCheck<
     R: UnitalRing,
-    P: MultivariatePolynomial<R>,
+    P: MultivariatePolynomial<Coefficient = R, Point = Point<R>>,
     D: Duplex<R>,
     E: Distribution<D, Output = R>,
 > {
@@ -69,7 +71,7 @@ pub struct SumCheck<
 
 impl<
     R: UnitalRing + InterpolationConsts + Eq + Send + Sync,
-    P: MultivariatePolynomial<R> + Send + Sync,
+    P: MultivariatePolynomial<Coefficient = R, Point = Point<R>> + Send + Sync,
     D: Duplex<R>,
     E: Distribution<D, Output = R>,
 > SumCheck<R, P, D, E>
@@ -85,8 +87,8 @@ impl<
             let claim = Self::prove_round(&polynomial, sum);
             duplex.absorb(&claim);
             let challenge = exceptional_set.sample(duplex);
-            polynomial.bind(challenge);
-            sum = claim.evaluate(challenge);
+            polynomial.bind(&challenge);
+            sum = claim.point(&challenge);
             claims.push(claim);
             exceptional_set.reset();
         }
@@ -114,7 +116,7 @@ impl<
             }
             duplex.absorb(claim);
             let challenge = exceptional_set.sample(duplex);
-            sum = claim.evaluate(challenge);
+            sum = claim.point(&challenge);
             coordinates.push(challenge);
             exceptional_set.reset();
         }
@@ -146,7 +148,7 @@ impl<
             }
             duplex.absorb(claim);
             let challenge = exceptional_set.sample(duplex);
-            sum = claim.evaluate(challenge);
+            sum = claim.point(&challenge);
             coordinates.push(challenge);
             exceptional_set.reset();
         }

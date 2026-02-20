@@ -17,7 +17,7 @@
 
 use blacknet_crypto::matrix::DenseVector;
 use blacknet_crypto::polynomial::{
-    Hypercube, InBasis, MaskingPolynomial, MultivariatePolynomial, Point,
+    Hypercube, InBasis, MaskingPolynomial, MultivariatePolynomial, Point, Polynomial,
 };
 
 type R = blacknet_crypto::pervushin::PervushinField;
@@ -46,31 +46,31 @@ fn bind() {
     let c = MaskingPolynomial::new([6].map(R::from).into(), 2, 0);
 
     let mut mask = a.clone();
-    mask.bind(R::from(0));
+    mask.bind(&R::from(0));
     assert_eq!(mask, b);
-    mask.bind(R::from(1));
+    mask.bind(&R::from(1));
     assert_eq!(mask, c);
 
     mask = a.clone();
-    mask.bind(R::from(-2));
+    mask.bind(&R::from(-2));
     assert_eq!(a.sum_with_var::<-2>(), Hypercube::<R>::sum(&mask));
     mask = a.clone();
-    mask.bind(R::from(-1));
+    mask.bind(&R::from(-1));
     assert_eq!(a.sum_with_var::<-1>(), Hypercube::<R>::sum(&mask));
     mask = a.clone();
-    mask.bind(R::from(0));
+    mask.bind(&R::from(0));
     assert_eq!(a.sum_with_var::<0>(), Hypercube::<R>::sum(&mask));
     mask = a.clone();
-    mask.bind(R::from(1));
+    mask.bind(&R::from(1));
     assert_eq!(a.sum_with_var::<1>(), Hypercube::<R>::sum(&mask));
     mask = a.clone();
-    mask.bind(R::from(2));
+    mask.bind(&R::from(2));
     assert_eq!(a.sum_with_var::<2>(), Hypercube::<R>::sum(&mask));
     mask = a.clone();
-    mask.bind(R::from(3));
+    mask.bind(&R::from(3));
     assert_eq!(a.sum_with_var::<3>(), Hypercube::<R>::sum(&mask));
     mask = a.clone();
-    mask.bind(R::from(4));
+    mask.bind(&R::from(4));
     assert_eq!(a.sum_with_var::<4>(), Hypercube::<R>::sum(&mask));
 }
 

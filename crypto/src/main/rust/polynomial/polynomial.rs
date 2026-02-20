@@ -17,23 +17,25 @@
 
 use crate::algebra::Semiring;
 use crate::matrix::DenseVector;
-use crate::polynomial::Point;
 
 /// Polynomial is an expression of indeterminates and coefficients with a finite number of terms.
 pub trait Polynomial {
+    /// Type of coefficients.
+    type Coefficient: Semiring;
     /// Type of points at which the polynomial can be evaluated.
     type Point;
+
+    /// Evaluate at a point.
+    fn point(&self, point: &Self::Point) -> Self::Coefficient;
 }
 
 /// A polynomial in many indeterminates.
-pub trait MultivariatePolynomial<R: Semiring>: Polynomial<Point = Point<R>> {
+pub trait MultivariatePolynomial: Polynomial {
     /// Substitute an indeterminate for the given value.
-    fn bind(&mut self, value: R);
+    fn bind(&mut self, value: &Self::Coefficient);
 
-    /// Evaluate at a point.
-    fn point(&self, point: &Self::Point) -> R;
     /// Sum over the unit hypercube with one indeterminate substituted for a small value.
-    fn sum_with_var<const VAL: i8>(&self) -> R;
+    fn sum_with_var<const VAL: i8>(&self) -> Self::Coefficient;
 
     /// The individual degree.
     fn degree(&self) -> usize;
@@ -42,13 +44,19 @@ pub trait MultivariatePolynomial<R: Semiring>: Polynomial<Point = Point<R>> {
 }
 
 /// A polynomial in certain basis.
-pub trait InBasis<R: Semiring>: Polynomial {
+pub trait InBasis: Polynomial {
     /// Basis coordinates of a point.
-    fn basis(&self, point: &Self::Point) -> DenseVector<R>;
+    fn basis(&self, point: &Self::Point) -> DenseVector<Self::Coefficient>;
 }
 
 /// Tensor structured basis.
-pub trait TensorBasis<R: Semiring>: InBasis<R> {
+pub trait TensorBasis: InBasis {
     /// Tensor basis coordinates of a point.
-    fn tensor_basis(&self, point: &Self::Point) -> (DenseVector<R>, DenseVector<R>);
+    fn tensor_basis(
+        &self,
+        point: &Self::Point,
+    ) -> (
+        DenseVector<Self::Coefficient>,
+        DenseVector<Self::Coefficient>,
+    );
 }

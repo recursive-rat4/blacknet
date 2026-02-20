@@ -21,7 +21,9 @@ use blacknet_crypto::assigner::polynomial::EqExtension as Assigner;
 use blacknet_crypto::circuit::builder::{CircuitBuilder, VariableKind};
 use blacknet_crypto::circuit::polynomial::{EqExtension as Circuit, Point as PointCircuit};
 use blacknet_crypto::constraintsystem::ConstraintSystem;
-use blacknet_crypto::polynomial::{EqExtension, Hypercube, MultivariatePolynomial, Point};
+use blacknet_crypto::polynomial::{
+    EqExtension, Hypercube, MultivariatePolynomial, Point, Polynomial,
+};
 
 type R = blacknet_crypto::pervushin::PervushinField;
 
@@ -45,40 +47,40 @@ fn bind() {
     let eq1 = EqExtension::from([2, 3, 4].map(R::from));
     let r1 = Point::from([5, 6, 7].map(R::from));
     let mut eq2 = eq1.clone();
-    eq2.bind(R::from(5));
+    eq2.bind(&R::from(5));
     let r2 = Point::from([6, 7].map(R::from));
     let mut eq3 = eq2.clone();
-    eq3.bind(R::from(6));
+    eq3.bind(&R::from(6));
     let r3 = Point::from([7].map(R::from));
     assert_eq!(eq2.point(&r2), eq1.point(&r1));
     assert_eq!(eq3.point(&r3), eq1.point(&r1));
 
     let mut eq = eq1.clone();
-    eq.bind(R::from(-2));
+    eq.bind(&R::from(-2));
     let evaluations = eq1.hypercube_with_var::<-2>();
     assert_eq!(evaluations, eq.hypercube());
     eq = eq1.clone();
-    eq.bind(R::from(-1));
+    eq.bind(&R::from(-1));
     let evaluations = eq1.hypercube_with_var::<-1>();
     assert_eq!(evaluations, eq.hypercube());
     eq = eq1.clone();
-    eq.bind(R::from(0));
+    eq.bind(&R::from(0));
     let evaluations = eq1.hypercube_with_var::<0>();
     assert_eq!(evaluations, eq.hypercube());
     eq = eq1.clone();
-    eq.bind(R::from(1));
+    eq.bind(&R::from(1));
     let evaluations = eq1.hypercube_with_var::<1>();
     assert_eq!(evaluations, eq.hypercube());
     eq = eq1.clone();
-    eq.bind(R::from(2));
+    eq.bind(&R::from(2));
     let evaluations = eq1.hypercube_with_var::<2>();
     assert_eq!(evaluations, eq.hypercube());
     eq = eq1.clone();
-    eq.bind(R::from(3));
+    eq.bind(&R::from(3));
     let evaluations = eq1.hypercube_with_var::<3>();
     assert_eq!(evaluations, eq.hypercube());
     eq = eq1.clone();
-    eq.bind(R::from(4));
+    eq.bind(&R::from(4));
     let evaluations = eq1.hypercube_with_var::<4>();
     assert_eq!(evaluations, eq.hypercube());
 }
