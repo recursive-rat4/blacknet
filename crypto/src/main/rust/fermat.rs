@@ -19,10 +19,10 @@ use crate::algebra::{
     AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, BalancedRepresentative,
     DivisionRing, Double, IntegerRing, Inv, LeftOne, LeftZero, MultiplicativeCommutativeMagma,
     MultiplicativeMonoid, MultiplicativeSemigroup, NTTRing, One, RightOne, RightZero, Set, Square,
-    UnivariateRing, Zero, square_and_multiply,
+    UnivariateRing, Zero,
 };
 use crate::convolution::Negacyclic;
-use crate::integer::{Integer, bits_u32};
+use crate::integer::Integer;
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
 use core::ops::{Add, AddAssign, Div, Mul, MulAssign, Neg, Sub, SubAssign};
@@ -49,7 +49,13 @@ impl FermatField {
         ((x & 0xFFFF) - (x >> 16)) as i32
     }
 
-    const P_MINUS_2: [bool; 16] = bits_u32(0xFFFF);
+    const fn halve(mut self) -> Self {
+        if self.n & 1 == 1 {
+            self.n += Self::MODULUS;
+        }
+        self.n >>= 1;
+        self
+    }
 }
 
 impl Debug for FermatField {
@@ -292,12 +298,31 @@ impl Inv for FermatField {
     type Output = Option<Self>;
 
     fn inv(self) -> Self::Output {
-        if self != Self::ZERO {
-            // Fermat little theorem
-            Some(square_and_multiply(self, Self::P_MINUS_2))
-        } else {
-            None
+        // Extended Binary GCD (classic algorithm)
+        // https://eprint.iacr.org/2020/972
+        let mut a = self.canonical();
+        let mut b = Self::MODULUS;
+        let mut c = Self::ONE;
+        let mut d = Self::ZERO;
+        while a != 0 {
+            if a & 1 == 0 {
+                a >>= 1;
+                c = c.halve();
+            } else {
+                if a < b {
+                    (a, b) = (b, a);
+                    (c, d) = (d, c);
+                }
+                a -= b;
+                a >>= 1;
+                c -= d;
+                c = c.halve();
+            }
         }
+        if b != 1 {
+            return None;
+        }
+        Some(d)
     }
 }
 

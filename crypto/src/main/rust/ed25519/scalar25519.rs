@@ -84,12 +84,17 @@ impl Scalar25519 {
         Self::reduce_add(n)
     }
 
+    fn halve(mut self) -> Self {
+        if self.n.is_odd() {
+            self.n += Self::MODULUS;
+        }
+        self.n >>= 1;
+        self
+    }
+
     const R2: UInt256 =
         UInt256::from_hex("0399411B7C309A3DCEEC73D217F5BE65D00E1BA768859347A40611E3449C0F01");
     const RN: u64 = 0xD2B51DA312547E1B;
-    const TWO_INVERTED: Self = Self {
-        n: UInt256::from_hex("0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF6DE72AE98B3AB623977F4A4775473485"),
-    };
     const P_MINUS_5_EIGHTH: [bool; 250] =
         UInt256::from_hex("02000000000000000000000000000000029BDF3BD45EF39ACB024C634B9EBA7D")
             .bits();
@@ -406,7 +411,7 @@ impl Inv for Scalar25519 {
         while a != UInt256::ZERO {
             if a.is_even() {
                 a >>= 1;
-                c *= Self::TWO_INVERTED;
+                c = c.halve();
             } else {
                 if a < b {
                     (a, b) = (b, a);
@@ -415,7 +420,7 @@ impl Inv for Scalar25519 {
                 a -= b;
                 a >>= 1;
                 c -= d;
-                c *= Self::TWO_INVERTED;
+                c = c.halve();
             }
         }
         if b != UInt256::ONE {

@@ -19,10 +19,10 @@ use crate::algebra::{
     AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, BalancedRepresentative,
     DivisionAlgebra, DivisionRing, Double, IntegerRing, Inv, LeftOne, LeftZero,
     MultiplicativeCommutativeMagma, MultiplicativeMonoid, MultiplicativeSemigroup, NTTRing, One,
-    PolynomialRing, RightOne, RightZero, Set, Square, UnivariateRing, Zero, square_and_multiply,
+    PolynomialRing, RightOne, RightZero, Set, Square, UnivariateRing, Zero,
 };
 use crate::convolution::{Binomial, Convolution, Negacyclic};
-use crate::integer::{Integer, bits_u64};
+use crate::integer::Integer;
 use crate::polynomial::interpolation::InterpolationConsts;
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
@@ -51,7 +51,13 @@ impl LMField {
         ((t & 0xFFFFFFFFFFFFFFF) - 33 * (t >> 60)) as i64
     }
 
-    const P_MINUS_2: [bool; 61] = bits_u64(0x100000000000001F);
+    const fn halve(mut self) -> Self {
+        if self.n & 1 == 1 {
+            self.n += Self::MODULUS;
+        }
+        self.n >>= 1;
+        self
+    }
 }
 
 impl Debug for LMField {
@@ -322,12 +328,31 @@ impl Inv for LMField {
     type Output = Option<Self>;
 
     fn inv(self) -> Self::Output {
-        if self != Self::ZERO {
-            // Fermat little theorem
-            Some(square_and_multiply(self, Self::P_MINUS_2))
-        } else {
-            None
+        // Extended Binary GCD (classic algorithm)
+        // https://eprint.iacr.org/2020/972
+        let mut a = self.canonical();
+        let mut b = Self::MODULUS;
+        let mut c = Self::ONE;
+        let mut d = Self::ZERO;
+        while a != 0 {
+            if a & 1 == 0 {
+                a >>= 1;
+                c = c.halve();
+            } else {
+                if a < b {
+                    (a, b) = (b, a);
+                    (c, d) = (d, c);
+                }
+                a -= b;
+                a >>= 1;
+                c -= d;
+                c = c.halve();
+            }
         }
+        if b != 1 {
+            return None;
+        }
+        Some(d)
     }
 }
 

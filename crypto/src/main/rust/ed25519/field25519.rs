@@ -84,12 +84,17 @@ impl Field25519 {
         Self::reduce_add(n)
     }
 
+    fn halve(mut self) -> Self {
+        if self.n.is_odd() {
+            self.n += Self::MODULUS;
+        }
+        self.n >>= 1;
+        self
+    }
+
     const R2: UInt256 =
         UInt256::from_hex("00000000000000000000000000000000000000000000000000000000000005A4");
     const RN: u64 = 0x86BCA1AF286BCA1B;
-    const TWO_INVERTED: Self = Self {
-        n: UInt256::from_hex("0000000000000000000000000000000000000000000000000000000000000013"),
-    };
     const P_MINUS_5_EIGHTH: [bool; 252] =
         UInt256::from_hex("0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFD")
             .bits();
@@ -406,7 +411,7 @@ impl Inv for Field25519 {
         while a != UInt256::ZERO {
             if a.is_even() {
                 a >>= 1;
-                c *= Self::TWO_INVERTED;
+                c = c.halve();
             } else {
                 if a < b {
                     (a, b) = (b, a);
@@ -415,7 +420,7 @@ impl Inv for Field25519 {
                 a -= b;
                 a >>= 1;
                 c -= d;
-                c *= Self::TWO_INVERTED;
+                c = c.halve();
             }
         }
         if b != UInt256::ONE {
