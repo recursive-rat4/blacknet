@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_crypto::algebra::{Double, Square, Tensor};
+use blacknet_crypto::algebra::{Double, Inv, Square, Tensor};
 use blacknet_crypto::matrix::{DenseMatrix, DenseVector};
 use blacknet_crypto::norm::InfinityNorm;
 use core::iter::zip;
@@ -97,6 +97,29 @@ fn sqr() {
         66, 79, 21,
     ].map(R::from).into());
     assert_eq!(a.square(), b);
+}
+
+#[test]
+#[rustfmt::skip]
+fn inv() {
+    let a = DenseMatrix::<R>::new(3, 3, [
+        -1,  0,  2,
+         1, -1,  1,
+         1,  0, -1,
+    ].map(R::from).into());
+    let b = DenseMatrix::<R>::new(3, 3, [
+        1,  0, 2,
+        2, -1, 3,
+        1,  0, 1,
+    ].map(R::from).into());
+    let c = DenseMatrix::<R>::new(3, 3, [
+        1, 2, 3,
+        4, 5, 6,
+        7, 8, 9,
+    ].map(R::from).into());
+    assert_eq!((&a).inv().unwrap(), b);
+    assert_eq!(b.inv().unwrap(), a);
+    assert!(c.inv().is_none());
 }
 
 #[test]
@@ -306,4 +329,28 @@ fn iter_row() {
         [4, 5, 6].map(R::from).into(),
     ];
     zip(a.iter_row(), b).for_each(|(a,b)| assert_eq!(a, b));
+}
+
+#[test]
+#[rustfmt::skip]
+fn swap_row() {
+    let mut a = DenseMatrix::<R>::new(3, 2, [
+        1, 2,
+        3, 4,
+        5, 6,
+    ].map(R::from).into());
+    let b = DenseMatrix::<R>::new(3, 2, [
+        3, 4,
+        1, 2,
+        5, 6,
+    ].map(R::from).into());
+    let c = DenseMatrix::<R>::new(3, 2, [
+        3, 4,
+        5, 6,
+        1, 2,
+    ].map(R::from).into());
+    a.swap_row(0, 1);
+    assert_eq!(a, b);
+    a.swap_row(2, 1);
+    assert_eq!(a, c);
 }

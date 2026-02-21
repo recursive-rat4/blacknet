@@ -15,8 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{Double, Square, Tensor, Zero};
-use crate::matrix::DenseVector;
+use crate::algebra::{Double, Field, Inv, Square, Tensor, Zero};
+use crate::matrix::{DenseVector, IdentityMatrix};
 use alloc::vec;
 use alloc::vec::Vec;
 use core::iter::{Sum, zip};
@@ -105,6 +105,18 @@ impl<T> DenseMatrix<T> {
     /// Iterate rows.
     pub fn iter_row(&self) -> impl ExactSizeIterator<Item = &[T]> {
         self.elements.chunks_exact(self.columns)
+    }
+
+    /// Swap two rows.
+    pub fn swap_row(&mut self, mut i: usize, mut j: usize) {
+        if i > j {
+            (i, j) = (j, i);
+        }
+        let (_, right) = self.elements.split_at_mut(i * self.columns);
+        let (ith, right) = right.split_at_mut(self.columns);
+        let (_, right) = right.split_at_mut((j - i - 1) * self.columns);
+        let (jth, _) = right.split_at_mut(self.columns);
+        ith.swap_with_slice(jth);
     }
 
     /// Concatenate horizontally.
@@ -683,6 +695,59 @@ where
     #[inline]
     fn square(self) -> Self::Output {
         self * self
+    }
+}
+
+impl<F: Field + Eq> Inv for DenseMatrix<F> {
+    type Output = Option<DenseMatrix<F>>;
+
+    fn inv(mut self) -> Self::Output {
+        if self.rows != self.columns {
+            return None;
+        }
+        // Gauss–Jordan elimination
+        let mut a: DenseMatrix<F> = IdentityMatrix::new(self.rows).into();
+        for i in 0..self.rows {
+            let pivot = (i..self.rows).find(|&j| self[(j, i)] != F::ZERO)?;
+            if pivot != i {
+                self.swap_row(i, pivot);
+                a.swap_row(i, pivot);
+            }
+
+            let f = self[(i, i)].inv()?;
+            let row = &mut self.elements[i * self.columns..(i + 1) * self.columns];
+            for element in row {
+                *element *= f
+            }
+            let row = &mut a.elements[i * a.columns..(i + 1) * a.columns];
+            for element in row {
+                *element *= f
+            }
+
+            for j in 0..self.rows {
+                if i == j {
+                    continue;
+                }
+                let f = self[(j, i)];
+                for k in 0..self.columns {
+                    let g = self[(i, k)];
+                    self[(j, k)] -= f * g;
+                }
+                for k in 0..a.columns {
+                    let g = a[(i, k)];
+                    a[(j, k)] -= f * g;
+                }
+            }
+        }
+        Some(a)
+    }
+}
+
+impl<F: Field + Eq> Inv for &DenseMatrix<F> {
+    type Output = Option<DenseMatrix<F>>;
+
+    fn inv(self) -> Self::Output {
+        self.clone().inv()
     }
 }
 
