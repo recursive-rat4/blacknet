@@ -489,12 +489,11 @@ impl<const N: usize> Neg for BigInt<N> {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
-        let mut c: i128 = 0;
+        let mut c: bool = false;
+        let mut n: u64 = 0;
         Self {
             limbs: array::from_fn(|i| {
-                c -= self.limbs[i] as i128;
-                let n = c as u64;
-                c >>= u64::BITS;
+                (n, c) = 0u64.borrowing_sub(self.limbs[i], c);
                 n
             }),
         }
