@@ -505,13 +505,12 @@ impl<const N: usize> Sub for BigInt<N> {
     type Output = Self;
 
     fn sub(self, rps: Self) -> Self::Output {
-        let mut c: i128 = 0;
+        let mut c: bool = false;
+        let mut l: u64 = 0;
         Self {
             limbs: array::from_fn(|i| {
-                c += self.limbs[i] as i128 - rps.limbs[i] as i128;
-                let n = c as u64;
-                c >>= u64::BITS;
-                n
+                (l, c) = self.limbs[i].borrowing_sub(rps.limbs[i], c);
+                l
             }),
         }
     }
