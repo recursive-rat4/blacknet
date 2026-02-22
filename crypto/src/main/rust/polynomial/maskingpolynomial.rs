@@ -210,4 +210,8 @@ impl<R: UnitalRing> InBasis for MaskingPolynomial<R> {
         }
         powers.into()
     }
+
+    fn coefficients(&self) -> &[R] {
+        &self.coefficients
+    }
 }

@@ -40,10 +40,6 @@ impl<R: UnitalRing> MultilinearExtension<R> {
         &self.coefficients
     }
 
-    pub const fn coefficients(&self) -> &Vec<R> {
-        &self.coefficients
-    }
-
     pub fn hypercube_with_var<const VAL: i8>(&self) -> DenseVector<R> {
         let (left, right) = self.coefficients.split_at(self.coefficients.len() >> 1);
         match VAL {
@@ -245,6 +241,10 @@ impl<R: UnitalRing> InBasis for MultilinearExtension<R> {
     fn basis(&self, point: &Point<R>) -> DenseVector<R> {
         debug_assert_eq!(self.coefficients.len(), 1 << point.dimension());
         EqExtension::basis(point).into()
+    }
+
+    fn coefficients(&self) -> &[R] {
+        &self.coefficients
     }
 }
 

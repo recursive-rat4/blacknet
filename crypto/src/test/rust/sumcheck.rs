@@ -26,7 +26,7 @@ use blacknet_crypto::constraintsystem::ConstraintSystem;
 use blacknet_crypto::duplex::Duplex;
 use blacknet_crypto::pervushin::PervushinField;
 use blacknet_crypto::polynomial::{
-    EqExtension, MultilinearExtension, MultivariatePolynomial, Polynomial,
+    EqExtension, InBasis, MultilinearExtension, MultivariatePolynomial, Polynomial,
 };
 use blacknet_crypto::poseidon2pervushin::DuplexPoseidon2Pervushin as DuplexPoseidon2PervushinPlain;
 use blacknet_crypto::random::{Distribution, UniformDistribution};

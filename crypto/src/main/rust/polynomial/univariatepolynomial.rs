@@ -47,10 +47,6 @@ impl<R: Semiring> UnivariatePolynomial<R> {
     pub const fn variables(&self) -> usize {
         1
     }
-
-    pub const fn coefficients(&self) -> &Vec<R> {
-        &self.coefficients
-    }
 }
 
 impl<R: Semiring, const N: usize> From<[R; N]> for UnivariatePolynomial<R> {
@@ -196,6 +192,10 @@ impl<R: Semiring> InBasis for UnivariatePolynomial<R> {
             powers.push(power);
         }
         powers.into()
+    }
+
+    fn coefficients(&self) -> &[R] {
+        &self.coefficients
     }
 }
 
