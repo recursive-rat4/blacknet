@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{DivisionRing, Double, Semiring, Set, Square, UnitalRing};
+use crate::algebra::{DivisionRing, Double, Semiring, SemiringOps, Set, Square, UnitalRing};
 use crate::duplex::{Absorb, Duplex, Squeeze, SqueezeWithSize};
 use crate::matrix::DenseVector;
 use crate::polynomial::{InBasis, Polynomial, TensorBasis};
@@ -270,7 +270,10 @@ impl<R: UnitalRing> Neg for UnivariatePolynomial<R> {
     }
 }
 
-impl<R: Semiring> Mul for UnivariatePolynomial<R> {
+impl<R: Semiring> Mul for UnivariatePolynomial<R>
+where
+    for<'a> &'a R: SemiringOps<R>,
+{
     type Output = Self;
 
     fn mul(self, rps: Self) -> Self::Output {
@@ -278,13 +281,19 @@ impl<R: Semiring> Mul for UnivariatePolynomial<R> {
     }
 }
 
-impl<R: Semiring> MulAssign for UnivariatePolynomial<R> {
+impl<R: Semiring> MulAssign for UnivariatePolynomial<R>
+where
+    for<'a> &'a R: SemiringOps<R>,
+{
     fn mul_assign(&mut self, rps: Self) {
         *self = &*self * &rps
     }
 }
 
-impl<R: Semiring> Square for UnivariatePolynomial<R> {
+impl<R: Semiring> Square for UnivariatePolynomial<R>
+where
+    for<'a> &'a R: SemiringOps<R>,
+{
     type Output = Self;
 
     fn square(self) -> Self::Output {
@@ -292,9 +301,24 @@ impl<R: Semiring> Square for UnivariatePolynomial<R> {
     }
 }
 
-impl<R: Semiring> Mul<&UnivariatePolynomial<R>> for &UnivariatePolynomial<R> {
+impl<R: Semiring> Square for &UnivariatePolynomial<R>
+where
+    for<'a> &'a R: SemiringOps<R>,
+{
     type Output = UnivariatePolynomial<R>;
 
+    fn square(self) -> Self::Output {
+        self * self
+    }
+}
+
+impl<R: Semiring> Mul<&UnivariatePolynomial<R>> for &UnivariatePolynomial<R>
+where
+    for<'a> &'a R: SemiringOps<R>,
+{
+    type Output = UnivariatePolynomial<R>;
+
+    #[allow(clippy::op_ref)]
     fn mul(self, rps: &UnivariatePolynomial<R>) -> Self::Output {
         // Long method
         let mut coefficients = Vec::new();
@@ -304,24 +328,42 @@ impl<R: Semiring> Mul<&UnivariatePolynomial<R>> for &UnivariatePolynomial<R> {
         );
         for i in 0..self.coefficients.len() {
             for j in 0..rps.coefficients.len() {
-                coefficients[i + j] += self.coefficients[i] * rps.coefficients[j];
+                coefficients[i + j] += &self.coefficients[i] * &rps.coefficients[j];
             }
         }
         Self::Output { coefficients }
     }
 }
 
-impl<R: Semiring> Mul<R> for UnivariatePolynomial<R> {
+impl<R: Semiring> Mul<R> for UnivariatePolynomial<R>
+where
+    for<'a> &'a R: SemiringOps<R>,
+{
     type Output = Self;
 
+    #[allow(clippy::op_ref)]
     fn mul(self, rps: R) -> Self::Output {
+        self * &rps
+    }
+}
+
+impl<R: Semiring> Mul<&R> for UnivariatePolynomial<R>
+where
+    for<'a> &'a R: SemiringOps<R>,
+{
+    type Output = Self;
+
+    fn mul(self, rps: &R) -> Self::Output {
         Self {
             coefficients: self.coefficients.into_iter().map(|l| l * rps).collect(),
         }
     }
 }
 
-impl<R: UnitalRing + DivisionRing> Div<R> for UnivariatePolynomial<R> {
+impl<R: UnitalRing + DivisionRing> Div<R> for UnivariatePolynomial<R>
+where
+    for<'a> &'a R: SemiringOps<R>,
+{
     type Output = Option<Self>;
 
     fn div(self, rps: R) -> Self::Output {
@@ -337,7 +379,7 @@ impl<S: Set, R: Semiring + Absorb<S>> Absorb<S> for UnivariatePolynomial<R> {
 
 impl<S: Set, R: Semiring + Absorb<S>> Absorb<S> for &UnivariatePolynomial<R> {
     fn absorb_into(self, duplex: &mut (impl Duplex<S> + ?Sized)) {
-        duplex.absorb_iter(self.coefficients.iter().copied())
+        duplex.absorb_iter(self.coefficients.iter().cloned())
     }
 }
 

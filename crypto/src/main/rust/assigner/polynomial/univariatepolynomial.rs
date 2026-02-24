@@ -116,6 +116,6 @@ impl<'a, R: Semiring + Absorb<R>> Absorb<R> for UnivariatePolynomial<'a, R> {
 
 impl<'a, R: Semiring + Absorb<R>> Absorb<R> for &UnivariatePolynomial<'a, R> {
     fn absorb_into(self, duplex: &mut (impl Duplex<R> + ?Sized)) {
-        duplex.absorb_iter(self.coefficients.iter().copied())
+        duplex.absorb_iter(self.coefficients.iter().cloned())
     }
 }
