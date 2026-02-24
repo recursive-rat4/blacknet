@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -51,16 +51,17 @@ impl<'a, R: UnitalRing + Eq> LogicGate<'a, R> {
     }
 
     pub fn and_slice(&self, a: &[R]) -> R {
-        if a.len() == 0 {
-            return R::ONE;
-        } else if a.len() == 1 {
-            return a[0];
-        };
-        let mut pi = a[0];
-        for &a in a.iter().skip(1) {
-            pi = self.and(pi, a);
+        match a.len() {
+            0 => R::ONE,
+            1 => a[0],
+            _ => {
+                let mut pi = a[0];
+                for &a in a.iter().skip(1) {
+                    pi = self.and(pi, a);
+                }
+                pi
+            }
         }
-        pi
     }
 
     pub fn check_less_or_equal(&self, a: &[R], b: &[R]) {

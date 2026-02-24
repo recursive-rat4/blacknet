@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -75,19 +75,20 @@ impl<'a, 'b, R: UnitalRing + Eq> LogicGate<'a, 'b, R> {
 
     /// Compute the n-ary conjunction `⋀a`.
     pub fn and_slice(&self, a: &[LinearCombination<R>]) -> LinearCombination<R> {
-        if a.len() == 0 {
-            return Constant::ONE.into();
-        } else if a.len() == 1 {
-            return a[0].clone();
+        match a.len() {
+            0 => Constant::ONE.into(),
+            1 => a[0].clone(),
+            _ => {
+                let scope = self.circuit.scope("LogicGate::and_slice");
+                let mut pi = a[0].clone();
+                for a in a.iter().skip(1) {
+                    let p = scope.auxiliary();
+                    scope.constrain(pi * a, p);
+                    pi = p.into();
+                }
+                pi
+            }
         }
-        let scope = self.circuit.scope("LogicGate::and_slice");
-        let mut pi = a[0].clone();
-        for a in a.iter().skip(1) {
-            let p = scope.auxiliary();
-            scope.constrain(pi * a, p);
-            pi = p.into();
-        }
-        pi
     }
 
     /// Constrain the inequality `a ≤ b` in the binary numeral system.
