@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Pavel Vasin
+ * Copyright (c) 2024-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -80,6 +80,30 @@ impl<R: Semiring> Add for LinearTerm<R> {
     }
 }
 
+impl<R: Semiring> Add<&Self> for LinearTerm<R> {
+    type Output = LinearCombination<R>;
+
+    fn add(self, rps: &Self) -> Self::Output {
+        self + *rps
+    }
+}
+
+impl<R: Semiring> Add<LinearTerm<R>> for &LinearTerm<R> {
+    type Output = LinearCombination<R>;
+
+    fn add(self, rps: LinearTerm<R>) -> Self::Output {
+        *self + rps
+    }
+}
+
+impl<R: Semiring> Add for &LinearTerm<R> {
+    type Output = LinearCombination<R>;
+
+    fn add(self, rps: Self) -> Self::Output {
+        *self + *rps
+    }
+}
+
 impl<R: Semiring> Double for LinearTerm<R> {
     type Output = Self;
 
@@ -91,6 +115,14 @@ impl<R: Semiring> Double for LinearTerm<R> {
     }
 }
 
+impl<R: Semiring> Double for &LinearTerm<R> {
+    type Output = LinearTerm<R>;
+
+    fn double(self) -> Self::Output {
+        (*self).double()
+    }
+}
+
 impl<R: UnitalRing> Neg for LinearTerm<R> {
     type Output = Self;
 
@@ -99,6 +131,14 @@ impl<R: UnitalRing> Neg for LinearTerm<R> {
             variable: self.variable,
             coefficient: -self.coefficient,
         }
+    }
+}
+
+impl<R: UnitalRing> Neg for &LinearTerm<R> {
+    type Output = LinearTerm<R>;
+
+    fn neg(self) -> Self::Output {
+        -(*self)
     }
 }
 
@@ -118,6 +158,30 @@ impl<R: UnitalRing> Sub for LinearTerm<R> {
     }
 }
 
+impl<R: UnitalRing> Sub<&Self> for LinearTerm<R> {
+    type Output = LinearCombination<R>;
+
+    fn sub(self, rps: &Self) -> Self::Output {
+        self - *rps
+    }
+}
+
+impl<R: UnitalRing> Sub<LinearTerm<R>> for &LinearTerm<R> {
+    type Output = LinearCombination<R>;
+
+    fn sub(self, rps: LinearTerm<R>) -> Self::Output {
+        *self - rps
+    }
+}
+
+impl<R: UnitalRing> Sub for &LinearTerm<R> {
+    type Output = LinearCombination<R>;
+
+    fn sub(self, rps: Self) -> Self::Output {
+        *self - *rps
+    }
+}
+
 impl<R: Semiring> Mul for LinearTerm<R> {
     type Output = LinearMonoid<R>;
 
@@ -128,12 +192,44 @@ impl<R: Semiring> Mul for LinearTerm<R> {
     }
 }
 
+impl<R: Semiring> Mul<&Self> for LinearTerm<R> {
+    type Output = LinearMonoid<R>;
+
+    fn mul(self, rps: &Self) -> Self::Output {
+        self * *rps
+    }
+}
+
+impl<R: Semiring> Mul<LinearTerm<R>> for &LinearTerm<R> {
+    type Output = LinearMonoid<R>;
+
+    fn mul(self, rps: LinearTerm<R>) -> Self::Output {
+        *self * rps
+    }
+}
+
+impl<R: Semiring> Mul for &LinearTerm<R> {
+    type Output = LinearMonoid<R>;
+
+    fn mul(self, rps: Self) -> Self::Output {
+        *self * *rps
+    }
+}
+
 impl<R: Semiring> Square for LinearTerm<R> {
     type Output = LinearMonoid<R>;
 
     fn square(self) -> Self::Output {
         let lc: LinearCombination<R> = self.into();
         [lc.clone(), lc].into()
+    }
+}
+
+impl<R: Semiring> Square for &LinearTerm<R> {
+    type Output = LinearMonoid<R>;
+
+    fn square(self) -> Self::Output {
+        (*self).square()
     }
 }
 
@@ -147,6 +243,30 @@ impl<R: Semiring> Add<Constant<R>> for LinearTerm<R> {
     }
 }
 
+impl<R: Semiring> Add<&Constant<R>> for LinearTerm<R> {
+    type Output = LinearCombination<R>;
+
+    fn add(self, rps: &Constant<R>) -> Self::Output {
+        self + *rps
+    }
+}
+
+impl<R: Semiring> Add<Constant<R>> for &LinearTerm<R> {
+    type Output = LinearCombination<R>;
+
+    fn add(self, rps: Constant<R>) -> Self::Output {
+        *self + rps
+    }
+}
+
+impl<R: Semiring> Add<&Constant<R>> for &LinearTerm<R> {
+    type Output = LinearCombination<R>;
+
+    fn add(self, rps: &Constant<R>) -> Self::Output {
+        *self + *rps
+    }
+}
+
 impl<R: UnitalRing> Sub<Constant<R>> for LinearTerm<R> {
     type Output = LinearCombination<R>;
 
@@ -154,6 +274,30 @@ impl<R: UnitalRing> Sub<Constant<R>> for LinearTerm<R> {
         let mut lps: LinearCombination<R> = self.into();
         lps -= rps;
         lps
+    }
+}
+
+impl<R: UnitalRing> Sub<&Constant<R>> for LinearTerm<R> {
+    type Output = LinearCombination<R>;
+
+    fn sub(self, rps: &Constant<R>) -> Self::Output {
+        self - *rps
+    }
+}
+
+impl<R: UnitalRing> Sub<Constant<R>> for &LinearTerm<R> {
+    type Output = LinearCombination<R>;
+
+    fn sub(self, rps: Constant<R>) -> Self::Output {
+        *self - rps
+    }
+}
+
+impl<R: UnitalRing> Sub<&Constant<R>> for &LinearTerm<R> {
+    type Output = LinearCombination<R>;
+
+    fn sub(self, rps: &Constant<R>) -> Self::Output {
+        *self - *rps
     }
 }
 
@@ -168,8 +312,38 @@ impl<R: Semiring> Mul<Constant<R>> for LinearTerm<R> {
     }
 }
 
+impl<R: Semiring> Mul<&Constant<R>> for LinearTerm<R> {
+    type Output = LinearTerm<R>;
+
+    fn mul(self, rps: &Constant<R>) -> Self::Output {
+        self * *rps
+    }
+}
+
+impl<R: Semiring> Mul<Constant<R>> for &LinearTerm<R> {
+    type Output = LinearTerm<R>;
+
+    fn mul(self, rps: Constant<R>) -> Self::Output {
+        *self * rps
+    }
+}
+
+impl<R: Semiring> Mul<&Constant<R>> for &LinearTerm<R> {
+    type Output = LinearTerm<R>;
+
+    fn mul(self, rps: &Constant<R>) -> Self::Output {
+        *self * *rps
+    }
+}
+
 impl<R: Semiring> MulAssign<Constant<R>> for LinearTerm<R> {
     fn mul_assign(&mut self, rps: Constant<R>) {
+        self.coefficient *= rps
+    }
+}
+
+impl<R: Semiring> MulAssign<&Constant<R>> for LinearTerm<R> {
+    fn mul_assign(&mut self, rps: &Constant<R>) {
         self.coefficient *= rps
     }
 }
@@ -190,6 +364,30 @@ impl<R: Semiring> Add<Variable<R>> for LinearTerm<R> {
     }
 }
 
+impl<R: Semiring> Add<&Variable<R>> for LinearTerm<R> {
+    type Output = LinearCombination<R>;
+
+    fn add(self, rps: &Variable<R>) -> Self::Output {
+        self + *rps
+    }
+}
+
+impl<R: Semiring> Add<Variable<R>> for &LinearTerm<R> {
+    type Output = LinearCombination<R>;
+
+    fn add(self, rps: Variable<R>) -> Self::Output {
+        *self + rps
+    }
+}
+
+impl<R: Semiring> Add<&Variable<R>> for &LinearTerm<R> {
+    type Output = LinearCombination<R>;
+
+    fn add(self, rps: &Variable<R>) -> Self::Output {
+        *self + *rps
+    }
+}
+
 impl<R: UnitalRing> Sub<Variable<R>> for LinearTerm<R> {
     type Output = LinearCombination<R>;
 
@@ -206,11 +404,59 @@ impl<R: UnitalRing> Sub<Variable<R>> for LinearTerm<R> {
     }
 }
 
+impl<R: UnitalRing> Sub<&Variable<R>> for LinearTerm<R> {
+    type Output = LinearCombination<R>;
+
+    fn sub(self, rps: &Variable<R>) -> Self::Output {
+        self - *rps
+    }
+}
+
+impl<R: UnitalRing> Sub<Variable<R>> for &LinearTerm<R> {
+    type Output = LinearCombination<R>;
+
+    fn sub(self, rps: Variable<R>) -> Self::Output {
+        *self - rps
+    }
+}
+
+impl<R: UnitalRing> Sub<&Variable<R>> for &LinearTerm<R> {
+    type Output = LinearCombination<R>;
+
+    fn sub(self, rps: &Variable<R>) -> Self::Output {
+        *self - *rps
+    }
+}
+
 impl<R: Semiring> Mul<Variable<R>> for LinearTerm<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, rps: Variable<R>) -> Self::Output {
         [self.into(), rps.into()].into()
+    }
+}
+
+impl<R: Semiring> Mul<&Variable<R>> for LinearTerm<R> {
+    type Output = LinearMonoid<R>;
+
+    fn mul(self, rps: &Variable<R>) -> Self::Output {
+        self * *rps
+    }
+}
+
+impl<R: Semiring> Mul<Variable<R>> for &LinearTerm<R> {
+    type Output = LinearMonoid<R>;
+
+    fn mul(self, rps: Variable<R>) -> Self::Output {
+        *self * rps
+    }
+}
+
+impl<R: Semiring> Mul<&Variable<R>> for &LinearTerm<R> {
+    type Output = LinearMonoid<R>;
+
+    fn mul(self, rps: &Variable<R>) -> Self::Output {
+        *self * *rps
     }
 }
 
@@ -234,6 +480,22 @@ impl<R: Semiring> Add<&LinearCombination<R>> for LinearTerm<R> {
     }
 }
 
+impl<R: Semiring> Add<LinearCombination<R>> for &LinearTerm<R> {
+    type Output = LinearCombination<R>;
+
+    fn add(self, rps: LinearCombination<R>) -> Self::Output {
+        *self + rps
+    }
+}
+
+impl<R: Semiring> Add<&LinearCombination<R>> for &LinearTerm<R> {
+    type Output = LinearCombination<R>;
+
+    fn add(self, rps: &LinearCombination<R>) -> Self::Output {
+        *self + rps
+    }
+}
+
 impl<R: UnitalRing> Sub<LinearCombination<R>> for LinearTerm<R> {
     type Output = LinearCombination<R>;
 
@@ -254,6 +516,22 @@ impl<R: UnitalRing> Sub<&LinearCombination<R>> for LinearTerm<R> {
     }
 }
 
+impl<R: UnitalRing> Sub<LinearCombination<R>> for &LinearTerm<R> {
+    type Output = LinearCombination<R>;
+
+    fn sub(self, rps: LinearCombination<R>) -> Self::Output {
+        *self - rps
+    }
+}
+
+impl<R: UnitalRing> Sub<&LinearCombination<R>> for &LinearTerm<R> {
+    type Output = LinearCombination<R>;
+
+    fn sub(self, rps: &LinearCombination<R>) -> Self::Output {
+        *self - rps
+    }
+}
+
 impl<R: Semiring> Mul<LinearCombination<R>> for LinearTerm<R> {
     type Output = LinearMonoid<R>;
 
@@ -267,6 +545,22 @@ impl<R: Semiring> Mul<&LinearCombination<R>> for LinearTerm<R> {
 
     fn mul(self, rps: &LinearCombination<R>) -> Self::Output {
         [self.into(), rps.clone()].into()
+    }
+}
+
+impl<R: Semiring> Mul<LinearCombination<R>> for &LinearTerm<R> {
+    type Output = LinearMonoid<R>;
+
+    fn mul(self, rps: LinearCombination<R>) -> Self::Output {
+        *self * rps
+    }
+}
+
+impl<R: Semiring> Mul<&LinearCombination<R>> for &LinearTerm<R> {
+    type Output = LinearMonoid<R>;
+
+    fn mul(self, rps: &LinearCombination<R>) -> Self::Output {
+        *self * rps
     }
 }
 
@@ -284,5 +578,21 @@ impl<R: Semiring> Mul<&LinearMonoid<R>> for LinearTerm<R> {
 
     fn mul(self, rps: &LinearMonoid<R>) -> Self::Output {
         self * rps.clone()
+    }
+}
+
+impl<R: Semiring> Mul<LinearMonoid<R>> for &LinearTerm<R> {
+    type Output = LinearMonoid<R>;
+
+    fn mul(self, rps: LinearMonoid<R>) -> Self::Output {
+        *self * rps
+    }
+}
+
+impl<R: Semiring> Mul<&LinearMonoid<R>> for &LinearTerm<R> {
+    type Output = LinearMonoid<R>;
+
+    fn mul(self, rps: &LinearMonoid<R>) -> Self::Output {
+        *self * rps
     }
 }
