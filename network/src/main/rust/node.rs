@@ -28,6 +28,7 @@ use crate::settings::Settings;
 use crate::txfetcher::TxFetcher;
 use crate::txpool::TxPool;
 use blacknet_compat::{Mode, XDGDirectories, getuid, uname};
+use blacknet_crypto::random::{Distribution, FAST_RNG, FastRNG, UniformIntDistribution};
 use blacknet_io::Write;
 use blacknet_io::file::replace;
 use blacknet_kernel::blake2b::Hash;
@@ -74,6 +75,7 @@ pub struct Node {
     prober_agent_string: String,
     agent_name: String,
     agent_version: String,
+    nonce: u64,
     mode: Mode,
 }
 
@@ -131,12 +133,18 @@ impl Node {
             prober_agent_string: format!("/{agent_name}-prober:{agent_version}/"),
             agent_name: agent_name.to_owned(),
             agent_version: agent_version.to_owned(),
+            nonce: Self::generate_nonce(),
             mode,
         });
 
         runtime.spawn(node.clone().rotator());
 
         Ok(node)
+    }
+
+    fn generate_nonce() -> u64 {
+        let mut uid = UniformIntDistribution::<u64, FastRNG>::default();
+        FAST_RNG.with_borrow_mut(|rng| uid.sample(rng))
     }
 
     pub fn agent_string(&self) -> &str {
@@ -155,8 +163,8 @@ impl Node {
         &self.agent_version
     }
 
-    pub fn nonce(&self) -> u64 {
-        todo!();
+    pub const fn nonce(&self) -> u64 {
+        self.nonce
     }
 
     pub fn is_online(&self) -> bool {
