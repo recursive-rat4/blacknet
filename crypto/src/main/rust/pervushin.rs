@@ -43,12 +43,12 @@ impl PervushinField {
         Self { n }
     }
 
-    const fn reduce_add(x: i64) -> i64 {
+    const fn reduce_64(x: i64) -> i64 {
         (x & 0x1FFFFFFFFFFFFFFF) + (x >> 61)
     }
 
-    const fn reduce_mul(x: i128) -> i64 {
-        Self::reduce_add(((x & 0x1FFFFFFFFFFFFFFF) + (x >> 61)) as i64)
+    const fn reduce_128(x: i128) -> i64 {
+        Self::reduce_64(((x & 0x1FFFFFFFFFFFFFFF) + (x >> 61)) as i64)
     }
 
     const fn halve(mut self) -> Self {
@@ -115,7 +115,7 @@ impl Add for PervushinField {
 
     fn add(self, rps: Self) -> Self::Output {
         Self {
-            n: Self::reduce_add(self.n + rps.n),
+            n: Self::reduce_64(self.n + rps.n),
         }
     }
 }
@@ -125,7 +125,7 @@ impl Add<&Self> for PervushinField {
 
     fn add(self, rps: &Self) -> Self::Output {
         Self {
-            n: Self::reduce_add(self.n + rps.n),
+            n: Self::reduce_64(self.n + rps.n),
         }
     }
 }
@@ -135,7 +135,7 @@ impl Add<PervushinField> for &PervushinField {
 
     fn add(self, rps: PervushinField) -> Self::Output {
         Self::Output {
-            n: Self::Output::reduce_add(self.n + rps.n),
+            n: Self::Output::reduce_64(self.n + rps.n),
         }
     }
 }
@@ -145,7 +145,7 @@ impl<'a> Add<&'a PervushinField> for &PervushinField {
 
     fn add(self, rps: &'a PervushinField) -> Self::Output {
         Self::Output {
-            n: Self::Output::reduce_add(self.n + rps.n),
+            n: Self::Output::reduce_64(self.n + rps.n),
         }
     }
 }
@@ -169,7 +169,7 @@ impl Double for PervushinField {
 
     fn double(self) -> Self {
         Self {
-            n: Self::reduce_add(self.n << 1),
+            n: Self::reduce_64(self.n << 1),
         }
     }
 }
@@ -179,7 +179,7 @@ impl Double for &PervushinField {
 
     fn double(self) -> Self::Output {
         Self::Output {
-            n: Self::Output::reduce_add(self.n << 1),
+            n: Self::Output::reduce_64(self.n << 1),
         }
     }
 }
@@ -205,7 +205,7 @@ impl Sub for PervushinField {
 
     fn sub(self, rps: Self) -> Self::Output {
         Self {
-            n: Self::reduce_add(self.n - rps.n),
+            n: Self::reduce_64(self.n - rps.n),
         }
     }
 }
@@ -215,7 +215,7 @@ impl Sub<&Self> for PervushinField {
 
     fn sub(self, rps: &Self) -> Self::Output {
         Self {
-            n: Self::reduce_add(self.n - rps.n),
+            n: Self::reduce_64(self.n - rps.n),
         }
     }
 }
@@ -225,7 +225,7 @@ impl Sub<PervushinField> for &PervushinField {
 
     fn sub(self, rps: PervushinField) -> Self::Output {
         Self::Output {
-            n: Self::Output::reduce_add(self.n - rps.n),
+            n: Self::Output::reduce_64(self.n - rps.n),
         }
     }
 }
@@ -235,7 +235,7 @@ impl<'a> Sub<&'a PervushinField> for &PervushinField {
 
     fn sub(self, rps: &'a PervushinField) -> Self::Output {
         Self::Output {
-            n: Self::Output::reduce_add(self.n - rps.n),
+            n: Self::Output::reduce_64(self.n - rps.n),
         }
     }
 }
@@ -259,7 +259,7 @@ impl Mul for PervushinField {
 
     fn mul(self, rps: Self) -> Self::Output {
         Self {
-            n: Self::reduce_mul(self.n as i128 * rps.n as i128),
+            n: Self::reduce_128(self.n as i128 * rps.n as i128),
         }
     }
 }
@@ -269,7 +269,7 @@ impl Mul<&Self> for PervushinField {
 
     fn mul(self, rps: &Self) -> Self::Output {
         Self {
-            n: Self::reduce_mul(self.n as i128 * rps.n as i128),
+            n: Self::reduce_128(self.n as i128 * rps.n as i128),
         }
     }
 }
@@ -279,7 +279,7 @@ impl Mul<PervushinField> for &PervushinField {
 
     fn mul(self, rps: PervushinField) -> Self::Output {
         Self::Output {
-            n: Self::Output::reduce_mul(self.n as i128 * rps.n as i128),
+            n: Self::Output::reduce_128(self.n as i128 * rps.n as i128),
         }
     }
 }
@@ -289,7 +289,7 @@ impl<'a> Mul<&'a PervushinField> for &PervushinField {
 
     fn mul(self, rps: &'a PervushinField) -> Self::Output {
         Self::Output {
-            n: Self::Output::reduce_mul(self.n as i128 * rps.n as i128),
+            n: Self::Output::reduce_128(self.n as i128 * rps.n as i128),
         }
     }
 }
@@ -400,9 +400,13 @@ impl Sqrt for PervushinField {
     }
 }
 
+/// # Safety
+/// Iterator size is less than 2⁶⁴.
 impl Sum for PervushinField {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
-        iter.reduce(|lps, rps| lps + rps).unwrap_or(Self::ZERO)
+        let n128 = iter.map(|i| i.n as i128).sum();
+        let n = Self::reduce_128(n128);
+        Self { n }
     }
 }
 
@@ -471,7 +475,7 @@ impl IntegerRing for PervushinField {
 
     fn new(n: Self::Int) -> Self {
         Self {
-            n: Self::reduce_add(n),
+            n: Self::reduce_64(n),
         }
     }
     fn with_limb(n: <Self::Int as Integer>::Limb) -> Self {
@@ -479,7 +483,7 @@ impl IntegerRing for PervushinField {
     }
 
     fn canonical(self) -> Self::Int {
-        let x = Self::reduce_add(self.n);
+        let x = Self::reduce_64(self.n);
         if x >= Self::MODULUS {
             x - Self::MODULUS
         } else if x < 0 {
@@ -545,7 +549,7 @@ impl BalancedRepresentative for PervushinField {
     type Output = i64;
 
     fn balanced(self) -> Self::Output {
-        let x = Self::reduce_add(self.n);
+        let x = Self::reduce_64(self.n);
         if x > Self::MODULUS / 2 {
             x - Self::MODULUS
         } else if x < -Self::MODULUS / 2 {

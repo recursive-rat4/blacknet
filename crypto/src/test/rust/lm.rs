@@ -122,6 +122,12 @@ fn z_neg() {
 }
 
 #[test]
+fn z_sum() {
+    let a = [-1, -2, -3, -4, 11].map(Z::from);
+    assert_eq!(a.into_iter().sum::<Z>(), Z::ONE);
+}
+
+#[test]
 fn f2_add() {
     let a = F2::from([0x04704AB88E022F0F, 0x0F72F4AF92783A07].map(Z::new));
     let b = F2::from([0x05941B02585DC435, 0x0468CBAF2A310378].map(Z::new));

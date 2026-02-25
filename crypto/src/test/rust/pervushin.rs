@@ -117,6 +117,12 @@ fn z_sqrt() {
 }
 
 #[test]
+fn z_sum() {
+    let a = [-1, -2, -3, -4, 11].map(Z::from);
+    assert_eq!(a.into_iter().sum::<Z>(), Z::ONE);
+}
+
+#[test]
 fn z_infinity_norm() {
     let a = Z::new(-677133638855483916);
     let b = Z::new(1140329745848183219);

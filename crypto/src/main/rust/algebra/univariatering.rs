@@ -416,16 +416,17 @@ impl<R: UnitalRing + DivisionRing, const N: usize, C: Convolution<R, N>> Div<&R>
 
 impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Sum for UnivariateRing<R, N, C> {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
-        iter.reduce(|lps, rps| lps + rps).unwrap_or(Self::ZERO)
+        let coefficients = iter.map(|i| i.coefficients).sum();
+        Self::new(coefficients)
     }
 }
 
 impl<'a, R: UnitalRing, const N: usize, C: Convolution<R, N>> Sum<&'a Self>
     for UnivariateRing<R, N, C>
 {
-    #[inline]
     fn sum<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
-        iter.copied().sum()
+        let coefficients = iter.map(|i| i.coefficients).sum();
+        Self::new(coefficients)
     }
 }
 

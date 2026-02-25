@@ -461,14 +461,15 @@ impl<Z: Twiddles<M>, const M: usize, const N: usize> Div<&Z> for NTTRing<Z, M, N
 
 impl<Z: Twiddles<M>, const M: usize, const N: usize> Sum for NTTRing<Z, M, N> {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
-        iter.reduce(|lps, rps| lps + rps).unwrap_or(Self::ZERO)
+        let spectrum = iter.map(|i| i.spectrum).sum();
+        Self { spectrum }
     }
 }
 
 impl<'a, Z: Twiddles<M>, const M: usize, const N: usize> Sum<&'a Self> for NTTRing<Z, M, N> {
-    #[inline]
     fn sum<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
-        iter.copied().sum()
+        let spectrum = iter.map(|i| i.spectrum).sum();
+        Self { spectrum }
     }
 }
 

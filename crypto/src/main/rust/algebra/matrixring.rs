@@ -477,9 +477,12 @@ impl<R: Ring, const N: usize, const NN: usize> Sum for MatrixRing<R, N, NN> {
 }
 
 impl<'a, R: Ring, const N: usize, const NN: usize> Sum<&'a Self> for MatrixRing<R, N, NN> {
-    #[inline]
-    fn sum<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
-        iter.copied().sum()
+    fn sum<I: Iterator<Item = &'a Self>>(mut iter: I) -> Self {
+        let first = match iter.next() {
+            Some(i) => *i,
+            None => return Self::ZERO,
+        };
+        iter.fold(first, |lps, rps| lps + rps)
     }
 }
 

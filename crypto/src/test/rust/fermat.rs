@@ -103,6 +103,12 @@ fn inv() {
 }
 
 #[test]
+fn sum() {
+    let a = [-1, -2, -3, -4, 11].map(Z::new);
+    assert_eq!(a.into_iter().sum::<Z>(), Z::ONE);
+}
+
+#[test]
 fn infinity_norm() {
     let a = Z::new(-30000);
     let b = Z::new(30000);

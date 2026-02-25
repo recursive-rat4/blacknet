@@ -41,11 +41,11 @@ impl FermatField {
         Self { n }
     }
 
-    const fn reduce_add(x: i32) -> i32 {
+    const fn reduce_32(x: i32) -> i32 {
         (x & 0xFFFF) - (x >> 16)
     }
 
-    const fn reduce_mul(x: i64) -> i32 {
+    const fn reduce_64(x: i64) -> i32 {
         ((x & 0xFFFF) - (x >> 16)) as i32
     }
 
@@ -87,7 +87,7 @@ impl Add for FermatField {
 
     fn add(self, rps: Self) -> Self {
         Self {
-            n: Self::reduce_add(self.n + rps.n),
+            n: Self::reduce_32(self.n + rps.n),
         }
     }
 }
@@ -97,7 +97,7 @@ impl Add<&Self> for FermatField {
 
     fn add(self, rps: &Self) -> Self {
         Self {
-            n: Self::reduce_add(self.n + rps.n),
+            n: Self::reduce_32(self.n + rps.n),
         }
     }
 }
@@ -107,7 +107,7 @@ impl Add<FermatField> for &FermatField {
 
     fn add(self, rps: FermatField) -> Self::Output {
         Self::Output {
-            n: Self::Output::reduce_add(self.n + rps.n),
+            n: Self::Output::reduce_32(self.n + rps.n),
         }
     }
 }
@@ -117,20 +117,20 @@ impl<'a> Add<&'a FermatField> for &FermatField {
 
     fn add(self, rps: &'a FermatField) -> Self::Output {
         Self::Output {
-            n: Self::Output::reduce_add(self.n + rps.n),
+            n: Self::Output::reduce_32(self.n + rps.n),
         }
     }
 }
 
 impl AddAssign for FermatField {
     fn add_assign(&mut self, rps: Self) {
-        self.n = Self::reduce_add(self.n + rps.n)
+        self.n = Self::reduce_32(self.n + rps.n)
     }
 }
 
 impl AddAssign<&Self> for FermatField {
     fn add_assign(&mut self, rps: &Self) {
-        self.n = Self::reduce_add(self.n + rps.n)
+        self.n = Self::reduce_32(self.n + rps.n)
     }
 }
 
@@ -139,7 +139,7 @@ impl Double for FermatField {
 
     fn double(self) -> Self {
         Self {
-            n: Self::reduce_add(self.n << 1),
+            n: Self::reduce_32(self.n << 1),
         }
     }
 }
@@ -149,7 +149,7 @@ impl Double for &FermatField {
 
     fn double(self) -> Self::Output {
         Self::Output {
-            n: Self::Output::reduce_add(self.n << 1),
+            n: Self::Output::reduce_32(self.n << 1),
         }
     }
 }
@@ -175,7 +175,7 @@ impl Sub for FermatField {
 
     fn sub(self, rps: Self) -> Self {
         Self {
-            n: Self::reduce_add(self.n - rps.n),
+            n: Self::reduce_32(self.n - rps.n),
         }
     }
 }
@@ -185,7 +185,7 @@ impl Sub<&Self> for FermatField {
 
     fn sub(self, rps: &Self) -> Self {
         Self {
-            n: Self::reduce_add(self.n - rps.n),
+            n: Self::reduce_32(self.n - rps.n),
         }
     }
 }
@@ -195,7 +195,7 @@ impl Sub<FermatField> for &FermatField {
 
     fn sub(self, rps: FermatField) -> Self::Output {
         Self::Output {
-            n: Self::Output::reduce_add(self.n - rps.n),
+            n: Self::Output::reduce_32(self.n - rps.n),
         }
     }
 }
@@ -205,20 +205,20 @@ impl<'a> Sub<&'a FermatField> for &FermatField {
 
     fn sub(self, rps: &'a FermatField) -> Self::Output {
         Self::Output {
-            n: Self::Output::reduce_add(self.n - rps.n),
+            n: Self::Output::reduce_32(self.n - rps.n),
         }
     }
 }
 
 impl SubAssign for FermatField {
     fn sub_assign(&mut self, rps: Self) {
-        self.n = Self::reduce_add(self.n - rps.n)
+        self.n = Self::reduce_32(self.n - rps.n)
     }
 }
 
 impl SubAssign<&Self> for FermatField {
     fn sub_assign(&mut self, rps: &Self) {
-        self.n = Self::reduce_add(self.n - rps.n)
+        self.n = Self::reduce_32(self.n - rps.n)
     }
 }
 
@@ -227,7 +227,7 @@ impl Mul for FermatField {
 
     fn mul(self, rps: Self) -> Self::Output {
         Self {
-            n: Self::reduce_mul(self.n as i64 * rps.n as i64),
+            n: Self::reduce_64(self.n as i64 * rps.n as i64),
         }
     }
 }
@@ -237,7 +237,7 @@ impl Mul<&Self> for FermatField {
 
     fn mul(self, rps: &Self) -> Self::Output {
         Self {
-            n: Self::reduce_mul(self.n as i64 * rps.n as i64),
+            n: Self::reduce_64(self.n as i64 * rps.n as i64),
         }
     }
 }
@@ -247,7 +247,7 @@ impl Mul<FermatField> for &FermatField {
 
     fn mul(self, rps: FermatField) -> Self::Output {
         Self::Output {
-            n: Self::Output::reduce_mul(self.n as i64 * rps.n as i64),
+            n: Self::Output::reduce_64(self.n as i64 * rps.n as i64),
         }
     }
 }
@@ -257,20 +257,20 @@ impl<'a> Mul<&'a FermatField> for &FermatField {
 
     fn mul(self, rps: &'a FermatField) -> Self::Output {
         Self::Output {
-            n: Self::Output::reduce_mul(self.n as i64 * rps.n as i64),
+            n: Self::Output::reduce_64(self.n as i64 * rps.n as i64),
         }
     }
 }
 
 impl MulAssign for FermatField {
     fn mul_assign(&mut self, rps: Self) {
-        self.n = Self::reduce_mul(self.n as i64 * rps.n as i64)
+        self.n = Self::reduce_64(self.n as i64 * rps.n as i64)
     }
 }
 
 impl MulAssign<&Self> for FermatField {
     fn mul_assign(&mut self, rps: &Self) {
-        self.n = Self::reduce_mul(self.n as i64 * rps.n as i64)
+        self.n = Self::reduce_64(self.n as i64 * rps.n as i64)
     }
 }
 
@@ -279,7 +279,7 @@ impl Square for FermatField {
 
     fn square(self) -> Self {
         Self {
-            n: Self::reduce_mul(self.n as i64 * self.n as i64),
+            n: Self::reduce_64(self.n as i64 * self.n as i64),
         }
     }
 }
@@ -289,7 +289,7 @@ impl Square for &FermatField {
 
     fn square(self) -> Self::Output {
         Self::Output {
-            n: Self::Output::reduce_mul(self.n as i64 * self.n as i64),
+            n: Self::Output::reduce_64(self.n as i64 * self.n as i64),
         }
     }
 }
@@ -342,9 +342,13 @@ impl Div<&Self> for FermatField {
     }
 }
 
+/// # Safety
+/// Iterator size is less than 2³².
 impl Sum for FermatField {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
-        iter.reduce(|lps, rps| lps + rps).unwrap_or(Self::ZERO)
+        let n64 = iter.map(|i| i.n as i64).sum();
+        let n = Self::reduce_64(n64);
+        Self { n }
     }
 }
 
@@ -413,7 +417,7 @@ impl IntegerRing for FermatField {
 
     fn new(n: Self::Int) -> Self {
         Self {
-            n: Self::reduce_add(n),
+            n: Self::reduce_32(n),
         }
     }
     fn with_limb(n: <Self::Int as Integer>::Limb) -> Self {
@@ -421,7 +425,7 @@ impl IntegerRing for FermatField {
     }
 
     fn canonical(self) -> Self::Int {
-        let x = Self::reduce_add(self.n);
+        let x = Self::reduce_32(self.n);
         if x >= Self::MODULUS {
             x - Self::MODULUS
         } else if x < 0 {
@@ -442,7 +446,7 @@ impl BalancedRepresentative for FermatField {
     type Output = i32;
 
     fn balanced(self) -> Self::Output {
-        let x = Self::reduce_add(self.n);
+        let x = Self::reduce_32(self.n);
         if x > Self::MODULUS / 2 {
             x - Self::MODULUS
         } else if x < -Self::MODULUS / 2 {
