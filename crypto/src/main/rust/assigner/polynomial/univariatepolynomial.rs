@@ -35,16 +35,17 @@ impl<'a, R: Semiring> UnivariatePolynomial<'a, R> {
         }
     }
 
-    pub fn evaluate(&self, point: R) -> R {
+    #[allow(clippy::clone_on_copy, clippy::op_ref)]
+    pub fn evaluate(&self, point: &R) -> R {
         // Horner method
         if self.coefficients.is_empty() {
             return R::ZERO;
         }
-        let mut accum = self.coefficients[self.coefficients.len() - 1];
+        let mut accum = self.coefficients[self.coefficients.len() - 1].clone();
         for i in (0..self.coefficients.len() - 1).rev() {
             let ap = accum * point;
-            self.assigment.push(ap);
-            accum = ap + self.coefficients[i];
+            self.assigment.push(ap.clone());
+            accum = ap + &self.coefficients[i];
         }
         accum
     }

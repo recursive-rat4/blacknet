@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Pavel Vasin
+ * Copyright (c) 2024-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -196,6 +196,7 @@ impl<'a, R: Semiring> CircuitBuilder<'a, R> {
 }
 
 impl<'a, R: Semiring + Eq> CircuitBuilder<'a, R> {
+    #[allow(clippy::clone_on_copy)]
     fn put(&self, m: &mut SparseMatrixBuilder<R>, lc: &LinearCombination<R>) {
         for (variable, coefficient) in &lc.terms {
             let column: usize = match variable.kind {
@@ -206,7 +207,7 @@ impl<'a, R: Semiring + Eq> CircuitBuilder<'a, R> {
                 VariableKind::PrivateOutput => self.private_outputs.get() + variable.number,
                 VariableKind::Auxiliary => self.auxiliaries.get() + variable.number,
             };
-            m.column(column, coefficient.value);
+            m.column(column, coefficient.value.clone());
         }
         m.row();
     }

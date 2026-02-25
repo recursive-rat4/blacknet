@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::UnitalRing;
+use crate::algebra::{RingOps, UnitalRing};
 use crate::circuit::builder::{Constant, LinearCombination, Scope};
 use core::array;
 
@@ -33,7 +33,9 @@ pub fn binomial<R: UnitalRing + Eq, const N: usize>(
     a: &[LinearCombination<R>],
     b: &[LinearCombination<R>],
     zeta: Constant<R>,
-) {
+) where
+    for<'a> &'a R: RingOps<R>,
+{
     //TODO Karatsuba method
     let mut ab: [[LinearCombination<R>; N]; N] =
         array::from_fn(|_| array::from_fn(|_| LinearCombination::new()));

@@ -77,7 +77,7 @@ impl<
             let claim = &proof.claims[i];
             duplex.absorb(claim);
             let challenge = exceptional_set.sample(duplex);
-            sum = claim.evaluate(challenge);
+            sum = claim.evaluate(&challenge);
             coordinates.push(challenge);
             exceptional_set.reset();
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Pavel Vasin
+ * Copyright (c) 2024-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -17,6 +17,7 @@
 
 #![allow(clippy::manual_is_multiple_of)]
 
+use crate::algebra::RingOps;
 use crate::circuit::builder::{Constant, LinearCombination, Scope};
 use crate::circuit::convolution::{Convolution, binomial};
 use crate::numbertheoretictransform::Twiddles;
@@ -83,8 +84,9 @@ pub fn gentleman_sande<Z: Twiddles<M>, const M: usize, const N: usize>(
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub struct NTTConvolution<const M: usize, const N: usize> {}
 
-impl<Z: Twiddles<M> + Eq, const M: usize, const N: usize> Convolution<Z, N>
-    for NTTConvolution<M, N>
+impl<Z: Twiddles<M> + Eq, const M: usize, const N: usize> Convolution<Z, N> for NTTConvolution<M, N>
+where
+    for<'a> &'a Z: RingOps<Z>,
 {
     fn convolute(
         scope: &Scope<Z>,

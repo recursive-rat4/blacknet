@@ -199,8 +199,8 @@ impl<R: Semiring> Add<&Self> for LinearCombination<R> {
 
 impl<R: Semiring> AddAssign<&Self> for LinearCombination<R> {
     fn add_assign(&mut self, rps: &Self) {
-        for (&variable, &coefficient) in &rps.terms {
-            *self += LinearTerm::new(variable, coefficient)
+        for (&variable, coefficient) in &rps.terms {
+            *self += LinearTerm::new(variable, *coefficient)
         }
     }
 }
@@ -243,7 +243,7 @@ impl<R: Semiring> Double for &LinearCombination<R> {
             terms: self
                 .terms
                 .iter()
-                .map(|(&var, &val)| (var, val.double()))
+                .map(|(&var, val)| (var, val.double()))
                 .collect(),
         }
     }
@@ -424,7 +424,7 @@ impl<R: Semiring> Mul<Constant<R>> for LinearCombination<R> {
 impl<R: Semiring> MulAssign<Constant<R>> for LinearCombination<R> {
     fn mul_assign(&mut self, rps: Constant<R>) {
         for coefficient in self.terms.values_mut() {
-            *coefficient *= rps
+            *coefficient *= &rps
         }
     }
 }
@@ -434,8 +434,8 @@ impl<R: Semiring> Mul<Constant<R>> for &LinearCombination<R> {
 
     fn mul(self, rps: Constant<R>) -> Self::Output {
         let mut lc = LinearCombination::new();
-        for (&variable, &coefficient) in &self.terms {
-            lc += LinearTerm::new(variable, coefficient * rps);
+        for (&variable, coefficient) in &self.terms {
+            lc += LinearTerm::new(variable, *coefficient * rps);
         }
         lc
     }

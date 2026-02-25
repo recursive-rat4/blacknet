@@ -174,6 +174,7 @@ impl<R: Semiring> Polynomial for UnivariatePolynomial<R> {
 
 /// In monomial basis.
 impl<R: Semiring> InBasis for UnivariatePolynomial<R> {
+    #[allow(clippy::clone_on_copy)]
     fn basis(&self, point: &R) -> DenseVector<R> {
         let n = self.coefficients.len();
         let mut powers = Vec::<R>::with_capacity(n);
@@ -184,12 +185,12 @@ impl<R: Semiring> InBasis for UnivariatePolynomial<R> {
         if n == 1 {
             return powers.into();
         }
-        let point = *point;
-        powers.push(point);
+        let point = point.clone();
+        powers.push(point.clone());
         let mut power = point;
         for _ in 2..n {
-            power *= point;
-            powers.push(power);
+            power *= &point;
+            powers.push(power.clone());
         }
         powers.into()
     }
@@ -200,6 +201,7 @@ impl<R: Semiring> InBasis for UnivariatePolynomial<R> {
 }
 
 impl<R: Semiring> TensorBasis for UnivariatePolynomial<R> {
+    #[allow(clippy::clone_on_copy)]
     fn tensor_basis(&self, point: &R) -> (DenseVector<R>, DenseVector<R>) {
         let n = self.coefficients.len().isqrt();
         debug_assert!(self.coefficients.len() == n * n);
@@ -209,9 +211,9 @@ impl<R: Semiring> TensorBasis for UnivariatePolynomial<R> {
         let mut power = point;
         let mut right = Vec::<R>::with_capacity(n);
         right.push(R::ONE);
-        right.push(point);
+        right.push(point.clone());
         for _ in 2..n {
-            power *= point;
+            power *= &point;
             right.push(power);
         }
 
@@ -222,8 +224,8 @@ impl<R: Semiring> TensorBasis for UnivariatePolynomial<R> {
         left.push(R::ONE);
         left.push(point);
         for _ in 2..n {
-            power *= point;
-            left.push(power);
+            power *= &point;
+            left.push(power.clone());
         }
 
         (left.into(), right.into())
