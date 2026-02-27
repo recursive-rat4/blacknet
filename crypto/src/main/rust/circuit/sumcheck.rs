@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::UnitalRing;
+use crate::algebra::{RingOps, UnitalRing};
 use crate::circuit::builder::{CircuitBuilder, LinearCombination, VariableKind};
 use crate::circuit::polynomial::{Point, UnivariatePolynomial};
 use crate::circuit::random::Distribution;
@@ -71,6 +71,8 @@ impl<
     D: Duplex<LinearCombination<R>>,
     E: Distribution<'a, 'b, R, D, Output = LinearCombination<R>>,
 > SumCheck<'a, 'b, R, P, D, E>
+where
+    for<'c> &'c R: RingOps<R>,
 {
     pub const fn new(circuit: &'a CircuitBuilder<'b, R>) -> Self {
         Self {

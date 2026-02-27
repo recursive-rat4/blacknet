@@ -25,7 +25,9 @@ use core::array;
 
 pub fn cooley_tukey<Z: Twiddles<M>, const M: usize, const N: usize>(
     a: &mut [LinearCombination<Z>; N],
-) {
+) where
+    for<'a> &'a Z: RingOps<Z>,
+{
     let inertia: usize = const {
         assert!(N % M == 0);
         N / M

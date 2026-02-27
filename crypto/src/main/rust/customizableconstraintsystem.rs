@@ -105,7 +105,7 @@ where
         }
         let mut sigma = DenseVector::fill(constraints, R::ZERO);
         for (i, c) in self.constants.iter().enumerate() {
-            let mut circle = DenseVector::fill(constraints, *c);
+            let mut circle = DenseVector::fill(constraints, c.clone());
             for &j in &self.multisets[i] {
                 circle *= &self.matrices[j] * z;
             }

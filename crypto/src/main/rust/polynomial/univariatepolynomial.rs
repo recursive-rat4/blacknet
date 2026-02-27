@@ -32,11 +32,14 @@ pub struct UnivariatePolynomial<R: Semiring> {
 }
 
 impl<R: Semiring> UnivariatePolynomial<R> {
-    pub fn at_0_plus_1(&self) -> R {
+    pub fn at_0_plus_1(&self) -> R
+    where
+        for<'a> &'a R: SemiringOps<R>,
+    {
         match self.coefficients.len() {
             0 => R::ZERO,
-            1 => self.coefficients[0].double(),
-            _ => self.coefficients[0].double() + self.coefficients.iter().skip(1).sum::<R>(),
+            1 => (&self.coefficients[0]).double(),
+            _ => (&self.coefficients[0]).double() + self.coefficients.iter().skip(1).sum::<R>(),
         }
     }
 
@@ -151,7 +154,10 @@ impl<'a, R: Semiring> IntoIterator for &'a UnivariatePolynomial<R> {
     }
 }
 
-impl<R: Semiring> Polynomial for UnivariatePolynomial<R> {
+impl<R: Semiring> Polynomial for UnivariatePolynomial<R>
+where
+    for<'a> &'a R: SemiringOps<R>,
+{
     type Coefficient = R;
     type Point = R;
 
@@ -159,22 +165,24 @@ impl<R: Semiring> Polynomial for UnivariatePolynomial<R> {
         if self.coefficients.is_empty() {
             return R::ZERO;
         }
-        let mut sigma = self.coefficients[0];
-        let mut power = *point;
+        let mut sigma = self.coefficients[0].clone();
+        let mut power = point.clone();
         for i in 1..self.coefficients.len() - 1 {
-            sigma += self.coefficients[i] * power;
+            sigma += &self.coefficients[i] * &power;
             power *= point;
         }
         if self.coefficients.len() > 1 {
-            sigma += self.coefficients[self.coefficients.len() - 1] * power;
+            sigma += &self.coefficients[self.coefficients.len() - 1] * power;
         }
         sigma
     }
 }
 
 /// In monomial basis.
-impl<R: Semiring> InBasis for UnivariatePolynomial<R> {
-    #[allow(clippy::clone_on_copy)]
+impl<R: Semiring> InBasis for UnivariatePolynomial<R>
+where
+    for<'a> &'a R: SemiringOps<R>,
+{
     fn basis(&self, point: &R) -> DenseVector<R> {
         let n = self.coefficients.len();
         let mut powers = Vec::<R>::with_capacity(n);
@@ -187,7 +195,7 @@ impl<R: Semiring> InBasis for UnivariatePolynomial<R> {
         }
         let point = point.clone();
         powers.push(point.clone());
-        let mut power = point;
+        let mut power = point.clone();
         for _ in 2..n {
             power *= &point;
             powers.push(power.clone());
@@ -200,29 +208,31 @@ impl<R: Semiring> InBasis for UnivariatePolynomial<R> {
     }
 }
 
-impl<R: Semiring> TensorBasis for UnivariatePolynomial<R> {
-    #[allow(clippy::clone_on_copy)]
+impl<R: Semiring> TensorBasis for UnivariatePolynomial<R>
+where
+    for<'a> &'a R: SemiringOps<R>,
+{
     fn tensor_basis(&self, point: &R) -> (DenseVector<R>, DenseVector<R>) {
         let n = self.coefficients.len().isqrt();
         debug_assert!(self.coefficients.len() == n * n);
         debug_assert!(n > 1);
-        let mut point = *point;
+        let mut point = point.clone();
 
-        let mut power = point;
+        let mut power = point.clone();
         let mut right = Vec::<R>::with_capacity(n);
         right.push(R::ONE);
         right.push(point.clone());
         for _ in 2..n {
             power *= &point;
-            right.push(power);
+            right.push(power.clone());
         }
 
         point *= power;
-        power = point;
+        power = point.clone();
 
         let mut left = Vec::<R>::with_capacity(n);
         left.push(R::ONE);
-        left.push(point);
+        left.push(point.clone());
         for _ in 2..n {
             power *= &point;
             left.push(power.clone());
@@ -320,7 +330,6 @@ where
 {
     type Output = UnivariatePolynomial<R>;
 
-    #[allow(clippy::op_ref)]
     fn mul(self, rps: &UnivariatePolynomial<R>) -> Self::Output {
         // Long method
         let mut coefficients = Vec::new();
@@ -343,7 +352,6 @@ where
 {
     type Output = Self;
 
-    #[allow(clippy::op_ref)]
     fn mul(self, rps: R) -> Self::Output {
         self * &rps
     }

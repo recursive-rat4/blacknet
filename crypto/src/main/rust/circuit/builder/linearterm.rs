@@ -15,9 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::Semiring;
-use crate::algebra::UnitalRing;
-use crate::algebra::{Double, Square};
+use crate::algebra::{Double, Semiring, SemiringOps, Square, UnitalRing};
 use crate::circuit::builder::{
     Constant, Expression, LinearCombination, LinearMonoid, LinearSpan, Variable,
 };
@@ -42,7 +40,6 @@ impl<R: Semiring> LinearTerm<R> {
 }
 
 impl<'a, R: Semiring + Eq + 'a> Expression<'a, R> for LinearTerm<R> {
-    #[allow(clippy::clone_on_copy)]
     fn span(&self) -> LinearSpan<R> {
         vec![self.clone().into()].into()
     }
@@ -84,7 +81,6 @@ impl<R: Semiring> Add for LinearTerm<R> {
 impl<R: Semiring> Add<&Self> for LinearTerm<R> {
     type Output = LinearCombination<R>;
 
-    #[allow(clippy::clone_on_copy)]
     fn add(self, rps: &Self) -> Self::Output {
         self + rps.clone()
     }
@@ -93,7 +89,6 @@ impl<R: Semiring> Add<&Self> for LinearTerm<R> {
 impl<R: Semiring> Add<LinearTerm<R>> for &LinearTerm<R> {
     type Output = LinearCombination<R>;
 
-    #[allow(clippy::clone_on_copy)]
     fn add(self, rps: LinearTerm<R>) -> Self::Output {
         self.clone() + rps
     }
@@ -102,7 +97,6 @@ impl<R: Semiring> Add<LinearTerm<R>> for &LinearTerm<R> {
 impl<R: Semiring> Add for &LinearTerm<R> {
     type Output = LinearCombination<R>;
 
-    #[allow(clippy::clone_on_copy)]
     fn add(self, rps: Self) -> Self::Output {
         self.clone() + rps.clone()
     }
@@ -119,11 +113,17 @@ impl<R: Semiring> Double for LinearTerm<R> {
     }
 }
 
-impl<R: Semiring> Double for &LinearTerm<R> {
+impl<R: Semiring> Double for &LinearTerm<R>
+where
+    for<'a> &'a R: SemiringOps<R>,
+{
     type Output = LinearTerm<R>;
 
     fn double(self) -> Self::Output {
-        (*self).double()
+        Self::Output {
+            variable: self.variable,
+            coefficient: (&self.coefficient).double(),
+        }
     }
 }
 
@@ -202,7 +202,6 @@ impl<R: Semiring> Mul for LinearTerm<R> {
 impl<R: Semiring> Mul<&Self> for LinearTerm<R> {
     type Output = LinearMonoid<R>;
 
-    #[allow(clippy::clone_on_copy)]
     fn mul(self, rps: &Self) -> Self::Output {
         self * rps.clone()
     }
@@ -211,7 +210,6 @@ impl<R: Semiring> Mul<&Self> for LinearTerm<R> {
 impl<R: Semiring> Mul<LinearTerm<R>> for &LinearTerm<R> {
     type Output = LinearMonoid<R>;
 
-    #[allow(clippy::clone_on_copy)]
     fn mul(self, rps: LinearTerm<R>) -> Self::Output {
         self.clone() * rps
     }
@@ -220,7 +218,6 @@ impl<R: Semiring> Mul<LinearTerm<R>> for &LinearTerm<R> {
 impl<R: Semiring> Mul for &LinearTerm<R> {
     type Output = LinearMonoid<R>;
 
-    #[allow(clippy::clone_on_copy)]
     fn mul(self, rps: Self) -> Self::Output {
         self.clone() * rps.clone()
     }
@@ -238,7 +235,6 @@ impl<R: Semiring> Square for LinearTerm<R> {
 impl<R: Semiring> Square for &LinearTerm<R> {
     type Output = LinearMonoid<R>;
 
-    #[allow(clippy::clone_on_copy)]
     fn square(self) -> Self::Output {
         self.clone().square()
     }
@@ -257,7 +253,6 @@ impl<R: Semiring> Add<Constant<R>> for LinearTerm<R> {
 impl<R: Semiring> Add<&Constant<R>> for LinearTerm<R> {
     type Output = LinearCombination<R>;
 
-    #[allow(clippy::clone_on_copy)]
     fn add(self, rps: &Constant<R>) -> Self::Output {
         self + rps.clone()
     }
@@ -266,7 +261,6 @@ impl<R: Semiring> Add<&Constant<R>> for LinearTerm<R> {
 impl<R: Semiring> Add<Constant<R>> for &LinearTerm<R> {
     type Output = LinearCombination<R>;
 
-    #[allow(clippy::clone_on_copy)]
     fn add(self, rps: Constant<R>) -> Self::Output {
         self.clone() + rps
     }
@@ -275,7 +269,6 @@ impl<R: Semiring> Add<Constant<R>> for &LinearTerm<R> {
 impl<R: Semiring> Add<&Constant<R>> for &LinearTerm<R> {
     type Output = LinearCombination<R>;
 
-    #[allow(clippy::clone_on_copy)]
     fn add(self, rps: &Constant<R>) -> Self::Output {
         self.clone() + rps.clone()
     }
@@ -340,24 +333,30 @@ impl<R: Semiring> Mul<&Constant<R>> for LinearTerm<R> {
     }
 }
 
-impl<R: Semiring> Mul<Constant<R>> for &LinearTerm<R> {
+impl<R: Semiring> Mul<Constant<R>> for &LinearTerm<R>
+where
+    for<'a> &'a R: SemiringOps<R>,
+{
     type Output = LinearTerm<R>;
 
     fn mul(self, rps: Constant<R>) -> Self::Output {
         Self::Output {
             variable: self.variable,
-            coefficient: self.coefficient * rps,
+            coefficient: &self.coefficient * rps,
         }
     }
 }
 
-impl<R: Semiring> Mul<&Constant<R>> for &LinearTerm<R> {
+impl<R: Semiring> Mul<&Constant<R>> for &LinearTerm<R>
+where
+    for<'a> &'a R: SemiringOps<R>,
+{
     type Output = LinearTerm<R>;
 
     fn mul(self, rps: &Constant<R>) -> Self::Output {
         Self::Output {
             variable: self.variable,
-            coefficient: self.coefficient * rps,
+            coefficient: &self.coefficient * rps,
         }
     }
 }
@@ -402,7 +401,7 @@ impl<R: Semiring> Add<Variable<R>> for &LinearTerm<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: Variable<R>) -> Self::Output {
-        *self + rps
+        self.clone() + rps
     }
 }
 
@@ -410,7 +409,7 @@ impl<R: Semiring> Add<&Variable<R>> for &LinearTerm<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: &Variable<R>) -> Self::Output {
-        *self + *rps
+        self.clone() + *rps
     }
 }
 
@@ -474,7 +473,7 @@ impl<R: Semiring> Mul<Variable<R>> for &LinearTerm<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, rps: Variable<R>) -> Self::Output {
-        *self * rps
+        self.clone() * rps
     }
 }
 
@@ -482,7 +481,7 @@ impl<R: Semiring> Mul<&Variable<R>> for &LinearTerm<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, rps: &Variable<R>) -> Self::Output {
-        *self * *rps
+        self.clone() * *rps
     }
 }
 
@@ -510,7 +509,7 @@ impl<R: Semiring> Add<LinearCombination<R>> for &LinearTerm<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: LinearCombination<R>) -> Self::Output {
-        *self + rps
+        self.clone() + rps
     }
 }
 
@@ -518,7 +517,7 @@ impl<R: Semiring> Add<&LinearCombination<R>> for &LinearTerm<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: &LinearCombination<R>) -> Self::Output {
-        *self + rps
+        self.clone() + rps
     }
 }
 
@@ -545,16 +544,18 @@ impl<R: UnitalRing> Sub<&LinearCombination<R>> for LinearTerm<R> {
 impl<R: UnitalRing> Sub<LinearCombination<R>> for &LinearTerm<R> {
     type Output = LinearCombination<R>;
 
+    #[allow(clippy::clone_on_copy)]
     fn sub(self, rps: LinearCombination<R>) -> Self::Output {
-        *self - rps
+        self.clone() - rps
     }
 }
 
 impl<R: UnitalRing> Sub<&LinearCombination<R>> for &LinearTerm<R> {
     type Output = LinearCombination<R>;
 
+    #[allow(clippy::clone_on_copy)]
     fn sub(self, rps: &LinearCombination<R>) -> Self::Output {
-        *self - rps
+        self.clone() - rps
     }
 }
 
@@ -578,7 +579,7 @@ impl<R: Semiring> Mul<LinearCombination<R>> for &LinearTerm<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, rps: LinearCombination<R>) -> Self::Output {
-        *self * rps
+        self.clone() * rps
     }
 }
 
@@ -586,7 +587,7 @@ impl<R: Semiring> Mul<&LinearCombination<R>> for &LinearTerm<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, rps: &LinearCombination<R>) -> Self::Output {
-        *self * rps
+        self.clone() * rps
     }
 }
 
@@ -611,7 +612,7 @@ impl<R: Semiring> Mul<LinearMonoid<R>> for &LinearTerm<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, rps: LinearMonoid<R>) -> Self::Output {
-        *self * rps
+        self.clone() * rps
     }
 }
 
@@ -619,6 +620,6 @@ impl<R: Semiring> Mul<&LinearMonoid<R>> for &LinearTerm<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, rps: &LinearMonoid<R>) -> Self::Output {
-        *self * rps
+        self.clone() * rps
     }
 }

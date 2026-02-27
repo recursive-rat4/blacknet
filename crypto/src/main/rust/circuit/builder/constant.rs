@@ -39,7 +39,6 @@ impl<R: Semiring> Constant<R> {
 }
 
 impl<'a, R: Semiring + 'a> Expression<'a, R> for Constant<R> {
-    #[allow(clippy::clone_on_copy)]
     fn span(&self) -> LinearSpan<R> {
         vec![self.clone().into()].into()
     }
@@ -68,7 +67,6 @@ impl<R: Semiring> Add for Constant<R> {
 impl<R: Semiring> Add<&Self> for Constant<R> {
     type Output = Self;
 
-    #[allow(clippy::op_ref)]
     fn add(self, rps: &Self) -> Self::Output {
         Self {
             value: self.value + &rps.value,
@@ -82,7 +80,6 @@ where
 {
     type Output = Constant<R>;
 
-    #[allow(clippy::op_ref)]
     fn add(self, rps: Constant<R>) -> Self::Output {
         Self::Output {
             value: &self.value + rps.value,
@@ -96,7 +93,6 @@ where
 {
     type Output = Constant<R>;
 
-    #[allow(clippy::op_ref)]
     fn add(self, rps: Self) -> Self::Output {
         Self::Output {
             value: &self.value + &rps.value,
@@ -126,12 +122,15 @@ impl<R: Semiring> Double for Constant<R> {
     }
 }
 
-impl<R: Semiring> Double for &Constant<R> {
+impl<R: Semiring> Double for &Constant<R>
+where
+    for<'a> &'a R: SemiringOps<R>,
+{
     type Output = Constant<R>;
 
     fn double(self) -> Self::Output {
         Self::Output {
-            value: self.value.double(),
+            value: (&self.value).double(),
         }
     }
 }
@@ -217,7 +216,6 @@ impl<R: Semiring> Mul for Constant<R> {
 impl<R: Semiring> Mul<&Constant<R>> for Constant<R> {
     type Output = Self;
 
-    #[allow(clippy::op_ref)]
     fn mul(self, rps: &Constant<R>) -> Self::Output {
         Self {
             value: self.value * &rps.value,
@@ -231,7 +229,6 @@ where
 {
     type Output = Constant<R>;
 
-    #[allow(clippy::op_ref)]
     fn mul(self, rps: Constant<R>) -> Self::Output {
         Self::Output {
             value: &self.value * rps.value,
@@ -245,7 +242,6 @@ where
 {
     type Output = Constant<R>;
 
-    #[allow(clippy::op_ref)]
     fn mul(self, rps: Self) -> Self::Output {
         Self::Output {
             value: &self.value * &rps.value,
@@ -275,12 +271,15 @@ impl<R: Semiring> Square for Constant<R> {
     }
 }
 
-impl<R: Semiring> Square for &Constant<R> {
+impl<R: Semiring> Square for &Constant<R>
+where
+    for<'a> &'a R: SemiringOps<R>,
+{
     type Output = Constant<R>;
 
     fn square(self) -> Self::Output {
         Self::Output {
-            value: self.value.square(),
+            value: (&self.value).square(),
         }
     }
 }
@@ -300,7 +299,6 @@ impl<R: Semiring> Add<Variable<R>> for Constant<R> {
 impl<R: Semiring> Add<Variable<R>> for &Constant<R> {
     type Output = LinearCombination<R>;
 
-    #[allow(clippy::clone_on_copy)]
     fn add(self, rps: Variable<R>) -> Self::Output {
         self.clone() + rps
     }
@@ -338,7 +336,6 @@ impl<R: Semiring> Mul<Variable<R>> for Constant<R> {
 impl<R: Semiring> Mul<Variable<R>> for &Constant<R> {
     type Output = LinearTerm<R>;
 
-    #[allow(clippy::clone_on_copy)]
     fn mul(self, rps: Variable<R>) -> Self::Output {
         self.clone() * rps
     }
@@ -355,7 +352,6 @@ impl<R: Semiring> Add<LinearTerm<R>> for Constant<R> {
 impl<R: Semiring> Add<LinearTerm<R>> for &Constant<R> {
     type Output = LinearCombination<R>;
 
-    #[allow(clippy::clone_on_copy)]
     fn add(self, rps: LinearTerm<R>) -> Self::Output {
         self.clone() + rps
     }
@@ -364,7 +360,6 @@ impl<R: Semiring> Add<LinearTerm<R>> for &Constant<R> {
 impl<R: Semiring> Add<&LinearTerm<R>> for Constant<R> {
     type Output = LinearCombination<R>;
 
-    #[allow(clippy::clone_on_copy)]
     fn add(self, rps: &LinearTerm<R>) -> Self::Output {
         self + rps.clone()
     }
@@ -373,7 +368,6 @@ impl<R: Semiring> Add<&LinearTerm<R>> for Constant<R> {
 impl<R: Semiring> Add<&LinearTerm<R>> for &Constant<R> {
     type Output = LinearCombination<R>;
 
-    #[allow(clippy::clone_on_copy)]
     fn add(self, rps: &LinearTerm<R>) -> Self::Output {
         self.clone() + rps.clone()
     }
@@ -436,7 +430,6 @@ where
 impl<R: Semiring> Mul<&LinearTerm<R>> for Constant<R> {
     type Output = LinearTerm<R>;
 
-    #[allow(clippy::clone_on_copy)]
     fn mul(self, rps: &LinearTerm<R>) -> Self::Output {
         self * rps.clone()
     }
@@ -448,7 +441,6 @@ where
 {
     type Output = LinearTerm<R>;
 
-    #[allow(clippy::clone_on_copy)]
     fn mul(self, rps: &LinearTerm<R>) -> Self::Output {
         self * rps.clone()
     }
@@ -466,7 +458,6 @@ impl<R: Semiring> Add<LinearCombination<R>> for Constant<R> {
 impl<R: Semiring> Add<LinearCombination<R>> for &Constant<R> {
     type Output = LinearCombination<R>;
 
-    #[allow(clippy::clone_on_copy)]
     fn add(self, rps: LinearCombination<R>) -> Self::Output {
         self.clone() + rps
     }
@@ -483,7 +474,6 @@ impl<R: Semiring> Add<&LinearCombination<R>> for Constant<R> {
 impl<R: Semiring> Add<&LinearCombination<R>> for &Constant<R> {
     type Output = LinearCombination<R>;
 
-    #[allow(clippy::clone_on_copy)]
     fn add(self, rps: &LinearCombination<R>) -> Self::Output {
         self.clone() + rps.clone()
     }
@@ -531,7 +521,6 @@ where
 {
     type Output = LinearCombination<R>;
 
-    #[allow(clippy::op_ref)]
     fn mul(self, rps: LinearCombination<R>) -> Self::Output {
         &self * rps
     }
@@ -543,7 +532,6 @@ where
 {
     type Output = LinearCombination<R>;
 
-    #[allow(clippy::op_ref)]
     fn mul(self, mut rps: LinearCombination<R>) -> Self::Output {
         for coefficient in rps.terms.values_mut() {
             *coefficient = self * &*coefficient
@@ -558,7 +546,6 @@ where
 {
     type Output = LinearCombination<R>;
 
-    #[allow(clippy::op_ref)]
     fn mul(self, rps: &LinearCombination<R>) -> Self::Output {
         &self * rps.clone()
     }
@@ -596,7 +583,6 @@ where
 {
     type Output = LinearMonoid<R>;
 
-    #[allow(clippy::clone_on_copy)]
     fn mul(self, mut rps: LinearMonoid<R>) -> Self::Output {
         match rps.factors.front_mut() {
             Some(factor) => *factor = self * &*factor,

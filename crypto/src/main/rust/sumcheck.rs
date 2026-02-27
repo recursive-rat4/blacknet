@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::UnitalRing;
+use crate::algebra::{RingOps, UnitalRing};
 use crate::duplex::Duplex;
 use crate::polynomial::{
     MultivariatePolynomial, Point, Polynomial, UnivariatePolynomial, interpolation::*,
@@ -75,6 +75,8 @@ impl<
     D: Duplex<R>,
     E: Distribution<D, Output = R>,
 > SumCheck<R, P, D, E>
+where
+    for<'a> &'a R: RingOps<R>,
 {
     pub fn prove(
         mut polynomial: P,

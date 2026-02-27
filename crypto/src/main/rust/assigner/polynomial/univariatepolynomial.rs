@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{Double, Semiring};
+use crate::algebra::{Double, Semiring, SemiringOps};
 use crate::assigner::assigment::Assigment;
 use crate::duplex::{Absorb, Duplex};
 use alloc::vec::Vec;
@@ -35,7 +35,6 @@ impl<'a, R: Semiring> UnivariatePolynomial<'a, R> {
         }
     }
 
-    #[allow(clippy::clone_on_copy, clippy::op_ref)]
     pub fn evaluate(&self, point: &R) -> R {
         // Horner method
         if self.coefficients.is_empty() {
@@ -50,11 +49,14 @@ impl<'a, R: Semiring> UnivariatePolynomial<'a, R> {
         accum
     }
 
-    pub fn at_0_plus_1(&self) -> R {
+    pub fn at_0_plus_1(&self) -> R
+    where
+        for<'b> &'b R: SemiringOps<R>,
+    {
         match self.coefficients.len() {
             0 => R::ZERO,
-            1 => self.coefficients[0].double(),
-            _ => self.coefficients[0].double() + self.coefficients.iter().skip(1).sum::<R>(),
+            1 => (&self.coefficients[0]).double(),
+            _ => (&self.coefficients[0]).double() + self.coefficients.iter().skip(1).sum::<R>(),
         }
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Pavel Vasin
+ * Copyright (c) 2024-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -17,8 +17,7 @@
 
 #![allow(clippy::needless_range_loop)]
 
-use crate::algebra::PrimeField;
-use crate::algebra::{Double, Square};
+use crate::algebra::{Double, PrimeField, RingOps, Square};
 use crate::circuit::builder::{CircuitBuilder, Constant, LinearCombination, Scope};
 use crate::poseidon2::Poseidon2Params;
 use core::array;
@@ -29,7 +28,8 @@ pub trait Poseidon2Circuit<
     const RBC: usize,
     const RPC: usize,
     const REC: usize,
->: Poseidon2Params<F, WIDTH, RBC, RPC, REC>
+>: Poseidon2Params<F, WIDTH, RBC, RPC, REC> where
+    for<'a> &'a F: RingOps<F>,
 {
     fn m4(x: &mut [LinearCombination<F>; WIDTH]) {
         for i in 0..WIDTH >> 2 {
@@ -215,5 +215,7 @@ impl<
     const REC: usize,
     P: Poseidon2Params<F, WIDTH, RBC, RPC, REC>,
 > Poseidon2Circuit<F, WIDTH, RBC, RPC, REC> for P
+where
+    for<'a> &'a F: RingOps<F>,
 {
 }

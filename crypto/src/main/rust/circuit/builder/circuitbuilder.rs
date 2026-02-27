@@ -196,7 +196,6 @@ impl<'a, R: Semiring> CircuitBuilder<'a, R> {
 }
 
 impl<'a, R: Semiring + Eq> CircuitBuilder<'a, R> {
-    #[allow(clippy::clone_on_copy)]
     fn put(&self, m: &mut SparseMatrixBuilder<R>, lc: &LinearCombination<R>) {
         for (variable, coefficient) in &lc.terms {
             let column: usize = match variable.kind {

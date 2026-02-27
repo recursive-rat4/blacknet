@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{Double, Semiring, Square, UnitalRing};
+use crate::algebra::{Double, Semiring, SemiringOps, Square, UnitalRing};
 use crate::circuit::builder::{
     Constant, Expression, LinearMonoid, LinearSpan, LinearTerm, Variable,
 };
@@ -110,8 +110,17 @@ impl<R: Semiring> AddAssign<LinearTerm<R>> for LinearCombination<R> {
     fn add_assign(&mut self, rps: LinearTerm<R>) {
         self.terms
             .entry(rps.variable)
-            .and_modify(|value| *value += rps.coefficient)
+            .and_modify(|value| *value += &rps.coefficient)
             .or_insert(rps.coefficient);
+    }
+}
+
+impl<R: Semiring> AddAssign<&LinearTerm<R>> for LinearCombination<R> {
+    fn add_assign(&mut self, rps: &LinearTerm<R>) {
+        self.terms
+            .entry(rps.variable)
+            .and_modify(|value| *value += &rps.coefficient)
+            .or_insert_with(|| rps.coefficient.clone());
     }
 }
 
@@ -140,6 +149,12 @@ impl<R: Semiring> AddAssign<Constant<R>> for LinearCombination<R> {
     }
 }
 
+impl<R: Semiring> AddAssign<&Constant<R>> for LinearCombination<R> {
+    fn add_assign(&mut self, rps: &Constant<R>) {
+        *self += LinearTerm::new(Variable::CONSTANT, rps.clone())
+    }
+}
+
 impl<R: Semiring> Add<Constant<R>> for &LinearCombination<R> {
     type Output = LinearCombination<R>;
 
@@ -160,6 +175,12 @@ impl<R: Semiring> Add<Variable<R>> for LinearCombination<R> {
 impl<R: Semiring> AddAssign<Variable<R>> for LinearCombination<R> {
     fn add_assign(&mut self, rps: Variable<R>) {
         *self += LinearTerm::new(rps, Constant::ONE)
+    }
+}
+
+impl<R: Semiring> AddAssign<&Variable<R>> for LinearCombination<R> {
+    fn add_assign(&mut self, rps: &Variable<R>) {
+        *self += LinearTerm::new(*rps, Constant::ONE)
     }
 }
 
@@ -200,7 +221,7 @@ impl<R: Semiring> Add<&Self> for LinearCombination<R> {
 impl<R: Semiring> AddAssign<&Self> for LinearCombination<R> {
     fn add_assign(&mut self, rps: &Self) {
         for (&variable, coefficient) in &rps.terms {
-            *self += LinearTerm::new(variable, *coefficient)
+            *self += LinearTerm::new(variable, coefficient.clone())
         }
     }
 }
@@ -235,7 +256,10 @@ impl<R: Semiring> Double for LinearCombination<R> {
     }
 }
 
-impl<R: Semiring> Double for &LinearCombination<R> {
+impl<R: Semiring> Double for &LinearCombination<R>
+where
+    for<'a> &'a R: SemiringOps<R>,
+{
     type Output = LinearCombination<R>;
 
     fn double(self) -> Self::Output {
@@ -429,13 +453,16 @@ impl<R: Semiring> MulAssign<Constant<R>> for LinearCombination<R> {
     }
 }
 
-impl<R: Semiring> Mul<Constant<R>> for &LinearCombination<R> {
+impl<R: Semiring> Mul<Constant<R>> for &LinearCombination<R>
+where
+    for<'a> &'a R: SemiringOps<R>,
+{
     type Output = LinearCombination<R>;
 
     fn mul(self, rps: Constant<R>) -> Self::Output {
         let mut lc = LinearCombination::new();
         for (&variable, coefficient) in &self.terms {
-            lc += LinearTerm::new(variable, *coefficient * rps);
+            lc += LinearTerm::new(variable, coefficient * &rps);
         }
         lc
     }
@@ -553,7 +580,7 @@ impl<'a, R: Semiring> Sum<&'a LinearTerm<R>> for LinearCombination<R> {
     fn sum<I: Iterator<Item = &'a LinearTerm<R>>>(iter: I) -> Self {
         let mut lc = Self::new();
         for i in iter {
-            lc += *i
+            lc += i
         }
         lc
     }
@@ -573,7 +600,7 @@ impl<'a, R: Semiring> Sum<&'a Variable<R>> for LinearCombination<R> {
     fn sum<I: Iterator<Item = &'a Variable<R>>>(iter: I) -> Self {
         let mut lc = Self::new();
         for i in iter {
-            lc += *i
+            lc += i
         }
         lc
     }
