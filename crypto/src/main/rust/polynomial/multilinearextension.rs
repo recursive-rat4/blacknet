@@ -36,10 +36,6 @@ pub struct MultilinearExtension<R: UnitalRing> {
 }
 
 impl<R: UnitalRing> MultilinearExtension<R> {
-    pub const fn hypercube(&self) -> &Vec<R> {
-        &self.coefficients
-    }
-
     pub fn hypercube_with_var<const VAL: i8>(&self) -> DenseVector<R> {
         let (left, right) = self.coefficients.split_at(self.coefficients.len() >> 1);
         match VAL {
@@ -194,8 +190,16 @@ impl<R: UnitalRing> Polynomial for MultilinearExtension<R> {
 
     fn point(&self, point: &Point<R>) -> R {
         debug_assert_eq!(self.coefficients.len(), 1 << point.dimension());
-        let basis = EqExtension::basis(point);
-        zip(&self.coefficients, basis).map(|(&c, b)| c * b).sum()
+        let n = point.dimension();
+        let mut scratch = self.coefficients.clone();
+        for i in (0..n).rev() {
+            let j = 1 << i;
+            for k in 0..j {
+                let t = scratch[j + k] - scratch[k];
+                scratch[k] += t * point[n - i - 1];
+            }
+        }
+        scratch[0]
     }
 }
 

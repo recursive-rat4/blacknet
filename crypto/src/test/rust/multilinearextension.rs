@@ -89,31 +89,31 @@ fn bind() {
     mle = a.clone();
     mle.bind(&R::from(-2));
     let evaluations = a.hypercube_with_var::<-2>();
-    assert_eq!(evaluations.elements(), mle.hypercube());
+    assert_eq!(*evaluations, *mle);
     mle = a.clone();
     mle.bind(&R::from(-1));
     let evaluations = a.hypercube_with_var::<-1>();
-    assert_eq!(evaluations.elements(), mle.hypercube());
+    assert_eq!(*evaluations, *mle);
     mle = a.clone();
     mle.bind(&R::from(0));
     let evaluations = a.hypercube_with_var::<0>();
-    assert_eq!(evaluations.elements(), mle.hypercube());
+    assert_eq!(*evaluations, *mle);
     mle = a.clone();
     mle.bind(&R::from(1));
     let evaluations = a.hypercube_with_var::<1>();
-    assert_eq!(evaluations.elements(), mle.hypercube());
+    assert_eq!(*evaluations, *mle);
     mle = a.clone();
     mle.bind(&R::from(2));
     let evaluations = a.hypercube_with_var::<2>();
-    assert_eq!(evaluations.elements(), mle.hypercube());
+    assert_eq!(*evaluations, *mle);
     mle = a.clone();
     mle.bind(&R::from(3));
     let evaluations = a.hypercube_with_var::<3>();
-    assert_eq!(evaluations.elements(), mle.hypercube());
+    assert_eq!(*evaluations, *mle);
     mle = a.clone();
     mle.bind(&R::from(4));
     let evaluations = a.hypercube_with_var::<4>();
-    assert_eq!(evaluations.elements(), mle.hypercube());
+    assert_eq!(*evaluations, *mle);
 }
 
 #[test]
