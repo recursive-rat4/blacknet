@@ -47,7 +47,7 @@ impl Field25519 {
     }
 
     fn to_form(x: UInt256) -> UInt256 {
-        Self::reduce_mul(x.mul(Self::R2))
+        Self::reduce_mul(x.widening_mul(Self::R2))
     }
 
     fn from_form(x: UInt256) -> UInt256 {
@@ -329,7 +329,7 @@ impl Mul for Field25519 {
 
     fn mul(self, rps: Self) -> Self::Output {
         Self {
-            n: Self::reduce_mul(self.n.mul(rps.n)),
+            n: Self::reduce_mul(self.n.widening_mul(rps.n)),
         }
     }
 }
@@ -339,7 +339,7 @@ impl Mul<&Self> for Field25519 {
 
     fn mul(self, rps: &Self) -> Self::Output {
         Self {
-            n: Self::reduce_mul(self.n.mul(rps.n)),
+            n: Self::reduce_mul(self.n.widening_mul(rps.n)),
         }
     }
 }
@@ -349,7 +349,7 @@ impl Mul<Field25519> for &Field25519 {
 
     fn mul(self, rps: Field25519) -> Self::Output {
         Self::Output {
-            n: Self::Output::reduce_mul(self.n.mul(rps.n)),
+            n: Self::Output::reduce_mul(self.n.widening_mul(rps.n)),
         }
     }
 }
@@ -359,7 +359,7 @@ impl<'a> Mul<&'a Field25519> for &Field25519 {
 
     fn mul(self, rps: &'a Field25519) -> Self::Output {
         Self::Output {
-            n: Self::Output::reduce_mul(self.n.mul(rps.n)),
+            n: Self::Output::reduce_mul(self.n.widening_mul(rps.n)),
         }
     }
 }
@@ -383,7 +383,7 @@ impl Square for Field25519 {
 
     fn square(self) -> Self {
         Self {
-            n: Self::reduce_mul(self.n.square()),
+            n: Self::reduce_mul(self.n.widening_square()),
         }
     }
 }
@@ -393,7 +393,7 @@ impl Square for &Field25519 {
 
     fn square(self) -> Self::Output {
         Self::Output {
-            n: Self::Output::reduce_mul(self.n.square()),
+            n: Self::Output::reduce_mul(self.n.widening_square()),
         }
     }
 }

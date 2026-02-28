@@ -148,14 +148,14 @@ fn sub() {
 }
 
 #[test]
-fn mul() {
+fn widening_mul() {
     let a = UInt256::from_hex("00F97CF9ECB6C4F46539B01EE42D4E9A2492C11E609BDE89B73DE031C564E2D7");
     let b = UInt256::from_hex("32192A679771050176C433E125E9389AA7185605C591D8201BA219EB7AAE6037");
     let c = UInt512::from_hex(
         "0030D2EF5819B091A74BE63C749C5ECE71995382110FE3BCFA03A0E4C26578B7452E2E03236EC2422C7EB89A069CA17D8C3F288A32A977CEF3154DC0E1DF5C31",
     );
-    assert_eq!(a.mul(b), c);
-    assert_eq!(b.mul(a), c);
+    assert_eq!(a.widening_mul(b), c);
+    assert_eq!(b.widening_mul(a), c);
 }
 
 #[test]
@@ -175,13 +175,13 @@ fn rem() {
 }
 
 #[test]
-fn sqr() {
+fn widening_square() {
     let a = UInt256::from_hex("6B3D316D1EEEEB1FF5A4A8F48B87F93B9C0C6CE0DE0AB366CD6901E304C7F7B9");
     let b = UInt512::from_hex(
         "2CEC35F1CF676AC395C6090AAD06AD8AA93B975F4EDB571C88FA5F7E1C416F3303186FE30B4BCA7D00B8357919AA2B42D7771EB3CC1FDB8E8A69A006D95483B1",
     );
-    assert_eq!(a.mul(a), b);
-    assert_eq!(a.square(), b);
+    assert_eq!(a.widening_mul(a), b);
+    assert_eq!(a.widening_square(), b);
 }
 
 #[test]

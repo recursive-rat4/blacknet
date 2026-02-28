@@ -38,6 +38,7 @@ pub struct BigInt<const N: usize> {
 
 impl<const N: usize> BigInt<N> {
     pub const fn from_hex(mut hex: &str) -> Self {
+        debug_assert!(hex.len() == N * 16);
         let mut limbs = [0; N];
         let mut i = 0;
         while i < N {
@@ -52,28 +53,34 @@ impl<const N: usize> BigInt<N> {
         Self { limbs }
     }
 
-    #[allow(clippy::should_implement_trait)]
-    pub fn mul<const M: usize, const NM: usize>(self, rps: BigInt<M>) -> BigInt<NM> {
+    pub const fn widening_mul<const M: usize, const NM: usize>(self, rps: BigInt<M>) -> BigInt<NM> {
+        const {
+            assert!(N + M == NM);
+        };
         let mut c: u128 = 0;
         let mut n = BigInt::<NM>::ZERO;
-        for i in 0..N {
-            for j in 0..M {
+        let mut i = 0;
+        while i < N {
+            let mut j = 0;
+            while j < M {
                 c += self.limbs[i] as u128 * rps.limbs[j] as u128 + n.limbs[i + j] as u128;
                 n.limbs[i + j] = c as u64;
                 c >>= u64::BITS;
+                j += 1;
             }
             n.limbs[i + M] = c as u64;
             c = 0;
+            i += 1;
         }
         n
     }
 
     #[inline]
-    pub fn square<const NN: usize>(self) -> BigInt<NN> {
+    pub fn widening_square<const NN: usize>(self) -> BigInt<NN> {
         const SQUARE_THRESHOLD: usize = 4;
 
         if N <= SQUARE_THRESHOLD {
-            self.mul(self)
+            self.widening_mul(self)
         } else {
             self.square_impl()
         }
@@ -241,6 +248,45 @@ impl<const N: usize> BigInt<N> {
         }
         bytes
     }
+
+    pub const fn const_cmp(&self, rps: &Self) -> Ordering {
+        let mut i = N;
+        while i > 0 {
+            if self.limbs[i - 1] < rps.limbs[i - 1] {
+                return Ordering::Less;
+            } else if self.limbs[i - 1] > rps.limbs[i - 1] {
+                return Ordering::Greater;
+            }
+            i -= 1;
+        }
+        Ordering::Equal
+    }
+
+    pub const fn const_add(self, rps: Self) -> Self {
+        let mut c: bool = false;
+        let mut limbs = [0_u64; N];
+        let mut i = 0;
+        while i < N {
+            let (l, o) = self.limbs[i].overflowing_add(rps.limbs[i]);
+            (limbs[i], c) = l.overflowing_add(c as u64);
+            c |= o;
+            i += 1;
+        }
+        Self { limbs }
+    }
+
+    pub const fn const_sub(self, rps: Self) -> Self {
+        let mut c: bool = false;
+        let mut limbs = [0_u64; N];
+        let mut i = 0;
+        while i < N {
+            let (l, o) = self.limbs[i].overflowing_sub(rps.limbs[i]);
+            (limbs[i], c) = l.overflowing_sub(c as u64);
+            c |= o;
+            i += 1;
+        }
+        Self { limbs }
+    }
 }
 
 impl<const N: usize> fmt::Debug for BigInt<N> {
@@ -347,13 +393,12 @@ impl<const N: usize> Add for BigInt<N> {
     type Output = Self;
 
     fn add(self, rps: Self) -> Self::Output {
-        let mut c: u128 = 0;
+        let mut c: bool = false;
+        let mut l: u64 = 0;
         Self {
             limbs: array::from_fn(|i| {
-                c += self.limbs[i] as u128 + rps.limbs[i] as u128;
-                let n = c as u64;
-                c >>= u64::BITS;
-                n
+                (l, c) = self.limbs[i].carrying_add(rps.limbs[i], c);
+                l
             }),
         }
     }
