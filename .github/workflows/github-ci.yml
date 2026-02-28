@@ -1,6 +1,6 @@
 #!/bin/false
 #
-# Copyright (c) 2020-2025 Pavel Vasin
+# Copyright (c) 2020-2026 Pavel Vasin
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -42,3 +42,4 @@ jobs:
       - run: cargo test --package blacknet-crypto --package blacknet-io --package blacknet-kernel --package blacknet-serialization --package blacknet-time --no-default-features
       - run: cargo build
       - run: cargo test
+      - run: cargo bench --no-run --profile dev
