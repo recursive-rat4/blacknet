@@ -42,7 +42,7 @@ pub struct DuplexImpl<
 impl<
     'a,
     'b,
-    S: Semiring + From<i8>,
+    S: Semiring + Clone + From<i8>,
     const RATE: usize,
     const CAPACITY: usize,
     const WIDTH: usize,
@@ -95,7 +95,7 @@ impl<
 impl<
     'a,
     'b,
-    S: Semiring + From<i8>,
+    S: Semiring + Clone + From<i8>,
     const RATE: usize,
     const CAPACITY: usize,
     const WIDTH: usize,
@@ -139,7 +139,7 @@ impl<
 impl<
     'a,
     'b,
-    S: Semiring + From<i8>,
+    S: Semiring + Clone + From<i8>,
     const RATE: usize,
     const CAPACITY: usize,
     const WIDTH: usize,

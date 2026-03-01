@@ -72,7 +72,7 @@ impl<R: UnitalRing> From<R1CS<R>> for CustomizableConstraintSystem<R> {
     }
 }
 
-impl<R: Semiring + Eq + Send + Sync> ConstraintSystem<R> for CustomizableConstraintSystem<R>
+impl<R: Semiring + Clone + Eq + Send + Sync> ConstraintSystem<R> for CustomizableConstraintSystem<R>
 where
     for<'a> &'a R: SemiringOps<R>,
 {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -58,7 +58,7 @@ impl<
 impl<
     'a,
     'b,
-    G: Semiring + AdditiveCyclicGroup,
+    G: Semiring + AdditiveCyclicGroup + Clone,
     const RANK: usize,
     const WIDTH: usize,
     P: Permutation<G, Domain = [LinearCombination<G>; WIDTH]>,

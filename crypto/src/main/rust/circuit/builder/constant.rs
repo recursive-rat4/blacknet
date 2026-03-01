@@ -38,7 +38,7 @@ impl<R: Semiring> Constant<R> {
     }
 }
 
-impl<'a, R: Semiring + 'a> Expression<'a, R> for Constant<R> {
+impl<'a, R: Semiring + Clone + 'a> Expression<'a, R> for Constant<R> {
     fn span(&self) -> LinearSpan<R> {
         vec![self.clone().into()].into()
     }
@@ -296,7 +296,7 @@ impl<R: Semiring> Add<Variable<R>> for Constant<R> {
     }
 }
 
-impl<R: Semiring> Add<Variable<R>> for &Constant<R> {
+impl<R: Semiring + Clone> Add<Variable<R>> for &Constant<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: Variable<R>) -> Self::Output {
@@ -333,7 +333,7 @@ impl<R: Semiring> Mul<Variable<R>> for Constant<R> {
     }
 }
 
-impl<R: Semiring> Mul<Variable<R>> for &Constant<R> {
+impl<R: Semiring + Clone> Mul<Variable<R>> for &Constant<R> {
     type Output = LinearTerm<R>;
 
     fn mul(self, rps: Variable<R>) -> Self::Output {
@@ -349,7 +349,7 @@ impl<R: Semiring> Add<LinearTerm<R>> for Constant<R> {
     }
 }
 
-impl<R: Semiring> Add<LinearTerm<R>> for &Constant<R> {
+impl<R: Semiring + Clone> Add<LinearTerm<R>> for &Constant<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: LinearTerm<R>) -> Self::Output {
@@ -357,7 +357,7 @@ impl<R: Semiring> Add<LinearTerm<R>> for &Constant<R> {
     }
 }
 
-impl<R: Semiring> Add<&LinearTerm<R>> for Constant<R> {
+impl<R: Semiring + Clone> Add<&LinearTerm<R>> for Constant<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: &LinearTerm<R>) -> Self::Output {
@@ -365,7 +365,7 @@ impl<R: Semiring> Add<&LinearTerm<R>> for Constant<R> {
     }
 }
 
-impl<R: Semiring> Add<&LinearTerm<R>> for &Constant<R> {
+impl<R: Semiring + Clone> Add<&LinearTerm<R>> for &Constant<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: &LinearTerm<R>) -> Self::Output {
@@ -427,7 +427,7 @@ where
     }
 }
 
-impl<R: Semiring> Mul<&LinearTerm<R>> for Constant<R> {
+impl<R: Semiring + Clone> Mul<&LinearTerm<R>> for Constant<R> {
     type Output = LinearTerm<R>;
 
     fn mul(self, rps: &LinearTerm<R>) -> Self::Output {
@@ -435,7 +435,7 @@ impl<R: Semiring> Mul<&LinearTerm<R>> for Constant<R> {
     }
 }
 
-impl<R: Semiring> Mul<&LinearTerm<R>> for &Constant<R>
+impl<R: Semiring + Clone> Mul<&LinearTerm<R>> for &Constant<R>
 where
     for<'a> &'a R: SemiringOps<R>,
 {
@@ -455,7 +455,7 @@ impl<R: Semiring> Add<LinearCombination<R>> for Constant<R> {
     }
 }
 
-impl<R: Semiring> Add<LinearCombination<R>> for &Constant<R> {
+impl<R: Semiring + Clone> Add<LinearCombination<R>> for &Constant<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: LinearCombination<R>) -> Self::Output {
@@ -463,7 +463,7 @@ impl<R: Semiring> Add<LinearCombination<R>> for &Constant<R> {
     }
 }
 
-impl<R: Semiring> Add<&LinearCombination<R>> for Constant<R> {
+impl<R: Semiring + Clone> Add<&LinearCombination<R>> for Constant<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: &LinearCombination<R>) -> Self::Output {
@@ -471,7 +471,7 @@ impl<R: Semiring> Add<&LinearCombination<R>> for Constant<R> {
     }
 }
 
-impl<R: Semiring> Add<&LinearCombination<R>> for &Constant<R> {
+impl<R: Semiring + Clone> Add<&LinearCombination<R>> for &Constant<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: &LinearCombination<R>) -> Self::Output {
@@ -540,7 +540,7 @@ where
     }
 }
 
-impl<R: Semiring> Mul<&LinearCombination<R>> for Constant<R>
+impl<R: Semiring + Clone> Mul<&LinearCombination<R>> for Constant<R>
 where
     for<'a> &'a R: SemiringOps<R>,
 {
@@ -551,7 +551,7 @@ where
     }
 }
 
-impl<R: Semiring> Mul<&LinearCombination<R>> for &Constant<R>
+impl<R: Semiring + Clone> Mul<&LinearCombination<R>> for &Constant<R>
 where
     for<'a> &'a R: SemiringOps<R>,
 {
@@ -562,7 +562,7 @@ where
     }
 }
 
-impl<R: Semiring> Mul<LinearMonoid<R>> for Constant<R>
+impl<R: Semiring + Clone> Mul<LinearMonoid<R>> for Constant<R>
 where
     for<'a> &'a R: SemiringOps<R>,
 {
@@ -577,7 +577,7 @@ where
     }
 }
 
-impl<R: Semiring> Mul<LinearMonoid<R>> for &Constant<R>
+impl<R: Semiring + Clone> Mul<LinearMonoid<R>> for &Constant<R>
 where
     for<'a> &'a R: SemiringOps<R>,
 {
@@ -592,7 +592,7 @@ where
     }
 }
 
-impl<R: Semiring> Mul<&LinearMonoid<R>> for Constant<R>
+impl<R: Semiring + Clone> Mul<&LinearMonoid<R>> for Constant<R>
 where
     for<'a> &'a R: SemiringOps<R>,
 {
@@ -603,7 +603,7 @@ where
     }
 }
 
-impl<R: Semiring> Mul<&LinearMonoid<R>> for &Constant<R>
+impl<R: Semiring + Clone> Mul<&LinearMonoid<R>> for &Constant<R>
 where
     for<'a> &'a R: SemiringOps<R>,
 {

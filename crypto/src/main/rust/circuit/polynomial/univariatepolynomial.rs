@@ -27,7 +27,7 @@ pub struct UnivariatePolynomial<'a, 'b, R: Semiring> {
     coefficients: Vec<LinearCombination<R>>,
 }
 
-impl<'a, 'b, R: Semiring + Eq> UnivariatePolynomial<'a, 'b, R> {
+impl<'a, 'b, R: Semiring + Clone + Eq> UnivariatePolynomial<'a, 'b, R> {
     pub fn allocate(circuit: &'a CircuitBuilder<'b, R>, kind: VariableKind, degree: usize) -> Self {
         let scope = circuit.scope("UnivariatePolynomial::allocate");
         Self {
@@ -99,7 +99,9 @@ impl<'a, 'b, R: Semiring> Absorb<LinearCombination<R>> for UnivariatePolynomial<
     }
 }
 
-impl<'a, 'b, R: Semiring> Absorb<LinearCombination<R>> for &UnivariatePolynomial<'a, 'b, R> {
+impl<'a, 'b, R: Semiring + Clone> Absorb<LinearCombination<R>>
+    for &UnivariatePolynomial<'a, 'b, R>
+{
     fn absorb_into(self, duplex: &mut (impl Duplex<LinearCombination<R>> + ?Sized)) {
         duplex.absorb_iter(self.coefficients.iter().cloned())
     }

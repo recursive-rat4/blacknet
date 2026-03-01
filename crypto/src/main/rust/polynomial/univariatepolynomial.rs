@@ -20,6 +20,7 @@ use crate::duplex::{Absorb, Duplex, Squeeze, SqueezeWithSize};
 use crate::matrix::DenseVector;
 use crate::polynomial::{InBasis, Polynomial, TensorBasis};
 use alloc::borrow::{Borrow, BorrowMut};
+use alloc::vec;
 use alloc::vec::Vec;
 use core::iter::zip;
 use core::ops::{Add, AddAssign, Deref, DerefMut, Div, Index, IndexMut, Mul, MulAssign, Neg};
@@ -154,7 +155,7 @@ impl<'a, R: Semiring> IntoIterator for &'a UnivariatePolynomial<R> {
     }
 }
 
-impl<R: Semiring> Polynomial for UnivariatePolynomial<R>
+impl<R: Semiring + Clone> Polynomial for UnivariatePolynomial<R>
 where
     for<'a> &'a R: SemiringOps<R>,
 {
@@ -179,7 +180,7 @@ where
 }
 
 /// In monomial basis.
-impl<R: Semiring> InBasis for UnivariatePolynomial<R>
+impl<R: Semiring + Clone> InBasis for UnivariatePolynomial<R>
 where
     for<'a> &'a R: SemiringOps<R>,
 {
@@ -208,7 +209,7 @@ where
     }
 }
 
-impl<R: Semiring> TensorBasis for UnivariatePolynomial<R>
+impl<R: Semiring + Clone> TensorBasis for UnivariatePolynomial<R>
 where
     for<'a> &'a R: SemiringOps<R>,
 {
@@ -282,7 +283,7 @@ impl<R: UnitalRing> Neg for UnivariatePolynomial<R> {
     }
 }
 
-impl<R: Semiring> Mul for UnivariatePolynomial<R>
+impl<R: Semiring + Clone> Mul for UnivariatePolynomial<R>
 where
     for<'a> &'a R: SemiringOps<R>,
 {
@@ -293,7 +294,7 @@ where
     }
 }
 
-impl<R: Semiring> MulAssign for UnivariatePolynomial<R>
+impl<R: Semiring + Clone> MulAssign for UnivariatePolynomial<R>
 where
     for<'a> &'a R: SemiringOps<R>,
 {
@@ -302,7 +303,7 @@ where
     }
 }
 
-impl<R: Semiring> Square for UnivariatePolynomial<R>
+impl<R: Semiring + Clone> Square for UnivariatePolynomial<R>
 where
     for<'a> &'a R: SemiringOps<R>,
 {
@@ -313,7 +314,7 @@ where
     }
 }
 
-impl<R: Semiring> Square for &UnivariatePolynomial<R>
+impl<R: Semiring + Clone> Square for &UnivariatePolynomial<R>
 where
     for<'a> &'a R: SemiringOps<R>,
 {
@@ -324,7 +325,7 @@ where
     }
 }
 
-impl<R: Semiring> Mul<&UnivariatePolynomial<R>> for &UnivariatePolynomial<R>
+impl<R: Semiring + Clone> Mul<&UnivariatePolynomial<R>> for &UnivariatePolynomial<R>
 where
     for<'a> &'a R: SemiringOps<R>,
 {
@@ -332,11 +333,7 @@ where
 
     fn mul(self, rps: &UnivariatePolynomial<R>) -> Self::Output {
         // Long method
-        let mut coefficients = Vec::new();
-        coefficients.resize(
-            self.coefficients.len() + rps.coefficients.len() - 1,
-            R::ZERO,
-        );
+        let mut coefficients = vec![R::ZERO; self.coefficients.len() + rps.coefficients.len() - 1];
         for i in 0..self.coefficients.len() {
             for j in 0..rps.coefficients.len() {
                 coefficients[i + j] += &self.coefficients[i] * &rps.coefficients[j];
@@ -387,7 +384,7 @@ impl<S: Set, R: Semiring + Absorb<S>> Absorb<S> for UnivariatePolynomial<R> {
     }
 }
 
-impl<S: Set, R: Semiring + Absorb<S>> Absorb<S> for &UnivariatePolynomial<R> {
+impl<S: Set, R: Semiring + Absorb<S> + Clone> Absorb<S> for &UnivariatePolynomial<R> {
     fn absorb_into(self, duplex: &mut (impl Duplex<S> + ?Sized)) {
         duplex.absorb_iter(self.coefficients.iter().cloned())
     }

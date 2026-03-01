@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Pavel Vasin
+ * Copyright (c) 2024-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -29,7 +29,7 @@ pub struct LinearMonoid<R: Semiring> {
     pub(super) factors: VecDeque<LinearCombination<R>>,
 }
 
-impl<'a, R: Semiring + Eq + 'a> Expression<'a, R> for LinearMonoid<R> {
+impl<'a, R: Semiring + Clone + Eq + 'a> Expression<'a, R> for LinearMonoid<R> {
     fn span(&self) -> LinearSpan<R> {
         self.factors.clone().into()
     }
@@ -65,7 +65,7 @@ impl<R: Semiring> MulAssign<Constant<R>> for LinearMonoid<R> {
     }
 }
 
-impl<R: Semiring> Mul<Constant<R>> for &LinearMonoid<R> {
+impl<R: Semiring + Clone> Mul<Constant<R>> for &LinearMonoid<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, rps: Constant<R>) -> Self::Output {
@@ -88,7 +88,7 @@ impl<R: Semiring> MulAssign<Variable<R>> for LinearMonoid<R> {
     }
 }
 
-impl<R: Semiring> Mul<Variable<R>> for &LinearMonoid<R> {
+impl<R: Semiring + Clone> Mul<Variable<R>> for &LinearMonoid<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, rps: Variable<R>) -> Self::Output {
@@ -111,7 +111,7 @@ impl<R: Semiring> MulAssign<LinearTerm<R>> for LinearMonoid<R> {
     }
 }
 
-impl<R: Semiring> Mul<LinearTerm<R>> for &LinearMonoid<R> {
+impl<R: Semiring + Clone> Mul<LinearTerm<R>> for &LinearMonoid<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, rps: LinearTerm<R>) -> Self::Output {
@@ -134,7 +134,7 @@ impl<R: Semiring> MulAssign<LinearCombination<R>> for LinearMonoid<R> {
     }
 }
 
-impl<R: Semiring> Mul<LinearCombination<R>> for &LinearMonoid<R> {
+impl<R: Semiring + Clone> Mul<LinearCombination<R>> for &LinearMonoid<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, rps: LinearCombination<R>) -> Self::Output {
@@ -142,7 +142,7 @@ impl<R: Semiring> Mul<LinearCombination<R>> for &LinearMonoid<R> {
     }
 }
 
-impl<R: Semiring> Mul<&LinearCombination<R>> for LinearMonoid<R> {
+impl<R: Semiring + Clone> Mul<&LinearCombination<R>> for LinearMonoid<R> {
     type Output = Self;
 
     fn mul(mut self, rps: &LinearCombination<R>) -> Self::Output {
@@ -151,7 +151,7 @@ impl<R: Semiring> Mul<&LinearCombination<R>> for LinearMonoid<R> {
     }
 }
 
-impl<R: Semiring> MulAssign<&LinearCombination<R>> for LinearMonoid<R> {
+impl<R: Semiring + Clone> MulAssign<&LinearCombination<R>> for LinearMonoid<R> {
     fn mul_assign(&mut self, rps: &LinearCombination<R>) {
         self.factors.push_back(rps.clone())
     }
@@ -172,7 +172,7 @@ impl<R: Semiring> MulAssign for LinearMonoid<R> {
     }
 }
 
-impl<R: Semiring> Mul<&Self> for LinearMonoid<R> {
+impl<R: Semiring + Clone> Mul<&Self> for LinearMonoid<R> {
     type Output = Self;
 
     fn mul(mut self, rps: &Self) -> Self::Output {
@@ -181,13 +181,13 @@ impl<R: Semiring> Mul<&Self> for LinearMonoid<R> {
     }
 }
 
-impl<R: Semiring> MulAssign<&Self> for LinearMonoid<R> {
+impl<R: Semiring + Clone> MulAssign<&Self> for LinearMonoid<R> {
     fn mul_assign(&mut self, rps: &Self) {
         self.factors.extend(rps.factors.iter().cloned())
     }
 }
 
-impl<R: Semiring> Mul<LinearMonoid<R>> for &LinearMonoid<R> {
+impl<R: Semiring + Clone> Mul<LinearMonoid<R>> for &LinearMonoid<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, rps: LinearMonoid<R>) -> Self::Output {
@@ -195,7 +195,7 @@ impl<R: Semiring> Mul<LinearMonoid<R>> for &LinearMonoid<R> {
     }
 }
 
-impl<R: Semiring> Mul for &LinearMonoid<R> {
+impl<R: Semiring + Clone> Mul for &LinearMonoid<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, rps: Self) -> Self::Output {
@@ -203,7 +203,7 @@ impl<R: Semiring> Mul for &LinearMonoid<R> {
     }
 }
 
-impl<R: Semiring> Square for LinearMonoid<R> {
+impl<R: Semiring + Clone> Square for LinearMonoid<R> {
     type Output = LinearMonoid<R>;
 
     fn square(self) -> Self::Output {
@@ -211,7 +211,7 @@ impl<R: Semiring> Square for LinearMonoid<R> {
     }
 }
 
-impl<R: Semiring> Square for &LinearMonoid<R> {
+impl<R: Semiring + Clone> Square for &LinearMonoid<R> {
     type Output = LinearMonoid<R>;
 
     fn square(self) -> Self::Output {

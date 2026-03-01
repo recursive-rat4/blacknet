@@ -27,7 +27,7 @@ pub struct UnivariatePolynomial<'a, R: Semiring> {
     assigment: &'a Assigment<R>,
 }
 
-impl<'a, R: Semiring> UnivariatePolynomial<'a, R> {
+impl<'a, R: Semiring + Clone> UnivariatePolynomial<'a, R> {
     pub const fn new(coefficients: Vec<R>, assigment: &'a Assigment<R>) -> Self {
         Self {
             coefficients,
@@ -117,7 +117,7 @@ impl<'a, R: Semiring + Absorb<R>> Absorb<R> for UnivariatePolynomial<'a, R> {
     }
 }
 
-impl<'a, R: Semiring + Absorb<R>> Absorb<R> for &UnivariatePolynomial<'a, R> {
+impl<'a, R: Semiring + Absorb<R> + Clone> Absorb<R> for &UnivariatePolynomial<'a, R> {
     fn absorb_into(self, duplex: &mut (impl Duplex<R> + ?Sized)) {
         duplex.absorb_iter(self.coefficients.iter().cloned())
     }

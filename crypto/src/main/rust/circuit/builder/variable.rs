@@ -234,7 +234,7 @@ impl<R: Semiring> Add<LinearCombination<R>> for Variable<R> {
     }
 }
 
-impl<R: Semiring> Add<&LinearCombination<R>> for Variable<R> {
+impl<R: Semiring + Clone> Add<&LinearCombination<R>> for Variable<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: &LinearCombination<R>) -> Self::Output {
@@ -268,7 +268,7 @@ impl<R: Semiring> Mul<LinearCombination<R>> for Variable<R> {
     }
 }
 
-impl<R: Semiring> Mul<&LinearCombination<R>> for Variable<R> {
+impl<R: Semiring + Clone> Mul<&LinearCombination<R>> for Variable<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, rps: &LinearCombination<R>) -> Self::Output {
@@ -285,7 +285,7 @@ impl<R: Semiring> Mul<LinearMonoid<R>> for Variable<R> {
     }
 }
 
-impl<R: Semiring> Mul<&LinearMonoid<R>> for Variable<R> {
+impl<R: Semiring + Clone> Mul<&LinearMonoid<R>> for Variable<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, rps: &LinearMonoid<R>) -> Self::Output {
