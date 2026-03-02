@@ -17,6 +17,7 @@
 
 use crate::fjall::Fjall;
 use blacknet_serialization::format::from_bytes;
+use core::fmt::Debug;
 use core::marker::PhantomData;
 use core::ops::Deref;
 use fjall::{Database, Keyspace, Result};
@@ -69,5 +70,18 @@ impl<K: AsRef<[u8]>, V: for<'de> Deserialize<'de>> DBView<K, V> {
             .get(key)
             .unwrap()
             .map(|slice| Box::from(slice.deref()))
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = (K, V)>
+    where
+        K: for<'a> TryFrom<&'a [u8], Error: Debug>,
+    {
+        self.keyspace.iter().map(|item| {
+            let (key, value) = item.into_inner().unwrap();
+            (
+                key.as_ref().try_into().unwrap(),
+                from_bytes::<V>(&value, false).unwrap(),
+            )
+        })
     }
 }

@@ -77,7 +77,30 @@ impl CoinDB {
     }
 
     pub fn check(&self) -> Check {
-        todo!();
+        let mut check = Check {
+            result: false,
+            accounts: 0,
+            htlcs: 0,
+            multisigs: 0,
+            expected_supply: self.state.supply,
+            actual_supply: Amount::ZERO,
+        };
+        for (_, account) in self.accounts.iter() {
+            check.actual_supply += account.total_balance();
+            check.accounts += 1;
+        }
+        for (_, htlc) in self.htlcs.iter() {
+            check.actual_supply += htlc.amount;
+            check.htlcs += 1;
+        }
+        for (_, multisig) in self.multisigs.iter() {
+            check.actual_supply += multisig.amount();
+            check.multisigs += 1;
+        }
+        if check.actual_supply == check.expected_supply {
+            check.result = true
+        }
+        check
     }
 
     pub fn check_anchor(&self, hash: Hash) -> Result<()> {
