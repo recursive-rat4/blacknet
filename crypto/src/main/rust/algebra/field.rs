@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Pavel Vasin
+ * Copyright (c) 2024-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,13 +15,14 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{CommutativeRing, DivisionRing, IntegerRing};
+use crate::algebra::{CommutativeRing, DivisionRing, IntegerRing, UnitalRing};
 use core::ops::Div;
 
-/// A commutative division ring.
+/// A unital commutative division ring.
 #[rustfmt::skip]
 pub trait Field
-    : CommutativeRing
+    : UnitalRing
+    + CommutativeRing
     + DivisionRing
     + Div<Output = Option<Self>>
     + for<'a> Div<&'a Self, Output = Option<Self>>
@@ -30,7 +31,8 @@ pub trait Field
 
 #[rustfmt::skip]
 impl<R
-    : CommutativeRing
+    : UnitalRing
+    + CommutativeRing
     + DivisionRing
     + Div<Output = Option<Self>>
     + for<'a> Div<&'a Self, Output = Option<Self>>

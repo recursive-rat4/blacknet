@@ -68,12 +68,16 @@ impl<R: Ring + Semiring> UnitalRing for R {}
 /// Elements of any ring commute under addition.
 #[rustfmt::skip]
 pub trait CommutativeRing
-    : UnitalRing
+    : Ring
     + CommutativeSemiring
 {
 }
 
-impl<R: UnitalRing + CommutativeSemiring> CommutativeRing for R {}
+#[rustfmt::skip]
+impl<R
+    : Ring
+    + CommutativeSemiring
+> CommutativeRing for R {}
 
 /// A ring in which nonzero elements are existent and invertible.
 #[rustfmt::skip]
@@ -85,7 +89,8 @@ pub trait DivisionRing
 
 #[rustfmt::skip]
 pub trait IntegerRing
-    : CommutativeRing
+    : UnitalRing
+    + CommutativeRing
     + AdditiveCyclicGroup
 {
     type Int: Integer;

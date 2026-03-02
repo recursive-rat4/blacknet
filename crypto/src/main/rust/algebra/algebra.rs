@@ -43,7 +43,7 @@ impl<R: UnitalRing> UnitalAlgebra<R> for R {}
 /// A marker for algebras with commutative multiplication.
 #[rustfmt::skip]
 pub trait CommutativeAlgebra<R: CommutativeRing>
-    : UnitalAlgebra<R>
+    : Algebra<R>
     + CommutativeRing
 {
 }
@@ -51,7 +51,7 @@ pub trait CommutativeAlgebra<R: CommutativeRing>
 #[rustfmt::skip]
 impl<
     R: CommutativeRing,
-    A: UnitalAlgebra<R> + CommutativeRing
+    A: Algebra<R> + CommutativeRing
 > CommutativeAlgebra<R> for A {}
 
 #[rustfmt::skip]

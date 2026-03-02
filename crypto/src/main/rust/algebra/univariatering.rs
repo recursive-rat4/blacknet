@@ -498,8 +498,8 @@ impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> AdditiveMonoid
 {
 }
 
-impl<R: CommutativeRing, const N: usize, C: Convolution<R, N>> MultiplicativeCommutativeMagma
-    for UnivariateRing<R, N, C>
+impl<R: UnitalRing + CommutativeRing, const N: usize, C: Convolution<R, N>>
+    MultiplicativeCommutativeMagma for UnivariateRing<R, N, C>
 {
 }
 

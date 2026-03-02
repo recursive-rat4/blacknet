@@ -16,7 +16,7 @@
  */
 
 use crate::algebra::{
-    AdditiveCommutativeMonoid, AdditiveMagmaOps, MultiplicativeCommutativeMonoid,
+    AdditiveCommutativeMonoid, AdditiveMagmaOps, MultiplicativeCommutativeSemigroup,
     MultiplicativeMagmaOps, MultiplicativeMonoid, MultiplicativeSemigroup,
 };
 
@@ -71,9 +71,13 @@ impl<R
 /// Semiring elements commute under addition by definition.
 #[rustfmt::skip]
 pub trait CommutativeSemiring
-    : Semiring
-    + MultiplicativeCommutativeMonoid
+    : Presemiring
+    + MultiplicativeCommutativeSemigroup
 {
 }
 
-impl<R: Semiring + MultiplicativeCommutativeMonoid> CommutativeSemiring for R {}
+#[rustfmt::skip]
+impl<R
+    : Presemiring
+    + MultiplicativeCommutativeSemigroup
+> CommutativeSemiring for R {}
