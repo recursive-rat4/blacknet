@@ -41,13 +41,9 @@ impl<R: Ring, const N: usize> FreeModule<R, N> {
         Self { components }
     }
 
-    pub const fn components(&self) -> &[R; N] {
-        &self.components
-    }
-
     #[inline]
     pub fn from_fn<F: FnMut(usize) -> R>(f: F) -> Self {
-        Self::from(array::from_fn(f))
+        Self::new(array::from_fn(f))
     }
 
     pub const fn swap(&mut self, a: usize, b: usize) {
@@ -89,9 +85,23 @@ impl<R: Ring, const N: usize> AsRef<[R]> for FreeModule<R, N> {
     }
 }
 
+impl<R: Ring, const N: usize> AsRef<[R; N]> for FreeModule<R, N> {
+    #[inline]
+    fn as_ref(&self) -> &[R; N] {
+        &self.components
+    }
+}
+
 impl<R: Ring, const N: usize> AsMut<[R]> for FreeModule<R, N> {
     #[inline]
     fn as_mut(&mut self) -> &mut [R] {
+        &mut self.components
+    }
+}
+
+impl<R: Ring, const N: usize> AsMut<[R; N]> for FreeModule<R, N> {
+    #[inline]
+    fn as_mut(&mut self) -> &mut [R; N] {
         &mut self.components
     }
 }
@@ -103,9 +113,23 @@ impl<R: Ring, const N: usize> Borrow<[R]> for FreeModule<R, N> {
     }
 }
 
+impl<R: Ring, const N: usize> Borrow<[R; N]> for FreeModule<R, N> {
+    #[inline]
+    fn borrow(&self) -> &[R; N] {
+        &self.components
+    }
+}
+
 impl<R: Ring, const N: usize> BorrowMut<[R]> for FreeModule<R, N> {
     #[inline]
     fn borrow_mut(&mut self) -> &mut [R] {
+        &mut self.components
+    }
+}
+
+impl<R: Ring, const N: usize> BorrowMut<[R; N]> for FreeModule<R, N> {
+    #[inline]
+    fn borrow_mut(&mut self) -> &mut [R; N] {
         &mut self.components
     }
 }

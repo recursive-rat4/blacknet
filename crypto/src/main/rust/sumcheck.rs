@@ -99,32 +99,15 @@ where
 
     pub fn verify(
         polynomial: &P,
-        mut sum: R,
+        sum: R,
         proof: &Proof<R>,
         duplex: &mut D,
         exceptional_set: &mut E,
     ) -> Result<(), Error<R>> {
-        if proof.variables() != polynomial.variables() {
-            return Err(Error::Variables(proof.variables(), polynomial.variables()));
-        }
-        let mut coordinates = Vec::<R>::with_capacity(polynomial.variables());
-        for i in 0..polynomial.variables() {
-            let claim = proof.claim(i);
-            if claim.degree() != polynomial.degree() {
-                return Err(Error::Degree(i, claim.degree(), polynomial.degree()));
-            }
-            if claim.at_0_plus_1() != sum {
-                return Err(Error::Sum(i, claim.at_0_plus_1(), sum));
-            }
-            duplex.absorb(claim);
-            let challenge = exceptional_set.sample(duplex);
-            sum = claim.point(&challenge);
-            coordinates.push(challenge);
-            exceptional_set.reset();
-        }
-        let r = Point::new(coordinates);
-        if polynomial.point(&r) != sum {
-            return Err(Error::PolynomialIdentity(polynomial.point(&r), sum));
+        let (r, s) = Self::verify_early_stopping(polynomial, sum, proof, duplex, exceptional_set)?;
+        let eval = polynomial.point(&r);
+        if eval != s {
+            return Err(Error::PolynomialIdentity(eval, s));
         }
         Ok(())
     }

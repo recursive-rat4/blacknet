@@ -150,7 +150,8 @@ pub fn encode(bytes: &[u8; D / 8]) -> PlainText {
 
 pub fn decode(pt: &PlainText) -> [u8; D / 8] {
     let mut bytes = [0_u8; D / 8];
-    for (i, chunk) in pt.m.coefficients().components().chunks_exact(8).enumerate() {
+    let coefficients: [Zt; D] = pt.m.coefficients().into();
+    for (i, chunk) in coefficients.chunks_exact(8).enumerate() {
         let byte = chunk
             .iter()
             .rev()

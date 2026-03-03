@@ -141,17 +141,14 @@ impl<Length: Ord, R: Ring + InfinityNorm<Length>, const N: usize> InfinityNorm<L
     for FreeModule<R, N>
 {
     fn check_infinity_norm(&self, bound: &Length) -> bool {
-        self.components()
-            .iter()
-            .all(|i| i.check_infinity_norm(bound))
+        self.into_iter().all(|i| i.check_infinity_norm(bound))
     }
 
     fn infinity_norm(&self) -> Length
     where
         Length: Default,
     {
-        self.components()
-            .iter()
+        self.into_iter()
             .map(InfinityNorm::infinity_norm)
             .max()
             .unwrap_or_default()

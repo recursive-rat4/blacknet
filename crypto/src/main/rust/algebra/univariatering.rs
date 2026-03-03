@@ -24,6 +24,7 @@ use crate::algebra::{
 };
 use crate::convolution::{Convolution, Negacyclic};
 use crate::duplex::{Absorb, Duplex, Squeeze};
+use core::borrow::Borrow;
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
 use core::marker::PhantomData;
@@ -276,19 +277,19 @@ impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Mul for UnivariateRing
     type Output = Self;
 
     fn mul(self, rps: Self) -> Self::Output {
-        Self::from(C::convolute(
-            self.coefficients.components(),
-            rps.coefficients.components(),
-        ))
+        let sequence = C::convolute(self.coefficients.borrow(), rps.coefficients.borrow());
+        let coefficients = FreeModule::<R, N>::new(sequence);
+        Self::new(coefficients)
     }
 }
 
 impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Mul<&Self> for UnivariateRing<R, N, C> {
     type Output = Self;
 
-    #[inline]
     fn mul(self, rps: &Self) -> Self::Output {
-        self * *rps
+        let sequence = C::convolute(self.coefficients.borrow(), rps.coefficients.borrow());
+        let coefficients = FreeModule::<R, N>::new(sequence);
+        Self::new(coefficients)
     }
 }
 
@@ -297,9 +298,10 @@ impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Mul<UnivariateRing<R, 
 {
     type Output = UnivariateRing<R, N, C>;
 
-    #[inline]
     fn mul(self, rps: UnivariateRing<R, N, C>) -> Self::Output {
-        *self * rps
+        let sequence = C::convolute(self.coefficients.borrow(), rps.coefficients.borrow());
+        let coefficients = FreeModule::<R, N>::new(sequence);
+        Self::Output::new(coefficients)
     }
 }
 
@@ -308,9 +310,10 @@ impl<'a, R: UnitalRing, const N: usize, C: Convolution<R, N>> Mul<&'a Univariate
 {
     type Output = UnivariateRing<R, N, C>;
 
-    #[inline]
     fn mul(self, rps: &'a UnivariateRing<R, N, C>) -> Self::Output {
-        *self * *rps
+        let sequence = C::convolute(self.coefficients.borrow(), rps.coefficients.borrow());
+        let coefficients = FreeModule::<R, N>::new(sequence);
+        Self::Output::new(coefficients)
     }
 }
 

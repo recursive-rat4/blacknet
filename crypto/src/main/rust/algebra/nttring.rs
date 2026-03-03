@@ -26,6 +26,7 @@ use crate::algebra::{
 use crate::convolution::{Convolution, Negacyclic};
 use crate::duplex::{Absorb, Duplex, Squeeze};
 use crate::numbertheoretictransform::{NTTConvolution, Twiddles, cooley_tukey, gentleman_sande};
+use core::borrow::Borrow;
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
 use core::ops::{Add, AddAssign, Div, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign};
@@ -293,30 +294,32 @@ impl<Z: Twiddles<M>, const M: usize, const N: usize> Mul for NTTRing<Z, M, N> {
     type Output = Self;
 
     fn mul(self, rps: Self) -> Self::Output {
-        Self {
-            spectrum: FreeModule::new(NTTConvolution::<M, N>::convolute(
-                self.spectrum.components(),
-                rps.spectrum.components(),
-            )),
-        }
+        let sequence =
+            NTTConvolution::<M, N>::convolute(self.spectrum.borrow(), rps.spectrum.borrow());
+        let spectrum = FreeModule::<Z, N>::new(sequence);
+        Self { spectrum }
     }
 }
 
 impl<Z: Twiddles<M>, const M: usize, const N: usize> Mul<&Self> for NTTRing<Z, M, N> {
     type Output = Self;
 
-    #[inline]
     fn mul(self, rps: &Self) -> Self::Output {
-        self * *rps
+        let sequence =
+            NTTConvolution::<M, N>::convolute(self.spectrum.borrow(), rps.spectrum.borrow());
+        let spectrum = FreeModule::<Z, N>::new(sequence);
+        Self { spectrum }
     }
 }
 
 impl<Z: Twiddles<M>, const M: usize, const N: usize> Mul<NTTRing<Z, M, N>> for &NTTRing<Z, M, N> {
     type Output = NTTRing<Z, M, N>;
 
-    #[inline]
     fn mul(self, rps: NTTRing<Z, M, N>) -> Self::Output {
-        *self * rps
+        let sequence =
+            NTTConvolution::<M, N>::convolute(self.spectrum.borrow(), rps.spectrum.borrow());
+        let spectrum = FreeModule::<Z, N>::new(sequence);
+        Self::Output { spectrum }
     }
 }
 
@@ -325,9 +328,11 @@ impl<'a, Z: Twiddles<M>, const M: usize, const N: usize> Mul<&'a NTTRing<Z, M, N
 {
     type Output = NTTRing<Z, M, N>;
 
-    #[inline]
     fn mul(self, rps: &'a NTTRing<Z, M, N>) -> Self::Output {
-        *self * *rps
+        let sequence =
+            NTTConvolution::<M, N>::convolute(self.spectrum.borrow(), rps.spectrum.borrow());
+        let spectrum = FreeModule::<Z, N>::new(sequence);
+        Self::Output { spectrum }
     }
 }
 
