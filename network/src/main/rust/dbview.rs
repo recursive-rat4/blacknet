@@ -84,4 +84,8 @@ impl<K: AsRef<[u8]>, V: for<'de> Deserialize<'de>> DBView<K, V> {
             )
         })
     }
+
+    pub fn count(&self) -> usize {
+        self.keyspace.len().unwrap()
+    }
 }

@@ -178,8 +178,21 @@ impl BlockDB {
         todo!();
     }
 
+    #[expect(unused)]
     pub fn check(&self) -> Check {
-        todo!();
+        let mut check = Check {
+            result: false,
+            height: todo!(),
+            indexes: 0,
+            blocks: 0,
+        };
+        check.indexes = self.indexes.count() as u32;
+        check.blocks = self.blocks.count() as u32;
+        // genesis is not in blocks, but is in indexes
+        if check.height + 1 == check.indexes && check.height == check.blocks {
+            check.result = true;
+        }
+        check
     }
 }
 
