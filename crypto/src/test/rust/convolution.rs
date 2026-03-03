@@ -23,7 +23,7 @@ type Z = blacknet_crypto::fermat::FermatField;
 struct TestBinomial;
 
 impl Convolution<Z, 3> for TestBinomial {
-    fn convolute(a: [Z; 3], b: [Z; 3]) -> [Z; 3] {
+    fn convolute(a: &[Z; 3], b: &[Z; 3]) -> [Z; 3] {
         <Self as Binomial<Z, 3>>::convolute(a, b)
     }
 }
@@ -37,7 +37,7 @@ fn cyclic() {
     let a = [3, 5, 7].map(Z::new);
     let b = [11, 13, 17].map(Z::new);
     let c = [209, 213, 193].map(Z::new);
-    let d = Cyclic::convolute(a, b);
+    let d = Cyclic::convolute(&a, &b);
     assert_eq!(d, c);
 }
 
@@ -46,7 +46,7 @@ fn negacyclic() {
     let a = [3, 5, 7].map(Z::new);
     let b = [11, 13, 17].map(Z::new);
     let c = [-143, -25, 193].map(Z::new);
-    let d = Negacyclic::convolute(a, b);
+    let d = Negacyclic::convolute(&a, &b);
     assert_eq!(d, c);
 }
 
@@ -55,6 +55,6 @@ fn binomial() {
     let a = [3, 5, 7].map(Z::new);
     let b = [11, 13, 17].map(Z::new);
     let c = [209, 213, 193].map(Z::new);
-    let d = <TestBinomial as Convolution<Z, 3>>::convolute(a, b);
+    let d = <TestBinomial as Convolution<Z, 3>>::convolute(&a, &b);
     assert_eq!(d, c);
 }

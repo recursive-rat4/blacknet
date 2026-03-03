@@ -81,18 +81,19 @@ impl<Z: Twiddles<M>, const M: usize, const N: usize> Default for NTTRing<Z, M, N
 }
 
 impl<Z: Twiddles<M>, const M: usize, const N: usize> From<[Z; N]> for NTTRing<Z, M, N> {
-    fn from(coefficients: [Z; N]) -> Self {
-        Self {
-            spectrum: cooley_tukey(coefficients).into(),
-        }
+    fn from(mut sequence: [Z; N]) -> Self {
+        cooley_tukey(&mut sequence);
+        let spectrum = FreeModule::<Z, N>::new(sequence);
+        Self { spectrum }
     }
 }
 
 impl<Z: Twiddles<M>, const M: usize, const N: usize> From<FreeModule<Z, N>> for NTTRing<Z, M, N> {
     fn from(coefficients: FreeModule<Z, N>) -> Self {
-        Self {
-            spectrum: cooley_tukey(coefficients.components()).into(),
-        }
+        let mut sequence: [Z; N] = coefficients.into();
+        cooley_tukey(&mut sequence);
+        let spectrum = FreeModule::<Z, N>::new(sequence);
+        Self { spectrum }
     }
 }
 
@@ -293,7 +294,7 @@ impl<Z: Twiddles<M>, const M: usize, const N: usize> Mul for NTTRing<Z, M, N> {
 
     fn mul(self, rps: Self) -> Self::Output {
         Self {
-            spectrum: FreeModule::from(NTTConvolution::<M, N>::convolute(
+            spectrum: FreeModule::new(NTTConvolution::<M, N>::convolute(
                 self.spectrum.components(),
                 rps.spectrum.components(),
             )),
@@ -538,7 +539,9 @@ impl<Z: Twiddles<M>, const M: usize, const N: usize> UnitalAlgebra<Z> for NTTRin
 impl<Z: Twiddles<M>, const M: usize, const N: usize> PolynomialRing<Z> for NTTRing<Z, M, N> {
     #[allow(refining_impl_trait_reachable)]
     fn coefficients(self) -> FreeModule<Z, N> {
-        gentleman_sande(self.spectrum.components()).into()
+        let mut sequence: [Z; N] = self.spectrum.into();
+        gentleman_sande(&mut sequence);
+        FreeModule::<Z, N>::new(sequence)
     }
 
     #[inline]

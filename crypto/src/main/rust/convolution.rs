@@ -18,13 +18,13 @@
 use crate::algebra::Ring;
 
 pub trait Convolution<R: Ring, const N: usize> {
-    fn convolute(a: [R; N], b: [R; N]) -> [R; N];
+    fn convolute(a: &[R; N], b: &[R; N]) -> [R; N];
 }
 
 pub struct Cyclic {}
 
 impl<R: Ring, const N: usize> Convolution<R, N> for Cyclic {
-    fn convolute(a: [R; N], b: [R; N]) -> [R; N] {
+    fn convolute(a: &[R; N], b: &[R; N]) -> [R; N] {
         let mut c = [R::ZERO; N];
         for k in 0..N {
             for i in 0..k + 1 {
@@ -41,7 +41,7 @@ impl<R: Ring, const N: usize> Convolution<R, N> for Cyclic {
 pub struct Negacyclic {}
 
 impl<R: Ring, const N: usize> Convolution<R, N> for Negacyclic {
-    fn convolute(a: [R; N], b: [R; N]) -> [R; N] {
+    fn convolute(a: &[R; N], b: &[R; N]) -> [R; N] {
         let mut c = [R::ZERO; N];
         for k in 0..N {
             for i in 0..k + 1 {
@@ -82,9 +82,9 @@ pub fn binomial<R: Ring, const N: usize>(c: &mut [R], a: &[R], b: &[R], zeta: R)
 pub trait Binomial<R: Ring, const N: usize>: Convolution<R, N> {
     const ZETA: R;
 
-    fn convolute(a: [R; N], b: [R; N]) -> [R; N] {
+    fn convolute(a: &[R; N], b: &[R; N]) -> [R; N] {
         let mut c = [R::ZERO; N];
-        binomial::<R, N>(&mut c, &a, &b, Self::ZETA);
+        binomial::<R, N>(&mut c, a, b, Self::ZETA);
         c
     }
 }

@@ -28,7 +28,7 @@ pub trait Twiddles<const N: usize>: PrimeField {
     const SCALE: Self;
 }
 
-pub fn cooley_tukey<Z: Twiddles<M>, const M: usize, const N: usize>(mut a: [Z; N]) -> [Z; N] {
+pub fn cooley_tukey<Z: Twiddles<M>, const M: usize, const N: usize>(a: &mut [Z; N]) {
     let inertia: usize = const {
         assert!(N % M == 0);
         N / M
@@ -52,10 +52,9 @@ pub fn cooley_tukey<Z: Twiddles<M>, const M: usize, const N: usize>(mut a: [Z; N
         }
         k >>= 1;
     }
-    a
 }
 
-pub fn gentleman_sande<Z: Twiddles<M>, const M: usize, const N: usize>(mut a: [Z; N]) -> [Z; N] {
+pub fn gentleman_sande<Z: Twiddles<M>, const M: usize, const N: usize>(a: &mut [Z; N]) {
     let inertia: usize = const {
         assert!(N % M == 0);
         N / M
@@ -80,13 +79,15 @@ pub fn gentleman_sande<Z: Twiddles<M>, const M: usize, const N: usize>(mut a: [Z
         }
         k <<= 1;
     }
-    a.map(|i| i * Z::SCALE)
+    for i in a {
+        *i *= Z::SCALE
+    }
 }
 
 pub struct NTTConvolution<const M: usize, const N: usize> {}
 
 impl<Z: Twiddles<M>, const M: usize, const N: usize> Convolution<Z, N> for NTTConvolution<M, N> {
-    fn convolute(a: [Z; N], b: [Z; N]) -> [Z; N] {
+    fn convolute(a: &[Z; N], b: &[Z; N]) -> [Z; N] {
         let inertia: usize = const {
             assert!(N % M == 0);
             N / M

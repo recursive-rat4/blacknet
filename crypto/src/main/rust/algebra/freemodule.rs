@@ -41,8 +41,8 @@ impl<R: Ring, const N: usize> FreeModule<R, N> {
         Self { components }
     }
 
-    pub const fn components(self) -> [R; N] {
-        self.components
+    pub const fn components(&self) -> &[R; N] {
+        &self.components
     }
 
     #[inline]
@@ -66,6 +66,13 @@ impl<R: Ring, const N: usize> From<[R; N]> for FreeModule<R, N> {
     #[inline]
     fn from(components: [R; N]) -> Self {
         Self { components }
+    }
+}
+
+impl<R: Ring, const N: usize> From<FreeModule<R, N>> for [R; N] {
+    #[inline]
+    fn from(module: FreeModule<R, N>) -> Self {
+        module.components
     }
 }
 

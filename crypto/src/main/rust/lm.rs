@@ -538,7 +538,7 @@ impl BalancedRepresentative for LMField {
 pub struct LMField2Convolution {}
 
 impl Convolution<LMField, 2> for LMField2Convolution {
-    fn convolute(a: [LMField; 2], b: [LMField; 2]) -> [LMField; 2] {
+    fn convolute(a: &[LMField; 2], b: &[LMField; 2]) -> [LMField; 2] {
         <Self as Binomial<LMField, 2>>::convolute(a, b)
     }
 }
@@ -599,7 +599,7 @@ impl DivisionAlgebra<LMField> for LMField2 {}
 pub struct LMField4Convolution {}
 
 impl Convolution<LMField, 4> for LMField4Convolution {
-    fn convolute(a: [LMField; 4], b: [LMField; 4]) -> [LMField; 4] {
+    fn convolute(a: &[LMField; 4], b: &[LMField; 4]) -> [LMField; 4] {
         <Self as Binomial<LMField, 4>>::convolute(a, b)
     }
 }
