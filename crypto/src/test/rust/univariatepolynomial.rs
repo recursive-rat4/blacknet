@@ -30,7 +30,6 @@ type R = blacknet_crypto::pervushin::PervushinField;
 fn polynomial() {
     let p = UnivariatePolynomial::from([2, 3, 4, 5].map(R::from));
     assert_eq!(p.degree(), 3);
-    assert_eq!(p.variables(), 1);
 }
 
 #[test]
@@ -124,7 +123,7 @@ fn circuit_evaluate() {
     let scope = circuit.scope("test");
     let p_circuit = Circuit::<R>::allocate(&circuit, VariableKind::PublicInput, p_plain.degree());
     let x_circuit = scope.public_input();
-    let _y_circuit = p_circuit.evaluate(&x_circuit.into());
+    let _y_circuit = p_circuit.point(&x_circuit.into());
     drop(scope);
 
     let r1cs = circuit.r1cs();
@@ -133,7 +132,7 @@ fn circuit_evaluate() {
     z.push(x_plain);
 
     let p_assigner = Assigner::new(p_plain.into(), &z);
-    let y_assigned = p_assigner.evaluate(&x_plain);
+    let y_assigned = p_assigner.point(&x_plain);
 
     assert_eq!(y_assigned, y_plain);
     assert_ok!(r1cs.is_satisfied(&z.finish()));

@@ -20,7 +20,7 @@ use crate::circuit::builder::{CircuitBuilder, LinearCombination, VariableKind};
 use crate::circuit::polynomial::{Point, UnivariatePolynomial};
 use crate::circuit::random::Distribution;
 use crate::duplex::Duplex;
-use crate::polynomial::MultivariatePolynomial;
+use crate::polynomial::{MultivariatePolynomial, Polynomial};
 use alloc::vec::Vec;
 use core::marker::PhantomData;
 
@@ -98,7 +98,7 @@ where
             scope.constrain(claim.at_0_plus_1(), sum.clone());
             duplex.absorb(claim);
             let challenge = exceptional_set.sample(duplex);
-            sum = claim.evaluate(&challenge);
+            sum = claim.point(&challenge);
             coordinates.push(challenge);
             exceptional_set.reset();
         }

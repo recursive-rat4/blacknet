@@ -47,10 +47,6 @@ impl<R: Semiring> UnivariatePolynomial<R> {
     pub const fn degree(&self) -> usize {
         self.coefficients.len() - 1
     }
-
-    pub const fn variables(&self) -> usize {
-        1
-    }
 }
 
 impl<R: Semiring, const N: usize> From<[R; N]> for UnivariatePolynomial<R> {

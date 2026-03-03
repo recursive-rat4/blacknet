@@ -18,6 +18,7 @@
 use crate::algebra::{Double, Semiring, SemiringOps};
 use crate::circuit::builder::{CircuitBuilder, LinearCombination, VariableKind};
 use crate::duplex::{Absorb, Duplex};
+use crate::polynomial::Polynomial;
 use alloc::vec::Vec;
 use core::iter::zip;
 use core::ops::{Add, AddAssign};
@@ -27,7 +28,7 @@ pub struct UnivariatePolynomial<'a, 'b, R: Semiring> {
     coefficients: Vec<LinearCombination<R>>,
 }
 
-impl<'a, 'b, R: Semiring + Clone + Eq> UnivariatePolynomial<'a, 'b, R> {
+impl<'a, 'b, R: Semiring + Clone> UnivariatePolynomial<'a, 'b, R> {
     pub fn allocate(circuit: &'a CircuitBuilder<'b, R>, kind: VariableKind, degree: usize) -> Self {
         let scope = circuit.scope("UnivariatePolynomial::allocate");
         Self {
@@ -36,21 +37,6 @@ impl<'a, 'b, R: Semiring + Clone + Eq> UnivariatePolynomial<'a, 'b, R> {
                 .map(|_| scope.variable(kind).into())
                 .collect(),
         }
-    }
-
-    pub fn evaluate(&self, point: &LinearCombination<R>) -> LinearCombination<R> {
-        if self.coefficients.is_empty() {
-            return LinearCombination::new();
-        }
-        let scope = self.circuit.scope("UnivariatePolynomial::evaluate");
-        // Horner method
-        let mut accum = self.coefficients[self.coefficients.len() - 1].clone();
-        for i in (0..self.coefficients.len() - 1).rev() {
-            let ap = scope.auxiliary();
-            scope.constrain(accum * point, ap);
-            accum = ap + &self.coefficients[i];
-        }
-        accum
     }
 
     pub fn at_0_plus_1(&self) -> LinearCombination<R>
@@ -69,6 +55,26 @@ impl<'a, 'b, R: Semiring + Clone + Eq> UnivariatePolynomial<'a, 'b, R> {
                         .sum::<LinearCombination<R>>()
             }
         }
+    }
+}
+
+impl<'a, 'b, R: Semiring + Clone + Eq> Polynomial for UnivariatePolynomial<'a, 'b, R> {
+    type Coefficient = LinearCombination<R>;
+    type Point = LinearCombination<R>;
+
+    fn point(&self, point: &LinearCombination<R>) -> LinearCombination<R> {
+        if self.coefficients.is_empty() {
+            return LinearCombination::new();
+        }
+        let scope = self.circuit.scope("UnivariatePolynomial::point");
+        // Horner method
+        let mut accum = self.coefficients[self.coefficients.len() - 1].clone();
+        for i in (0..self.coefficients.len() - 1).rev() {
+            let ap = scope.auxiliary();
+            scope.constrain(accum * point, ap);
+            accum = ap + &self.coefficients[i];
+        }
+        accum
     }
 }
 

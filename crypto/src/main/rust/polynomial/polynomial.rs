@@ -15,13 +15,12 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::Semiring;
 use crate::matrix::DenseVector;
 
 /// Polynomial is an expression of indeterminates and coefficients with a finite number of terms.
 pub trait Polynomial {
     /// Type of coefficients.
-    type Coefficient: Semiring;
+    type Coefficient;
     /// Type of points at which the polynomial can be evaluated.
     type Point;
 

@@ -18,6 +18,7 @@
 use crate::algebra::{Double, Semiring, SemiringOps};
 use crate::assigner::assigment::Assigment;
 use crate::duplex::{Absorb, Duplex};
+use crate::polynomial::Polynomial;
 use alloc::vec::Vec;
 use core::iter::zip;
 use core::ops::{Add, AddAssign};
@@ -27,26 +28,12 @@ pub struct UnivariatePolynomial<'a, R: Semiring> {
     assigment: &'a Assigment<R>,
 }
 
-impl<'a, R: Semiring + Clone> UnivariatePolynomial<'a, R> {
+impl<'a, R: Semiring> UnivariatePolynomial<'a, R> {
     pub const fn new(coefficients: Vec<R>, assigment: &'a Assigment<R>) -> Self {
         Self {
             coefficients,
             assigment,
         }
-    }
-
-    pub fn evaluate(&self, point: &R) -> R {
-        // Horner method
-        if self.coefficients.is_empty() {
-            return R::ZERO;
-        }
-        let mut accum = self.coefficients[self.coefficients.len() - 1].clone();
-        for i in (0..self.coefficients.len() - 1).rev() {
-            let ap = accum * point;
-            self.assigment.push(ap.clone());
-            accum = ap + &self.coefficients[i];
-        }
-        accum
     }
 
     pub fn at_0_plus_1(&self) -> R
@@ -63,10 +50,6 @@ impl<'a, R: Semiring + Clone> UnivariatePolynomial<'a, R> {
     pub const fn degree(&self) -> usize {
         self.coefficients.len() - 1
     }
-
-    pub const fn variables(&self) -> usize {
-        1
-    }
 }
 
 impl<'a, R: Semiring> IntoIterator for UnivariatePolynomial<'a, R> {
@@ -76,6 +59,25 @@ impl<'a, R: Semiring> IntoIterator for UnivariatePolynomial<'a, R> {
     #[inline]
     fn into_iter(self) -> Self::IntoIter {
         self.coefficients.into_iter()
+    }
+}
+
+impl<'a, R: Semiring + Clone> Polynomial for UnivariatePolynomial<'a, R> {
+    type Coefficient = R;
+    type Point = R;
+
+    fn point(&self, point: &R) -> R {
+        // Horner method
+        if self.coefficients.is_empty() {
+            return R::ZERO;
+        }
+        let mut accum = self.coefficients[self.coefficients.len() - 1].clone();
+        for i in (0..self.coefficients.len() - 1).rev() {
+            let ap = accum * point;
+            self.assigment.push(ap.clone());
+            accum = ap + &self.coefficients[i];
+        }
+        accum
     }
 }
 
