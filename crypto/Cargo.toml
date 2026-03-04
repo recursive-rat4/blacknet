@@ -34,6 +34,7 @@ categories.workspace = true
 blacknet-compat = { workspace = true, optional = true }
 libm.workspace = true
 orx-tree.workspace = true
+rayon = { workspace = true, optional = true }
 serde.workspace = true
 thiserror.workspace = true
 
@@ -42,8 +43,9 @@ blacknet-compat.workspace = true
 criterion.workspace = true
 
 [features]
-default = ["std"]
+default = ["std", "rayon"]
 std = ["dep:blacknet-compat"]
+rayon = ["dep:rayon"]
 
 [lints]
 workspace = true

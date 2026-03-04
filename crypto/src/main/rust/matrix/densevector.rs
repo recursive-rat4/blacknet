@@ -26,6 +26,8 @@ use core::iter::{Sum, repeat_n, zip};
 use core::ops::{
     Add, AddAssign, Deref, DerefMut, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign,
 };
+#[cfg(feature = "rayon")]
+use rayon::iter::{FromParallelIterator, IntoParallelIterator, ParallelIterator};
 use serde::{Deserialize, Serialize};
 
 /// A row (column) vector is a `1 ⨉ n` (`m ⨉ 1`) matrix.
@@ -214,6 +216,16 @@ impl<T> FromIterator<T> for DenseVector<T> {
     }
 }
 
+#[cfg(feature = "rayon")]
+impl<T: Send> FromParallelIterator<T> for DenseVector<T> {
+    #[inline]
+    fn from_par_iter<I: IntoParallelIterator<Item = T>>(par_iter: I) -> Self {
+        Self {
+            elements: par_iter.into_par_iter().collect(),
+        }
+    }
+}
+
 impl<T> IntoIterator for DenseVector<T> {
     type Item = T;
     type IntoIter = alloc::vec::IntoIter<T>;
@@ -241,6 +253,17 @@ impl<'a, T> IntoIterator for &'a mut DenseVector<T> {
     #[inline]
     fn into_iter(self) -> Self::IntoIter {
         self.elements.iter_mut()
+    }
+}
+
+#[cfg(feature = "rayon")]
+impl<T: Send> IntoParallelIterator for DenseVector<T> {
+    type Item = T;
+    type Iter = rayon::vec::IntoIter<T>;
+
+    #[inline]
+    fn into_par_iter(self) -> Self::Iter {
+        self.elements.into_par_iter()
     }
 }
 

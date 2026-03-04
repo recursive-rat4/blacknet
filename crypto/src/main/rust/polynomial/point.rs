@@ -19,6 +19,8 @@ use alloc::borrow::{Borrow, BorrowMut};
 use alloc::vec::Vec;
 use core::fmt::{Debug, Formatter, Result};
 use core::ops::{Deref, DerefMut, Index, IndexMut};
+#[cfg(feature = "rayon")]
+use rayon::iter::IntoParallelIterator;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Deserialize, Eq, PartialEq, Serialize)]
@@ -155,5 +157,16 @@ impl<'a, S> IntoIterator for &'a Point<S> {
     #[inline]
     fn into_iter(self) -> Self::IntoIter {
         self.coordinates.iter()
+    }
+}
+
+#[cfg(feature = "rayon")]
+impl<S: Send> IntoParallelIterator for Point<S> {
+    type Item = S;
+    type Iter = rayon::vec::IntoIter<S>;
+
+    #[inline]
+    fn into_par_iter(self) -> Self::Iter {
+        self.coordinates.into_par_iter()
     }
 }
