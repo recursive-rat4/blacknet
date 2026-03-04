@@ -17,13 +17,13 @@
 
 use crate::algebra::{
     AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, DivisionRing, Double, LeftZero,
-    RightZero, Ring, Semimodule, Set, Zero,
+    RightZero, Ring, RingOps, Semimodule, Set, Zero,
 };
 use crate::duplex::{Absorb, Duplex, Squeeze};
 use core::array;
 use core::borrow::{Borrow, BorrowMut};
 use core::fmt::{Debug, Formatter, Result};
-use core::iter::Sum;
+use core::iter::{Sum, zip};
 use core::ops::{Add, AddAssign, Div, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign};
 use serde::{Deserialize, Serialize};
 
@@ -170,13 +170,23 @@ impl<'a, R: Ring, const N: usize> IntoIterator for &'a FreeModule<R, N> {
     }
 }
 
+impl<'a, R: Ring, const N: usize> IntoIterator for &'a mut FreeModule<R, N> {
+    type Item = &'a mut R;
+    type IntoIter = core::slice::IterMut<'a, R>;
+
+    #[inline]
+    fn into_iter(self) -> Self::IntoIter {
+        self.components.iter_mut()
+    }
+}
+
 impl<R: Ring, const N: usize> Add for FreeModule<R, N> {
     type Output = Self;
 
     fn add(self, rps: Self) -> Self::Output {
-        Self {
-            components: array::from_fn(|i| self.components[i] + rps.components[i]),
-        }
+        let mut out = Self::Output::ZERO;
+        zip(&mut out, zip(self, rps)).for_each(|(o, (l, r))| *o = l + r);
+        out
     }
 }
 
@@ -184,43 +194,47 @@ impl<R: Ring, const N: usize> Add<&Self> for FreeModule<R, N> {
     type Output = Self;
 
     fn add(self, rps: &Self) -> Self::Output {
-        Self {
-            components: array::from_fn(|i| self.components[i] + rps.components[i]),
-        }
+        let mut out = Self::Output::ZERO;
+        zip(&mut out, zip(self, rps)).for_each(|(o, (l, r))| *o = l + r);
+        out
     }
 }
 
-impl<R: Ring, const N: usize> Add<FreeModule<R, N>> for &FreeModule<R, N> {
+impl<R: Ring, const N: usize> Add<FreeModule<R, N>> for &FreeModule<R, N>
+where
+    for<'a> &'a R: RingOps<R>,
+{
     type Output = FreeModule<R, N>;
 
     fn add(self, rps: FreeModule<R, N>) -> Self::Output {
-        Self::Output {
-            components: array::from_fn(|i| self.components[i] + rps.components[i]),
-        }
+        let mut out = Self::Output::ZERO;
+        zip(&mut out, zip(self, rps)).for_each(|(o, (l, r))| *o = l + r);
+        out
     }
 }
 
-impl<'a, R: Ring, const N: usize> Add<&'a FreeModule<R, N>> for &FreeModule<R, N> {
+impl<'a, R: Ring, const N: usize> Add<&'a FreeModule<R, N>> for &FreeModule<R, N>
+where
+    for<'b> &'b R: RingOps<R>,
+{
     type Output = FreeModule<R, N>;
 
     fn add(self, rps: &'a FreeModule<R, N>) -> Self::Output {
-        Self::Output {
-            components: array::from_fn(|i| self.components[i] + rps.components[i]),
-        }
+        let mut out = Self::Output::ZERO;
+        zip(&mut out, zip(self, rps)).for_each(|(o, (l, r))| *o = l + r);
+        out
     }
 }
 
 impl<R: Ring, const N: usize> AddAssign for FreeModule<R, N> {
-    #[inline]
     fn add_assign(&mut self, rps: Self) {
-        *self = *self + rps
+        zip(self, rps).for_each(|(l, r)| *l += r);
     }
 }
 
 impl<R: Ring, const N: usize> AddAssign<&Self> for FreeModule<R, N> {
-    #[inline]
     fn add_assign(&mut self, rps: &Self) {
-        *self = *self + *rps
+        zip(self, rps).for_each(|(l, r)| *l += r);
     }
 }
 
@@ -228,9 +242,9 @@ impl<R: Ring, const N: usize> Double for FreeModule<R, N> {
     type Output = Self;
 
     fn double(self) -> Self {
-        Self {
-            components: array::from_fn(|i| self.components[i].double()),
-        }
+        let mut lps = self;
+        lps.components.iter_mut().for_each(|l| *l = l.double());
+        lps
     }
 }
 
@@ -238,9 +252,9 @@ impl<R: Ring, const N: usize> Double for &FreeModule<R, N> {
     type Output = FreeModule<R, N>;
 
     fn double(self) -> Self::Output {
-        Self::Output {
-            components: array::from_fn(|i| self.components[i].double()),
-        }
+        let mut out = Self::Output::ZERO;
+        zip(&mut out, self).for_each(|(o, l)| *o = l.double());
+        out
     }
 }
 
@@ -248,9 +262,9 @@ impl<R: Ring, const N: usize> Neg for FreeModule<R, N> {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
-        Self {
-            components: array::from_fn(|i| -self.components[i]),
-        }
+        let mut lps = self;
+        lps.components.iter_mut().for_each(|l| *l = l.neg());
+        lps
     }
 }
 
@@ -258,9 +272,9 @@ impl<R: Ring, const N: usize> Neg for &FreeModule<R, N> {
     type Output = FreeModule<R, N>;
 
     fn neg(self) -> Self::Output {
-        Self::Output {
-            components: array::from_fn(|i| -self.components[i]),
-        }
+        let mut out = Self::Output::ZERO;
+        zip(&mut out, self).for_each(|(o, l)| *o = l.neg());
+        out
     }
 }
 
@@ -268,9 +282,9 @@ impl<R: Ring, const N: usize> Sub for FreeModule<R, N> {
     type Output = Self;
 
     fn sub(self, rps: Self) -> Self::Output {
-        Self {
-            components: array::from_fn(|i| self.components[i] - rps.components[i]),
-        }
+        let mut out = Self::Output::ZERO;
+        zip(&mut out, zip(self, rps)).for_each(|(o, (l, r))| *o = l - r);
+        out
     }
 }
 
@@ -278,43 +292,47 @@ impl<R: Ring, const N: usize> Sub<&Self> for FreeModule<R, N> {
     type Output = Self;
 
     fn sub(self, rps: &Self) -> Self::Output {
-        Self {
-            components: array::from_fn(|i| self.components[i] - rps.components[i]),
-        }
+        let mut out = Self::Output::ZERO;
+        zip(&mut out, zip(self, rps)).for_each(|(o, (l, r))| *o = l - r);
+        out
     }
 }
 
-impl<R: Ring, const N: usize> Sub<FreeModule<R, N>> for &FreeModule<R, N> {
+impl<R: Ring, const N: usize> Sub<FreeModule<R, N>> for &FreeModule<R, N>
+where
+    for<'a> &'a R: RingOps<R>,
+{
     type Output = FreeModule<R, N>;
 
     fn sub(self, rps: FreeModule<R, N>) -> Self::Output {
-        Self::Output {
-            components: array::from_fn(|i| self.components[i] - rps.components[i]),
-        }
+        let mut out = Self::Output::ZERO;
+        zip(&mut out, zip(self, rps)).for_each(|(o, (l, r))| *o = l - r);
+        out
     }
 }
 
-impl<'a, R: Ring, const N: usize> Sub<&'a FreeModule<R, N>> for &FreeModule<R, N> {
+impl<'a, R: Ring, const N: usize> Sub<&'a FreeModule<R, N>> for &FreeModule<R, N>
+where
+    for<'b> &'b R: RingOps<R>,
+{
     type Output = FreeModule<R, N>;
 
     fn sub(self, rps: &'a FreeModule<R, N>) -> Self::Output {
-        Self::Output {
-            components: array::from_fn(|i| self.components[i] - rps.components[i]),
-        }
+        let mut out = Self::Output::ZERO;
+        zip(&mut out, zip(self, rps)).for_each(|(o, (l, r))| *o = l - r);
+        out
     }
 }
 
 impl<R: Ring, const N: usize> SubAssign for FreeModule<R, N> {
-    #[inline]
     fn sub_assign(&mut self, rps: Self) {
-        *self = *self - rps
+        zip(self, rps).for_each(|(l, r)| *l -= r);
     }
 }
 
 impl<R: Ring, const N: usize> SubAssign<&Self> for FreeModule<R, N> {
-    #[inline]
     fn sub_assign(&mut self, rps: &Self) {
-        *self = *self - *rps
+        zip(self, rps).for_each(|(l, r)| *l -= r);
     }
 }
 
@@ -332,13 +350,16 @@ impl<R: Ring, const N: usize> Mul<&R> for FreeModule<R, N> {
     type Output = Self;
 
     fn mul(self, rps: &R) -> Self::Output {
-        Self::Output {
-            components: array::from_fn(|i| self.components[i] * rps),
-        }
+        let mut lps = self;
+        lps.components.iter_mut().for_each(|l| *l *= rps);
+        lps
     }
 }
 
-impl<R: Ring, const N: usize> Mul<R> for &FreeModule<R, N> {
+impl<R: Ring, const N: usize> Mul<R> for &FreeModule<R, N>
+where
+    for<'a> &'a R: RingOps<R>,
+{
     type Output = FreeModule<R, N>;
 
     #[allow(clippy::op_ref)]
@@ -348,27 +369,29 @@ impl<R: Ring, const N: usize> Mul<R> for &FreeModule<R, N> {
     }
 }
 
-impl<R: Ring, const N: usize> Mul<&R> for &FreeModule<R, N> {
+impl<R: Ring, const N: usize> Mul<&R> for &FreeModule<R, N>
+where
+    for<'a> &'a R: RingOps<R>,
+{
     type Output = FreeModule<R, N>;
 
     fn mul(self, rps: &R) -> Self::Output {
-        Self::Output {
-            components: array::from_fn(|i| self.components[i] * rps),
-        }
+        let mut out = Self::Output::ZERO;
+        zip(&mut out, self).for_each(|(o, l)| *o = l * rps);
+        out
     }
 }
 
 impl<R: Ring, const N: usize> MulAssign<R> for FreeModule<R, N> {
     #[inline]
     fn mul_assign(&mut self, rps: R) {
-        *self = *self * rps
+        *self *= &rps
     }
 }
 
 impl<R: Ring, const N: usize> MulAssign<&R> for FreeModule<R, N> {
-    #[inline]
     fn mul_assign(&mut self, rps: &R) {
-        *self = *self * *rps
+        self.components.iter_mut().for_each(|l| *l *= rps);
     }
 }
 
@@ -388,7 +411,10 @@ impl<R: DivisionRing, const N: usize> Div<&R> for FreeModule<R, N> {
     }
 }
 
-impl<R: DivisionRing, const N: usize> Div<R> for &FreeModule<R, N> {
+impl<R: DivisionRing, const N: usize> Div<R> for &FreeModule<R, N>
+where
+    for<'a> &'a R: RingOps<R>,
+{
     type Output = Option<FreeModule<R, N>>;
 
     fn div(self, rps: R) -> Self::Output {
@@ -396,7 +422,10 @@ impl<R: DivisionRing, const N: usize> Div<R> for &FreeModule<R, N> {
     }
 }
 
-impl<R: DivisionRing, const N: usize> Div<&R> for &FreeModule<R, N> {
+impl<R: DivisionRing, const N: usize> Div<&R> for &FreeModule<R, N>
+where
+    for<'a> &'a R: RingOps<R>,
+{
     type Output = Option<FreeModule<R, N>>;
 
     fn div(self, rps: &R) -> Self::Output {
@@ -411,9 +440,10 @@ impl<R: Ring, const N: usize> Sum for FreeModule<R, N> {
 }
 
 impl<'a, R: Ring, const N: usize> Sum<&'a Self> for FreeModule<R, N> {
+    #[allow(clippy::clone_on_copy)]
     fn sum<I: Iterator<Item = &'a Self>>(mut iter: I) -> Self {
         let first = match iter.next() {
-            Some(i) => *i,
+            Some(i) => i.clone(),
             None => return Self::ZERO,
         };
         iter.fold(first, |lps, rps| lps + rps)

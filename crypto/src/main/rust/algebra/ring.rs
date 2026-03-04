@@ -62,7 +62,11 @@ pub trait UnitalRing
 {
 }
 
-impl<R: Ring + Semiring> UnitalRing for R {}
+#[rustfmt::skip]
+impl<R
+    : Ring
+    + Semiring
+> UnitalRing for R {}
 
 /// A marker for rings with commutative multiplication.
 /// Elements of any ring commute under addition.
