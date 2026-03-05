@@ -19,8 +19,8 @@ use crate::algebra::{
     AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, Algebra, CommutativeRing,
     Conjugate, DivisionRing, Double, FreeModule, IntegerRing, LeftOne, LeftZero,
     MultiplicativeCommutativeMagma, MultiplicativeMonoid, MultiplicativeSemigroup, One,
-    PolynomialRing, PowerOfTwoCyclotomicRing, RightOne, RightZero, Semimodule, Set, Square,
-    UnitalAlgebra, UnitalRing, Zero,
+    PolynomialRing, PowerOfTwoCyclotomicRing, RightOne, RightZero, RingOps, Semimodule, Set,
+    Square, UnitalAlgebra, UnitalRing, Zero,
 };
 use crate::convolution::{Convolution, Negacyclic};
 use crate::duplex::{Absorb, Duplex, Squeeze};
@@ -199,7 +199,10 @@ impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Double for UnivariateR
     }
 }
 
-impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Double for &UnivariateRing<R, N, C> {
+impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Double for &UnivariateRing<R, N, C>
+where
+    for<'a> &'a R: RingOps<R>,
+{
     type Output = UnivariateRing<R, N, C>;
 
     fn double(self) -> Self::Output {
@@ -215,7 +218,10 @@ impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Neg for UnivariateRing
     }
 }
 
-impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Neg for &UnivariateRing<R, N, C> {
+impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Neg for &UnivariateRing<R, N, C>
+where
+    for<'a> &'a R: RingOps<R>,
+{
     type Output = UnivariateRing<R, N, C>;
 
     fn neg(self) -> Self::Output {

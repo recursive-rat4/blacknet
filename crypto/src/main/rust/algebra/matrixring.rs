@@ -240,7 +240,10 @@ impl<R: Ring, const N: usize, const NN: usize> Double for MatrixRing<R, N, NN> {
     }
 }
 
-impl<R: Ring, const N: usize, const NN: usize> Double for &MatrixRing<R, N, NN> {
+impl<R: Ring, const N: usize, const NN: usize> Double for &MatrixRing<R, N, NN>
+where
+    for<'a> &'a R: RingOps<R>,
+{
     type Output = MatrixRing<R, N, NN>;
 
     fn double(self) -> Self::Output {
@@ -255,17 +258,20 @@ impl<R: Ring, const N: usize, const NN: usize> Neg for MatrixRing<R, N, NN> {
 
     fn neg(self) -> Self::Output {
         let mut lps = self;
-        lps.elements.iter_mut().for_each(|l| *l = l.neg());
+        lps.elements.iter_mut().for_each(|l| *l = -*l);
         lps
     }
 }
 
-impl<R: Ring, const N: usize, const NN: usize> Neg for &MatrixRing<R, N, NN> {
+impl<R: Ring, const N: usize, const NN: usize> Neg for &MatrixRing<R, N, NN>
+where
+    for<'a> &'a R: RingOps<R>,
+{
     type Output = MatrixRing<R, N, NN>;
 
     fn neg(self) -> Self::Output {
         let mut out = Self::Output::ZERO;
-        zip(&mut out, self).for_each(|(o, l)| *o = l.neg());
+        zip(&mut out, self).for_each(|(o, l)| *o = -l);
         out
     }
 }

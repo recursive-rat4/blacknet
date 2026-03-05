@@ -25,6 +25,8 @@ use core::borrow::{Borrow, BorrowMut};
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Sum, zip};
 use core::ops::{Add, AddAssign, Div, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign};
+#[cfg(feature = "rayon")]
+use rayon::iter::IntoParallelIterator;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Copy, Deserialize, Eq, PartialEq, Serialize)]
@@ -180,6 +182,17 @@ impl<'a, R: Ring, const N: usize> IntoIterator for &'a mut FreeModule<R, N> {
     }
 }
 
+#[cfg(feature = "rayon")]
+impl<R: Ring + Send, const N: usize> IntoParallelIterator for FreeModule<R, N> {
+    type Item = R;
+    type Iter = rayon::array::IntoIter<R, N>;
+
+    #[inline]
+    fn into_par_iter(self) -> Self::Iter {
+        self.components.into_par_iter()
+    }
+}
+
 impl<R: Ring, const N: usize> Add for FreeModule<R, N> {
     type Output = Self;
 
@@ -248,7 +261,10 @@ impl<R: Ring, const N: usize> Double for FreeModule<R, N> {
     }
 }
 
-impl<R: Ring, const N: usize> Double for &FreeModule<R, N> {
+impl<R: Ring, const N: usize> Double for &FreeModule<R, N>
+where
+    for<'a> &'a R: RingOps<R>,
+{
     type Output = FreeModule<R, N>;
 
     fn double(self) -> Self::Output {
@@ -263,17 +279,20 @@ impl<R: Ring, const N: usize> Neg for FreeModule<R, N> {
 
     fn neg(self) -> Self::Output {
         let mut lps = self;
-        lps.components.iter_mut().for_each(|l| *l = l.neg());
+        lps.components.iter_mut().for_each(|l| *l = -*l);
         lps
     }
 }
 
-impl<R: Ring, const N: usize> Neg for &FreeModule<R, N> {
+impl<R: Ring, const N: usize> Neg for &FreeModule<R, N>
+where
+    for<'a> &'a R: RingOps<R>,
+{
     type Output = FreeModule<R, N>;
 
     fn neg(self) -> Self::Output {
         let mut out = Self::Output::ZERO;
-        zip(&mut out, self).for_each(|(o, l)| *o = l.neg());
+        zip(&mut out, self).for_each(|(o, l)| *o = -l);
         out
     }
 }

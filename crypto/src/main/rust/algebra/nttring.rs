@@ -21,7 +21,7 @@ use crate::algebra::{
     AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, Algebra, Conjugate, Double,
     FreeModule, Inv, LeftOne, LeftZero, MultiplicativeCommutativeMagma, MultiplicativeMonoid,
     MultiplicativeSemigroup, One, PolynomialRing, PowerOfTwoCyclotomicRing, RightOne, RightZero,
-    Semimodule, Set, Square, UnitalAlgebra, UnivariateRing, Zero,
+    RingOps, Semimodule, Set, Square, UnitalAlgebra, UnivariateRing, Zero,
 };
 use crate::convolution::{Convolution, Negacyclic};
 use crate::duplex::{Absorb, Duplex, Squeeze};
@@ -206,7 +206,10 @@ impl<Z: Twiddles<M>, const M: usize, const N: usize> Double for NTTRing<Z, M, N>
     }
 }
 
-impl<Z: Twiddles<M>, const M: usize, const N: usize> Double for &NTTRing<Z, M, N> {
+impl<Z: Twiddles<M>, const M: usize, const N: usize> Double for &NTTRing<Z, M, N>
+where
+    for<'a> &'a Z: RingOps<Z>,
+{
     type Output = NTTRing<Z, M, N>;
 
     fn double(self) -> Self::Output {
@@ -226,7 +229,10 @@ impl<Z: Twiddles<M>, const M: usize, const N: usize> Neg for NTTRing<Z, M, N> {
     }
 }
 
-impl<Z: Twiddles<M>, const M: usize, const N: usize> Neg for &NTTRing<Z, M, N> {
+impl<Z: Twiddles<M>, const M: usize, const N: usize> Neg for &NTTRing<Z, M, N>
+where
+    for<'a> &'a Z: RingOps<Z>,
+{
     type Output = NTTRing<Z, M, N>;
 
     fn neg(self) -> Self::Output {

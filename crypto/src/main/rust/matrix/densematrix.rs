@@ -21,6 +21,8 @@ use alloc::vec;
 use alloc::vec::Vec;
 use core::iter::{Sum, zip};
 use core::ops::{Add, AddAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign};
+#[cfg(feature = "rayon")]
+use rayon::slice::ParallelSlice;
 use serde::{Deserialize, Serialize};
 
 /// A matrix in the row-major order.
@@ -103,8 +105,17 @@ impl<T> DenseMatrix<T> {
     }
 
     /// Iterate rows.
-    pub fn iter_row(&self) -> impl ExactSizeIterator<Item = &[T]> {
+    pub fn iter_row(&self) -> core::slice::ChunksExact<'_, T> {
         self.elements.chunks_exact(self.columns)
+    }
+
+    /// Iterate rows.
+    #[cfg(feature = "rayon")]
+    pub fn par_iter_row(&self) -> rayon::slice::ChunksExact<'_, T>
+    where
+        T: Sync,
+    {
+        self.elements.par_chunks_exact(self.columns)
     }
 
     /// Swap two rows.
@@ -126,10 +137,10 @@ impl<T> DenseMatrix<T> {
     {
         debug_assert!(self.rows == rps.rows);
         let mut elements = Vec::<T>::with_capacity(self.rows * (self.columns + rps.columns));
-        for i in 0..self.rows {
-            elements.extend_from_slice(&self.elements[i * self.columns..(i + 1) * self.columns]);
-            elements.extend_from_slice(&rps.elements[i * rps.columns..(i + 1) * rps.columns]);
-        }
+        zip(self.iter_row(), rps.iter_row()).for_each(|(l, r)| {
+            elements.extend_from_slice(l);
+            elements.extend_from_slice(r);
+        });
         Self {
             rows: self.rows,
             columns: self.columns + rps.columns,
