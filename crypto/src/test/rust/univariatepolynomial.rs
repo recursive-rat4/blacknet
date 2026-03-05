@@ -48,6 +48,13 @@ fn dbl() {
 }
 
 #[test]
+fn neg() {
+    let a = UnivariatePolynomial::from([2, 1, 0, -1].map(R::from));
+    let b = UnivariatePolynomial::from([-2, -1, 0, 1].map(R::from));
+    assert_eq!(-a, b);
+}
+
+#[test]
 fn mul() {
     let a = UnivariatePolynomial::from([2, 3].map(R::from));
     let b = UnivariatePolynomial::from([5, 7, 11].map(R::from));

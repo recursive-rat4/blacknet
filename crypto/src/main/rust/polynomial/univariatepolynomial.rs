@@ -15,7 +15,9 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{DivisionRing, Double, Semiring, SemiringOps, Set, Square, UnitalRing};
+use crate::algebra::{
+    DivisionRing, Double, RingOps, Semiring, SemiringOps, Set, Square, UnitalRing,
+};
 use crate::duplex::{Absorb, Duplex, Squeeze, SqueezeWithSize};
 use crate::matrix::DenseVector;
 use crate::polynomial::{InBasis, Polynomial, TensorBasis};
@@ -269,12 +271,38 @@ impl<R: Semiring> Double for UnivariatePolynomial<R> {
     }
 }
 
+impl<R: Semiring> Double for &UnivariatePolynomial<R>
+where
+    for<'a> &'a R: SemiringOps<R>,
+{
+    type Output = UnivariatePolynomial<R>;
+
+    fn double(self) -> Self::Output {
+        Self::Output {
+            coefficients: self.coefficients.iter().map(Double::double).collect(),
+        }
+    }
+}
+
 impl<R: UnitalRing> Neg for UnivariatePolynomial<R> {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
         Self {
             coefficients: self.coefficients.into_iter().map(Neg::neg).collect(),
+        }
+    }
+}
+
+impl<R: UnitalRing> Neg for &UnivariatePolynomial<R>
+where
+    for<'a> &'a R: RingOps<R>,
+{
+    type Output = UnivariatePolynomial<R>;
+
+    fn neg(self) -> Self::Output {
+        Self::Output {
+            coefficients: self.coefficients.iter().map(Neg::neg).collect(),
         }
     }
 }
