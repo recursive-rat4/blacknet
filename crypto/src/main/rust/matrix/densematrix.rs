@@ -188,10 +188,11 @@ impl<T> DenseMatrix<T> {
         let rows = self.rows;
         let columns = self.columns * rps.columns;
         let mut elements = Vec::<T>::with_capacity(rows * columns);
-        for i in 0..rows {
+        for (l, r) in zip(self.iter_row(), rps.iter_row()) {
+            #[allow(clippy::needless_range_loop)]
             for j in 0..self.columns {
                 for k in 0..rps.columns {
-                    elements.push(&self[(i, j)] * &rps[(i, k)])
+                    elements.push(&l[j] * &r[k])
                 }
             }
         }
@@ -629,8 +630,8 @@ where
 
     fn mul(self, rps: &DenseVector<T>) -> Self::Output {
         debug_assert!(self.columns == rps.dimension());
-        (0..self.rows())
-            .map(|i| (0..self.columns()).map(|j| &self[(i, j)] * &rps[j]).sum())
+        self.iter_row()
+            .map(|row| (0..self.columns).map(|j| &row[j] * &rps[j]).sum())
             .collect()
     }
 }
@@ -679,8 +680,8 @@ where
 
     fn mul(self, rps: &DenseMatrix<T>) -> Self::Output {
         debug_assert!(self.dimension() == rps.rows);
-        (0..rps.columns())
-            .map(|j| (0..rps.rows()).map(|i| &self[i] * &rps[(i, j)]).sum())
+        (0..rps.columns)
+            .map(|j| (0..rps.rows).map(|i| &self[i] * &rps[(i, j)]).sum())
             .collect()
     }
 }
@@ -809,11 +810,11 @@ where
         let rows = self.rows * rps.rows;
         let columns = self.columns * rps.columns;
         let mut elements = Vec::<T>::with_capacity(rows * columns);
-        for i in 0..self.rows {
-            for j in 0..rps.rows {
-                for k in 0..self.columns {
-                    for l in 0..rps.columns {
-                        elements.push(&self[(i, k)] * &rps[(j, l)])
+        for left in self.iter_row() {
+            for right in rps.iter_row() {
+                for l in left {
+                    for r in right {
+                        elements.push(l * r)
                     }
                 }
             }

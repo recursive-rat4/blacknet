@@ -96,12 +96,12 @@ where
 
     fn mul(self, rps: &SparseVector<T>) -> Self::Output {
         let rps_nnz = rps.index.len();
-        (0..self.rows())
-            .map(|i| {
+        self.iter_row()
+            .map(|row| {
                 (0..rps_nnz)
                     .map(|j| {
                         let column = rps.index[j];
-                        &self[(i, column)] * &rps.elements[j]
+                        &row[column] * &rps.elements[j]
                     })
                     .sum()
             })
