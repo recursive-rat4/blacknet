@@ -38,11 +38,23 @@ impl<R, T
 > RingOps<R> for T {}
 
 #[rustfmt::skip]
+pub trait DivisionRingOps<R>
+    : RingOps<R>
+    + Inv<Output = Option<R>>
+{
+}
+
+#[rustfmt::skip]
+impl<R, T
+    : RingOps<R>
+    + Inv<Output = Option<R>>
+> DivisionRingOps<R> for T {}
+
+#[rustfmt::skip]
 pub trait Ring
     : Presemiring
     + AdditiveAbelianGroup
     + RingOps<Self>
-    + Clone
 {
 }
 
@@ -51,7 +63,6 @@ impl<R
     : Presemiring
     + AdditiveAbelianGroup
     + RingOps<Self>
-    + Clone
 > Ring for R {}
 
 /// A ring with multiplicative identity.
@@ -90,7 +101,6 @@ impl<R
 pub trait DivisionRing
     : Ring
     + Inv<Output = Option<Self>>
-    + Copy
 {
 }
 

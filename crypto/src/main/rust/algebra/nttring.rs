@@ -18,10 +18,10 @@
 #![allow(clippy::manual_is_multiple_of)]
 
 use crate::algebra::{
-    AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, Algebra, Conjugate, Double,
-    FreeModule, Inv, LeftOne, LeftZero, MultiplicativeCommutativeMagma, MultiplicativeMonoid,
-    MultiplicativeSemigroup, One, PolynomialRing, PowerOfTwoCyclotomicRing, RightOne, RightZero,
-    RingOps, Semimodule, Set, Square, UnitalAlgebra, UnivariateRing, Zero,
+    AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, Algebra, Conjugate,
+    DivisionRingOps, Double, FreeModule, Inv, LeftOne, LeftZero, MultiplicativeCommutativeMagma,
+    MultiplicativeMonoid, MultiplicativeSemigroup, One, PolynomialRing, PowerOfTwoCyclotomicRing,
+    RightOne, RightZero, RingOps, Semimodule, Set, Square, UnitalAlgebra, UnivariateRing, Zero,
 };
 use crate::convolution::{Convolution, Negacyclic};
 use crate::duplex::{Absorb, Duplex, Squeeze};
@@ -463,7 +463,10 @@ impl<Z: Twiddles<M>, const M: usize, const N: usize> Div<Z> for NTTRing<Z, M, N>
     }
 }
 
-impl<Z: Twiddles<M>, const M: usize, const N: usize> Div<&Z> for NTTRing<Z, M, N> {
+impl<Z: Twiddles<M>, const M: usize, const N: usize> Div<&Z> for NTTRing<Z, M, N>
+where
+    for<'a> &'a Z: DivisionRingOps<Z>,
+{
     type Output = Option<Self>;
 
     fn div(self, rps: &Z) -> Self::Output {

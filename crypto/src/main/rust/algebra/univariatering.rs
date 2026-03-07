@@ -17,7 +17,7 @@
 
 use crate::algebra::{
     AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, Algebra, CommutativeRing,
-    Conjugate, DivisionRing, Double, FreeModule, IntegerRing, LeftOne, LeftZero,
+    Conjugate, DivisionRing, DivisionRingOps, Double, FreeModule, IntegerRing, LeftOne, LeftZero,
     MultiplicativeCommutativeMagma, MultiplicativeMonoid, MultiplicativeSemigroup, One,
     PolynomialRing, PowerOfTwoCyclotomicRing, RightOne, RightZero, RingOps, Semimodule, Set,
     Square, UnitalAlgebra, UnitalRing, Zero,
@@ -415,6 +415,8 @@ impl<R: UnitalRing + DivisionRing, const N: usize, C: Convolution<R, N>> Div<R>
 
 impl<R: UnitalRing + DivisionRing, const N: usize, C: Convolution<R, N>> Div<&R>
     for UnivariateRing<R, N, C>
+where
+    for<'a> &'a R: DivisionRingOps<R>,
 {
     type Output = Option<Self>;
 
