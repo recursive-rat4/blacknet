@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{Double, Semiring, SemiringOps, Square, UnitalRing};
+use crate::algebra::{Double, RingOps, Semiring, SemiringOps, Square, UnitalRing};
 use crate::circuit::builder::{
     Expression, LinearCombination, LinearMonoid, LinearSpan, LinearTerm, Variable,
 };
@@ -143,7 +143,10 @@ impl<R: UnitalRing> Neg for Constant<R> {
     }
 }
 
-impl<R: UnitalRing> Neg for &Constant<R> {
+impl<R: UnitalRing> Neg for &Constant<R>
+where
+    for<'a> &'a R: RingOps<R>,
+{
     type Output = Constant<R>;
 
     fn neg(self) -> Self::Output {

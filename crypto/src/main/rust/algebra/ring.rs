@@ -42,7 +42,7 @@ pub trait Ring
     : Presemiring
     + AdditiveAbelianGroup
     + RingOps<Self>
-    + Copy
+    + Clone
 {
 }
 
@@ -51,7 +51,7 @@ impl<R
     : Presemiring
     + AdditiveAbelianGroup
     + RingOps<Self>
-    + Copy
+    + Clone
 > Ring for R {}
 
 /// A ring with multiplicative identity.
@@ -59,6 +59,7 @@ impl<R
 pub trait UnitalRing
     : Ring
     + Semiring
+    + Copy
 {
 }
 
@@ -66,6 +67,7 @@ pub trait UnitalRing
 impl<R
     : Ring
     + Semiring
+    + Copy
 > UnitalRing for R {}
 
 /// A marker for rings with commutative multiplication.
@@ -88,6 +90,7 @@ impl<R
 pub trait DivisionRing
     : Ring
     + Inv<Output = Option<Self>>
+    + Copy
 {
 }
 

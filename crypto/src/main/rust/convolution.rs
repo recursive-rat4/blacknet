@@ -23,7 +23,7 @@ pub trait Convolution<R: Ring, const N: usize> {
 
 pub struct Cyclic {}
 
-impl<R: Ring, const N: usize> Convolution<R, N> for Cyclic {
+impl<R: Ring + Copy, const N: usize> Convolution<R, N> for Cyclic {
     fn convolute(a: &[R; N], b: &[R; N]) -> [R; N] {
         let mut c = [R::ZERO; N];
         for k in 0..N {
@@ -40,7 +40,7 @@ impl<R: Ring, const N: usize> Convolution<R, N> for Cyclic {
 
 pub struct Negacyclic {}
 
-impl<R: Ring, const N: usize> Convolution<R, N> for Negacyclic {
+impl<R: Ring + Copy, const N: usize> Convolution<R, N> for Negacyclic {
     fn convolute(a: &[R; N], b: &[R; N]) -> [R; N] {
         let mut c = [R::ZERO; N];
         for k in 0..N {
@@ -56,7 +56,7 @@ impl<R: Ring, const N: usize> Convolution<R, N> for Negacyclic {
 }
 
 #[inline]
-pub fn binomial<R: Ring, const N: usize>(c: &mut [R], a: &[R], b: &[R], zeta: R) {
+pub fn binomial<R: Ring + Copy, const N: usize>(c: &mut [R], a: &[R], b: &[R], zeta: R) {
     match N {
         4 => {
             c[0] = a[0] * b[0] + zeta * (a[1] * b[3] + a[2] * b[2] + a[3] * b[1]);
@@ -79,7 +79,7 @@ pub fn binomial<R: Ring, const N: usize>(c: &mut [R], a: &[R], b: &[R], zeta: R)
     }
 }
 
-pub trait Binomial<R: Ring, const N: usize>: Convolution<R, N> {
+pub trait Binomial<R: Ring + Copy, const N: usize>: Convolution<R, N> {
     const ZETA: R;
 
     fn convolute(a: &[R; N], b: &[R; N]) -> [R; N] {

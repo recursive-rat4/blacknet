@@ -255,9 +255,9 @@ impl<R: Ring, const N: usize> Double for FreeModule<R, N> {
     type Output = Self;
 
     fn double(self) -> Self {
-        let mut lps = self;
-        lps.components.iter_mut().for_each(|l| *l = l.double());
-        lps
+        Self {
+            components: self.components.map(Double::double),
+        }
     }
 }
 
@@ -278,9 +278,9 @@ impl<R: Ring, const N: usize> Neg for FreeModule<R, N> {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
-        let mut lps = self;
-        lps.components.iter_mut().for_each(|l| *l = -*l);
-        lps
+        Self {
+            components: self.components.map(Neg::neg),
+        }
     }
 }
 
