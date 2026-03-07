@@ -51,9 +51,7 @@ impl<R: Semiring> CustomizableConstraintSystem<R> {
             .map(SparseMatrix::columns)
             .expect("Valid CCS")
     }
-}
 
-impl<R: Semiring + Eq + Send + Sync> CustomizableConstraintSystem<R> {
     pub fn assigment(&self) -> Assigment<R> {
         let z = Assigment::new(self.variables());
         z.push(R::ONE);

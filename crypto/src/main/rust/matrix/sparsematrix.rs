@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{AdditiveGroup, Zero};
+use crate::algebra::{AdditiveGroup, AdditiveGroupOps, Zero};
 use crate::matrix::{DenseMatrix, DenseVector};
 use alloc::vec;
 use alloc::vec::Vec;
@@ -103,6 +103,22 @@ impl<G: AdditiveGroup> Neg for SparseMatrix<G> {
     }
 }
 
+impl<G: AdditiveGroup> Neg for &SparseMatrix<G>
+where
+    for<'a> &'a G: AdditiveGroupOps<G>,
+{
+    type Output = SparseMatrix<G>;
+
+    fn neg(self) -> Self::Output {
+        Self::Output {
+            columns: self.columns,
+            r_index: self.r_index.clone(),
+            c_index: self.c_index.clone(),
+            elements: self.elements.iter().map(Neg::neg).collect(),
+        }
+    }
+}
+
 impl<T: Zero + Sum> Mul<&DenseVector<T>> for &SparseMatrix<T>
 where
     for<'a> &'a T: Mul<Output = T>,
@@ -110,14 +126,15 @@ where
     type Output = DenseVector<T>;
 
     fn mul(self, rps: &DenseVector<T>) -> Self::Output {
+        debug_assert!(self.columns == rps.dimension());
         (0..self.rows())
             .map(|i| {
                 let row_start = self.r_index[i];
                 let row_end = self.r_index[i + 1];
                 (row_start..row_end)
-                    .map(|j| {
-                        let column = self.c_index[j];
-                        &self.elements[j] * &rps[column]
+                    .map(|idx| {
+                        let j = self.c_index[idx];
+                        &self.elements[idx] * &rps[j]
                     })
                     .sum()
             })

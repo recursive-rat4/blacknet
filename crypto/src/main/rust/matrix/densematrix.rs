@@ -159,7 +159,7 @@ impl<T> DenseMatrix<T> {
         T: for<'a> Sum<&'a T>,
     {
         debug_assert!(self.rows == self.columns);
-        (0..self.rows).map(|i| &self[(i, i)]).sum()
+        self.iter_row().enumerate().map(|(i, row)| &row[i]).sum()
     }
 
     pub fn transpose(&self) -> Self
@@ -448,7 +448,7 @@ where
     }
 }
 
-impl<T: Zero + AddAssign + Clone> Mul for DenseMatrix<T>
+impl<T: Sum> Mul for DenseMatrix<T>
 where
     for<'a> &'a T: Mul<Output = T>,
 {
@@ -460,7 +460,7 @@ where
     }
 }
 
-impl<T: Zero + AddAssign + Clone> MulAssign for DenseMatrix<T>
+impl<T: Sum> MulAssign for DenseMatrix<T>
 where
     for<'a> &'a T: Mul<Output = T>,
 {
@@ -470,7 +470,7 @@ where
     }
 }
 
-impl<T: Zero + AddAssign + Clone> Mul<&DenseMatrix<T>> for DenseMatrix<T>
+impl<T: Sum> Mul<&DenseMatrix<T>> for DenseMatrix<T>
 where
     for<'a> &'a T: Mul<Output = T>,
 {
@@ -482,7 +482,7 @@ where
     }
 }
 
-impl<T: Zero + AddAssign + Clone> MulAssign<&DenseMatrix<T>> for DenseMatrix<T>
+impl<T: Sum> MulAssign<&DenseMatrix<T>> for DenseMatrix<T>
 where
     for<'a> &'a T: Mul<Output = T>,
 {
@@ -492,7 +492,7 @@ where
     }
 }
 
-impl<T: Zero + AddAssign + Clone> Mul<DenseMatrix<T>> for &DenseMatrix<T>
+impl<T: Sum> Mul<DenseMatrix<T>> for &DenseMatrix<T>
 where
     for<'a> &'a T: Mul<Output = T>,
 {
@@ -504,7 +504,7 @@ where
     }
 }
 
-impl<T: Zero + AddAssign + Clone> Mul for &DenseMatrix<T>
+impl<T: Sum> Mul for &DenseMatrix<T>
 where
     for<'a> &'a T: Mul<Output = T>,
 {
@@ -513,15 +513,21 @@ where
     fn mul(self, rps: &DenseMatrix<T>) -> Self::Output {
         debug_assert!(self.columns == rps.rows);
         // Iterative algorithm
-        let mut r = DenseMatrix::fill(self.rows, rps.columns, T::ZERO);
+        let mut elements = Vec::<T>::with_capacity(self.rows * rps.columns);
         for i in 0..self.rows {
             for j in 0..rps.columns {
-                for k in 0..self.columns {
-                    r[(i, j)] += &self[(i, k)] * &rps[(k, j)];
-                }
+                elements.push(
+                    (0..self.columns)
+                        .map(|k| &self[(i, k)] * &rps[(k, j)])
+                        .sum(),
+                )
             }
         }
-        r
+        Self::Output {
+            rows: self.rows,
+            columns: rps.columns,
+            elements,
+        }
     }
 }
 
@@ -681,12 +687,17 @@ where
     fn mul(self, rps: &DenseMatrix<T>) -> Self::Output {
         debug_assert!(self.dimension() == rps.rows);
         (0..rps.columns)
-            .map(|j| (0..rps.rows).map(|i| &self[i] * &rps[(i, j)]).sum())
+            .map(|j| {
+                rps.iter_row()
+                    .enumerate()
+                    .map(|(i, r)| &self[i] * &r[j])
+                    .sum()
+            })
             .collect()
     }
 }
 
-impl<T: Zero + AddAssign + Clone> Square for DenseMatrix<T>
+impl<T: Sum> Square for DenseMatrix<T>
 where
     for<'a> &'a T: Mul<Output = T>,
 {
@@ -698,7 +709,7 @@ where
     }
 }
 
-impl<T: Zero + AddAssign + Clone> Square for &DenseMatrix<T>
+impl<T: Sum> Square for &DenseMatrix<T>
 where
     for<'a> &'a T: Mul<Output = T>,
 {

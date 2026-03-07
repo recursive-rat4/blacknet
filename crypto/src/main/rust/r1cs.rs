@@ -40,9 +40,7 @@ impl<R: Semiring> R1CS<R> {
     const fn variables(&self) -> usize {
         self.a.columns()
     }
-}
 
-impl<R: Semiring + Eq + Send + Sync> R1CS<R> {
     pub fn assigment(&self) -> Assigment<R> {
         let z = Assigment::new(self.variables());
         z.push(R::ONE);

@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{AdditiveGroup, Zero};
+use crate::algebra::{AdditiveGroup, AdditiveGroupOps, Zero};
 use crate::matrix::{DenseMatrix, DenseVector};
 use alloc::vec::Vec;
 use core::iter::{Sum, zip};
@@ -67,6 +67,21 @@ impl<G: AdditiveGroup> Neg for SparseVector<G> {
     }
 }
 
+impl<G: AdditiveGroup> Neg for &SparseVector<G>
+where
+    for<'a> &'a G: AdditiveGroupOps<G>,
+{
+    type Output = SparseVector<G>;
+
+    fn neg(self) -> Self::Output {
+        Self::Output {
+            dimension: self.dimension,
+            index: self.index.clone(),
+            elements: self.elements.iter().map(Neg::neg).collect(),
+        }
+    }
+}
+
 impl<T: Zero + Sum> Mul<&DenseMatrix<T>> for &SparseVector<T>
 where
     for<'a> &'a T: Mul<Output = T>,
@@ -74,13 +89,14 @@ where
     type Output = DenseVector<T>;
 
     fn mul(self, rps: &DenseMatrix<T>) -> Self::Output {
+        debug_assert!(self.dimension == rps.rows());
         let lps_nnz = self.index.len();
         (0..rps.columns())
             .map(|j| {
                 (0..lps_nnz)
-                    .map(|i| {
-                        let row = self.index[i];
-                        &self.elements[i] * &rps[(row, j)]
+                    .map(|idx| {
+                        let i = self.index[idx];
+                        &self.elements[idx] * &rps[(i, j)]
                     })
                     .sum()
             })
@@ -95,13 +111,14 @@ where
     type Output = DenseVector<T>;
 
     fn mul(self, rps: &SparseVector<T>) -> Self::Output {
+        debug_assert!(self.columns() == rps.dimension);
         let rps_nnz = rps.index.len();
         self.iter_row()
             .map(|row| {
                 (0..rps_nnz)
-                    .map(|j| {
-                        let column = rps.index[j];
-                        &row[column] * &rps.elements[j]
+                    .map(|idx| {
+                        let j = rps.index[idx];
+                        &row[j] * &rps.elements[idx]
                     })
                     .sum()
             })
