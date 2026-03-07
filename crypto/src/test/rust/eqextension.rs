@@ -35,6 +35,13 @@ fn meta() {
 }
 
 #[test]
+fn neg() {
+    let a = EqExtension::from([3, 5, 7, 11].map(R::from));
+    let r = Point::from([17, 23, 29, 31].map(R::from));
+    assert_eq!(-(a.point(&r)), (-a).point(&r));
+}
+
+#[test]
 fn mul() {
     let a = EqExtension::from([2, 3, 5, 7].map(R::from));
     let b = R::from(11);

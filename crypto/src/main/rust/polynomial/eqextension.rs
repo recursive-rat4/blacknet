@@ -152,12 +152,34 @@ impl<R: UnitalRing> Double for EqExtension<R> {
     }
 }
 
+impl<R: UnitalRing> Double for &EqExtension<R> {
+    type Output = EqExtension<R>;
+
+    fn double(self) -> Self::Output {
+        Self::Output {
+            coefficients: self.coefficients.clone(),
+            z: self.z.double(),
+        }
+    }
+}
+
 impl<R: UnitalRing> Neg for EqExtension<R> {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
         Self {
             coefficients: self.coefficients,
+            z: -self.z,
+        }
+    }
+}
+
+impl<R: UnitalRing> Neg for &EqExtension<R> {
+    type Output = EqExtension<R>;
+
+    fn neg(self) -> Self::Output {
+        Self::Output {
+            coefficients: self.coefficients.clone(),
             z: -self.z,
         }
     }
@@ -174,8 +196,47 @@ impl<R: UnitalRing> Mul<R> for EqExtension<R> {
     }
 }
 
+impl<R: UnitalRing> Mul<&R> for EqExtension<R> {
+    type Output = Self;
+
+    fn mul(self, rps: &R) -> Self::Output {
+        Self {
+            coefficients: self.coefficients,
+            z: self.z * rps,
+        }
+    }
+}
+
+impl<R: UnitalRing> Mul<R> for &EqExtension<R> {
+    type Output = EqExtension<R>;
+
+    fn mul(self, rps: R) -> Self::Output {
+        Self::Output {
+            coefficients: self.coefficients.clone(),
+            z: self.z * rps,
+        }
+    }
+}
+
+impl<R: UnitalRing> Mul<&R> for &EqExtension<R> {
+    type Output = EqExtension<R>;
+
+    fn mul(self, rps: &R) -> Self::Output {
+        Self::Output {
+            coefficients: self.coefficients.clone(),
+            z: self.z * rps,
+        }
+    }
+}
+
 impl<R: UnitalRing> MulAssign<R> for EqExtension<R> {
     fn mul_assign(&mut self, rps: R) {
+        self.z *= rps
+    }
+}
+
+impl<R: UnitalRing> MulAssign<&R> for EqExtension<R> {
+    fn mul_assign(&mut self, rps: &R) {
         self.z *= rps
     }
 }

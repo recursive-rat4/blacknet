@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{Double, Set, UnitalRing};
+use crate::algebra::{Double, RingOps, Set, UnitalRing};
 use crate::duplex::{Absorb, Duplex, Squeeze, SqueezeWithSize};
 use crate::matrix::{DenseMatrix, DenseVector};
 use crate::polynomial::{
@@ -27,6 +27,8 @@ use core::iter::zip;
 use core::ops::{
     Add, AddAssign, Deref, DerefMut, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign,
 };
+#[cfg(feature = "rayon")]
+use rayon::iter::{FromParallelIterator, IntoParallelIterator, ParallelIterator};
 use serde::{Deserialize, Serialize};
 
 /// A multilinear polynomial that evaluates to its coefficients over the unit hypercube.
@@ -83,6 +85,18 @@ impl<R: UnitalRing> FromIterator<R> for MultilinearExtension<R> {
     fn from_iter<I: IntoIterator<Item = R>>(iter: I) -> Self {
         let result = Self {
             coefficients: iter.into_iter().collect(),
+        };
+        debug_assert!(result.coefficients.len().is_power_of_two());
+        result
+    }
+}
+
+#[cfg(feature = "rayon")]
+impl<R: UnitalRing + Send> FromParallelIterator<R> for MultilinearExtension<R> {
+    #[inline]
+    fn from_par_iter<I: IntoParallelIterator<Item = R>>(par_iter: I) -> Self {
+        let result = Self {
+            coefficients: par_iter.into_par_iter().collect(),
         };
         debug_assert!(result.coefficients.len().is_power_of_two());
         result
@@ -184,6 +198,47 @@ impl<R: UnitalRing> IndexMut<usize> for MultilinearExtension<R> {
     }
 }
 
+impl<R: UnitalRing> IntoIterator for MultilinearExtension<R> {
+    type Item = R;
+    type IntoIter = alloc::vec::IntoIter<R>;
+
+    #[inline]
+    fn into_iter(self) -> Self::IntoIter {
+        self.coefficients.into_iter()
+    }
+}
+
+impl<'a, R: UnitalRing> IntoIterator for &'a MultilinearExtension<R> {
+    type Item = &'a R;
+    type IntoIter = core::slice::Iter<'a, R>;
+
+    #[inline]
+    fn into_iter(self) -> Self::IntoIter {
+        self.coefficients.iter()
+    }
+}
+
+impl<'a, R: UnitalRing> IntoIterator for &'a mut MultilinearExtension<R> {
+    type Item = &'a mut R;
+    type IntoIter = core::slice::IterMut<'a, R>;
+
+    #[inline]
+    fn into_iter(self) -> Self::IntoIter {
+        self.coefficients.iter_mut()
+    }
+}
+
+#[cfg(feature = "rayon")]
+impl<R: UnitalRing + Send> IntoParallelIterator for MultilinearExtension<R> {
+    type Item = R;
+    type Iter = rayon::vec::IntoIter<R>;
+
+    #[inline]
+    fn into_par_iter(self) -> Self::Iter {
+        self.coefficients.into_par_iter()
+    }
+}
+
 impl<R: UnitalRing> Polynomial for MultilinearExtension<R> {
     type Coefficient = R;
     type Point = Point<R>;
@@ -267,17 +322,17 @@ impl<R: UnitalRing> Add for MultilinearExtension<R> {
     type Output = Self;
 
     fn add(self, rps: Self) -> Self::Output {
+        debug_assert_eq!(self.coefficients.len(), rps.coefficients.len());
         Self {
-            coefficients: zip(self.coefficients, rps.coefficients)
-                .map(|(l, r)| l + r)
-                .collect(),
+            coefficients: zip(self, rps).map(|(l, r)| l + r).collect(),
         }
     }
 }
 
 impl<R: UnitalRing> AddAssign for MultilinearExtension<R> {
     fn add_assign(&mut self, rps: Self) {
-        zip(self.coefficients.iter_mut(), rps.coefficients).for_each(|(l, r)| *l += r);
+        debug_assert_eq!(self.coefficients.len(), rps.coefficients.len());
+        zip(self, rps).for_each(|(l, r)| *l += r);
     }
 }
 
@@ -287,6 +342,19 @@ impl<R: UnitalRing> Double for MultilinearExtension<R> {
     fn double(self) -> Self::Output {
         Self {
             coefficients: self.coefficients.into_iter().map(Double::double).collect(),
+        }
+    }
+}
+
+impl<R: UnitalRing> Double for &MultilinearExtension<R>
+where
+    for<'a> &'a R: RingOps<R>,
+{
+    type Output = MultilinearExtension<R>;
+
+    fn double(self) -> Self::Output {
+        Self::Output {
+            coefficients: self.coefficients.iter().map(Double::double).collect(),
         }
     }
 }
@@ -301,21 +369,34 @@ impl<R: UnitalRing> Neg for MultilinearExtension<R> {
     }
 }
 
+impl<R: UnitalRing> Neg for &MultilinearExtension<R>
+where
+    for<'a> &'a R: RingOps<R>,
+{
+    type Output = MultilinearExtension<R>;
+
+    fn neg(self) -> Self::Output {
+        Self::Output {
+            coefficients: self.coefficients.iter().map(Neg::neg).collect(),
+        }
+    }
+}
+
 impl<R: UnitalRing> Sub for MultilinearExtension<R> {
     type Output = Self;
 
     fn sub(self, rps: Self) -> Self::Output {
+        debug_assert_eq!(self.coefficients.len(), rps.coefficients.len());
         Self {
-            coefficients: zip(self.coefficients, rps.coefficients)
-                .map(|(l, r)| l - r)
-                .collect(),
+            coefficients: zip(self, rps).map(|(l, r)| l - r).collect(),
         }
     }
 }
 
 impl<R: UnitalRing> SubAssign for MultilinearExtension<R> {
     fn sub_assign(&mut self, rps: Self) {
-        zip(self.coefficients.iter_mut(), rps.coefficients).for_each(|(l, r)| *l -= r);
+        debug_assert_eq!(self.coefficients.len(), rps.coefficients.len());
+        zip(self, rps).for_each(|(l, r)| *l -= r);
     }
 }
 
@@ -363,6 +444,12 @@ impl<R: UnitalRing> Mul<R> for MultilinearExtension<R> {
 
 impl<R: UnitalRing> MulAssign<R> for MultilinearExtension<R> {
     fn mul_assign(&mut self, rps: R) {
+        self.coefficients.iter_mut().for_each(|l| *l *= rps);
+    }
+}
+
+impl<R: UnitalRing> MulAssign<&R> for MultilinearExtension<R> {
+    fn mul_assign(&mut self, rps: &R) {
         self.coefficients.iter_mut().for_each(|l| *l *= rps);
     }
 }
