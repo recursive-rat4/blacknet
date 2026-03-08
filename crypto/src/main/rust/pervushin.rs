@@ -329,13 +329,22 @@ impl Square for &PervushinField {
 impl Inv for PervushinField {
     type Output = Option<Self>;
 
+    #[inline]
+    fn inv(self) -> Self::Output {
+        (&self).inv()
+    }
+}
+
+impl Inv for &PervushinField {
+    type Output = Option<PervushinField>;
+
     fn inv(self) -> Self::Output {
         // Extended Binary GCD (classic algorithm)
         // https://eprint.iacr.org/2020/972
         let mut a = self.canonical();
-        let mut b = Self::MODULUS;
-        let mut c = Self::ONE;
-        let mut d = Self::ZERO;
+        let mut b = PervushinField::MODULUS;
+        let mut c = PervushinField::ONE;
+        let mut d = PervushinField::ZERO;
         while a != 0 {
             if a & 1 == 0 {
                 a >>= 1;
@@ -482,7 +491,7 @@ impl IntegerRing for PervushinField {
         Self::new(n)
     }
 
-    fn canonical(self) -> Self::Int {
+    fn canonical(&self) -> Self::Int {
         let x = Self::reduce_64(self.n);
         if x >= Self::MODULUS {
             x - Self::MODULUS
@@ -492,7 +501,7 @@ impl IntegerRing for PervushinField {
             x
         }
     }
-    fn absolute(self) -> Self::Int {
+    fn absolute(&self) -> Self::Int {
         self.balanced().abs()
     }
 

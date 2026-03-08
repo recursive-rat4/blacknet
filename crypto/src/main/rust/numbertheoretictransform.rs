@@ -17,7 +17,7 @@
 
 #![allow(clippy::manual_is_multiple_of)]
 
-use crate::algebra::PrimeField;
+use crate::algebra::{PrimeField, RingOps};
 use crate::convolution::{Convolution, binomial};
 use core::array;
 
@@ -86,7 +86,10 @@ pub fn gentleman_sande<Z: Twiddles<M>, const M: usize, const N: usize>(a: &mut [
 
 pub struct NTTConvolution<const M: usize, const N: usize> {}
 
-impl<Z: Twiddles<M>, const M: usize, const N: usize> Convolution<Z, N> for NTTConvolution<M, N> {
+impl<Z: Twiddles<M>, const M: usize, const N: usize> Convolution<Z, N> for NTTConvolution<M, N>
+where
+    for<'a> &'a Z: RingOps<Z>,
+{
     fn convolute(a: &[Z; N], b: &[Z; N]) -> [Z; N] {
         let inertia: usize = const {
             assert!(N % M == 0);
@@ -103,13 +106,13 @@ impl<Z: Twiddles<M>, const M: usize, const N: usize> Convolution<Z, N> for NTTCo
                         &mut c[i * k..i * k + 4],
                         &a[i * k..i * k + 4],
                         &b[i * k..i * k + 4],
-                        Z::TWIDDLES[l + i],
+                        &Z::TWIDDLES[l + i],
                     );
                     binomial::<Z, 4>(
                         &mut c[i * k + inertia..i * k + inertia + 4],
                         &a[i * k + inertia..i * k + inertia + 4],
                         &b[i * k + inertia..i * k + inertia + 4],
-                        -Z::TWIDDLES[l + i],
+                        &-Z::TWIDDLES[l + i],
                     );
                 }
                 c

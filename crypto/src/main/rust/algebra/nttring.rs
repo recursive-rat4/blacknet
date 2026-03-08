@@ -20,16 +20,17 @@
 use crate::algebra::{
     AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, Algebra, Conjugate,
     DivisionRingOps, Double, FreeModule, Inv, LeftOne, LeftZero, MultiplicativeCommutativeMagma,
-    MultiplicativeMonoid, MultiplicativeSemigroup, One, PolynomialRing, PowerOfTwoCyclotomicRing,
-    RightOne, RightZero, RingOps, Semimodule, Set, Square, UnitalAlgebra, UnivariateRing, Zero,
+    MultiplicativeMonoid, MultiplicativeSemigroup, One, RightOne, RightZero, RingOps, Semimodule,
+    Set, Square, UnitalAlgebra, UnivariateRing, Zero,
 };
 use crate::convolution::{Convolution, Negacyclic};
 use crate::duplex::{Absorb, Duplex, Squeeze};
 use crate::numbertheoretictransform::{NTTConvolution, Twiddles, cooley_tukey, gentleman_sande};
-use core::borrow::Borrow;
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
 use core::ops::{Add, AddAssign, Div, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign};
+#[cfg(feature = "rayon")]
+use rayon::iter::IntoParallelIterator;
 use serde::{Deserialize, Serialize};
 
 // Univariate polynomial ring in NTT form
@@ -90,10 +91,9 @@ impl<Z: Twiddles<M>, const M: usize, const N: usize> From<[Z; N]> for NTTRing<Z,
 }
 
 impl<Z: Twiddles<M>, const M: usize, const N: usize> From<FreeModule<Z, N>> for NTTRing<Z, M, N> {
-    fn from(coefficients: FreeModule<Z, N>) -> Self {
-        let mut sequence: [Z; N] = coefficients.into();
-        cooley_tukey(&mut sequence);
-        let spectrum = FreeModule::<Z, N>::new(sequence);
+    fn from(mut coefficients: FreeModule<Z, N>) -> Self {
+        cooley_tukey(&mut coefficients);
+        let spectrum = coefficients;
         Self { spectrum }
     }
 }
@@ -104,15 +104,39 @@ impl<Z: Twiddles<M>, const M: usize, const N: usize> From<Z> for NTTRing<Z, M, N
     }
 }
 
-impl<Z: Twiddles<M>, const M: usize, const N: usize> From<Iso<Z, N>> for NTTRing<Z, M, N> {
+impl<Z: Twiddles<M>, const M: usize, const N: usize> From<Iso<Z, N>> for NTTRing<Z, M, N>
+where
+    for<'a> &'a Z: RingOps<Z>,
+{
     fn from(iso: Iso<Z, N>) -> Self {
-        Self::from(iso.coefficients())
+        let coefficients: FreeModule<Z, N> = iso.into();
+        Self::from(coefficients)
     }
 }
 
-impl<Z: Twiddles<M>, const M: usize, const N: usize> From<NTTRing<Z, M, N>> for Iso<Z, N> {
+impl<Z: Twiddles<M>, const M: usize, const N: usize> From<NTTRing<Z, M, N>> for Iso<Z, N>
+where
+    for<'a> &'a Z: RingOps<Z>,
+{
     fn from(ntt: NTTRing<Z, M, N>) -> Self {
-        Self::from(ntt.coefficients())
+        let mut spectrum = ntt.spectrum;
+        gentleman_sande(&mut spectrum);
+        let coefficients = spectrum;
+        Self::from(coefficients)
+    }
+}
+
+impl<Z: Twiddles<M>, const M: usize, const N: usize> AsRef<FreeModule<Z, N>> for NTTRing<Z, M, N> {
+    #[inline]
+    fn as_ref(&self) -> &FreeModule<Z, N> {
+        &self.spectrum
+    }
+}
+
+impl<Z: Twiddles<M>, const M: usize, const N: usize> AsMut<FreeModule<Z, N>> for NTTRing<Z, M, N> {
+    #[inline]
+    fn as_mut(&mut self) -> &mut FreeModule<Z, N> {
+        &mut self.spectrum
     }
 }
 
@@ -139,6 +163,39 @@ impl<Z: Twiddles<M>, const M: usize, const N: usize> IntoIterator for NTTRing<Z,
     #[inline]
     fn into_iter(self) -> Self::IntoIter {
         self.spectrum.into_iter()
+    }
+}
+
+impl<'a, Z: Twiddles<M>, const M: usize, const N: usize> IntoIterator for &'a NTTRing<Z, M, N> {
+    type Item = &'a Z;
+    type IntoIter = core::slice::Iter<'a, Z>;
+
+    #[inline]
+    fn into_iter(self) -> Self::IntoIter {
+        (&self.spectrum).into_iter()
+    }
+}
+
+impl<'a, Z: Twiddles<M>, const M: usize, const N: usize> IntoIterator for &'a mut NTTRing<Z, M, N> {
+    type Item = &'a mut Z;
+    type IntoIter = core::slice::IterMut<'a, Z>;
+
+    #[inline]
+    fn into_iter(self) -> Self::IntoIter {
+        (&mut self.spectrum).into_iter()
+    }
+}
+
+#[cfg(feature = "rayon")]
+impl<Z: Twiddles<M> + Send, const M: usize, const N: usize> IntoParallelIterator
+    for NTTRing<Z, M, N>
+{
+    type Item = Z;
+    type Iter = rayon::array::IntoIter<Z, N>;
+
+    #[inline]
+    fn into_par_iter(self) -> Self::Iter {
+        self.spectrum.into_par_iter()
     }
 }
 
@@ -296,73 +353,90 @@ impl<Z: Twiddles<M>, const M: usize, const N: usize> SubAssign<&Self> for NTTRin
     }
 }
 
-impl<Z: Twiddles<M>, const M: usize, const N: usize> Mul for NTTRing<Z, M, N> {
+impl<Z: Twiddles<M>, const M: usize, const N: usize> Mul for NTTRing<Z, M, N>
+where
+    for<'a> &'a Z: RingOps<Z>,
+{
     type Output = Self;
 
+    #[allow(clippy::op_ref)]
+    #[inline]
     fn mul(self, rps: Self) -> Self::Output {
-        let sequence =
-            NTTConvolution::<M, N>::convolute(self.spectrum.borrow(), rps.spectrum.borrow());
-        let spectrum = FreeModule::<Z, N>::new(sequence);
-        Self { spectrum }
+        &self * &rps
     }
 }
 
-impl<Z: Twiddles<M>, const M: usize, const N: usize> Mul<&Self> for NTTRing<Z, M, N> {
+impl<Z: Twiddles<M>, const M: usize, const N: usize> Mul<&Self> for NTTRing<Z, M, N>
+where
+    for<'a> &'a Z: RingOps<Z>,
+{
     type Output = Self;
 
+    #[allow(clippy::op_ref)]
+    #[inline]
     fn mul(self, rps: &Self) -> Self::Output {
-        let sequence =
-            NTTConvolution::<M, N>::convolute(self.spectrum.borrow(), rps.spectrum.borrow());
-        let spectrum = FreeModule::<Z, N>::new(sequence);
-        Self { spectrum }
+        &self * rps
     }
 }
 
-impl<Z: Twiddles<M>, const M: usize, const N: usize> Mul<NTTRing<Z, M, N>> for &NTTRing<Z, M, N> {
+impl<Z: Twiddles<M>, const M: usize, const N: usize> Mul<NTTRing<Z, M, N>> for &NTTRing<Z, M, N>
+where
+    for<'a> &'a Z: RingOps<Z>,
+{
     type Output = NTTRing<Z, M, N>;
 
+    #[allow(clippy::op_ref)]
+    #[inline]
     fn mul(self, rps: NTTRing<Z, M, N>) -> Self::Output {
-        let sequence =
-            NTTConvolution::<M, N>::convolute(self.spectrum.borrow(), rps.spectrum.borrow());
-        let spectrum = FreeModule::<Z, N>::new(sequence);
-        Self::Output { spectrum }
+        self * &rps
     }
 }
 
 impl<'a, Z: Twiddles<M>, const M: usize, const N: usize> Mul<&'a NTTRing<Z, M, N>>
     for &NTTRing<Z, M, N>
+where
+    for<'b> &'b Z: RingOps<Z>,
 {
     type Output = NTTRing<Z, M, N>;
 
     fn mul(self, rps: &'a NTTRing<Z, M, N>) -> Self::Output {
         let sequence =
-            NTTConvolution::<M, N>::convolute(self.spectrum.borrow(), rps.spectrum.borrow());
+            <NTTConvolution<M, N> as Convolution<Z, N>>::convolute(&self.spectrum, &rps.spectrum);
         let spectrum = FreeModule::<Z, N>::new(sequence);
         Self::Output { spectrum }
     }
 }
 
-impl<Z: Twiddles<M>, const M: usize, const N: usize> MulAssign for NTTRing<Z, M, N> {
+impl<Z: Twiddles<M>, const M: usize, const N: usize> MulAssign for NTTRing<Z, M, N>
+where
+    for<'a> &'a Z: RingOps<Z>,
+{
     #[inline]
     fn mul_assign(&mut self, rps: Self) {
         *self = *self * rps
     }
 }
 
-impl<Z: Twiddles<M>, const M: usize, const N: usize> MulAssign<&Self> for NTTRing<Z, M, N> {
+impl<Z: Twiddles<M>, const M: usize, const N: usize> MulAssign<&Self> for NTTRing<Z, M, N>
+where
+    for<'a> &'a Z: RingOps<Z>,
+{
     #[inline]
     fn mul_assign(&mut self, rps: &Self) {
         *self = *self * *rps
     }
 }
 
-impl<Z: Twiddles<M>, const M: usize, const N: usize> Square for NTTRing<Z, M, N> {
+impl<Z: Twiddles<M>, const M: usize, const N: usize> Square for NTTRing<Z, M, N>
+where
+    for<'a> &'a Z: RingOps<Z>,
+{
     type Output = Self;
 
     fn square(self) -> Self {
         if Self::INERTIA == 1 {
             Self {
-                spectrum: FreeModule::<Z, N>::from_fn(|i| self.spectrum[i].square()),
+                spectrum: self.spectrum.map(Square::square),
             }
         } else {
             self * self
@@ -370,7 +444,10 @@ impl<Z: Twiddles<M>, const M: usize, const N: usize> Square for NTTRing<Z, M, N>
     }
 }
 
-impl<Z: Twiddles<M>, const M: usize, const N: usize> Square for &NTTRing<Z, M, N> {
+impl<Z: Twiddles<M>, const M: usize, const N: usize> Square for &NTTRing<Z, M, N>
+where
+    for<'a> &'a Z: RingOps<Z>,
+{
     type Output = NTTRing<Z, M, N>;
 
     fn square(self) -> Self::Output {
@@ -488,13 +565,19 @@ impl<'a, Z: Twiddles<M>, const M: usize, const N: usize> Sum<&'a Self> for NTTRi
     }
 }
 
-impl<Z: Twiddles<M>, const M: usize, const N: usize> Product for NTTRing<Z, M, N> {
+impl<Z: Twiddles<M>, const M: usize, const N: usize> Product for NTTRing<Z, M, N>
+where
+    for<'a> &'a Z: RingOps<Z>,
+{
     fn product<I: Iterator<Item = Self>>(iter: I) -> Self {
         iter.reduce(|lps, rps| lps * rps).unwrap_or(Self::ONE)
     }
 }
 
-impl<'a, Z: Twiddles<M>, const M: usize, const N: usize> Product<&'a Self> for NTTRing<Z, M, N> {
+impl<'a, Z: Twiddles<M>, const M: usize, const N: usize> Product<&'a Self> for NTTRing<Z, M, N>
+where
+    for<'b> &'b Z: RingOps<Z>,
+{
     #[inline]
     fn product<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
         iter.copied().product()
@@ -537,39 +620,37 @@ impl<Z: Twiddles<M>, const M: usize, const N: usize> AdditiveMonoid for NTTRing<
 
 impl<Z: Twiddles<M>, const M: usize, const N: usize> MultiplicativeCommutativeMagma
     for NTTRing<Z, M, N>
+where
+    for<'a> &'a Z: RingOps<Z>,
 {
 }
 
-impl<Z: Twiddles<M>, const M: usize, const N: usize> MultiplicativeSemigroup for NTTRing<Z, M, N> {}
+impl<Z: Twiddles<M>, const M: usize, const N: usize> MultiplicativeSemigroup for NTTRing<Z, M, N> where
+    for<'a> &'a Z: RingOps<Z>
+{
+}
 
-impl<Z: Twiddles<M>, const M: usize, const N: usize> MultiplicativeMonoid for NTTRing<Z, M, N> {}
+impl<Z: Twiddles<M>, const M: usize, const N: usize> MultiplicativeMonoid for NTTRing<Z, M, N> where
+    for<'a> &'a Z: RingOps<Z>
+{
+}
 
 impl<Z: Twiddles<M>, const M: usize, const N: usize> Semimodule<Z> for NTTRing<Z, M, N> {}
 
-impl<Z: Twiddles<M>, const M: usize, const N: usize> Algebra<Z> for NTTRing<Z, M, N> {}
-
-impl<Z: Twiddles<M>, const M: usize, const N: usize> UnitalAlgebra<Z> for NTTRing<Z, M, N> {}
-
-impl<Z: Twiddles<M>, const M: usize, const N: usize> PolynomialRing<Z> for NTTRing<Z, M, N> {
-    #[allow(refining_impl_trait_reachable)]
-    fn coefficients(self) -> FreeModule<Z, N> {
-        let mut sequence: [Z; N] = self.spectrum.into();
-        gentleman_sande(&mut sequence);
-        FreeModule::<Z, N>::new(sequence)
-    }
-
-    #[inline]
-    fn constant_term(self) -> Z {
-        self.coefficients()[0]
-    }
-
-    fn evaluate(self, point: Z) -> Z {
-        let iso: Iso<Z, N> = self.into();
-        iso.evaluate(point)
-    }
+impl<Z: Twiddles<M>, const M: usize, const N: usize> Algebra<Z> for NTTRing<Z, M, N> where
+    for<'a> &'a Z: RingOps<Z>
+{
 }
 
-impl<Z: Twiddles<M>, const M: usize, const N: usize> Conjugate for NTTRing<Z, M, N> {
+impl<Z: Twiddles<M>, const M: usize, const N: usize> UnitalAlgebra<Z> for NTTRing<Z, M, N> where
+    for<'a> &'a Z: RingOps<Z>
+{
+}
+
+impl<Z: Twiddles<M>, const M: usize, const N: usize> Conjugate for NTTRing<Z, M, N>
+where
+    for<'a> &'a Z: RingOps<Z>,
+{
     type Output = Self;
 
     fn conjugate(self) -> Self {
@@ -581,14 +662,9 @@ impl<Z: Twiddles<M>, const M: usize, const N: usize> Conjugate for NTTRing<Z, M,
             Self { spectrum }
         } else {
             let iso: Iso<Z, N> = self.into();
-            Self::from(iso.conjugate().coefficients())
+            Self::from(iso.conjugate())
         }
     }
-}
-
-impl<Z: Twiddles<M>, const M: usize, const N: usize> PowerOfTwoCyclotomicRing<Z>
-    for NTTRing<Z, M, N>
-{
 }
 
 impl<Z: Twiddles<M> + Absorb<Z>, const M: usize, const N: usize> Absorb<Z> for NTTRing<Z, M, N> {

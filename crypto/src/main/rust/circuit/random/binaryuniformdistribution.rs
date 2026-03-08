@@ -56,7 +56,7 @@ impl<
 impl<
     'a,
     'b,
-    Z: IntegerRing + Eq,
+    Z: IntegerRing + Clone + Eq,
     G: UniformGenerator<Output = LinearCombination<Z>>
 > Distribution<'a, 'b, Z, G> for BinaryUniformDistribution<'a, 'b, Z, G> {
     type Output = LinearCombination<Z>;
@@ -79,7 +79,7 @@ impl<
             for i in 0..Z::BITS {
                 let digit = scope.auxiliary();
                 self.cache[i as usize] = digit.into();
-                composed += digit * Constant::new(p);
+                composed += digit * Constant::new(p.clone());
                 p = p.double();
             }
             scope.constrain(composed, generated);

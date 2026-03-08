@@ -15,8 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::Double;
-use crate::algebra::UnitalRing;
+use crate::algebra::{Double, RingOps, UnitalRing};
 use crate::circuit::builder::{CircuitBuilder, Constant, LinearCombination, VariableKind};
 use crate::circuit::polynomial::Point;
 use alloc::vec;
@@ -28,7 +27,7 @@ pub struct EqExtension<'a, 'b, R: UnitalRing> {
     coefficients: Vec<LinearCombination<R>>,
 }
 
-impl<'a, 'b, R: UnitalRing + Eq> EqExtension<'a, 'b, R> {
+impl<'a, 'b, R: UnitalRing + Clone + Eq> EqExtension<'a, 'b, R> {
     pub const fn new(
         circuit: &'a CircuitBuilder<'b, R>,
         coefficients: Vec<LinearCombination<R>>,
@@ -53,7 +52,10 @@ impl<'a, 'b, R: UnitalRing + Eq> EqExtension<'a, 'b, R> {
         }
     }
 
-    pub fn point(&self, point: &Point<R>) -> LinearCombination<R> {
+    pub fn point(&self, point: &Point<R>) -> LinearCombination<R>
+    where
+        for<'c> &'c R: RingOps<R>,
+    {
         let scope = self.circuit.scope("EqExtension::point");
         let mut pi = LinearCombination::<R>::from(Constant::ONE);
         zip(&self.coefficients, point).for_each(|(c, p)| {
@@ -76,8 +78,8 @@ impl<'a, 'b, R: UnitalRing + Eq> EqExtension<'a, 'b, R> {
             for k in 0..j {
                 let t = scope.auxiliary();
                 scope.constrain(&self.coefficients[i] * &r[k], t);
-                r[l] = t.into();
                 r[k] -= t;
+                r[l] = t.into();
                 l += 1;
             }
             j <<= 1;

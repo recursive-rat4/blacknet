@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Pavel Vasin
+ * Copyright (c) 2024-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -26,14 +26,17 @@ fn balanced() {
     let p3 = UnivariatePolynomial::from([2, 3, 5, 7].map(Z::from));
     let p4 = UnivariatePolynomial::from([2, 3, 5, 7, 11].map(Z::from));
     let p5 = UnivariatePolynomial::from([2, 3, 5, 7, 11, 13].map(Z::from));
-    assert_eq!(interpolate_1(Z::from(2), Z::from(5)), p1);
-    assert_eq!(interpolate_2(Z::from(4), Z::from(2), Z::from(10)), p2);
+    assert_eq!(interpolate_1::<Z>(Z::from(2), Z::from(5)), p1);
     assert_eq!(
-        interpolate_3(Z::from(-3), Z::from(2), Z::from(17), Z::from(84)),
+        interpolate_2::<Z, Z>(Z::from(4), Z::from(2), Z::from(10)),
+        p2
+    );
+    assert_eq!(
+        interpolate_3::<Z, Z>(Z::from(-3), Z::from(2), Z::from(17), Z::from(84)),
         p3
     );
     assert_eq!(
-        interpolate_4(
+        interpolate_4::<Z, Z>(
             Z::from(136),
             Z::from(8),
             Z::from(2),
@@ -43,7 +46,7 @@ fn balanced() {
         p4
     );
     assert_eq!(
-        interpolate_5(
+        interpolate_5::<Z, Z>(
             Z::from(-280),
             Z::from(-5),
             Z::from(2),

@@ -30,8 +30,8 @@ pub struct Constant<R: Semiring> {
 }
 
 impl<R: Semiring> Constant<R> {
-    pub const ZERO: Self = Self::new(R::ZERO);
-    pub const ONE: Self = Self::new(R::ONE);
+    pub const ZERO: Self = Self { value: R::ZERO };
+    pub const ONE: Self = Self { value: R::ONE };
 
     pub const fn new(value: R) -> Self {
         Self { value }
@@ -150,7 +150,9 @@ where
     type Output = Constant<R>;
 
     fn neg(self) -> Self::Output {
-        Self::Output { value: -self.value }
+        Self::Output {
+            value: -&self.value,
+        }
     }
 }
 
@@ -169,27 +171,33 @@ impl<R: UnitalRing> Sub<&Self> for Constant<R> {
 
     fn sub(self, rps: &Self) -> Self::Output {
         Self {
-            value: self.value - rps.value,
+            value: self.value - &rps.value,
         }
     }
 }
 
-impl<R: UnitalRing> Sub<Constant<R>> for &Constant<R> {
+impl<R: UnitalRing> Sub<Constant<R>> for &Constant<R>
+where
+    for<'a> &'a R: RingOps<R>,
+{
     type Output = Constant<R>;
 
     fn sub(self, rps: Constant<R>) -> Self::Output {
         Self::Output {
-            value: self.value - rps.value,
+            value: &self.value - rps.value,
         }
     }
 }
 
-impl<R: UnitalRing> Sub for &Constant<R> {
+impl<R: UnitalRing> Sub for &Constant<R>
+where
+    for<'a> &'a R: RingOps<R>,
+{
     type Output = Constant<R>;
 
     fn sub(self, rps: Self) -> Self::Output {
         Self::Output {
-            value: self.value - rps.value,
+            value: &self.value - &rps.value,
         }
     }
 }
@@ -319,10 +327,9 @@ impl<R: UnitalRing> Sub<Variable<R>> for Constant<R> {
     }
 }
 
-impl<R: UnitalRing> Sub<Variable<R>> for &Constant<R> {
+impl<R: UnitalRing + Clone> Sub<Variable<R>> for &Constant<R> {
     type Output = LinearCombination<R>;
 
-    #[allow(clippy::clone_on_copy)]
     fn sub(self, rps: Variable<R>) -> Self::Output {
         self.clone() - rps
     }
@@ -384,28 +391,25 @@ impl<R: UnitalRing> Sub<LinearTerm<R>> for Constant<R> {
     }
 }
 
-impl<R: UnitalRing> Sub<LinearTerm<R>> for &Constant<R> {
+impl<R: UnitalRing + Clone> Sub<LinearTerm<R>> for &Constant<R> {
     type Output = LinearCombination<R>;
 
-    #[allow(clippy::clone_on_copy)]
     fn sub(self, rps: LinearTerm<R>) -> Self::Output {
         self.clone() - rps
     }
 }
 
-impl<R: UnitalRing> Sub<&LinearTerm<R>> for Constant<R> {
+impl<R: UnitalRing + Clone> Sub<&LinearTerm<R>> for Constant<R> {
     type Output = LinearCombination<R>;
 
-    #[allow(clippy::clone_on_copy)]
     fn sub(self, rps: &LinearTerm<R>) -> Self::Output {
         self - rps.clone()
     }
 }
 
-impl<R: UnitalRing> Sub<&LinearTerm<R>> for &Constant<R> {
+impl<R: UnitalRing + Clone> Sub<&LinearTerm<R>> for &Constant<R> {
     type Output = LinearCombination<R>;
 
-    #[allow(clippy::clone_on_copy)]
     fn sub(self, rps: &LinearTerm<R>) -> Self::Output {
         self.clone() - rps.clone()
     }
@@ -492,16 +496,15 @@ impl<R: UnitalRing> Sub<LinearCombination<R>> for Constant<R> {
     }
 }
 
-impl<R: UnitalRing> Sub<LinearCombination<R>> for &Constant<R> {
+impl<R: UnitalRing + Clone> Sub<LinearCombination<R>> for &Constant<R> {
     type Output = LinearCombination<R>;
 
-    #[allow(clippy::clone_on_copy)]
     fn sub(self, rps: LinearCombination<R>) -> Self::Output {
         self.clone() - rps
     }
 }
 
-impl<R: UnitalRing> Sub<&LinearCombination<R>> for Constant<R> {
+impl<R: UnitalRing + Clone> Sub<&LinearCombination<R>> for Constant<R> {
     type Output = LinearCombination<R>;
 
     fn sub(self, rps: &LinearCombination<R>) -> Self::Output {
@@ -509,10 +512,9 @@ impl<R: UnitalRing> Sub<&LinearCombination<R>> for Constant<R> {
     }
 }
 
-impl<R: UnitalRing> Sub<&LinearCombination<R>> for &Constant<R> {
+impl<R: UnitalRing + Clone> Sub<&LinearCombination<R>> for &Constant<R> {
     type Output = LinearCombination<R>;
 
-    #[allow(clippy::clone_on_copy)]
     fn sub(self, rps: &LinearCombination<R>) -> Self::Output {
         self.clone() - rps.clone()
     }

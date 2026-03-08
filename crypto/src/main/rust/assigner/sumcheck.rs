@@ -49,7 +49,7 @@ pub struct SumCheck<
 
 impl<
     'a,
-    R: UnitalRing,
+    R: UnitalRing + Clone,
     P: MultivariatePolynomial<Coefficient = R, Point = Point<R>>,
     D: Duplex<R>,
     E: Distribution<'a, R, D, Output = R>,

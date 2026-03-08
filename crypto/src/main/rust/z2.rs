@@ -245,6 +245,17 @@ impl Inv for Z2 {
     }
 }
 
+impl Inv for &Z2 {
+    type Output = Option<Z2>;
+
+    fn inv(self) -> Self::Output {
+        match self.n {
+            true => Some(Z2::ONE),
+            false => None,
+        }
+    }
+}
+
 impl Div for Z2 {
     type Output = Option<Self>;
 
@@ -371,10 +382,10 @@ impl IntegerRing for Z2 {
         Self::new(n)
     }
 
-    fn canonical(self) -> Self::Int {
+    fn canonical(&self) -> Self::Int {
         self.n.into()
     }
-    fn absolute(self) -> Self::Int {
+    fn absolute(&self) -> Self::Int {
         self.n.into()
     }
 

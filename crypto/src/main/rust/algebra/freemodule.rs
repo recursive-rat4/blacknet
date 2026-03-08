@@ -24,8 +24,9 @@ use core::array;
 use core::borrow::{Borrow, BorrowMut};
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Sum, zip};
-use core::mem::MaybeUninit;
-use core::ops::{Add, AddAssign, Div, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign};
+use core::ops::{
+    Add, AddAssign, Deref, DerefMut, Div, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign,
+};
 #[cfg(feature = "rayon")]
 use rayon::iter::IntoParallelIterator;
 use serde::{Deserialize, Serialize};
@@ -46,11 +47,16 @@ impl<R: Ring, const N: usize> FreeModule<R, N> {
 
     #[inline]
     pub fn from_fn<F: FnMut(usize) -> R>(f: F) -> Self {
-        Self::new(array::from_fn(f))
+        Self {
+            components: array::from_fn(f),
+        }
     }
 
-    pub const fn swap(&mut self, a: usize, b: usize) {
-        self.components.swap(a, b)
+    #[inline]
+    pub fn map<F: FnMut(R) -> T, T: Ring>(self, f: F) -> FreeModule<T, N> {
+        FreeModule::<T, N> {
+            components: self.components.map(f),
+        }
     }
 }
 
@@ -133,6 +139,22 @@ impl<R: Ring, const N: usize> BorrowMut<[R]> for FreeModule<R, N> {
 impl<R: Ring, const N: usize> BorrowMut<[R; N]> for FreeModule<R, N> {
     #[inline]
     fn borrow_mut(&mut self) -> &mut [R; N] {
+        &mut self.components
+    }
+}
+
+impl<R: Ring, const N: usize> Deref for FreeModule<R, N> {
+    type Target = [R; N];
+
+    #[inline]
+    fn deref(&self) -> &[R; N] {
+        &self.components
+    }
+}
+
+impl<R: Ring, const N: usize> DerefMut for FreeModule<R, N> {
+    #[inline]
+    fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.components
     }
 }
@@ -234,12 +256,7 @@ where
     type Output = FreeModule<R, N>;
 
     fn add(self, rps: &'a FreeModule<R, N>) -> Self::Output {
-        let mut out = [const { MaybeUninit::<R>::uninit() }; N];
-        zip(&mut out, zip(self, rps)).for_each(|(o, (l, r))| {
-            o.write(l + r);
-        });
-        let components = out.map(|i| unsafe { i.assume_init() });
-        Self::Output { components }
+        Self::Output::from_fn(|i| &self.components[i] + &rps.components[i])
     }
 }
 
@@ -259,9 +276,7 @@ impl<R: Ring, const N: usize> Double for FreeModule<R, N> {
     type Output = Self;
 
     fn double(self) -> Self {
-        Self {
-            components: self.components.map(Double::double),
-        }
+        self.map(Double::double)
     }
 }
 
@@ -272,12 +287,7 @@ where
     type Output = FreeModule<R, N>;
 
     fn double(self) -> Self::Output {
-        let mut out = [const { MaybeUninit::<R>::uninit() }; N];
-        zip(&mut out, self).for_each(|(o, l)| {
-            o.write(l.double());
-        });
-        let components = out.map(|i| unsafe { i.assume_init() });
-        Self::Output { components }
+        Self::Output::from_fn(|i| (&self.components[i]).double())
     }
 }
 
@@ -285,9 +295,7 @@ impl<R: Ring, const N: usize> Neg for FreeModule<R, N> {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
-        Self {
-            components: self.components.map(Neg::neg),
-        }
+        self.map(Neg::neg)
     }
 }
 
@@ -298,12 +306,7 @@ where
     type Output = FreeModule<R, N>;
 
     fn neg(self) -> Self::Output {
-        let mut out = [const { MaybeUninit::<R>::uninit() }; N];
-        zip(&mut out, self).for_each(|(o, l)| {
-            o.write(-l);
-        });
-        let components = out.map(|i| unsafe { i.assume_init() });
-        Self::Output { components }
+        Self::Output::from_fn(|i| -&self.components[i])
     }
 }
 
@@ -347,12 +350,7 @@ where
     type Output = FreeModule<R, N>;
 
     fn sub(self, rps: &'a FreeModule<R, N>) -> Self::Output {
-        let mut out = [const { MaybeUninit::<R>::uninit() }; N];
-        zip(&mut out, zip(self, rps)).for_each(|(o, (l, r))| {
-            o.write(l - r);
-        });
-        let components = out.map(|i| unsafe { i.assume_init() });
-        Self::Output { components }
+        Self::Output::from_fn(|i| &self.components[i] - &rps.components[i])
     }
 }
 
@@ -406,12 +404,7 @@ where
     type Output = FreeModule<R, N>;
 
     fn mul(self, rps: &R) -> Self::Output {
-        let mut out = [const { MaybeUninit::<R>::uninit() }; N];
-        zip(&mut out, self).for_each(|(o, l)| {
-            o.write(l * rps);
-        });
-        let components = out.map(|i| unsafe { i.assume_init() });
-        Self::Output { components }
+        Self::Output::from_fn(|i| &self.components[i] * rps)
     }
 }
 

@@ -92,6 +92,20 @@ impl<T: Zero + Clone> From<&SymmetricTridiagonalMatrix<T>> for DenseMatrix<T> {
     }
 }
 
+impl<T: Zero> AsRef<[T]> for SymmetricTridiagonalMatrix<T> {
+    #[inline]
+    fn as_ref(&self) -> &[T] {
+        &self.elements
+    }
+}
+
+impl<T: Zero> AsMut<[T]> for SymmetricTridiagonalMatrix<T> {
+    #[inline]
+    fn as_mut(&mut self) -> &mut [T] {
+        &mut self.elements
+    }
+}
+
 impl<T: Zero + Add<Output = T>> Add for SymmetricTridiagonalMatrix<T> {
     type Output = Self;
 

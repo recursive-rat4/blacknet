@@ -27,12 +27,12 @@ pub trait Convolution<R: UnitalRing, const N: usize> {
     ) -> [LinearCombination<R>; N];
 }
 
-pub fn binomial<R: UnitalRing + Eq, const N: usize>(
+pub fn binomial<R: UnitalRing + Clone + Eq, const N: usize>(
     scope: &Scope<R>,
     c: &mut [LinearCombination<R>],
     a: &[LinearCombination<R>],
     b: &[LinearCombination<R>],
-    zeta: Constant<R>,
+    zeta: &Constant<R>,
 ) where
     for<'a> &'a R: RingOps<R>,
 {

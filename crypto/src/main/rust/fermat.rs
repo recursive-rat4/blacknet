@@ -297,13 +297,22 @@ impl Square for &FermatField {
 impl Inv for FermatField {
     type Output = Option<Self>;
 
+    #[inline]
+    fn inv(self) -> Self::Output {
+        (&self).inv()
+    }
+}
+
+impl Inv for &FermatField {
+    type Output = Option<FermatField>;
+
     fn inv(self) -> Self::Output {
         // Extended Binary GCD (classic algorithm)
         // https://eprint.iacr.org/2020/972
         let mut a = self.canonical();
-        let mut b = Self::MODULUS;
-        let mut c = Self::ONE;
-        let mut d = Self::ZERO;
+        let mut b = FermatField::MODULUS;
+        let mut c = FermatField::ONE;
+        let mut d = FermatField::ZERO;
         while a != 0 {
             if a & 1 == 0 {
                 a >>= 1;
@@ -424,7 +433,7 @@ impl IntegerRing for FermatField {
         Self::new(n)
     }
 
-    fn canonical(self) -> Self::Int {
+    fn canonical(&self) -> Self::Int {
         let x = Self::reduce_32(self.n);
         if x >= Self::MODULUS {
             x - Self::MODULUS
@@ -434,7 +443,7 @@ impl IntegerRing for FermatField {
             x
         }
     }
-    fn absolute(self) -> Self::Int {
+    fn absolute(&self) -> Self::Int {
         self.balanced().abs()
     }
 

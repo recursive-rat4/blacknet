@@ -69,11 +69,6 @@ impl<T> SymmetricMatrix<T> {
         self.dimension
     }
 
-    /// The lower triangular entries.
-    pub const fn elements(&self) -> &Vec<T> {
-        &self.elements
-    }
-
     pub fn trace(&self) -> T
     where
         T: for<'a> Sum<&'a T>,
@@ -99,6 +94,20 @@ impl<T: Clone> From<&SymmetricMatrix<T>> for DenseMatrix<T> {
             }
         }
         DenseMatrix::new(symmetric.rows(), symmetric.columns(), elements)
+    }
+}
+
+impl<T> AsRef<[T]> for SymmetricMatrix<T> {
+    #[inline]
+    fn as_ref(&self) -> &[T] {
+        &self.elements
+    }
+}
+
+impl<T> AsMut<[T]> for SymmetricMatrix<T> {
+    #[inline]
+    fn as_mut(&mut self) -> &mut [T] {
+        &mut self.elements
     }
 }
 

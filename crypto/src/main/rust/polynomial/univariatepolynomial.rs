@@ -201,10 +201,6 @@ where
         }
         powers.into()
     }
-
-    fn coefficients(&self) -> &[R] {
-        &self.coefficients
-    }
 }
 
 impl<R: Semiring + Clone> TensorBasis for UnivariatePolynomial<R>

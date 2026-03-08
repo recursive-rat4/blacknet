@@ -99,11 +99,6 @@ impl<T> DenseMatrix<T> {
         self.columns
     }
 
-    /// The entries in row-major order.
-    pub const fn elements(&self) -> &Vec<T> {
-        &self.elements
-    }
-
     /// Iterate rows.
     pub fn iter_row(&self) -> core::slice::ChunksExact<'_, T> {
         self.elements.chunks_exact(self.columns)
@@ -230,6 +225,20 @@ impl<T> DenseMatrix<T> {
 impl<T> From<DenseMatrix<T>> for (usize, usize, Vec<T>) {
     fn from(matrix: DenseMatrix<T>) -> Self {
         (matrix.rows, matrix.columns, matrix.elements)
+    }
+}
+
+impl<T> AsRef<[T]> for DenseMatrix<T> {
+    #[inline]
+    fn as_ref(&self) -> &[T] {
+        &self.elements
+    }
+}
+
+impl<T> AsMut<[T]> for DenseMatrix<T> {
+    #[inline]
+    fn as_mut(&mut self) -> &mut [T] {
+        &mut self.elements
     }
 }
 

@@ -37,26 +37,29 @@ pub struct MultilinearExtension<R: UnitalRing> {
     coefficients: Vec<R>,
 }
 
-impl<R: UnitalRing> MultilinearExtension<R> {
-    pub fn hypercube_with_var<const VAL: i8>(&self) -> DenseVector<R> {
+impl<R: UnitalRing + Clone> MultilinearExtension<R> {
+    pub fn hypercube_with_var<const VAL: i8>(&self) -> DenseVector<R>
+    where
+        for<'a> &'a R: RingOps<R>,
+    {
         let (left, right) = self.coefficients.split_at(self.coefficients.len() >> 1);
         match VAL {
             -2 => zip(left, right)
-                .map(|(&l, &r)| l + l.double() - r.double())
+                .map(|(l, r)| l + l.double() - r.double())
                 .collect::<Vec<R>>(),
             -1 => zip(left, right)
-                .map(|(&l, &r)| l.double() - r)
+                .map(|(l, r)| l.double() - r)
                 .collect::<Vec<R>>(),
             0 => left.to_vec(),
             1 => right.to_vec(),
             2 => zip(left, right)
-                .map(|(&l, &r)| r.double() - l)
+                .map(|(l, r)| r.double() - l)
                 .collect::<Vec<R>>(),
             3 => zip(left, right)
-                .map(|(&l, &r)| r + r.double() - l.double())
+                .map(|(l, r)| r + r.double() - l.double())
                 .collect::<Vec<R>>(),
             4 => zip(left, right)
-                .map(|(&l, &r)| r.double().double() - l.double() - l)
+                .map(|(l, r)| r.double().double() - l.double() - l)
                 .collect::<Vec<R>>(),
             _ => unimplemented!("hypercube_with_var for val = {VAL}"),
         }
@@ -239,7 +242,10 @@ impl<R: UnitalRing + Send> IntoParallelIterator for MultilinearExtension<R> {
     }
 }
 
-impl<R: UnitalRing> Polynomial for MultilinearExtension<R> {
+impl<R: UnitalRing + Clone> Polynomial for MultilinearExtension<R>
+where
+    for<'a> &'a R: RingOps<R>,
+{
     type Coefficient = R;
     type Point = Point<R>;
 
@@ -250,19 +256,22 @@ impl<R: UnitalRing> Polynomial for MultilinearExtension<R> {
         for i in (0..n).rev() {
             let j = 1 << i;
             for k in 0..j {
-                let t = scratch[j + k] - scratch[k];
-                scratch[k] += t * point[n - i - 1];
+                let t = &scratch[j + k] - &scratch[k];
+                scratch[k] += t * &point[n - i - 1];
             }
         }
-        scratch[0]
+        scratch.into_iter().next().unwrap_or(R::ZERO)
     }
 }
 
-impl<R: UnitalRing> MultivariatePolynomial for MultilinearExtension<R> {
+impl<R: UnitalRing + Clone> MultivariatePolynomial for MultilinearExtension<R>
+where
+    for<'a> &'a R: RingOps<R>,
+{
     fn bind(&mut self, e: &R) {
         let new_len = self.coefficients.len() >> 1;
         let (left, right) = self.coefficients.split_at_mut(new_len);
-        zip(left, right).for_each(|(l, r)| *l += (*r - *l) * e);
+        zip(left, right).for_each(|(l, r)| *l += (&*r - &*l) * e);
         self.coefficients.truncate(new_len);
     }
 
@@ -270,17 +279,17 @@ impl<R: UnitalRing> MultivariatePolynomial for MultilinearExtension<R> {
         let (left, right) = self.coefficients.split_at(self.coefficients.len() >> 1);
         match VAL {
             -2 => zip(left, right)
-                .map(|(&l, &r)| l + l.double() - r.double())
+                .map(|(l, r)| l + l.double() - r.double())
                 .sum::<R>(),
-            -1 => zip(left, right).map(|(&l, &r)| l.double() - r).sum::<R>(),
+            -1 => zip(left, right).map(|(l, r)| l.double() - r).sum::<R>(),
             0 => left.iter().sum::<R>(),
             1 => right.iter().sum::<R>(),
-            2 => zip(left, right).map(|(&l, &r)| r.double() - l).sum::<R>(),
+            2 => zip(left, right).map(|(l, r)| r.double() - l).sum::<R>(),
             3 => zip(left, right)
-                .map(|(&l, &r)| r + r.double() - l.double())
+                .map(|(l, r)| r + r.double() - l.double())
                 .sum::<R>(),
             4 => zip(left, right)
-                .map(|(&l, &r)| r.double().double() - l.double() - l)
+                .map(|(l, r)| r.double().double() - l.double() - l)
                 .sum::<R>(),
             _ => unimplemented!("sum_with_var for val = {VAL}"),
         }
@@ -296,24 +305,26 @@ impl<R: UnitalRing> MultivariatePolynomial for MultilinearExtension<R> {
 }
 
 /// In Lagrange basis.
-impl<R: UnitalRing> InBasis for MultilinearExtension<R> {
+impl<R: UnitalRing + Clone> InBasis for MultilinearExtension<R>
+where
+    for<'a> &'a R: RingOps<R>,
+{
     fn basis(&self, point: &Point<R>) -> DenseVector<R> {
         debug_assert_eq!(self.coefficients.len(), 1 << point.dimension());
-        EqExtension::basis(point).into()
-    }
-
-    fn coefficients(&self) -> &[R] {
-        &self.coefficients
+        EqExtension::<R>::basis(point).into()
     }
 }
 
-impl<R: UnitalRing> TensorBasis for MultilinearExtension<R> {
+impl<R: UnitalRing + Clone> TensorBasis for MultilinearExtension<R>
+where
+    for<'a> &'a R: RingOps<R>,
+{
     fn tensor_basis(&self, point: &Point<R>) -> (DenseVector<R>, DenseVector<R>) {
         debug_assert_eq!(self.coefficients.len(), 1 << point.dimension());
         let (left, right) = point.split_at(point.dimension() >> 1);
         (
-            EqExtension::basis(left).into(),
-            EqExtension::basis(right).into(),
+            EqExtension::<R>::basis(left).into(),
+            EqExtension::<R>::basis(right).into(),
         )
     }
 }
@@ -405,14 +416,14 @@ impl<R: UnitalRing> Add<R> for MultilinearExtension<R> {
 
     fn add(self, rps: R) -> Self::Output {
         Self {
-            coefficients: self.coefficients.into_iter().map(|l| l + rps).collect(),
+            coefficients: self.coefficients.into_iter().map(|l| l + &rps).collect(),
         }
     }
 }
 
 impl<R: UnitalRing> AddAssign<R> for MultilinearExtension<R> {
     fn add_assign(&mut self, rps: R) {
-        self.coefficients.iter_mut().for_each(|l| *l += rps);
+        self.coefficients.iter_mut().for_each(|l| *l += &rps);
     }
 }
 
@@ -421,14 +432,14 @@ impl<R: UnitalRing> Sub<R> for MultilinearExtension<R> {
 
     fn sub(self, rps: R) -> Self::Output {
         Self {
-            coefficients: self.coefficients.into_iter().map(|l| l - rps).collect(),
+            coefficients: self.coefficients.into_iter().map(|l| l - &rps).collect(),
         }
     }
 }
 
 impl<R: UnitalRing> SubAssign<R> for MultilinearExtension<R> {
     fn sub_assign(&mut self, rps: R) {
-        self.coefficients.iter_mut().for_each(|l| *l -= rps);
+        self.coefficients.iter_mut().for_each(|l| *l -= &rps);
     }
 }
 
@@ -437,14 +448,14 @@ impl<R: UnitalRing> Mul<R> for MultilinearExtension<R> {
 
     fn mul(self, rps: R) -> Self::Output {
         Self {
-            coefficients: self.coefficients.into_iter().map(|l| l * rps).collect(),
+            coefficients: self.coefficients.into_iter().map(|l| l * &rps).collect(),
         }
     }
 }
 
 impl<R: UnitalRing> MulAssign<R> for MultilinearExtension<R> {
     fn mul_assign(&mut self, rps: R) {
-        self.coefficients.iter_mut().for_each(|l| *l *= rps);
+        self.coefficients.iter_mut().for_each(|l| *l *= &rps);
     }
 }
 

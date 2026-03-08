@@ -37,7 +37,7 @@ fn cyclic() {
     let a = [3, 5, 7].map(Z::new);
     let b = [11, 13, 17].map(Z::new);
     let c = [209, 213, 193].map(Z::new);
-    let d = Cyclic::convolute(&a, &b);
+    let d = <Cyclic as Convolution<Z, 3>>::convolute(&a, &b);
     assert_eq!(d, c);
 }
 
@@ -46,7 +46,7 @@ fn negacyclic() {
     let a = [3, 5, 7].map(Z::new);
     let b = [11, 13, 17].map(Z::new);
     let c = [-143, -25, 193].map(Z::new);
-    let d = Negacyclic::convolute(&a, &b);
+    let d = <Negacyclic as Convolution<Z, 3>>::convolute(&a, &b);
     assert_eq!(d, c);
 }
 

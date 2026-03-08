@@ -43,12 +43,9 @@ pub trait MultivariatePolynomial: Polynomial {
 }
 
 /// A polynomial in certain basis.
-pub trait InBasis: Polynomial {
+pub trait InBasis: Polynomial + AsRef<[Self::Coefficient]> {
     /// Basis coordinates of a point.
     fn basis(&self, point: &Self::Point) -> DenseVector<Self::Coefficient>;
-
-    /// Coefficients of the polynomial.
-    fn coefficients(&self) -> &[Self::Coefficient];
 }
 
 /// Tensor structured basis.

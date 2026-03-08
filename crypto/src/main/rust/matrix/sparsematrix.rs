@@ -72,11 +72,6 @@ impl<T: Zero> SparseMatrix<T> {
     pub const fn columns(&self) -> usize {
         self.columns
     }
-
-    /// The nonzero entries.
-    pub const fn elements(&self) -> &Vec<T> {
-        &self.elements
-    }
 }
 
 impl<T: Zero> Default for SparseMatrix<T> {
@@ -87,6 +82,20 @@ impl<T: Zero> Default for SparseMatrix<T> {
             c_index: Vec::new(),
             elements: Vec::new(),
         }
+    }
+}
+
+impl<T: Zero> AsRef<[T]> for SparseMatrix<T> {
+    #[inline]
+    fn as_ref(&self) -> &[T] {
+        &self.elements
+    }
+}
+
+impl<T: Zero> AsMut<[T]> for SparseMatrix<T> {
+    #[inline]
+    fn as_mut(&mut self) -> &mut [T] {
+        &mut self.elements
     }
 }
 

@@ -70,7 +70,7 @@ pub struct SumCheck<
 }
 
 impl<
-    R: UnitalRing + InterpolationConsts + Eq + Send + Sync,
+    R: UnitalRing + InterpolationConsts + Clone + Eq + Send + Sync,
     P: MultivariatePolynomial<Coefficient = R, Point = Point<R>> + Send + Sync,
     D: Duplex<R>,
     E: Distribution<D, Output = R>,
@@ -148,25 +148,25 @@ where
             let p1 = polynomial.sum_with_var::<1>();
             let p2 = polynomial.sum_with_var::<2>();
             let p3 = polynomial.sum_with_var::<3>();
-            interpolate_5(n2, n1, sum - p1, p1, p2, p3)
+            interpolate_5::<R, R>(n2, n1, sum - &p1, p1, p2, p3)
         } else if polynomial.degree() == 4 {
             let n2 = polynomial.sum_with_var::<-2>();
             let n1 = polynomial.sum_with_var::<-1>();
             let p1 = polynomial.sum_with_var::<1>();
             let p2 = polynomial.sum_with_var::<2>();
-            interpolate_4(n2, n1, sum - p1, p1, p2)
+            interpolate_4::<R, R>(n2, n1, sum - &p1, p1, p2)
         } else if polynomial.degree() == 3 {
             let n1 = polynomial.sum_with_var::<-1>();
             let p1 = polynomial.sum_with_var::<1>();
             let p2 = polynomial.sum_with_var::<2>();
-            interpolate_3(n1, sum - p1, p1, p2)
+            interpolate_3::<R, R>(n1, sum - &p1, p1, p2)
         } else if polynomial.degree() == 2 {
             let n1 = polynomial.sum_with_var::<-1>();
             let p1 = polynomial.sum_with_var::<1>();
-            interpolate_2(n1, sum - p1, p1)
+            interpolate_2::<R, R>(n1, sum - &p1, p1)
         } else if polynomial.degree() == 1 {
             let p1 = polynomial.sum_with_var::<1>();
-            interpolate_1(sum - p1, p1)
+            interpolate_1::<R>(sum - &p1, p1)
         } else {
             unimplemented!("Sum-check prover for degree {}", polynomial.degree());
         }

@@ -26,7 +26,7 @@ use blacknet_crypto::constraintsystem::ConstraintSystem;
 use blacknet_crypto::duplex::Duplex;
 use blacknet_crypto::pervushin::PervushinField;
 use blacknet_crypto::polynomial::{
-    EqExtension, InBasis, MultilinearExtension, MultivariatePolynomial, Polynomial,
+    EqExtension, MultilinearExtension, MultivariatePolynomial, Polynomial,
 };
 use blacknet_crypto::poseidon2pervushin::DuplexPoseidon2Pervushin as DuplexPoseidon2PervushinPlain;
 use blacknet_crypto::random::{Distribution, UniformDistribution};
@@ -364,7 +364,7 @@ fn circuit() {
     let proof_assigner = ProofAssigner::from(
         (&proof_plain)
             .into_iter()
-            .map(|i| UnivariatePolynomialAssigner::new(i.coefficients().to_owned(), &z))
+            .map(|i| UnivariatePolynomialAssigner::new(i.as_ref().to_owned(), &z))
             .collect::<Vec<_>>(),
     );
     type DuplexAssigner<'a> = DuplexPoseidon2PervushinAssigner<'a>;

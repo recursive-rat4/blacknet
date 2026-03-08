@@ -49,9 +49,19 @@ impl<T: Zero> SparseVector<T> {
     pub const fn dimension(&self) -> usize {
         self.dimension
     }
+}
 
-    pub const fn elements(&self) -> &Vec<T> {
+impl<T: Zero> AsRef<[T]> for SparseVector<T> {
+    #[inline]
+    fn as_ref(&self) -> &[T] {
         &self.elements
+    }
+}
+
+impl<T: Zero> AsMut<[T]> for SparseVector<T> {
+    #[inline]
+    fn as_mut(&mut self) -> &mut [T] {
+        &mut self.elements
     }
 }
 

@@ -264,7 +264,7 @@ impl<'a, R: Semiring + Clone + Eq> CircuitBuilder<'a, R> {
     }
 }
 
-impl<'a, R: UnitalRing + Eq> CircuitBuilder<'a, R> {
+impl<'a, R: UnitalRing + Clone + Eq> CircuitBuilder<'a, R> {
     /// Compile to CCS.
     pub fn ccs(self) -> CustomizableConstraintSystem<R> {
         let (constraints_num, variables_num) = (self.constraints(), self.variables());

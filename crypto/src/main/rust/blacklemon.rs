@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{IntegerRing, One, PolynomialRing, Zero};
+use crate::algebra::{IntegerRing, One, Zero};
 use crate::lpr;
 use crate::random::UniformGenerator;
 
@@ -76,9 +76,9 @@ pub fn decrypt(sk: &SecretKey, ct: &CipherText) -> PlainText {
 }
 
 pub fn detect(sk: &SecretKey, ct: &CipherText) -> Option<PlainText> {
-    let mut m = lpr::Rt::default();
+    let mut m = lpr::Rt::ZERO;
     let d = ct.a + ct.b * sk.a.s + sk.b;
-    let coefficients = d.coefficients();
+    let coefficients = lpr::Rq::from(d);
     for i in 0..lpr::D {
         if coefficients[i].absolute() <= R {
             m[i] = lpr::Zt::ZERO;
@@ -88,10 +88,10 @@ pub fn detect(sk: &SecretKey, ct: &CipherText) -> Option<PlainText> {
             return None;
         }
     }
-    if m.coefficients()
+    if (&m)
         .into_iter()
         .take(KAPPA)
-        .any(|coefficient| coefficient != lpr::Zt::ZERO)
+        .any(|coefficient| *coefficient != lpr::Zt::ZERO)
     {
         return None;
     }

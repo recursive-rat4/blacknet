@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{Double, Set, UnitalRing};
+use crate::algebra::{Double, RingOps, Set, UnitalRing};
 use crate::duplex::{Absorb, Duplex, Squeeze, SqueezeWithSize};
 use crate::matrix::DenseVector;
 use crate::polynomial::{MultivariatePolynomial, Point, Polynomial};
@@ -37,7 +37,12 @@ impl<R: UnitalRing> EqExtension<R> {
     pub const fn new(coefficients: Vec<R>, z: R) -> Self {
         Self { coefficients, z }
     }
+}
 
+impl<R: UnitalRing + Clone> EqExtension<R>
+where
+    for<'a> &'a R: RingOps<R>,
+{
     /// Evaluate over the unit hypercube.
     pub fn basis(coefficients: &[R]) -> Vec<R> {
         Self::evaluate(coefficients, R::ONE)
@@ -45,7 +50,7 @@ impl<R: UnitalRing> EqExtension<R> {
 
     /// Evaluate over a hypercube.
     pub fn hypercube(&self) -> DenseVector<R> {
-        Self::evaluate(&self.coefficients, self.z).into()
+        Self::evaluate(&self.coefficients, self.z.clone()).into()
     }
 
     pub fn hypercube_with_var<const VAL: i8>(&self) -> DenseVector<R>
@@ -62,13 +67,13 @@ impl<R: UnitalRing> EqExtension<R> {
         R: From<u8>,
     {
         match VAL {
-            -2 => self.z * (R::from(3) - self.coefficients[0] - self.coefficients[0].double().double()),
-            -1 => self.z * (R::from(2) - self.coefficients[0] - self.coefficients[0].double()),
-            0 => self.z * (R::ONE - self.coefficients[0]),
-            1 => self.z * self.coefficients[0],
-            2 => self.z * (self.coefficients[0].double() + self.coefficients[0] - R::ONE),
-            3 => self.z * (self.coefficients[0].double().double() + self.coefficients[0] - R::from(2)),
-            4 => self.z * (self.coefficients[0].double().double().double() - self.coefficients[0] - R::from(3)),
+            -2 => &self.z * (R::from(3) - &self.coefficients[0] - (&self.coefficients[0]).double().double()),
+            -1 => &self.z * (R::from(2) - &self.coefficients[0] - (&self.coefficients[0]).double()),
+            0 => &self.z * (R::ONE - &self.coefficients[0]),
+            1 => &self.z * &self.coefficients[0],
+            2 => &self.z * ((&self.coefficients[0]).double() + &self.coefficients[0] - R::ONE),
+            3 => &self.z * ((&self.coefficients[0]).double().double() + &self.coefficients[0] - R::from(2)),
+            4 => &self.z * ((&self.coefficients[0]).double().double().double() - &self.coefficients[0] - R::from(3)),
             _ => unimplemented!("z_with_var for val = {VAL}"),
         }
     }
@@ -80,9 +85,9 @@ impl<R: UnitalRing> EqExtension<R> {
         for i in (0..coefficients.len()).rev() {
             let mut l = j;
             for k in 0..j {
-                let t = coefficients[i] * r[k];
+                let t = &coefficients[i] * &r[k];
+                r[k] -= &t;
                 r[l] = t;
-                r[k] -= t;
                 l += 1;
             }
             j <<= 1;
@@ -109,23 +114,29 @@ impl<R: UnitalRing> From<Vec<R>> for EqExtension<R> {
     }
 }
 
-impl<R: UnitalRing> Polynomial for EqExtension<R> {
+impl<R: UnitalRing> Polynomial for EqExtension<R>
+where
+    for<'a> &'a R: RingOps<R>,
+{
     type Coefficient = R;
     type Point = Point<R>;
 
     fn point(&self, point: &Point<R>) -> R {
         debug_assert_eq!(self.coefficients.len(), point.dimension());
-        self.z
+        &self.z
             * zip(&self.coefficients, point)
-                .map(|(&c, &p)| (c * p).double() - c - p + R::ONE)
+                .map(|(c, p)| (c * p).double() - c - p + R::ONE)
                 .product::<R>()
     }
 }
 
-impl<R: UnitalRing + From<u8>> MultivariatePolynomial for EqExtension<R> {
-    fn bind(&mut self, e: &R) {
-        self.z *= (self.coefficients[0] * e).double() - self.coefficients[0] - e + R::ONE;
-        self.coefficients.remove(0);
+impl<R: UnitalRing + Clone + From<u8>> MultivariatePolynomial for EqExtension<R>
+where
+    for<'a> &'a R: RingOps<R>,
+{
+    fn bind(&mut self, value: &R) {
+        let c0 = self.coefficients.remove(0);
+        self.z *= (&c0 * value).double() - c0 - value + R::ONE;
     }
 
     fn sum_with_var<const VAL: i8>(&self) -> R {
@@ -152,13 +163,16 @@ impl<R: UnitalRing> Double for EqExtension<R> {
     }
 }
 
-impl<R: UnitalRing> Double for &EqExtension<R> {
+impl<R: UnitalRing + Clone> Double for &EqExtension<R>
+where
+    for<'a> &'a R: RingOps<R>,
+{
     type Output = EqExtension<R>;
 
     fn double(self) -> Self::Output {
         Self::Output {
             coefficients: self.coefficients.clone(),
-            z: self.z.double(),
+            z: (&self.z).double(),
         }
     }
 }
@@ -174,13 +188,16 @@ impl<R: UnitalRing> Neg for EqExtension<R> {
     }
 }
 
-impl<R: UnitalRing> Neg for &EqExtension<R> {
+impl<R: UnitalRing + Clone> Neg for &EqExtension<R>
+where
+    for<'a> &'a R: RingOps<R>,
+{
     type Output = EqExtension<R>;
 
     fn neg(self) -> Self::Output {
         Self::Output {
             coefficients: self.coefficients.clone(),
-            z: -self.z,
+            z: -&self.z,
         }
     }
 }
@@ -207,24 +224,30 @@ impl<R: UnitalRing> Mul<&R> for EqExtension<R> {
     }
 }
 
-impl<R: UnitalRing> Mul<R> for &EqExtension<R> {
+impl<R: UnitalRing + Clone> Mul<R> for &EqExtension<R>
+where
+    for<'a> &'a R: RingOps<R>,
+{
     type Output = EqExtension<R>;
 
     fn mul(self, rps: R) -> Self::Output {
         Self::Output {
             coefficients: self.coefficients.clone(),
-            z: self.z * rps,
+            z: &self.z * rps,
         }
     }
 }
 
-impl<R: UnitalRing> Mul<&R> for &EqExtension<R> {
+impl<R: UnitalRing + Clone> Mul<&R> for &EqExtension<R>
+where
+    for<'a> &'a R: RingOps<R>,
+{
     type Output = EqExtension<R>;
 
     fn mul(self, rps: &R) -> Self::Output {
         Self::Output {
             coefficients: self.coefficients.clone(),
-            z: self.z * rps,
+            z: &self.z * rps,
         }
     }
 }

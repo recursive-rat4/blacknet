@@ -401,13 +401,22 @@ impl Square for &Scalar25519 {
 impl Inv for Scalar25519 {
     type Output = Option<Self>;
 
+    #[inline]
+    fn inv(self) -> Self::Output {
+        (&self).inv()
+    }
+}
+
+impl Inv for &Scalar25519 {
+    type Output = Option<Scalar25519>;
+
     fn inv(self) -> Self::Output {
         // Extended Binary GCD (classic algorithm)
         // https://eprint.iacr.org/2020/972
         let mut a = self.canonical();
-        let mut b = Self::MODULUS;
-        let mut c = Self::ONE;
-        let mut d = Self::ZERO;
+        let mut b = Scalar25519::MODULUS;
+        let mut c = Scalar25519::ONE;
+        let mut d = Scalar25519::ZERO;
         while a != UInt256::ZERO {
             if a.is_even() {
                 a >>= 1;
@@ -546,10 +555,10 @@ impl IntegerRing for Scalar25519 {
         }
     }
 
-    fn canonical(self) -> UInt256 {
+    fn canonical(&self) -> UInt256 {
         Self::from_form(self.n)
     }
-    fn absolute(self) -> UInt256 {
+    fn absolute(&self) -> UInt256 {
         let n = self.canonical();
         if n <= Self::P_MINUS_1_HALF {
             n

@@ -55,7 +55,9 @@ pub fn cooley_tukey<Z: Twiddles<M>, const M: usize, const N: usize>(
 
 pub fn gentleman_sande<Z: Twiddles<M>, const M: usize, const N: usize>(
     a: &mut [LinearCombination<Z>; N],
-) {
+) where
+    for<'a> &'a Z: RingOps<Z>,
+{
     let inertia: usize = const {
         assert!(N % M == 0);
         N / M
@@ -115,14 +117,14 @@ where
                         &mut c[i * k..i * k + 4],
                         &a[i * k..i * k + 4],
                         &b[i * k..i * k + 4],
-                        Constant::new(Z::TWIDDLES[l + i]),
+                        &Constant::new(Z::TWIDDLES[l + i]),
                     );
                     binomial::<Z, 4>(
                         scope,
                         &mut c[i * k + inertia..i * k + inertia + 4],
                         &a[i * k + inertia..i * k + inertia + 4],
                         &b[i * k + inertia..i * k + inertia + 4],
-                        Constant::new(-Z::TWIDDLES[l + i]),
+                        &Constant::new(-Z::TWIDDLES[l + i]),
                     );
                 }
                 c

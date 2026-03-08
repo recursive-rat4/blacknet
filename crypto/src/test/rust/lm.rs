@@ -530,8 +530,4 @@ fn r64_infinity_norm() {
     let elt = R64::from(coeffs);
     assert!(!elt.check_infinity_norm(&bad));
     assert!(elt.check_infinity_norm(&good));
-
-    let elt = NTT64::from(coeffs);
-    assert!(!elt.check_infinity_norm(&bad));
-    assert!(elt.check_infinity_norm(&good));
 }

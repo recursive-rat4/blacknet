@@ -252,7 +252,7 @@ impl<R: UnitalRing> Sub<LinearCombination<R>> for Variable<R> {
     }
 }
 
-impl<R: UnitalRing> Sub<&LinearCombination<R>> for Variable<R> {
+impl<R: UnitalRing + Clone> Sub<&LinearCombination<R>> for Variable<R> {
     type Output = LinearCombination<R>;
 
     fn sub(self, rps: &LinearCombination<R>) -> Self::Output {

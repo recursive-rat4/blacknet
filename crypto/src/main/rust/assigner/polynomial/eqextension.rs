@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Pavel Vasin
+ * Copyright (c) 2024-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::UnitalRing;
+use crate::algebra::{RingOps, UnitalRing};
 use crate::assigner::assigment::Assigment;
 use crate::matrix::DenseVector;
 use crate::polynomial::Point;
@@ -35,15 +35,19 @@ impl<'a, R: UnitalRing> EqExtension<'a, R> {
             assigment,
         }
     }
+}
 
+impl<'a, R: UnitalRing + Clone> EqExtension<'a, R>
+where
+    for<'b> &'b R: RingOps<R>,
+{
     pub fn point(&self, point: &Point<R>) -> R {
         let mut pi = R::ONE;
-        zip(&self.coefficients, point).for_each(|(&c, &p)| {
+        zip(&self.coefficients, point).for_each(|(c, p)| {
             let cp = c * p;
-            self.assigment.push(cp);
-            let t = pi * (cp.double() - c - p + R::ONE);
-            self.assigment.push(t);
-            pi = t;
+            self.assigment.push(cp.clone());
+            pi *= cp.double() - c - p + R::ONE;
+            self.assigment.push(pi.clone());
         });
         pi
     }
@@ -55,10 +59,10 @@ impl<'a, R: UnitalRing> EqExtension<'a, R> {
         for i in (0..self.coefficients.len()).rev() {
             let mut l = j;
             for k in 0..j {
-                let t = self.coefficients[i] * r[k];
-                self.assigment.push(t);
+                let t = &self.coefficients[i] * &r[k];
+                self.assigment.push(t.clone());
+                r[k] -= &t;
                 r[l] = t;
-                r[k] -= t;
                 l += 1;
             }
             j <<= 1;

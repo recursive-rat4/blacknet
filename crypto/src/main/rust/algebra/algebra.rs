@@ -15,7 +15,22 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{CommutativeRing, DivisionRing, Module, Ring, UnitalRing};
+use crate::algebra::{
+    CommutativeRing, DivisionRing, Module, Ring, RingOps, SemimoduleOps, UnitalRing,
+};
+
+#[rustfmt::skip]
+pub trait AlgebraOps<R, A>
+    : SemimoduleOps<R, A>
+    + RingOps<A>
+{
+}
+
+#[rustfmt::skip]
+impl<R, A, T
+    : SemimoduleOps<R, A>
+    + RingOps<A>
+> AlgebraOps<R, A> for T {}
 
 /// Associative algebra over a ring.
 #[rustfmt::skip]
@@ -23,6 +38,7 @@ pub trait Algebra<R: Ring>
     : Module<R>
     + Ring
     + From<R>
+    + AlgebraOps<R, Self>
 {
 }
 

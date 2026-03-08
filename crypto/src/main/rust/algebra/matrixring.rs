@@ -20,8 +20,9 @@ use crate::algebra::{
     LeftOne, LeftZero, MultiplicativeMonoid, MultiplicativeSemigroup, One, RightOne, RightZero,
     Ring, RingOps, Semimodule, Set, Square, UnitalAlgebra, UnitalRing, Zero,
 };
+use core::array;
 use core::iter::{Product, Sum, zip};
-use core::mem::MaybeUninit;
+use core::mem::{MaybeUninit, transmute_copy};
 use core::ops::{Add, AddAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign};
 use serde::{Deserialize, Serialize};
 
@@ -78,11 +79,6 @@ impl<R: Ring, const N: usize, const NN: usize> MatrixRing<R, N, NN> {
         N
     }
 
-    /// The entries in row-major order.
-    pub const fn elements(&self) -> &[R; NN] {
-        &self.elements
-    }
-
     /// Compute the trace.
     pub fn trace(&self) -> R {
         let mut sigma = R::ZERO;
@@ -107,7 +103,7 @@ impl<R: Ring, const N: usize, const NN: usize> MatrixRing<R, N, NN> {
     }
 }
 
-impl<R: Ring + Copy, const N: usize, const NN: usize> Default for MatrixRing<R, N, NN> {
+impl<R: Ring, const N: usize, const NN: usize> Default for MatrixRing<R, N, NN> {
     fn default() -> Self {
         Self::ZERO
     }
@@ -116,6 +112,20 @@ impl<R: Ring + Copy, const N: usize, const NN: usize> Default for MatrixRing<R, 
 impl<R: Ring + Copy, const N: usize, const NN: usize> From<R> for MatrixRing<R, N, NN> {
     fn from(scalar: R) -> Self {
         Self::const_from(scalar)
+    }
+}
+
+impl<R: Ring, const N: usize, const NN: usize> AsRef<[R; NN]> for MatrixRing<R, N, NN> {
+    #[inline]
+    fn as_ref(&self) -> &[R; NN] {
+        &self.elements
+    }
+}
+
+impl<R: Ring, const N: usize, const NN: usize> AsMut<[R; NN]> for MatrixRing<R, N, NN> {
+    #[inline]
+    fn as_mut(&mut self) -> &mut [R; NN] {
+        &mut self.elements
     }
 }
 
@@ -222,11 +232,7 @@ where
     type Output = MatrixRing<R, N, NN>;
 
     fn add(self, rps: &'a MatrixRing<R, N, NN>) -> Self::Output {
-        let mut out = [const { MaybeUninit::<R>::uninit() }; NN];
-        zip(&mut out, zip(self, rps)).for_each(|(o, (l, r))| {
-            o.write(l + r);
-        });
-        let elements = out.map(|i| unsafe { i.assume_init() });
+        let elements = array::from_fn(|i| &self.elements[i] + &rps.elements[i]);
         Self::Output { elements }
     }
 }
@@ -260,11 +266,7 @@ where
     type Output = MatrixRing<R, N, NN>;
 
     fn double(self) -> Self::Output {
-        let mut out = [const { MaybeUninit::<R>::uninit() }; NN];
-        zip(&mut out, self).for_each(|(o, l)| {
-            o.write(l.double());
-        });
-        let elements = out.map(|i| unsafe { i.assume_init() });
+        let elements = array::from_fn(|i| (&self.elements[i]).double());
         Self::Output { elements }
     }
 }
@@ -286,11 +288,7 @@ where
     type Output = MatrixRing<R, N, NN>;
 
     fn neg(self) -> Self::Output {
-        let mut out = [const { MaybeUninit::<R>::uninit() }; NN];
-        zip(&mut out, self).for_each(|(o, l)| {
-            o.write(-l);
-        });
-        let elements = out.map(|i| unsafe { i.assume_init() });
+        let elements = array::from_fn(|i| -&self.elements[i]);
         Self::Output { elements }
     }
 }
@@ -336,11 +334,7 @@ where
     type Output = MatrixRing<R, N, NN>;
 
     fn sub(self, rps: &'a MatrixRing<R, N, NN>) -> Self::Output {
-        let mut out = [const { MaybeUninit::<R>::uninit() }; NN];
-        zip(&mut out, zip(self, rps)).for_each(|(o, (l, r))| {
-            o.write(l - r);
-        });
-        let elements = out.map(|i| unsafe { i.assume_init() });
+        let elements = array::from_fn(|i| &self.elements[i] - &rps.elements[i]);
         Self::Output { elements }
     }
 }
@@ -357,84 +351,102 @@ impl<R: Ring, const N: usize, const NN: usize> SubAssign<&Self> for MatrixRing<R
     }
 }
 
-impl<R: Ring + Copy, const N: usize, const NN: usize> Mul for MatrixRing<R, N, NN> {
+impl<R: Ring, const N: usize, const NN: usize> Mul for MatrixRing<R, N, NN>
+where
+    for<'a> &'a R: RingOps<R>,
+{
     type Output = Self;
 
-    #[allow(clippy::op_ref)]
     #[inline]
     fn mul(self, rps: Self) -> Self::Output {
         &self * &rps
     }
 }
 
-impl<R: Ring + Copy, const N: usize, const NN: usize> Mul<&Self> for MatrixRing<R, N, NN> {
+impl<R: Ring, const N: usize, const NN: usize> Mul<&Self> for MatrixRing<R, N, NN>
+where
+    for<'a> &'a R: RingOps<R>,
+{
     type Output = Self;
 
-    #[allow(clippy::op_ref)]
     #[inline]
     fn mul(self, rps: &Self) -> Self::Output {
         &self * rps
     }
 }
 
-impl<R: Ring + Copy, const N: usize, const NN: usize> Mul<MatrixRing<R, N, NN>>
-    for &MatrixRing<R, N, NN>
+impl<R: Ring, const N: usize, const NN: usize> Mul<MatrixRing<R, N, NN>> for &MatrixRing<R, N, NN>
+where
+    for<'a> &'a R: RingOps<R>,
 {
     type Output = MatrixRing<R, N, NN>;
 
-    #[allow(clippy::op_ref)]
     #[inline]
     fn mul(self, rps: MatrixRing<R, N, NN>) -> Self::Output {
         self * &rps
     }
 }
 
-impl<'a, R: Ring + Copy, const N: usize, const NN: usize> Mul<&'a MatrixRing<R, N, NN>>
+impl<'a, R: Ring, const N: usize, const NN: usize> Mul<&'a MatrixRing<R, N, NN>>
     for &MatrixRing<R, N, NN>
+where
+    for<'b> &'b R: RingOps<R>,
 {
     type Output = MatrixRing<R, N, NN>;
 
     fn mul(self, rps: &'a MatrixRing<R, N, NN>) -> Self::Output {
         // Iterative algorithm
-        let mut m = Self::Output::ZERO;
+        let mut out = [const { MaybeUninit::<R>::uninit() }; NN];
         for i in 0..N {
             for j in 0..N {
+                let mut m = R::ZERO;
                 for k in 0..N {
-                    m[(i, j)] += self[(i, k)] * rps[(k, j)];
+                    m += &self[(i, k)] * &rps[(k, j)];
                 }
+                out[i * N + j].write(m);
             }
         }
-        m
+        let elements = out.map(|i| unsafe { i.assume_init() });
+        Self::Output { elements }
     }
 }
 
-impl<R: Ring + Copy, const N: usize, const NN: usize> MulAssign for MatrixRing<R, N, NN> {
-    #[allow(clippy::op_ref)]
+impl<R: Ring, const N: usize, const NN: usize> MulAssign for MatrixRing<R, N, NN>
+where
+    for<'a> &'a R: RingOps<R>,
+{
     #[inline]
     fn mul_assign(&mut self, rps: Self) {
         *self = &*self * &rps
     }
 }
 
-impl<R: Ring + Copy, const N: usize, const NN: usize> MulAssign<&Self> for MatrixRing<R, N, NN> {
-    #[allow(clippy::op_ref)]
+impl<R: Ring, const N: usize, const NN: usize> MulAssign<&Self> for MatrixRing<R, N, NN>
+where
+    for<'a> &'a R: RingOps<R>,
+{
     #[inline]
     fn mul_assign(&mut self, rps: &Self) {
         *self = &*self * rps
     }
 }
 
-impl<R: Ring + Copy, const N: usize, const NN: usize> Square for MatrixRing<R, N, NN> {
+impl<R: Ring, const N: usize, const NN: usize> Square for MatrixRing<R, N, NN>
+where
+    for<'a> &'a R: RingOps<R>,
+{
     type Output = Self;
 
-    #[allow(clippy::op_ref)]
     #[inline]
     fn square(self) -> Self {
         &self * &self
     }
 }
 
-impl<R: Ring + Copy, const N: usize, const NN: usize> Square for &MatrixRing<R, N, NN> {
+impl<R: Ring, const N: usize, const NN: usize> Square for &MatrixRing<R, N, NN>
+where
+    for<'a> &'a R: RingOps<R>,
+{
     type Output = MatrixRing<R, N, NN>;
 
     #[inline]
@@ -481,11 +493,7 @@ where
     type Output = MatrixRing<R, N, NN>;
 
     fn mul(self, rps: &R) -> Self::Output {
-        let mut out = [const { MaybeUninit::<R>::uninit() }; NN];
-        zip(&mut out, self).for_each(|(o, l)| {
-            o.write(l * rps);
-        });
-        let elements = out.map(|i| unsafe { i.assume_init() });
+        let elements = array::from_fn(|i| &self.elements[i] * rps);
         Self::Output { elements }
     }
 }
@@ -535,14 +543,13 @@ impl<R: Ring + Copy, const N: usize, const NN: usize> Mul<MatrixRing<R, N, NN>>
     }
 }
 
-impl<R: Ring + Copy, const N: usize, const NN: usize> Sum for MatrixRing<R, N, NN> {
+impl<R: Ring, const N: usize, const NN: usize> Sum for MatrixRing<R, N, NN> {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
         iter.reduce(|lps, rps| lps + rps).unwrap_or(Self::LEFT_ZERO)
     }
 }
 
-impl<'a, R: Ring + Copy, const N: usize, const NN: usize> Sum<&'a Self> for MatrixRing<R, N, NN> {
-    #[allow(clippy::clone_on_copy)]
+impl<'a, R: Ring + Clone, const N: usize, const NN: usize> Sum<&'a Self> for MatrixRing<R, N, NN> {
     fn sum<I: Iterator<Item = &'a Self>>(mut iter: I) -> Self {
         let first = match iter.next() {
             Some(i) => i.clone(),
@@ -552,43 +559,67 @@ impl<'a, R: Ring + Copy, const N: usize, const NN: usize> Sum<&'a Self> for Matr
     }
 }
 
-impl<R: UnitalRing, const N: usize, const NN: usize> Product for MatrixRing<R, N, NN> {
+impl<R: UnitalRing, const N: usize, const NN: usize> Product for MatrixRing<R, N, NN>
+where
+    for<'a> &'a R: RingOps<R>,
+{
     fn product<I: Iterator<Item = Self>>(iter: I) -> Self {
         iter.reduce(|lps, rps| lps * rps).unwrap_or(Self::LEFT_ONE)
     }
 }
 
-impl<'a, R: UnitalRing, const N: usize, const NN: usize> Product<&'a Self>
+impl<'a, R: UnitalRing + Clone, const N: usize, const NN: usize> Product<&'a Self>
     for MatrixRing<R, N, NN>
+where
+    for<'b> &'b R: RingOps<R>,
 {
-    #[inline]
-    fn product<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
-        iter.copied().product()
+    fn product<I: Iterator<Item = &'a Self>>(mut iter: I) -> Self {
+        let first = match iter.next() {
+            Some(i) => i.clone(),
+            None => return Self::LEFT_ONE,
+        };
+        iter.fold(first, |lps, rps| lps * rps)
     }
 }
 
-impl<R: Ring + Copy, const N: usize, const NN: usize> LeftZero for MatrixRing<R, N, NN> {
-    const LEFT_ZERO: Self = Self::const_from(R::LEFT_ZERO);
+impl<R: Ring, const N: usize, const NN: usize> LeftZero for MatrixRing<R, N, NN> {
+    const LEFT_ZERO: Self = Self::ZERO;
 }
 
-impl<R: Ring + Copy, const N: usize, const NN: usize> RightZero for MatrixRing<R, N, NN> {
-    const RIGHT_ZERO: Self = Self::const_from(R::RIGHT_ZERO);
+impl<R: Ring, const N: usize, const NN: usize> RightZero for MatrixRing<R, N, NN> {
+    const RIGHT_ZERO: Self = Self::ZERO;
 }
 
-impl<R: Ring + Copy, const N: usize, const NN: usize> Zero for MatrixRing<R, N, NN> {
-    const ZERO: Self = Self::const_from(R::ZERO);
+impl<R: Ring, const N: usize, const NN: usize> Zero for MatrixRing<R, N, NN> {
+    const ZERO: Self = {
+        let elements = [R::ZERO; NN];
+        Self { elements }
+    };
 }
 
 impl<R: UnitalRing, const N: usize, const NN: usize> LeftOne for MatrixRing<R, N, NN> {
-    const LEFT_ONE: Self = Self::const_from(R::LEFT_ONE);
+    const LEFT_ONE: Self = Self::ONE;
 }
 
 impl<R: UnitalRing, const N: usize, const NN: usize> RightOne for MatrixRing<R, N, NN> {
-    const RIGHT_ONE: Self = Self::const_from(R::RIGHT_ONE);
+    const RIGHT_ONE: Self = Self::ONE;
 }
 
 impl<R: UnitalRing, const N: usize, const NN: usize> One for MatrixRing<R, N, NN> {
-    const ONE: Self = Self::const_from(R::ONE);
+    const ONE: Self = {
+        let mut t = [const { MaybeUninit::<R>::uninit() }; NN];
+        let mut i = 0;
+        while i < N {
+            let mut j = 0;
+            while j < N {
+                t[i * N + j].write(if i != j { R::ZERO } else { R::ONE });
+                j += 1;
+            }
+            i += 1;
+        }
+        let elements: [R; NN] = unsafe { transmute_copy(&t) };
+        Self { elements }
+    };
 }
 
 impl<R: Ring, const N: usize, const NN: usize> Set for MatrixRing<R, N, NN> {}
@@ -597,17 +628,30 @@ impl<R: Ring, const N: usize, const NN: usize> AdditiveCommutativeMagma for Matr
 
 impl<R: Ring, const N: usize, const NN: usize> AdditiveSemigroup for MatrixRing<R, N, NN> {}
 
-impl<R: Ring + Copy, const N: usize, const NN: usize> AdditiveMonoid for MatrixRing<R, N, NN> {}
+impl<R: Ring + Clone, const N: usize, const NN: usize> AdditiveMonoid for MatrixRing<R, N, NN> {}
 
-impl<R: Ring + Copy, const N: usize, const NN: usize> MultiplicativeSemigroup
-    for MatrixRing<R, N, NN>
+impl<R: Ring, const N: usize, const NN: usize> MultiplicativeSemigroup for MatrixRing<R, N, NN> where
+    for<'a> &'a R: RingOps<R>
 {
 }
 
-impl<R: UnitalRing, const N: usize, const NN: usize> MultiplicativeMonoid for MatrixRing<R, N, NN> {}
+impl<R: UnitalRing + Clone, const N: usize, const NN: usize> MultiplicativeMonoid
+    for MatrixRing<R, N, NN>
+where
+    for<'a> &'a R: RingOps<R>,
+{
+}
 
-impl<R: Ring + Copy, const N: usize, const NN: usize> Semimodule<R> for MatrixRing<R, N, NN> {}
+impl<R: Ring + Clone, const N: usize, const NN: usize> Semimodule<R> for MatrixRing<R, N, NN> {}
 
-impl<R: Ring + Copy, const N: usize, const NN: usize> Algebra<R> for MatrixRing<R, N, NN> {}
+impl<R: Ring + Copy, const N: usize, const NN: usize> Algebra<R> for MatrixRing<R, N, NN> where
+    for<'a> &'a R: RingOps<R>
+{
+}
 
-impl<R: UnitalRing, const N: usize, const NN: usize> UnitalAlgebra<R> for MatrixRing<R, N, NN> {}
+impl<R: UnitalRing + Copy, const N: usize, const NN: usize> UnitalAlgebra<R>
+    for MatrixRing<R, N, NN>
+where
+    for<'a> &'a R: RingOps<R>,
+{
+}

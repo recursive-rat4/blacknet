@@ -82,11 +82,6 @@ impl<T> DenseVector<T> {
         self.elements.len()
     }
 
-    /// The entries.
-    pub const fn elements(&self) -> &Vec<T> {
-        &self.elements
-    }
-
     /// Concatenate horizontally.
     pub fn concat(&self, rps: &Self) -> Self
     where

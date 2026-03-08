@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{IntegerRing, One, PolynomialRing, UnivariateRing, Zero};
+use crate::algebra::{IntegerRing, One, UnivariateRing, Zero};
 use crate::convolution::Negacyclic;
 use crate::fermat::{FermatField, FermatNTT1024, FermatRing1024};
 use crate::integer::bits_u8;
@@ -34,7 +34,6 @@ pub(crate) const D: usize = 1024;
 pub(crate) const H: usize = 64;
 pub(crate) const SIGMA: f64 = 0.5;
 pub(crate) type Rt = UnivariateRing<Zt, D, Negacyclic>;
-#[expect(dead_code)]
 pub(crate) type Rq = FermatRing1024;
 pub(crate) type RqNTT = FermatNTT1024;
 pub(crate) const DELTA: <Zq as IntegerRing>::Int = Zq::MODULUS >> 1;
@@ -60,7 +59,7 @@ pub struct PlainText {
 }
 
 pub(crate) fn upscale(rt: &Rt) -> RqNTT {
-    let coefficients = rt.coefficients();
+    let coefficients = rt;
     array::from_fn(|i| {
         if coefficients[i] == Zt::ZERO {
             Zq::ZERO
@@ -123,7 +122,7 @@ pub fn encrypt<RNG: UniformGenerator<Output = u8>>(
 
 pub fn decrypt(sk: &SecretKey, ct: &CipherText) -> PlainText {
     let d = ct.a + ct.b * sk.s;
-    let coefficients = d.coefficients();
+    let coefficients: Rq = d.into();
     let m: Rt = array::from_fn(|i| {
         if coefficients[i].absolute() <= HALF_DELTA {
             Zt::ZERO
@@ -150,8 +149,7 @@ pub fn encode(bytes: &[u8; D / 8]) -> PlainText {
 
 pub fn decode(pt: &PlainText) -> [u8; D / 8] {
     let mut bytes = [0_u8; D / 8];
-    let coefficients: [Zt; D] = pt.m.coefficients().into();
-    for (i, chunk) in coefficients.chunks_exact(8).enumerate() {
+    for (i, chunk) in pt.m.as_ref().chunks_exact(8).enumerate() {
         let byte = chunk
             .iter()
             .rev()

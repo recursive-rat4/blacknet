@@ -23,37 +23,42 @@ pub struct LogicGate<'a, R: UnitalRing> {
     assigment: &'a Assigment<R>,
 }
 
-impl<'a, R: UnitalRing + Eq> LogicGate<'a, R> {
+impl<'a, R: UnitalRing + Eq + Copy> LogicGate<'a, R> {
     pub const fn new(assigment: &'a Assigment<R>) -> Self {
         Self { assigment }
     }
 
     pub fn xor(&self, a: R, b: R) -> R {
         let ab = a * b;
+        let r = a + b - ab.double();
         self.assigment.push(ab);
-        a + b - ab.double()
+        r
     }
 
+    #[allow(clippy::clone_on_copy)]
     pub fn and(&self, a: R, b: R) -> R {
         let ab = a * b;
-        self.assigment.push(ab);
+        self.assigment.push(ab.clone());
         ab
     }
 
+    #[allow(clippy::op_ref)]
     pub fn or(&self, a: R, b: R) -> R {
         let ab = a * b;
+        let r = a + b - &ab;
         self.assigment.push(ab);
-        a + b - ab
+        r
     }
 
     pub fn not(&self, a: R) -> R {
         R::ONE - a
     }
 
+    #[allow(clippy::clone_on_copy)]
     pub fn and_slice(&self, a: &[R]) -> R {
         match a.len() {
             0 => R::ONE,
-            1 => a[0],
+            1 => a[0].clone(),
             _ => {
                 let mut pi = a[0];
                 for &a in a.iter().skip(1) {
@@ -64,12 +69,13 @@ impl<'a, R: UnitalRing + Eq> LogicGate<'a, R> {
         }
     }
 
+    #[allow(clippy::clone_on_copy)]
     pub fn check_less_or_equal(&self, a: &[R], b: &[R]) {
         let mut current_run = Vec::<R>::with_capacity(b.len());
         let mut last_run: Option<R> = None;
         for i in (0..b.len()).rev() {
-            let digit = a[i];
             if b[i] == R::ONE {
+                let digit = a[i].clone();
                 current_run.push(digit);
             } else if !current_run.is_empty() {
                 if let Some(last_run) = last_run {

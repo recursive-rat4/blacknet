@@ -17,11 +17,12 @@
 
 use crate::algebra::{
     AdditiveAbelianGroup, AdditiveCyclicGroup, AdditiveGroupOps, CommutativeAlgebra,
-    CommutativeSemiring, Conjugate, Inv, Module, MultiplicativeMagmaOps, Presemiring, Semiring,
+    CommutativeSemiring, Conjugate, Inv, MultiplicativeMagmaOps, Presemiring, Semiring,
     UnitalAlgebra,
 };
 use crate::integer::{Integer, SignedInteger};
 use alloc::vec::Vec;
+use core::borrow::{Borrow, BorrowMut};
 use core::ops::{Index, IndexMut};
 
 #[rustfmt::skip]
@@ -70,7 +71,6 @@ impl<R
 pub trait UnitalRing
     : Ring
     + Semiring
-    + Copy
 {
 }
 
@@ -78,7 +78,6 @@ pub trait UnitalRing
 impl<R
     : Ring
     + Semiring
-    + Copy
 > UnitalRing for R {}
 
 /// A marker for rings with commutative multiplication.
@@ -116,14 +115,14 @@ pub trait IntegerRing
     fn with_limb(n: <Self::Int as Integer>::Limb) -> Self;
 
     /// Canonical representative
-    fn canonical(self) -> Self::Int;
+    fn canonical(&self) -> Self::Int;
     /// The absolute value of balanced representative
-    fn absolute(self) -> Self::Int;
+    fn absolute(&self) -> Self::Int;
 
     const BITS: u32;
     const MODULUS: Self::Int;
 
-    fn gadget(self) -> Vec<Self> {
+    fn gadget(&self) -> Vec<Self> {
         let mut representative = self.canonical();
         let mut bits = Vec::<Self>::with_capacity(Self::BITS as usize);
         for _ in 0..Self::BITS {
@@ -147,13 +146,14 @@ pub trait BalancedRepresentative {
 #[rustfmt::skip]
 pub trait PolynomialRing<R: UnitalRing>
     : UnitalAlgebra<R>
+    + Borrow<[R]>
+    + BorrowMut<[R]>
     + Index<usize, Output = R>
     + IndexMut<usize, Output = R>
     + IntoIterator<Item = R>
 {
-    fn coefficients(self) -> impl Module<R>;
     fn constant_term(self) -> R;
-    fn evaluate(self, point: R) -> R;
+    fn evaluate(&self, point: &R) -> R;
 }
 
 #[rustfmt::skip]

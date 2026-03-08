@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{Double, Semiring, SemiringOps, Square, UnitalRing};
+use crate::algebra::{Double, RingOps, Semiring, SemiringOps, Square, UnitalRing};
 use crate::circuit::builder::{
     Constant, Expression, LinearMonoid, LinearSpan, LinearTerm, Variable,
 };
@@ -276,21 +276,27 @@ where
 impl<R: UnitalRing> Neg for LinearCombination<R> {
     type Output = Self;
 
-    fn neg(mut self) -> Self::Output {
-        for coefficient in self.terms.values_mut() {
-            *coefficient = -*coefficient;
+    fn neg(self) -> Self::Output {
+        LinearCombination::<R> {
+            terms: self
+                .terms
+                .into_iter()
+                .map(|(var, val)| (var, -val))
+                .collect(),
         }
-        self
     }
 }
 
-impl<R: UnitalRing> Neg for &LinearCombination<R> {
+impl<R: UnitalRing> Neg for &LinearCombination<R>
+where
+    for<'a> &'a R: RingOps<R>,
+{
     type Output = LinearCombination<R>;
 
     fn neg(self) -> Self::Output {
         let mut lc = LinearCombination::new();
-        for (&variable, &coefficient) in &self.terms {
-            lc -= LinearTerm::new(variable, coefficient);
+        for (&variable, coefficient) in &self.terms {
+            lc += LinearTerm::new(variable, -coefficient);
         }
         lc
     }
@@ -309,12 +315,12 @@ impl<R: UnitalRing> SubAssign<LinearTerm<R>> for LinearCombination<R> {
     fn sub_assign(&mut self, rps: LinearTerm<R>) {
         self.terms
             .entry(rps.variable)
-            .and_modify(|value| *value -= rps.coefficient)
+            .and_modify(|value| *value -= &rps.coefficient)
             .or_insert(-rps.coefficient);
     }
 }
 
-impl<R: UnitalRing> Sub<LinearTerm<R>> for &LinearCombination<R> {
+impl<R: UnitalRing + Clone> Sub<LinearTerm<R>> for &LinearCombination<R> {
     type Output = LinearCombination<R>;
 
     fn sub(self, rps: LinearTerm<R>) -> Self::Output {
@@ -339,7 +345,7 @@ impl<R: UnitalRing> SubAssign<Constant<R>> for LinearCombination<R> {
     }
 }
 
-impl<R: UnitalRing> Sub<Constant<R>> for &LinearCombination<R> {
+impl<R: UnitalRing + Clone> Sub<Constant<R>> for &LinearCombination<R> {
     type Output = LinearCombination<R>;
 
     fn sub(self, rps: Constant<R>) -> Self::Output {
@@ -362,7 +368,7 @@ impl<R: UnitalRing> SubAssign<Variable<R>> for LinearCombination<R> {
     }
 }
 
-impl<R: UnitalRing> Sub<Variable<R>> for &LinearCombination<R> {
+impl<R: UnitalRing + Clone> Sub<Variable<R>> for &LinearCombination<R> {
     type Output = LinearCombination<R>;
 
     fn sub(self, rps: Variable<R>) -> Self::Output {
@@ -387,7 +393,10 @@ impl<R: UnitalRing> SubAssign for LinearCombination<R> {
     }
 }
 
-impl<R: UnitalRing> Sub<&Self> for LinearCombination<R> {
+impl<R: UnitalRing> Sub<&Self> for LinearCombination<R>
+where
+    for<'a> &'a R: RingOps<R>,
+{
     type Output = Self;
 
     fn sub(mut self, rps: &Self) -> Self::Output {
@@ -396,15 +405,18 @@ impl<R: UnitalRing> Sub<&Self> for LinearCombination<R> {
     }
 }
 
-impl<R: UnitalRing> SubAssign<&Self> for LinearCombination<R> {
+impl<R: UnitalRing> SubAssign<&Self> for LinearCombination<R>
+where
+    for<'a> &'a R: RingOps<R>,
+{
     fn sub_assign(&mut self, rps: &Self) {
-        for (&variable, &coefficient) in &rps.terms {
-            *self -= LinearTerm::new(variable, coefficient)
+        for (&variable, coefficient) in &rps.terms {
+            *self += LinearTerm::new(variable, -coefficient)
         }
     }
 }
 
-impl<R: UnitalRing> Sub<LinearCombination<R>> for &LinearCombination<R> {
+impl<R: UnitalRing + Clone> Sub<LinearCombination<R>> for &LinearCombination<R> {
     type Output = LinearCombination<R>;
 
     fn sub(self, rps: LinearCombination<R>) -> Self::Output {
@@ -412,7 +424,10 @@ impl<R: UnitalRing> Sub<LinearCombination<R>> for &LinearCombination<R> {
     }
 }
 
-impl<R: UnitalRing> Sub for &LinearCombination<R> {
+impl<R: UnitalRing + Clone> Sub for &LinearCombination<R>
+where
+    for<'a> &'a R: RingOps<R>,
+{
     type Output = LinearCombination<R>;
 
     fn sub(self, rps: Self) -> Self::Output {

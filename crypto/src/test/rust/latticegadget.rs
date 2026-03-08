@@ -37,7 +37,7 @@ fn matrix() {
             R::from([4295098373, 0].map(Z::new)),
             R::from([4295098374, 0].map(Z::new)),
      ].into());
-    let g = latticegadget::matrix::<Z, R>(Z::from(65536), 2, 4);
+    let g = latticegadget::matrix::<Z, R>(&Z::from(65536), 2, 4);
     assert_eq!(&a * g.transpose(), b);
     let c = latticegadget::decompose_matrix(&b, 65535, 16, 4);
     assert_eq!(c, a);
@@ -47,7 +47,7 @@ fn matrix() {
 fn vector() {
     let a = DenseVector::from([3, 2, 1, 0, 4, 2, 1, 0].map(Z::from).map(R::from));
     let b = DenseVector::from([4295098371, 4295098372].map(Z::new).map(R::from));
-    let g = latticegadget::matrix::<Z, R>(Z::from(65536), 2, 4);
+    let g = latticegadget::matrix::<Z, R>(&Z::from(65536), 2, 4);
     assert_eq!(&g * &a, b);
     let c = latticegadget::decompose_vector(&b, 65535, 16, 4);
     assert_eq!(c, a);
@@ -57,7 +57,7 @@ fn vector() {
 fn polynomial() {
     let a = R::from([4444, 7789].map(Z::from));
     let b = R::from([34010, -59023].map(Z::from));
-    let d = latticegadget::decompose_polynomial(a, 65535, 16, 4);
-    let p = latticegadget::vector(b, Z::from(65536), 4);
+    let d = latticegadget::decompose_polynomial(&a, 65535, 16, 4);
+    let p = latticegadget::vector::<Z, R>(b, &Z::from(65536), 4);
     assert_eq!(d.dot(&p), a * b);
 }

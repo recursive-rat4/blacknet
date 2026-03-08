@@ -28,7 +28,7 @@ pub struct BinarityPolynomial<R: UnitalRing> {
     coefficients: MultilinearExtension<R>,
 }
 
-impl<R: UnitalRing> BinarityPolynomial<R> {
+impl<R: UnitalRing + Clone> BinarityPolynomial<R> {
     /// Construct a new polynomial.
     pub const fn new(coefficients: MultilinearExtension<R>) -> Self {
         Self { coefficients }
@@ -67,17 +67,20 @@ impl<R: UnitalRing> From<DenseVector<R>> for BinarityPolynomial<R> {
     }
 }
 
-impl<R: UnitalRing> Polynomial for BinarityPolynomial<R> {
+impl<R: UnitalRing + Clone> Polynomial for BinarityPolynomial<R>
+where
+    for<'a> &'a R: RingOps<R>,
+{
     type Coefficient = R;
     type Point = Point<R>;
 
     fn point(&self, point: &Point<R>) -> R {
         let t = self.coefficients.point(point);
-        t.square() - t
+        (&t).square() - t
     }
 }
 
-impl<R: UnitalRing> MultivariatePolynomial for BinarityPolynomial<R>
+impl<R: UnitalRing + Clone> MultivariatePolynomial for BinarityPolynomial<R>
 where
     for<'a> &'a R: RingOps<R>,
 {
