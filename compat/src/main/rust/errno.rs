@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -17,7 +17,7 @@
 
 #[cfg(target_family = "unix")]
 use core::ffi::CStr;
-use thiserror::Error;
+use core::fmt;
 
 #[cfg(all(target_family = "unix", not(target_os = "macos")))]
 pub fn errno() -> libc::c_int {
@@ -34,11 +34,21 @@ pub fn strerror<'a>(errno: libc::c_int) -> &'a CStr {
     unsafe { CStr::from_ptr(libc::strerror(errno)) }
 }
 
-#[derive(Debug, Error)]
+#[derive(Debug)]
 pub enum Error {
     #[cfg(target_family = "unix")]
-    #[error("{}", &strerror(*.0).to_string_lossy())]
     Errno(libc::c_int),
-    #[error("{0}")]
     Message(String),
 }
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            #[cfg(target_family = "unix")]
+            Error::Errno(errno) => f.write_str(&strerror(*errno).to_string_lossy()),
+            Error::Message(msg) => f.write_str(msg),
+        }
+    }
+}
+
+impl core::error::Error for Error {}

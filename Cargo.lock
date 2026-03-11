@@ -171,7 +171,6 @@ version = "0.3.0"
 dependencies = [
  "libc",
  "platform-info",
- "thiserror 2.0.18",
  "windows-sys 0.61.2",
 ]
 
