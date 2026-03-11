@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -26,6 +26,7 @@ mod linearcombination;
 mod linearmonoid;
 mod linearspan;
 mod linearterm;
+mod tree;
 mod variable;
 
 pub use circuitbuilder::{CircuitBuilder, Constraint, Expression, Scope};

@@ -17,7 +17,10 @@
 
 use crate::algebra::Semiring;
 use crate::algebra::UnitalRing;
-use crate::circuit::builder::{LinearCombination, LinearSpan, Variable, VariableKind};
+use crate::circuit::builder::{
+    LinearCombination, LinearSpan, Variable, VariableKind,
+    tree::{NodeId, Tree},
+};
 use crate::customizableconstraintsystem::CustomizableConstraintSystem;
 use crate::matrix::SparseMatrixBuilder;
 use crate::r1cs::R1CS;
@@ -27,7 +30,6 @@ use alloc::vec::Vec;
 use core::cell::{Cell, RefCell};
 use core::cmp::max;
 use core::fmt::{Display, Formatter, Result};
-use orx_tree::{Dyn, DynTree, NodeIdx, NodeRef};
 
 /// An expression to be constrained.
 pub trait Expression<'a, R: Semiring + 'a>: 'a {
@@ -50,15 +52,14 @@ pub struct CircuitBuilder<'a, R: Semiring> {
     private_outputs: Cell<usize>,
     auxiliaries: Cell<usize>,
     constraints: RefCell<Vec<Constraint<'a, R>>>,
-    scopes: RefCell<DynTree<ScopeInfo>>,
-    current_scope: RefCell<NodeIdx<Dyn<ScopeInfo>>>,
+    scopes: RefCell<Tree<ScopeInfo>>,
+    current_scope: Cell<NodeId>,
 }
 
 impl<'a, R: Semiring> CircuitBuilder<'a, R> {
     /// Construct a new builder with a maximum `degree` of constraints.
     pub fn new(degree: usize) -> Self {
-        let mut tree = DynTree::empty();
-        let root = tree.push_root(ScopeInfo::root());
+        let (tree, root) = Tree::with_root(ScopeInfo::root());
         Self {
             degree,
             public_inputs: Cell::new(0),
@@ -68,7 +69,7 @@ impl<'a, R: Semiring> CircuitBuilder<'a, R> {
             auxiliaries: Cell::new(0),
             constraints: RefCell::new(Vec::new()),
             scopes: RefCell::new(tree),
-            current_scope: RefCell::new(root),
+            current_scope: Cell::new(root),
         }
     }
 
@@ -94,20 +95,17 @@ impl<'a, R: Semiring> CircuitBuilder<'a, R> {
     /// Enter a new scope.
     pub fn scope<'b>(&'b self, name: &'static str) -> Scope<'b, 'a, R> {
         let mut scopes = self.scopes.borrow_mut();
-        let mut current_scope = self.current_scope.borrow_mut();
         let info = ScopeInfo::new(name);
-        let mut node = scopes.get_node_mut(*current_scope).expect("Scope");
-        *current_scope = node.push_child(info);
+        self.current_scope
+            .update(|id| scopes.descend(id, info).expect("Tree"));
         Scope { builder: self }
     }
 
     #[must_use = "Circuit variable should be constrained"]
     fn allocate(&self, kind: VariableKind) -> Variable<R> {
         let mut scopes = self.scopes.borrow_mut();
-        let current_scope = self.current_scope.borrow();
-        let mut scope = scopes.get_node_mut(*current_scope).expect("Scope");
-        let info = scope.data_mut();
-        info.variables += 1;
+        let scope = scopes.get_mut(self.current_scope.get()).expect("Scope");
+        scope.variables += 1;
 
         let n = match kind {
             VariableKind::PublicInput => {
@@ -142,26 +140,24 @@ impl<'a, R: Semiring> CircuitBuilder<'a, R> {
 
     fn constrain(&self, constraint: Constraint<'a, R>) {
         let mut scopes = self.scopes.borrow_mut();
-        let current_scope = self.current_scope.borrow();
-        let mut scope = scopes.get_node_mut(*current_scope).expect("Scope");
-        let info = scope.data_mut();
+        let scope = scopes.get_mut(self.current_scope.get()).expect("Scope");
 
         assert!(
             self.degree >= constraint.lps.degree(),
             "In scope {} constraint left degree {} is higher than circuit degree {}",
-            info.name,
+            scope.name,
             constraint.lps.degree(),
             self.degree
         );
         assert!(
             self.degree >= constraint.rps.degree(),
             "In scope {} constraint right degree {} is higher than circuit degree {}",
-            info.name,
+            scope.name,
             constraint.rps.degree(),
             self.degree
         );
 
-        info.constraints += 1;
+        scope.constraints += 1;
         let mut constraints = self.constraints.borrow_mut();
         constraints.push(constraint)
     }
@@ -390,9 +386,9 @@ impl<'a, 'b, R: Semiring> Scope<'a, 'b, R> {
 impl<'a, 'b, R: Semiring> Drop for Scope<'a, 'b, R> {
     fn drop(&mut self) {
         let scopes = self.builder.scopes.borrow();
-        let mut current_scope = self.builder.current_scope.borrow_mut();
-        let node = scopes.get_node(*current_scope).expect("Tree");
-        *current_scope = node.parent().expect("Scope").idx();
+        self.builder
+            .current_scope
+            .update(|id| scopes.ascendant(id).expect("Tree"));
     }
 }
 

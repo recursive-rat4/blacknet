@@ -33,7 +33,6 @@ categories.workspace = true
 [dependencies]
 blacknet-compat = { workspace = true, optional = true }
 libm.workspace = true
-orx-tree.workspace = true
 rayon = { workspace = true, optional = true }
 serde.workspace = true
 thiserror.workspace = true
