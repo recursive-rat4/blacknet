@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -16,40 +16,60 @@
  */
 
 use alloc::string::{FromUtf8Error, String, ToString};
-use core::fmt::Display;
+use core::fmt;
 use serde_core::{de, ser};
-use thiserror::Error;
 
-#[derive(Debug, Error)]
+#[derive(Debug)]
 pub enum Error {
-    #[error("{0}")]
     Message(String),
-    #[error("{0}")]
     StaticMessage(&'static str),
-    #[error("{0}")]
-    Io(#[from] blacknet_io::Error),
-    #[error("{0}")]
-    Utf8(#[from] FromUtf8Error),
-    #[error("Too long VarInt")]
+    Io(blacknet_io::Error),
+    Utf8(FromUtf8Error),
     TooLongVarInt,
-    #[error("0x{0:X} is not boolean")]
     InvalidBool(u8),
-    #[error("0x{0:X} is not option")]
     InvalidOption(u8),
-    #[error("{0} trailing bytes")]
     TrailingBytes(usize),
 }
 
+impl From<blacknet_io::Error> for Error {
+    fn from(error: blacknet_io::Error) -> Self {
+        Self::Io(error)
+    }
+}
+
+impl From<FromUtf8Error> for Error {
+    fn from(error: FromUtf8Error) -> Self {
+        Self::Utf8(error)
+    }
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Message(msg) => f.write_str(msg),
+            Self::StaticMessage(msg) => f.write_str(msg),
+            Self::Io(err) => write!(f, "{err}"),
+            Self::Utf8(err) => write!(f, "{err}"),
+            Self::TooLongVarInt => f.write_str("Too long VarInt"),
+            Self::InvalidBool(byte) => write!(f, "0x{byte:X} is not boolean"),
+            Self::InvalidOption(byte) => write!(f, "0x{byte:X} is not option"),
+            Self::TrailingBytes(size) => write!(f, "{size} trailing bytes"),
+        }
+    }
+}
+
 impl ser::Error for Error {
-    fn custom<T: Display>(msg: T) -> Self {
+    fn custom<T: fmt::Display>(msg: T) -> Self {
         Error::Message(msg.to_string())
     }
 }
 
 impl de::Error for Error {
-    fn custom<T: Display>(msg: T) -> Self {
+    fn custom<T: fmt::Display>(msg: T) -> Self {
         Error::Message(msg.to_string())
     }
 }
+
+impl core::error::Error for Error {}
 
 pub type Result<T> = core::result::Result<T, Error>;
