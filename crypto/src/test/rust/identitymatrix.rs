@@ -22,6 +22,24 @@ type R = blacknet_crypto::pervushin::PervushinField;
 
 #[test]
 #[rustfmt::skip]
+fn cmp() {
+    let a = IdentityMatrix::<R>::new(2);
+    let b = DenseMatrix::<R>::new(2, 2, [
+        1, 0,
+        0, 1,
+    ].map(R::from).into());
+    let c = DenseMatrix::<R>::new(2, 2, [
+        1, 0,
+        0, 2,
+    ].map(R::from).into());
+    assert_eq!(a, b);
+    assert_eq!(b, a);
+    assert_ne!(a, c);
+    assert_ne!(c, a);
+}
+
+#[test]
+#[rustfmt::skip]
 fn tensor() {
     let a = IdentityMatrix::<R>::new(2);
     let b = DenseMatrix::<R>::new(2, 2, [
@@ -46,7 +64,7 @@ fn trace() {
 
 #[test]
 #[rustfmt::skip]
-fn dense() {
+fn into() {
     let a = IdentityMatrix::<R>::new(3);
     let b = DenseMatrix::<R>::new(3, 3, [
         1, 0, 0,

@@ -18,12 +18,13 @@
 use crate::algebra::{One, Tensor, Zero};
 use crate::matrix::DenseMatrix;
 use alloc::vec;
+use core::fmt::{Debug, Formatter, Result};
 use core::iter::Sum;
 use core::marker::PhantomData;
 use serde::{Deserialize, Serialize};
 
 /// The `n ⨉ n` matrix with ones on the leading diagonal and zeros otherwise.
-#[derive(Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Default, Deserialize, Eq, PartialEq, Serialize)]
 pub struct IdentityMatrix<T: One + Zero> {
     dimension: usize,
     #[serde(skip)]
@@ -64,6 +65,36 @@ impl<T: One + Zero> Clone for IdentityMatrix<T> {
 }
 
 impl<T: One + Zero> Copy for IdentityMatrix<T> {}
+
+impl<T: One + Zero> Debug for IdentityMatrix<T> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        write!(f, "IdentityMatrix {{ dimension: {} }}", self.dimension)
+    }
+}
+
+impl<T: One + Zero + PartialEq> PartialEq<DenseMatrix<T>> for IdentityMatrix<T> {
+    #[inline]
+    fn eq(&self, rps: &DenseMatrix<T>) -> bool {
+        *rps == *self
+    }
+}
+
+impl<T: One + Zero + PartialEq> PartialEq<IdentityMatrix<T>> for DenseMatrix<T> {
+    fn eq(&self, rps: &IdentityMatrix<T>) -> bool {
+        if self.rows() != rps.dimension || self.columns() != rps.dimension {
+            return false;
+        }
+        for i in 0..self.rows() {
+            for j in 0..self.columns() {
+                let e = &self[(i, j)];
+                if (i != j && *e != T::ZERO) || (i == j && *e != T::ONE) {
+                    return false;
+                }
+            }
+        }
+        true
+    }
+}
 
 impl<T: One + Zero + Clone> From<IdentityMatrix<T>> for DenseMatrix<T> {
     fn from(matrix: IdentityMatrix<T>) -> Self {
