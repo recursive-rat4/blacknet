@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2025 Pavel Vasin
+ * Copyright (c) 2018-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -27,7 +27,7 @@ use blacknet_kernel::multisig::Multisig;
 use blacknet_kernel::transaction::{
     CoinTx, HashTimeLockContractId, MultiSignatureLockContractId, Transaction,
 };
-use blacknet_log::{Error as LogError, LogManager, Logger, warn};
+use blacknet_log::{Error as LogError, LogManager, Logger, debug, warn};
 use blacknet_serialization::format::from_bytes;
 use blacknet_time::{Milliseconds, Seconds};
 use std::collections::{HashMap, HashSet, hash_map::Keys};
@@ -42,6 +42,7 @@ pub struct TxPool {
     accounts: HashMap<PublicKey, Account>,
     htlcs: HashMap<HashTimeLockContractId, Option<HTLC>>,
     multisigs: HashMap<MultiSignatureLockContractId, Option<Multisig>>,
+    transactions: Vec<Hash>,
     undo_accounts: HashMap<PublicKey, Option<Account>>,
     undo_htlcs: HashMap<HashTimeLockContractId, (bool, Option<HTLC>)>,
     undo_multisigs: HashMap<MultiSignatureLockContractId, (bool, Option<Multisig>)>,
@@ -63,6 +64,7 @@ impl TxPool {
             accounts: HashMap::new(),
             htlcs: HashMap::new(),
             multisigs: HashMap::new(),
+            transactions: Vec::new(),
             undo_accounts: HashMap::new(),
             undo_htlcs: HashMap::new(),
             undo_multisigs: HashMap::new(),
@@ -122,14 +124,23 @@ impl TxPool {
     }
 
     fn process_impl_with_fee(
-        &self,
-        _hash: Hash,
+        &mut self,
+        hash: Hash,
         bytes: &[u8],
         _time: Milliseconds,
     ) -> Result<Amount> {
         let tx = from_bytes::<Transaction>(bytes, false)?;
-        self.check_fee(bytes.len() as u32, tx.fee())?;
-        todo!();
+        let fee = tx.fee();
+        self.check_fee(bytes.len() as u32, fee)?;
+        let result = self.process_transaction_impl(tx, hash);
+        self.undo_impl(result)?;
+        self.map.insert(hash, bytes.into());
+        self.data_len += bytes.len();
+        self.transactions.push(hash);
+        //TODO wallet
+        //TODO rpc
+        debug!(self.logger, "Accepted {hash}");
+        Ok(fee)
     }
 
     fn check_fee(&self, size: u32, amount: Amount) -> Result<()> {
@@ -138,6 +149,38 @@ impl TxPool {
         } else {
             Err(Error::Invalid(format!("Too low fee {}", amount)))
         }
+    }
+
+    fn undo_impl(&mut self, result: Result<()>) -> Result<()> {
+        if result.is_ok() {
+            self.undo_accounts.clear();
+            self.undo_htlcs.clear();
+            self.undo_multisigs.clear();
+        } else {
+            self.undo_accounts.drain().for_each(|(key, account)| {
+                match account {
+                    Some(account) => self.accounts.insert(key, account),
+                    None => self.accounts.remove(&key),
+                };
+            });
+            self.undo_htlcs.drain().for_each(|(id, (insert, htlc))| {
+                if insert {
+                    self.htlcs.insert(id, htlc);
+                } else {
+                    self.htlcs.remove(&id);
+                }
+            });
+            self.undo_multisigs
+                .drain()
+                .for_each(|(id, (insert, multisig))| {
+                    if insert {
+                        self.multisigs.insert(id, multisig);
+                    } else {
+                        self.multisigs.remove(&id);
+                    }
+                });
+        }
+        result
     }
 }
 
