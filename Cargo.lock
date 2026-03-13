@@ -249,7 +249,6 @@ dependencies = [
  "chrono",
  "log",
  "spdlog-rs",
- "thiserror 2.0.18",
 ]
 
 [[package]]
