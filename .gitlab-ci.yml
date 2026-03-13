@@ -22,12 +22,15 @@
     CARGO_HOME: ".cargo"
     CARGO_TERM_COLOR: always
   cache:
+    key:
+      files:
+       - Cargo.lock
     paths:
       - .cargo
       - target
 
 .openjdk:
-  image: maven:3.9.12-eclipse-temurin-21@sha256:67dd489908ce4a87c1bea43c589b00c1121a64c1b0ca0f9f80902963655bdc73
+  image: maven:3.9.13-eclipse-temurin-21@sha256:850d3575de1cf32ee99e6da31acd943242113ee9b7d320564784a30b2f9b0a42
   variables:
     MAVEN: "mvn --batch-mode --no-transfer-progress" #TODO 4
     MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
