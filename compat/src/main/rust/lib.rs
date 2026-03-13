@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -21,6 +21,8 @@ mod getentropy;
 mod getuid;
 mod magic;
 mod mode;
+#[cfg(target_family = "windows")]
+mod ntstatus;
 mod ulimit;
 mod uname;
 mod xdgdirectories;
@@ -29,6 +31,8 @@ pub use errno::*;
 pub use getentropy::*;
 pub use getuid::*;
 pub use mode::*;
+#[cfg(target_family = "windows")]
+pub use ntstatus::*;
 pub use ulimit::*;
 pub use uname::*;
 pub use xdgdirectories::*;

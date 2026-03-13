@@ -15,6 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#[cfg(target_family = "windows")]
+use crate::NtStatus;
 #[cfg(target_family = "unix")]
 use core::ffi::CStr;
 use core::fmt;
@@ -38,7 +40,8 @@ pub fn strerror<'a>(errno: libc::c_int) -> &'a CStr {
 pub enum Error {
     #[cfg(target_family = "unix")]
     Errno(libc::c_int),
-    Message(String),
+    #[cfg(target_family = "windows")]
+    NtStatus(NtStatus),
 }
 
 impl fmt::Display for Error {
@@ -46,7 +49,8 @@ impl fmt::Display for Error {
         match self {
             #[cfg(target_family = "unix")]
             Error::Errno(errno) => f.write_str(&strerror(*errno).to_string_lossy()),
-            Error::Message(msg) => f.write_str(msg),
+            #[cfg(target_family = "windows")]
+            Error::NtStatus(status) => write!(f, "{status}"),
         }
     }
 }
