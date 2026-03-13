@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2025 Pavel Vasin
+ * Copyright (c) 2018-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -17,17 +17,13 @@
 
 use alloc::string::{String, ToString};
 use blacknet_serialization::error::Error as SerializationError;
-use thiserror::Error;
+use core::fmt;
 
-#[derive(Debug, Error)]
+#[derive(Debug)]
 pub enum Error {
-    #[error("Already have {0}")]
     AlreadyHave(String),
-    #[error("Too far in future {0}")]
     InFuture(String),
-    #[error("{0}")]
     Invalid(String),
-    #[error("Not reachable vertex {0}")]
     NotReachableVertex(String),
 }
 
@@ -36,5 +32,18 @@ impl From<SerializationError> for Error {
         Error::Invalid(error.to_string())
     }
 }
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Error::AlreadyHave(msg) => write!(f, "Already have {msg}"),
+            Error::InFuture(msg) => write!(f, "Too far in future {msg}"),
+            Error::Invalid(msg) => f.write_str(msg),
+            Error::NotReachableVertex(msg) => write!(f, "Not reachable vertex {msg}"),
+        }
+    }
+}
+
+impl core::error::Error for Error {}
 
 pub type Result<T> = core::result::Result<T, Error>;
