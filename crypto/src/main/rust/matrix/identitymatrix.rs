@@ -68,7 +68,9 @@ impl<T: One + Zero> Copy for IdentityMatrix<T> {}
 
 impl<T: One + Zero> Debug for IdentityMatrix<T> {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-        write!(f, "IdentityMatrix {{ dimension: {} }}", self.dimension)
+        f.debug_struct("IdentityMatrix")
+            .field("dimension", &self.dimension)
+            .finish()
     }
 }
 

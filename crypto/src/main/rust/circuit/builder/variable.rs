@@ -77,11 +77,10 @@ impl<R: Semiring> Copy for Variable<R> {}
 
 impl<R: Semiring> Debug for Variable<R> {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-        write!(
-            f,
-            "Variable {{ kind: {:?}, number: {:?} }}",
-            self.kind, self.number
-        )
+        f.debug_struct("Variable")
+            .field("kind", &self.kind)
+            .field("number", &self.number)
+            .finish()
     }
 }
 
