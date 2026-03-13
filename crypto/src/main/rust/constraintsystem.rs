@@ -16,7 +16,7 @@
  */
 
 use crate::algebra::Set;
-use thiserror::Error;
+use core::fmt;
 
 pub trait ConstraintSystem<S: Set> {
     type Assigment;
@@ -28,12 +28,24 @@ pub trait ConstraintSystem<S: Set> {
     fn is_satisfied(&self, z: &Self::Assigment) -> Result<S>;
 }
 
-#[derive(Debug, Error)]
+#[derive(Debug)]
 pub enum Error<S: Set> {
-    #[error("Assigned {0} variables instead of {1} required")]
     Length(usize, usize),
-    #[error("Mismatch at position {0}")]
     Mismatch(usize, S, S),
 }
+
+impl<S: Set> fmt::Display for Error<S> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Error::Length(actual, expected) => write!(
+                f,
+                "Assigned {actual} variables instead of {expected} required"
+            ),
+            Error::Mismatch(idx, _, _) => write!(f, "Mismatch at position {idx}"),
+        }
+    }
+}
+
+impl<S: Set + fmt::Debug> core::error::Error for Error<S> {}
 
 pub type Result<S> = core::result::Result<(), Error<S>>;
