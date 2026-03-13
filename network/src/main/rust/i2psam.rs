@@ -21,13 +21,13 @@ use blacknet_compat::{Mode, XDGDirectories};
 use blacknet_crypto::random::{Distribution, FAST_RNG, FastRNG, UniformIntDistribution};
 use blacknet_io::file::replace;
 use blacknet_log::{Error as LogError, LogManager, Logger, error, info, warn};
+use core::fmt;
 use data_encoding::{DecodeError, Encoding};
 use data_encoding_macro::new_encoding;
 use sha2::{Digest, Sha256};
 use std::io::{Error as IoError, Write};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
-use thiserror::Error;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufStream};
 use tokio::net::TcpStream;
 
@@ -326,16 +326,12 @@ impl SAM {
     }
 }
 
-#[derive(Debug, Error)]
+#[derive(Debug)]
 pub enum Error {
-    #[error("{0}")]
     Message(String),
-    #[error("{0}")]
-    Decode(#[from] DecodeError),
-    #[error("{0}")]
-    Io(#[from] IoError),
-    #[error("{0}")]
-    Log(#[from] LogError),
+    Decode(DecodeError),
+    Io(IoError),
+    Log(LogError),
 }
 
 impl From<&str> for Error {
@@ -349,3 +345,34 @@ impl From<String> for Error {
         Error::Message(err)
     }
 }
+
+impl From<DecodeError> for Error {
+    fn from(err: DecodeError) -> Self {
+        Error::Decode(err)
+    }
+}
+
+impl From<IoError> for Error {
+    fn from(err: IoError) -> Self {
+        Error::Io(err)
+    }
+}
+
+impl From<LogError> for Error {
+    fn from(err: LogError) -> Self {
+        Error::Log(err)
+    }
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Message(msg) => f.write_str(msg),
+            Self::Decode(err) => write!(f, "{err}"),
+            Self::Io(err) => write!(f, "{err}"),
+            Self::Log(err) => write!(f, "{err}"),
+        }
+    }
+}
+
+impl core::error::Error for Error {}

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2025 Pavel Vasin
+ * Copyright (c) 2018-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -16,8 +16,8 @@
  */
 
 use crate::endpoint::Endpoint;
+use core::fmt;
 use std::io::Error as IoError;
-use thiserror::Error;
 use tokio::io::{AsyncReadExt, AsyncWriteExt, BufStream};
 use tokio::net::TcpStream;
 
@@ -107,22 +107,37 @@ pub async fn socks5(proxy: Endpoint, destination: Endpoint) -> Result<BufStream<
     Ok(stream)
 }
 
-#[derive(Debug, Error)]
+#[derive(Debug)]
 pub enum Error {
-    #[error("Unsupported proxy endpoint")]
     Endpoint,
-    #[error("Unsupported destination endpoint")]
     Destination,
-    #[error("Unknown socks version {0}")]
     Version(u8),
-    #[error("Authentication not accepted ({0})")]
     Authentication(u8),
-    #[error("Access not granted ({0})")]
     NotGranted(u8),
-    #[error("Unknown socks reply ({0})")]
     Unknown(u8),
-    #[error("Reserved socks reply ({0})")]
     Reserved(u8),
-    #[error("{0}")]
-    Io(#[from] IoError),
+    Io(IoError),
 }
+
+impl From<IoError> for Error {
+    fn from(error: IoError) -> Self {
+        Self::Io(error)
+    }
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Endpoint => f.write_str("Unsupported proxy endpoint"),
+            Self::Destination => f.write_str("Unsupported destination endpoint"),
+            Self::Version(octet) => write!(f, "Unknown socks version {octet}"),
+            Self::Authentication(octet) => write!(f, "Authentication not accepted ({octet})"),
+            Self::NotGranted(octet) => write!(f, "Access not granted ({octet})"),
+            Self::Unknown(octet) => write!(f, "Unknown socks reply ({octet})"),
+            Self::Reserved(octet) => write!(f, "Reserved socks reply ({octet})"),
+            Self::Io(err) => write!(f, "{err}"),
+        }
+    }
+}
+
+impl core::error::Error for Error {}

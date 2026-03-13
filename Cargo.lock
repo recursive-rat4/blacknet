@@ -277,7 +277,6 @@ dependencies = [
  "sha2",
  "sha3",
  "spdlog-rs",
- "thiserror 2.0.18",
  "tokio",
 ]
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -16,8 +16,8 @@
  */
 
 use crate::endpoint::Endpoint;
+use core::fmt;
 use natpmp::{Protocol, Response, new_tokio_natpmp};
-use thiserror::Error;
 
 //TODO lifetime
 
@@ -48,10 +48,25 @@ pub async fn natpmp_forward(port: u16) -> Result<Endpoint, Error> {
     })
 }
 
-#[derive(Debug, Error)]
+#[derive(Debug)]
 pub enum Error {
-    #[error("Unexpected response kind")]
     UnexpectedResponseKind,
-    #[error("{0}")]
-    NATPMP(#[from] natpmp::Error),
+    NATPMP(natpmp::Error),
 }
+
+impl From<natpmp::Error> for Error {
+    fn from(error: natpmp::Error) -> Self {
+        Self::NATPMP(error)
+    }
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::UnexpectedResponseKind => f.write_str("Unexpected response kind"),
+            Self::NATPMP(err) => write!(f, "{err}"),
+        }
+    }
+}
+
+impl core::error::Error for Error {}

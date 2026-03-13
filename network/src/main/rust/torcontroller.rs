@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -20,10 +20,10 @@ use crate::settings::Settings;
 use blacknet_compat::XDGDirectories;
 use blacknet_io::file::replace;
 use blacknet_log::{Error as LogError, LogManager, Logger, error, info, warn};
+use core::fmt;
 use std::io::{Error as IoError, Write};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
-use thiserror::Error;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufStream};
 use tokio::net::TcpStream;
 
@@ -195,14 +195,11 @@ impl TorConnection {
 
 type Result<T> = core::result::Result<T, Error>;
 
-#[derive(Debug, Error)]
+#[derive(Debug)]
 pub enum Error {
-    #[error("{0}")]
     Message(String),
-    #[error("{0}")]
-    Io(#[from] IoError),
-    #[error("{0}")]
-    Log(#[from] LogError),
+    Io(IoError),
+    Log(LogError),
 }
 
 impl From<&str> for Error {
@@ -210,3 +207,27 @@ impl From<&str> for Error {
         Error::Message(err.to_owned())
     }
 }
+
+impl From<IoError> for Error {
+    fn from(err: IoError) -> Self {
+        Error::Io(err)
+    }
+}
+
+impl From<LogError> for Error {
+    fn from(err: LogError) -> Self {
+        Error::Log(err)
+    }
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Message(msg) => f.write_str(msg),
+            Self::Io(err) => write!(f, "{err}"),
+            Self::Log(err) => write!(f, "{err}"),
+        }
+    }
+}
+
+impl core::error::Error for Error {}
