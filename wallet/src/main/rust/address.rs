@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2025 Pavel Vasin
+ * Copyright (c) 2018-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -20,7 +20,7 @@ use bech32::primitives::hrp::Error as HrpError;
 use bech32::{Bech32, DecodeError, EncodeError, Hrp, decode, encode};
 use blacknet_compat::Mode;
 use blacknet_kernel::ed25519::PublicKey;
-use thiserror::Error;
+use core::fmt;
 
 #[derive(Clone, Copy)]
 #[repr(u8)]
@@ -99,21 +99,14 @@ impl AddressCodec {
     }
 }
 
-#[derive(Debug, Error)]
+#[derive(Debug)]
 pub enum Error {
-    #[error("Wrong readable part")]
     WrongHrp,
-    #[error("Wrong address size")]
     WrongSize,
-    #[error("Wrong address kind")]
     WrongKind,
-    #[error("{0}")]
     Bech32Checksum(CheckedHrpstringError),
-    #[error("{0}")]
     Bech32Decode(DecodeError),
-    #[error("{0}")]
     Bech32Encode(EncodeError),
-    #[error("{0}")]
     Bech32Setup(HrpError),
 }
 
@@ -140,5 +133,21 @@ impl From<HrpError> for Error {
         Self::Bech32Setup(err)
     }
 }
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::WrongHrp => f.write_str("Wrong readable part"),
+            Self::WrongSize => f.write_str("Wrong address size"),
+            Self::WrongKind => f.write_str("Wrong address kind"),
+            Self::Bech32Checksum(err) => write!(f, "{err}"),
+            Self::Bech32Decode(err) => write!(f, "{err}"),
+            Self::Bech32Encode(err) => write!(f, "{err}"),
+            Self::Bech32Setup(err) => write!(f, "{err}"),
+        }
+    }
+}
+
+impl core::error::Error for Error {}
 
 pub type Result<T> = core::result::Result<T, Error>;

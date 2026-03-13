@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -17,10 +17,10 @@
 
 use blacknet_compat::Mode;
 use blacknet_kernel::blake2b::Hash;
+use core::fmt;
 use rusqlite::{Connection, Error as SqliteError, OpenFlags};
 use std::path::Path;
 use std::sync::Mutex;
-use thiserror::Error;
 
 #[derive(Debug)]
 pub struct Wallet {
@@ -123,12 +123,29 @@ impl Wallet {
     }
 }
 
-#[derive(Debug, Error)]
+#[derive(Debug)]
 pub enum Error {
-    #[error("This SQLite database doesn't look like {0} wallet")]
     WrongMagic(String),
-    #[error("{0}")]
-    Sqlite(#[from] SqliteError),
+    Sqlite(SqliteError),
 }
+
+impl From<SqliteError> for Error {
+    fn from(error: SqliteError) -> Self {
+        Self::Sqlite(error)
+    }
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::WrongMagic(name) => {
+                write!(f, "This SQLite database doesn't look like {name} wallet")
+            }
+            Self::Sqlite(err) => write!(f, "{err}"),
+        }
+    }
+}
+
+impl core::error::Error for Error {}
 
 pub type Result<T> = core::result::Result<T, Error>;

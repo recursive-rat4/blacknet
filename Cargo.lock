@@ -316,7 +316,6 @@ dependencies = [
  "data-encoding",
  "rusqlite",
  "spdlog-rs",
- "thiserror 2.0.18",
 ]
 
 [[package]]
