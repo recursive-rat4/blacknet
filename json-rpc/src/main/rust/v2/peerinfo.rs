@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2025 Pavel Vasin
+ * Copyright (c) 2018-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -76,9 +76,7 @@ impl ChainInfo {
     pub fn new(block_announce: &BlockAnnounce, cache: &mut ForkCache, block_db: &BlockDB) -> Self {
         Self {
             chain: block_announce.hash().into(),
-            cumulativeDifficulty: BigIntegerInfo::from_be_bytes(
-                block_announce.raw_cumulative_difficulty(),
-            ),
+            cumulativeDifficulty: BigIntegerInfo::from(block_announce.cumulative_difficulty()),
             fork: fork_cache_get_or_compute(cache, block_announce.hash(), block_db),
         }
     }

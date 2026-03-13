@@ -15,6 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use alloc::string::String;
+use alloc::vec::Vec;
 use core::array;
 use core::cmp::Ordering;
 use core::fmt;
@@ -286,6 +288,19 @@ impl<const N: usize> BigInt<N> {
             i += 1;
         }
         Self { limbs }
+    }
+
+    pub fn to_decimal(mut self) -> String {
+        const ALPHABET: [char; 10] = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+        let mut decimal = Vec::<char>::with_capacity(Self::BITS as usize >> 1);
+        loop {
+            let digit = self % 10;
+            self /= 10;
+            decimal.push(ALPHABET[digit as usize]);
+            if self == Self::ZERO {
+                return decimal.into_iter().rev().collect();
+            }
+        }
     }
 }
 

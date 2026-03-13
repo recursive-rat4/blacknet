@@ -50,6 +50,17 @@ fn hex() {
 }
 
 #[test]
+fn decimal() {
+    let a = UInt256::from_hex("000000000000000000000000000000000000000000015E6B7FEE4E21DF56BDAE");
+    let b = "1654811289011657408691630";
+    let c = UInt256::from_hex("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
+    let d = "115792089237316195423570985008687907853269984665640564039457584007913129639935";
+    assert_eq!(a.to_decimal(), b);
+    assert_eq!(c.to_decimal(), d);
+    assert_eq!(UInt256::ZERO.to_decimal(), "0");
+}
+
+#[test]
 fn bytes() {
     let a = UInt256::from_hex("82040BFACDA49378AA9A7091D231DF1C0000000000000000D30557C9C39DA70C");
     let b = [
