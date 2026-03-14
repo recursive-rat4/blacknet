@@ -100,7 +100,7 @@ impl<'a, 'b, R: Semiring> AddAssign for UnivariatePolynomial<'a, 'b, R> {
 }
 
 impl<'a, 'b, R: Semiring> Absorb<LinearCombination<R>> for UnivariatePolynomial<'a, 'b, R> {
-    fn absorb_into(self, duplex: &mut (impl Duplex<LinearCombination<R>> + ?Sized)) {
+    fn absorb_into(self, duplex: &mut impl Duplex<LinearCombination<R>>) {
         duplex.absorb_iter(self.coefficients.into_iter())
     }
 }
@@ -108,7 +108,7 @@ impl<'a, 'b, R: Semiring> Absorb<LinearCombination<R>> for UnivariatePolynomial<
 impl<'a, 'b, R: Semiring + Clone> Absorb<LinearCombination<R>>
     for &UnivariatePolynomial<'a, 'b, R>
 {
-    fn absorb_into(self, duplex: &mut (impl Duplex<LinearCombination<R>> + ?Sized)) {
+    fn absorb_into(self, duplex: &mut impl Duplex<LinearCombination<R>>) {
         duplex.absorb_iter(self.coefficients.iter().cloned())
     }
 }

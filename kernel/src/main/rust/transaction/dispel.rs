@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2025 Pavel Vasin
+ * Copyright (c) 2020-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -38,7 +38,7 @@ impl TxData for Dispel {
         tx: &Transaction,
         _hash: Hash,
         _data_index: u32,
-        _coin_tx: &mut (impl CoinTx + ?Sized),
+        _coin_tx: &mut impl CoinTx,
     ) -> Result<()> {
         if tx.fee() > Amount::ZERO {
             Ok(())

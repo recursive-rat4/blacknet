@@ -26,15 +26,10 @@ pub trait TxData {
         tx: &Transaction,
         hash: Hash,
         data_index: u32,
-        coin_tx: &mut (impl CoinTx + ?Sized),
+        coin_tx: &mut impl CoinTx,
     ) -> Result<()>;
 
-    fn process(
-        &self,
-        tx: Transaction,
-        hash: Hash,
-        coin_tx: &mut (impl CoinTx + ?Sized),
-    ) -> Result<()> {
+    fn process(&self, tx: Transaction, hash: Hash, coin_tx: &mut impl CoinTx) -> Result<()> {
         let mut account = coin_tx.get_account(tx.from())?;
         if tx.seq() != account.seq() {
             let msg = format!("sequence {} expected {}", tx.seq(), account.seq());

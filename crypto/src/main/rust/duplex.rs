@@ -31,7 +31,7 @@ pub enum Phase {
     Squeeze,
 }
 
-pub trait Duplex<T>: UniformGenerator {
+pub trait Duplex<T>: Sized + UniformGenerator {
     fn reset(&mut self);
 
     fn absorb_native(&mut self, e: T);
@@ -59,36 +59,36 @@ pub trait Duplex<T>: UniformGenerator {
 }
 
 pub trait Absorb<T> {
-    fn absorb_into(self, duplex: &mut (impl Duplex<T> + ?Sized));
+    fn absorb_into(self, duplex: &mut impl Duplex<T>);
 }
 
 impl<T> Absorb<T> for T {
     #[inline]
-    fn absorb_into(self, duplex: &mut (impl Duplex<T> + ?Sized)) {
+    fn absorb_into(self, duplex: &mut impl Duplex<T>) {
         duplex.absorb_native(self)
     }
 }
 
 pub trait Squeeze<T> {
-    fn squeeze_from(duplex: &mut (impl Duplex<T> + ?Sized)) -> Self;
+    fn squeeze_from(duplex: &mut impl Duplex<T>) -> Self;
 }
 
 impl<T> Squeeze<T> for T {
     #[inline]
-    fn squeeze_from(duplex: &mut (impl Duplex<T> + ?Sized)) -> Self {
+    fn squeeze_from(duplex: &mut impl Duplex<T>) -> Self {
         duplex.squeeze_native()
     }
 }
 
 impl<T, const N: usize> Squeeze<T> for [T; N] {
     #[inline]
-    fn squeeze_from(duplex: &mut (impl Duplex<T> + ?Sized)) -> Self {
+    fn squeeze_from(duplex: &mut impl Duplex<T>) -> Self {
         array::from_fn(|_| duplex.squeeze())
     }
 }
 
 pub trait SqueezeWithSize<T> {
-    fn squeeze_from(duplex: &mut (impl Duplex<T> + ?Sized), size: usize) -> Self;
+    fn squeeze_from(duplex: &mut impl Duplex<T>, size: usize) -> Self;
 }
 
 /// An implementation of the duplex construction.

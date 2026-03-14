@@ -466,13 +466,13 @@ impl<R: UnitalRing> MulAssign<&R> for MultilinearExtension<R> {
 }
 
 impl<S: Set, R: UnitalRing + Absorb<S>> Absorb<S> for MultilinearExtension<R> {
-    fn absorb_into(self, duplex: &mut (impl Duplex<S> + ?Sized)) {
+    fn absorb_into(self, duplex: &mut impl Duplex<S>) {
         duplex.absorb_iter(self.coefficients.into_iter())
     }
 }
 
 impl<S: Set, R: UnitalRing + Squeeze<S>> SqueezeWithSize<S> for MultilinearExtension<R> {
-    fn squeeze_from(duplex: &mut (impl Duplex<S> + ?Sized), size: usize) -> Self {
+    fn squeeze_from(duplex: &mut impl Duplex<S>, size: usize) -> Self {
         (0..size)
             .map(|_| duplex.squeeze::<R>())
             .collect::<Vec<R>>()

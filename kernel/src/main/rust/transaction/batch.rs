@@ -68,7 +68,7 @@ impl TxData for Batch {
         tx: &Transaction,
         hash: Hash,
         data_index: u32,
-        coin_tx: &mut (impl CoinTx + ?Sized),
+        coin_tx: &mut impl CoinTx,
     ) -> Result<()> {
         if data_index != 0 {
             return Err(Error::Invalid(

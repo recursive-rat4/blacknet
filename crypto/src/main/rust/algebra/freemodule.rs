@@ -507,13 +507,13 @@ impl<R: Ring + Clone, const N: usize> AdditiveMonoid for FreeModule<R, N> {}
 impl<R: Ring + Clone, const N: usize> Semimodule<R> for FreeModule<R, N> {}
 
 impl<R: Ring + Absorb<R>, const N: usize> Absorb<R> for FreeModule<R, N> {
-    fn absorb_into(self, duplex: &mut (impl Duplex<R> + ?Sized)) {
+    fn absorb_into(self, duplex: &mut impl Duplex<R>) {
         duplex.absorb_iter(self.components.into_iter())
     }
 }
 
 impl<R: Ring + Squeeze<R>, const N: usize> Squeeze<R> for FreeModule<R, N> {
-    fn squeeze_from(duplex: &mut (impl Duplex<R> + ?Sized)) -> Self {
+    fn squeeze_from(duplex: &mut impl Duplex<R>) -> Self {
         duplex.squeeze::<[R; N]>().into()
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2025 Pavel Vasin
+ * Copyright (c) 2018-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -27,7 +27,7 @@ use alloc::borrow::ToOwned;
 use blacknet_serialization::format::from_bytes;
 use blacknet_time::Seconds;
 
-pub trait CoinTx {
+pub trait CoinTx: Sized {
     fn add_supply(&mut self, amount: Amount);
     fn sub_supply(&mut self, amount: Amount);
     fn check_anchor(&self, hash: Hash) -> Result<()>;

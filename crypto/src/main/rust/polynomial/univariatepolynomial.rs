@@ -399,19 +399,19 @@ where
 }
 
 impl<S: Set, R: Semiring + Absorb<S>> Absorb<S> for UnivariatePolynomial<R> {
-    fn absorb_into(self, duplex: &mut (impl Duplex<S> + ?Sized)) {
+    fn absorb_into(self, duplex: &mut impl Duplex<S>) {
         duplex.absorb_iter(self.coefficients.into_iter())
     }
 }
 
 impl<S: Set, R: Semiring + Absorb<S> + Clone> Absorb<S> for &UnivariatePolynomial<R> {
-    fn absorb_into(self, duplex: &mut (impl Duplex<S> + ?Sized)) {
+    fn absorb_into(self, duplex: &mut impl Duplex<S>) {
         duplex.absorb_iter(self.coefficients.iter().cloned())
     }
 }
 
 impl<S: Set, R: Semiring + Squeeze<S>> SqueezeWithSize<S> for UnivariatePolynomial<R> {
-    fn squeeze_from(duplex: &mut (impl Duplex<S> + ?Sized), size: usize) -> Self {
+    fn squeeze_from(duplex: &mut impl Duplex<S>, size: usize) -> Self {
         (0..size)
             .map(|_| duplex.squeeze::<R>())
             .collect::<Vec<R>>()

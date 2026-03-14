@@ -616,13 +616,13 @@ where
 }
 
 impl<S: Set, T: Absorb<S>> Absorb<S> for DenseVector<T> {
-    fn absorb_into(self, duplex: &mut (impl Duplex<S> + ?Sized)) {
+    fn absorb_into(self, duplex: &mut impl Duplex<S>) {
         duplex.absorb_iter(self.elements.into_iter())
     }
 }
 
 impl<S: Set, T: Absorb<S> + Clone> Absorb<S> for &DenseVector<T> {
-    fn absorb_into(self, duplex: &mut (impl Duplex<S> + ?Sized)) {
+    fn absorb_into(self, duplex: &mut impl Duplex<S>) {
         duplex.absorb_iter(self.elements.iter().cloned())
     }
 }
