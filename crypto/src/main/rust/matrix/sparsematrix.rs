@@ -156,9 +156,7 @@ impl<T: Zero + Clone + Eq> From<&DenseMatrix<T>> for SparseMatrix<T> {
         for i in 0..dense.rows() {
             for j in 0..dense.columns() {
                 let e = &dense[(i, j)];
-                if *e != T::ZERO {
-                    builder.column(j, e.clone());
-                }
+                builder.column_ref(j, e);
             }
             builder.row();
         }
@@ -227,6 +225,15 @@ impl<T: Zero + Eq> SparseMatrixBuilder<T> {
     pub fn column(&mut self, column: usize, element: T) {
         if element != T::ZERO {
             unsafe { self.column_unchecked(column, element) };
+        }
+    }
+
+    pub fn column_ref(&mut self, column: usize, element: &T)
+    where
+        T: Clone,
+    {
+        if *element != T::ZERO {
+            unsafe { self.column_unchecked(column, element.clone()) };
         }
     }
 }

@@ -202,7 +202,7 @@ impl<'a, R: Semiring + Clone + Eq> CircuitBuilder<'a, R> {
                 VariableKind::PrivateOutput => self.private_outputs.get() + variable.number,
                 VariableKind::Auxiliary => self.auxiliaries.get() + variable.number,
             };
-            m.column(column, coefficient.value.clone());
+            m.column_ref(column, &coefficient.value);
         }
         m.row();
     }
