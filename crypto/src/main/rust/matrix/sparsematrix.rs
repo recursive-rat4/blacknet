@@ -136,10 +136,9 @@ where
 
     fn mul(self, rps: &DenseVector<T>) -> Self::Output {
         debug_assert!(self.columns == rps.dimension());
-        (0..self.rows())
-            .map(|i| {
-                let row_start = self.r_index[i];
-                let row_end = self.r_index[i + 1];
+        self.r_index
+            .array_windows::<2>()
+            .map(|&[row_start, row_end]| {
                 (row_start..row_end)
                     .map(|idx| {
                         let j = self.c_index[idx];
@@ -170,14 +169,16 @@ impl<T: Zero + Clone + Eq> From<&DenseMatrix<T>> for SparseMatrix<T> {
 impl<T: Zero + Clone> From<&SparseMatrix<T>> for DenseMatrix<T> {
     fn from(sparse: &SparseMatrix<T>) -> Self {
         let mut dense = DenseMatrix::<T>::fill(sparse.rows(), sparse.columns(), T::ZERO);
-        for i in 0..sparse.rows() {
-            let row_start = sparse.r_index[i];
-            let row_end = sparse.r_index[i + 1];
-            for j in row_start..row_end {
-                let column = sparse.c_index[j];
-                dense[(i, column)] = sparse.elements[j].clone();
-            }
-        }
+        sparse
+            .r_index
+            .array_windows::<2>()
+            .enumerate()
+            .for_each(|(i, &[row_start, row_end])| {
+                (row_start..row_end).for_each(|idx| {
+                    let j = sparse.c_index[idx];
+                    dense[(i, j)] = sparse.elements[idx].clone();
+                });
+            });
         dense
     }
 }
