@@ -20,6 +20,7 @@ use crate::dbview::DBView;
 use crate::genesis;
 use crate::rollinghashset::RollingHashSet;
 use arc_swap::ArcSwapOption;
+use blacknet_compat::{XDGDirectories, statvfs};
 use blacknet_kernel::amount::Amount;
 use blacknet_kernel::blake2b::Hash;
 use blacknet_kernel::block::Block;
@@ -68,16 +69,18 @@ pub struct BlockDB {
     rejects: RollingHashSet<Hash>,
     blocks: DBView<Hash, Block>,
     pub(super) indexes: DBView<Hash, BlockIndex>,
+    data_dir: PathBuf,
 }
 
 impl BlockDB {
-    pub fn new(fjall: &Database) -> Result<Arc<Self>> {
+    pub fn new(dirs: &XDGDirectories, fjall: &Database) -> Result<Arc<Self>> {
         Ok(Arc::new(Self {
             cached_block: ArcSwapOption::empty(),
             cached_index: ArcSwapOption::empty(),
             rejects: RollingHashSet::new(ROLLBACK_LIMIT),
             blocks: DBView::with_blob(fjall, "blocks")?,
             indexes: DBView::new(fjall, "indexes")?,
+            data_dir: dirs.data().to_owned(),
         }))
     }
 
@@ -181,8 +184,13 @@ impl BlockDB {
     }
 
     pub fn warnings(&self, warnings: &mut Vec<String>) {
-        if self.usable_space() <= MIN_DISK_SPACE {
-            warnings.push("Disk space is low!".to_owned())
+        match statvfs(&self.data_dir) {
+            Ok(available) => {
+                if available <= MIN_DISK_SPACE {
+                    warnings.push("Disk space is low!".to_owned())
+                }
+            }
+            Err(error) => warnings.push(format!("statvfs: {error}")),
         }
     }
 
@@ -201,10 +209,6 @@ impl BlockDB {
             check.result = true;
         }
         check
-    }
-
-    fn usable_space(&self) -> u64 {
-        todo!();
     }
 }
 

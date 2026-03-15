@@ -23,6 +23,7 @@ mod magic;
 mod mode;
 #[cfg(target_family = "windows")]
 mod ntstatus;
+mod statvfs;
 mod ulimit;
 mod uname;
 mod xdgdirectories;
@@ -33,6 +34,7 @@ pub use getuid::*;
 pub use mode::*;
 #[cfg(target_family = "windows")]
 pub use ntstatus::*;
+pub use statvfs::*;
 pub use ulimit::*;
 pub use uname::*;
 pub use xdgdirectories::*;

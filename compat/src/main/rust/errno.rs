@@ -16,7 +16,7 @@
  */
 
 #[cfg(target_family = "windows")]
-use crate::NtStatus;
+use crate::{NtStatus, Win32Error};
 #[cfg(target_family = "unix")]
 use core::ffi::CStr;
 use core::fmt;
@@ -42,6 +42,8 @@ pub enum Error {
     Errno(libc::c_int),
     #[cfg(target_family = "windows")]
     NtStatus(NtStatus),
+    #[cfg(target_family = "windows")]
+    Win32(Win32Error),
 }
 
 impl fmt::Display for Error {
@@ -51,6 +53,8 @@ impl fmt::Display for Error {
             Error::Errno(errno) => f.write_str(&strerror(*errno).to_string_lossy()),
             #[cfg(target_family = "windows")]
             Error::NtStatus(status) => write!(f, "{status}"),
+            #[cfg(target_family = "windows")]
+            Error::Win32(win32) => write!(f, "{win32}"),
         }
     }
 }

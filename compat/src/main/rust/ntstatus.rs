@@ -17,7 +17,7 @@
 
 use core::fmt;
 use windows_sys::Win32::Foundation::{
-    ERROR_SUCCESS, NTSTATUS, RtlNtStatusToDosError, STATUS_SUCCESS, WIN32_ERROR,
+    ERROR_SUCCESS, GetLastError, NTSTATUS, RtlNtStatusToDosError, STATUS_SUCCESS, WIN32_ERROR,
 };
 
 #[derive(Debug)]
@@ -54,6 +54,12 @@ impl Win32Error {
     pub const fn is_success(&self) -> bool {
         self.error == ERROR_SUCCESS
     }
+
+    pub fn last() -> Self {
+        Self {
+            error: unsafe { GetLastError() },
+        }
+    }
 }
 
 impl From<NtStatus> for Win32Error {
@@ -61,5 +67,11 @@ impl From<NtStatus> for Win32Error {
         Self {
             error: unsafe { RtlNtStatusToDosError(status.status) },
         }
+    }
+}
+
+impl fmt::Display for Win32Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "WIN32 ERROR (0x{:08X})", self.status)
     }
 }
