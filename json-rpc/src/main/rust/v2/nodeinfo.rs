@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2025 Pavel Vasin
+ * Copyright (c) 2018-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -42,7 +42,7 @@ impl NodeInfo {
             outgoing: node.outgoing() as u32,
             incoming: node.incoming() as u32,
             listening: listening.iter().copied().map(EndpointInfo::from).collect(),
-            warnings: node.warnings(),
+            warnings: node.all_warnings(),
         }
     }
 }

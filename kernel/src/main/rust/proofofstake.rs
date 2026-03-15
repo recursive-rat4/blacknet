@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2025 Pavel Vasin
+ * Copyright (c) 2014-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -66,6 +66,11 @@ pub const MATURITY: u32 = 1350;
 pub const ROLLBACK_LIMIT: usize = 1350;
 
 /**
+ * Sequence of blocks to activate fork
+ */
+pub const UPGRADE_THRESHOLD: u16 = 1350;
+
+/**
  * Minimum amount that can be leased out for cold staking
  */
 pub const MIN_LEASE: Amount = Amount::new(1000 * Amount::COIN.value());
@@ -90,3 +95,8 @@ pub const BLOCK_RESERVED_SIZE: u32 = 100;
  * Minimum maximum block size
  */
 pub const DEFAULT_MAX_BLOCK_SIZE: u32 = 100000;
+
+/**
+ * Maximum block size
+ */
+pub const MAX_BLOCK_SIZE: u32 = i32::MAX as u32 - BLOCK_RESERVED_SIZE;

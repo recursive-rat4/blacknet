@@ -28,7 +28,9 @@ use blacknet_kernel::ed25519::PublicKey;
 use blacknet_kernel::error::{Error, Result};
 use blacknet_kernel::htlc::HTLC;
 use blacknet_kernel::multisig::Multisig;
-use blacknet_kernel::proofofstake::{DEFAULT_MAX_BLOCK_SIZE, INITIAL_DIFFICULTY, ROLLBACK_LIMIT};
+use blacknet_kernel::proofofstake::{
+    DEFAULT_MAX_BLOCK_SIZE, INITIAL_DIFFICULTY, ROLLBACK_LIMIT, UPGRADE_THRESHOLD,
+};
 use blacknet_kernel::transaction::{CoinTx, HashTimeLockContractId, MultiSignatureLockContractId};
 use blacknet_serialization::format::{from_bytes, to_bytes};
 use blacknet_time::Seconds;
@@ -74,6 +76,12 @@ impl CoinDB {
 
     pub fn multisig(&self, id: MultiSignatureLockContractId) -> Option<Multisig> {
         self.multisigs.get(id)
+    }
+
+    pub fn warnings(&self, warnings: &mut Vec<String>) {
+        if self.state.upgraded >= UPGRADE_THRESHOLD / 2 {
+            warnings.push("This version is obsolete, upgrade required!".to_owned())
+        }
     }
 
     pub fn check(&self) -> Check {

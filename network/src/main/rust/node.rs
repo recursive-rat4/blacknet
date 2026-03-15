@@ -34,11 +34,11 @@ use blacknet_io::file::replace;
 use blacknet_kernel::blake2b::Hash;
 use blacknet_kernel::error::Error;
 use blacknet_kernel::proofofstake::{
-    BLOCK_RESERVED_SIZE, DEFAULT_MAX_BLOCK_SIZE, guess_initial_synchronization,
+    BLOCK_RESERVED_SIZE, DEFAULT_MAX_BLOCK_SIZE, guess_initial_synchronization, time_slot,
 };
 use blacknet_log::{LogManager, Logger, error, info, warn};
 use blacknet_serialization::format::to_write;
-use blacknet_time::{Milliseconds, SystemClock};
+use blacknet_time::{Milliseconds, Seconds, SystemClock};
 use blacknet_wallet::walletdb::WalletDB;
 use core::error::Error as StdError;
 use core::num::NonZero;
@@ -196,9 +196,24 @@ impl Node {
         self.router.listening()
     }
 
-    pub const fn warnings(&self) -> Vec<String> {
-        //TODO
-        vec![]
+    pub fn all_warnings(&self) -> Vec<String> {
+        let mut warnings = Vec::<String>::new();
+        self.block_db.warnings(&mut warnings);
+        self.coin_db.warnings(&mut warnings);
+        self.warnings(&mut warnings);
+        warnings
+    }
+
+    #[expect(unused)]
+    pub fn warnings(&self, warnings: &mut Vec<String>) {
+        let time_offset = self.time_offset();
+        let time_slot = time_slot(todo!());
+
+        if time_offset <= -time_slot || time_offset >= time_slot {
+            warnings.push(
+                "Please check your system clock. Many peers report different time.".to_owned(),
+            )
+        }
     }
 
     pub const fn max_packet_size(&self) -> u32 {
@@ -249,6 +264,29 @@ impl Node {
 
     pub const fn mode(&self) -> &Mode {
         &self.mode
+    }
+
+    fn time_offset(&self) -> Seconds {
+        let min = self.settings.outgoing_connections;
+        let mut offsets: Vec<Seconds> = self
+            .connections
+            .read()
+            .unwrap()
+            .iter()
+            .filter_map(|connection| {
+                if connection.state() == State::OutgoingConnected {
+                    Some(connection.time_offset())
+                } else {
+                    None
+                }
+            })
+            .collect();
+        if offsets.len() >= min.into() {
+            offsets.sort_unstable();
+            offsets[offsets.len() >> 1] // median
+        } else {
+            Seconds::ZERO
+        }
     }
 
     pub async fn broadcast_block(&self, hash: Hash, bytes: Vec<u8>) -> bool {

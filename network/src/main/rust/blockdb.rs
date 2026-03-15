@@ -23,11 +23,13 @@ use arc_swap::ArcSwapOption;
 use blacknet_kernel::amount::Amount;
 use blacknet_kernel::blake2b::Hash;
 use blacknet_kernel::block::Block;
-use blacknet_kernel::proofofstake::ROLLBACK_LIMIT;
+use blacknet_kernel::proofofstake::{MAX_BLOCK_SIZE, ROLLBACK_LIMIT};
 use fjall::{Database, Result};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use std::sync::Arc;
+
+const MIN_DISK_SPACE: u64 = MAX_BLOCK_SIZE as u64 * 2;
 
 #[derive(Clone, Copy, Deserialize, Serialize)]
 pub struct BlockIndex {
@@ -178,6 +180,12 @@ impl BlockDB {
         todo!();
     }
 
+    pub fn warnings(&self, warnings: &mut Vec<String>) {
+        if self.usable_space() <= MIN_DISK_SPACE {
+            warnings.push("Disk space is low!".to_owned())
+        }
+    }
+
     #[expect(unused)]
     pub fn check(&self) -> Check {
         let mut check = Check {
@@ -193,6 +201,10 @@ impl BlockDB {
             check.result = true;
         }
         check
+    }
+
+    fn usable_space(&self) -> u64 {
+        todo!();
     }
 }
 
