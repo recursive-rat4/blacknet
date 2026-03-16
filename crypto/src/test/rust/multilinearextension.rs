@@ -125,7 +125,7 @@ fn matrix() {
         43, 44, 45, 46,
     ].map(R::from).into());
     let mle = MultilinearExtension::from(a.clone());
-    zip(hc.iter_rank2(2, 4), hc.iter_vertex())
+    zip(hc.iter_order2(2, 4), hc.iter_vertex())
         .for_each(|(index, b)| assert_eq!(mle.point(&b), a[index]));
 }
 

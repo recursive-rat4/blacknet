@@ -18,7 +18,7 @@
 use crate::algebra::{RingOps, UnitalRing};
 use crate::duplex::Duplex;
 use crate::polynomial::{
-    MultivariatePolynomial, Point, Polynomial, UnivariatePolynomial, interpolation::*,
+    MultivariatePolynomial, Polynomial, UnivariatePolynomial, interpolation::*,
 };
 use crate::random::Distribution;
 use alloc::vec::Vec;
@@ -59,7 +59,7 @@ impl<'a, R: UnitalRing> IntoIterator for &'a Proof<R> {
 
 pub struct SumCheck<
     R: UnitalRing,
-    P: MultivariatePolynomial<Coefficient = R, Point = Point<R>>,
+    P: MultivariatePolynomial<Coefficient = R, Point: From<Vec<R>>>,
     D: Duplex<R>,
     E: Distribution<D, Output = R>,
 > {
@@ -71,7 +71,7 @@ pub struct SumCheck<
 
 impl<
     R: UnitalRing + InterpolationConsts + Clone + Eq + Send + Sync,
-    P: MultivariatePolynomial<Coefficient = R, Point = Point<R>> + Send + Sync,
+    P: MultivariatePolynomial<Coefficient = R, Point: From<Vec<R>>> + Send + Sync,
     D: Duplex<R>,
     E: Distribution<D, Output = R>,
 > SumCheck<R, P, D, E>
@@ -118,7 +118,7 @@ where
         proof: &Proof<R>,
         duplex: &mut D,
         exceptional_set: &mut E,
-    ) -> Result<(Point<R>, R), Error<R>> {
+    ) -> Result<(P::Point, R), Error<R>> {
         if proof.variables() != polynomial.variables() {
             return Err(Error::Variables(proof.variables(), polynomial.variables()));
         }
@@ -137,7 +137,7 @@ where
             coordinates.push(challenge);
             exceptional_set.reset();
         }
-        let r = Point::new(coordinates);
+        let r = P::Point::from(coordinates);
         Ok((r, sum))
     }
 

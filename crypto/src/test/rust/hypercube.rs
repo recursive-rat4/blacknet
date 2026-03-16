@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Pavel Vasin
+ * Copyright (c) 2024-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -42,13 +42,13 @@ fn vertex() {
         [1, 1, 0].map(R::from).into(),
         [1, 1, 1].map(R::from).into(),
     ];
-    let iter = hypercube.iter_vertex();
+    let iter = hypercube.iter_vertex::<Point<R>>();
     assert_eq!(iter.len(), vertices.len());
     zip(iter, vertices).for_each(|(a, b)| assert_eq!(a, b));
 }
 
 #[test]
-fn rank2() {
+fn order2() {
     let hypercube = Hypercube::<R>::new(3);
     #[rustfmt::skip]
     let indices: [(usize, usize); 8] = [
@@ -57,7 +57,7 @@ fn rank2() {
         (2, 0), (2, 1),
         (3, 0), (3, 1),
     ];
-    let iter = hypercube.iter_rank2(4, 2);
+    let iter = hypercube.iter_order2(4, 2);
     assert_eq!(iter.len(), indices.len());
     zip(iter, indices).for_each(|(a, b)| assert_eq!(a, b));
 }

@@ -20,7 +20,7 @@ use crate::assigner::assigment::Assigment;
 use crate::assigner::polynomial::UnivariatePolynomial;
 use crate::assigner::random::Distribution;
 use crate::duplex::Duplex;
-use crate::polynomial::{MultivariatePolynomial, Point, Polynomial};
+use crate::polynomial::{MultivariatePolynomial, Polynomial};
 use alloc::vec::Vec;
 use core::marker::PhantomData;
 
@@ -37,7 +37,7 @@ impl<'a, R: UnitalRing> From<Vec<UnivariatePolynomial<'a, R>>> for Proof<'a, R> 
 pub struct SumCheck<
     'a,
     R: UnitalRing,
-    P: MultivariatePolynomial<Coefficient = R, Point = Point<R>>,
+    P: MultivariatePolynomial<Coefficient = R, Point: From<Vec<R>>>,
     D: Duplex<R>,
     E: Distribution<'a, R, D, Output = R>,
 > {
@@ -50,7 +50,7 @@ pub struct SumCheck<
 impl<
     'a,
     R: UnitalRing + Clone,
-    P: MultivariatePolynomial<Coefficient = R, Point = Point<R>>,
+    P: MultivariatePolynomial<Coefficient = R, Point: From<Vec<R>>>,
     D: Duplex<R>,
     E: Distribution<'a, R, D, Output = R>,
 > SumCheck<'a, R, P, D, E>
@@ -71,7 +71,7 @@ impl<
         proof: &Proof<'a, R>,
         duplex: &mut D,
         exceptional_set: &mut E,
-    ) -> (Point<R>, R) {
+    ) -> (P::Point, R) {
         let mut coordinates = Vec::<R>::with_capacity(polynomial.variables());
         for i in 0..polynomial.variables() {
             let claim = &proof.claims[i];
@@ -81,7 +81,7 @@ impl<
             coordinates.push(challenge);
             exceptional_set.reset();
         }
-        let r = Point::new(coordinates);
+        let r = P::Point::from(coordinates);
         (r, sum)
     }
 }

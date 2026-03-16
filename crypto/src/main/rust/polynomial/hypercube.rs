@@ -16,9 +16,11 @@
  */
 
 use crate::algebra::Semiring;
-use crate::polynomial::{MultivariatePolynomial, Point};
+use crate::polynomial::MultivariatePolynomial;
 use alloc::vec::Vec;
+use core::iter::Map;
 use core::marker::PhantomData;
+use core::ops::Range;
 
 /// An n-dimensional unit hypercube with a vertex at the origin in the coordinate system.
 pub struct Hypercube<R: Semiring> {
@@ -38,142 +40,46 @@ impl<R: Semiring> Hypercube<R> {
     }
 
     /// Iterate indices of vertices.
-    pub const fn iter_index(&self) -> IndexIterator {
-        IndexIterator {
-            index: 0,
-            last: self.vertices,
-        }
+    pub const fn iter_index(&self) -> Range<usize> {
+        0..self.vertices
     }
 
     /// Iterate vertices.
-    pub const fn iter_vertex(&self) -> VertexIterator<R> {
-        VertexIterator {
-            index: 0,
-            last: self.vertices,
-            dimension: self.dimension,
-            phantom: PhantomData,
-        }
-    }
-
-    pub const fn iter_rank2(&self, rows: usize, columns: usize) -> Rank2Iterator {
-        Rank2Iterator {
-            index: 0,
-            last: self.vertices,
-            _rows: rows,
-            columns,
-        }
-    }
-
-    /// Sum a polynomial over a unit hypercube.
-    pub fn sum<P: MultivariatePolynomial<Coefficient = R, Point = Point<R>>>(polynomial: &P) -> R {
-        Hypercube::new(polynomial.variables())
-            .iter_vertex()
-            .map(|vertex| polynomial.point(&vertex))
-            .sum()
-    }
-}
-
-/// Iterator of indices of vertices.
-pub struct IndexIterator {
-    index: usize,
-    last: usize,
-}
-
-impl Iterator for IndexIterator {
-    type Item = usize;
-
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        let size = self.last - self.index;
-        (size, Some(size))
-    }
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.index != self.last {
-            let current = self.index;
-            self.index += 1;
-            Some(current)
-        } else {
-            None
-        }
-    }
-}
-
-impl ExactSizeIterator for IndexIterator {
-    fn len(&self) -> usize {
-        self.last - self.index
-    }
-}
-
-/// Iterator of vertices.
-pub struct VertexIterator<R> {
-    index: usize,
-    last: usize,
-    dimension: usize,
-    phantom: PhantomData<R>,
-}
-
-impl<R: Semiring> Iterator for VertexIterator<R> {
-    type Item = Point<R>;
-
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        let size = self.last - self.index;
-        (size, Some(size))
-    }
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.index != self.last {
+    pub fn iter_vertex<Vertex: From<Vec<R>>>(
+        &self,
+    ) -> Map<Range<usize>, impl FnMut(usize) -> Vertex> {
+        (0..self.vertices).map(move |index| {
             let mut coordinates = Vec::<R>::with_capacity(self.dimension);
-            let mut s = self.last;
+            let mut s = self.vertices;
             for _ in 0..self.dimension {
                 s >>= 1;
-                if self.index & s == s {
+                if index & s == s {
                     coordinates.push(R::ONE)
                 } else {
                     coordinates.push(R::ZERO)
                 }
             }
-            self.index += 1;
-            Some(coordinates.into())
-        } else {
-            None
-        }
-    }
-}
-
-impl<R: Semiring> ExactSizeIterator for VertexIterator<R> {
-    fn len(&self) -> usize {
-        self.last - self.index
-    }
-}
-
-pub struct Rank2Iterator {
-    index: usize,
-    last: usize,
-    _rows: usize,
-    columns: usize,
-}
-
-impl Iterator for Rank2Iterator {
-    type Item = (usize, usize);
-
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        let size = self.last - self.index;
-        (size, Some(size))
+            Vertex::from(coordinates)
+        })
     }
 
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.index != self.last {
-            let tuple = (self.index / self.columns, self.index % self.columns);
-            self.index += 1;
-            Some(tuple)
-        } else {
-            None
-        }
+    /// Iterate indices of vertices as order 2 tensor.
+    pub fn iter_order2(
+        &self,
+        rows: usize,
+        columns: usize,
+    ) -> Map<Range<usize>, impl FnMut(usize) -> (usize, usize)> {
+        debug_assert!(rows * columns == self.vertices);
+        (0..self.vertices).map(move |index| (index / columns, index % columns))
     }
-}
 
-impl ExactSizeIterator for Rank2Iterator {
-    fn len(&self) -> usize {
-        self.last - self.index
+    /// Sum a polynomial over a unit hypercube.
+    pub fn sum<P: MultivariatePolynomial<Coefficient = R, Point: From<Vec<R>>>>(
+        polynomial: &P,
+    ) -> R {
+        Hypercube::new(polynomial.variables())
+            .iter_vertex::<P::Point>()
+            .map(|vertex| polynomial.point(&vertex))
+            .sum()
     }
 }
