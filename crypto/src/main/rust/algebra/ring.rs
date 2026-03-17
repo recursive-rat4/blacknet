@@ -99,7 +99,7 @@ impl<R
 #[rustfmt::skip]
 pub trait DivisionRing
     : Ring
-    + Inv<Output = Option<Self>>
+    + DivisionRingOps<Self>
 {
 }
 

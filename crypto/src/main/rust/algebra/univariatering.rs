@@ -17,7 +17,7 @@
 
 use crate::algebra::{
     AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, Algebra, CommutativeRing,
-    Conjugate, DivisionRing, DivisionRingOps, Double, FreeModule, IntegerRing, LeftOne, LeftZero,
+    Conjugate, Double, FreeModule, IntegerRing, Inv, LeftOne, LeftZero,
     MultiplicativeCommutativeMagma, MultiplicativeMonoid, MultiplicativeSemigroup, One,
     PolynomialRing, PowerOfTwoCyclotomicRing, RightOne, RightZero, RingOps, Semimodule, Set,
     Square, UnitalAlgebra, UnitalRing, Zero,
@@ -510,7 +510,7 @@ impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> MulAssign<&R>
     }
 }
 
-impl<R: UnitalRing + DivisionRing, const N: usize, C: Convolution<R, N>> Div<R>
+impl<R: UnitalRing + Inv<Output = Option<R>>, const N: usize, C: Convolution<R, N>> Div<R>
     for UnivariateRing<R, N, C>
 {
     type Output = Option<Self>;
@@ -520,10 +520,10 @@ impl<R: UnitalRing + DivisionRing, const N: usize, C: Convolution<R, N>> Div<R>
     }
 }
 
-impl<R: UnitalRing + DivisionRing, const N: usize, C: Convolution<R, N>> Div<&R>
+impl<R: UnitalRing + Inv<Output = Option<R>>, const N: usize, C: Convolution<R, N>> Div<&R>
     for UnivariateRing<R, N, C>
 where
-    for<'a> &'a R: DivisionRingOps<R>,
+    for<'a> &'a R: Inv<Output = Option<R>>,
 {
     type Output = Option<Self>;
 

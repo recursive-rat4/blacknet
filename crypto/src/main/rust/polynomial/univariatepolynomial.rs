@@ -15,9 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{
-    DivisionRing, Double, RingOps, Semiring, SemiringOps, Set, Square, UnitalRing,
-};
+use crate::algebra::{Double, Inv, RingOps, Semiring, SemiringOps, Set, Square, UnitalRing};
 use crate::duplex::{Absorb, Duplex, Squeeze, SqueezeWithSize};
 use crate::matrix::DenseVector;
 use crate::polynomial::{InBasis, Polynomial, TensorBasis};
@@ -387,7 +385,7 @@ where
     }
 }
 
-impl<R: UnitalRing + DivisionRing> Div<R> for UnivariatePolynomial<R>
+impl<R: Semiring + Inv<Output = Option<R>>> Div<R> for UnivariatePolynomial<R>
 where
     for<'a> &'a R: SemiringOps<R>,
 {
