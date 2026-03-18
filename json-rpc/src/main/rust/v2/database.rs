@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -93,7 +93,8 @@ async fn block_index(Path(hash): Path<Hash>, State(node): State<Arc<Node>>) -> R
 
 async fn make_bootstrap(State(node): State<Arc<Node>>) -> Response<String> {
     let block_db = node.block_db();
-    match block_db.export() {
+    let coin_db = node.coin_db();
+    match block_db.export(coin_db.state()) {
         Some(path) => match absolute(&path) {
             Ok(path) => respond_text(path.display().to_string()),
             Err(_) => respond_text(path.display().to_string()),
