@@ -27,6 +27,8 @@ use blacknet_kernel::block::Block;
 use blacknet_kernel::proofofstake::{MAX_BLOCK_SIZE, ROLLBACK_LIMIT};
 use fjall::{Database, Result};
 use serde::{Deserialize, Serialize};
+use std::fs::File;
+use std::io::{BufWriter, Write};
 use std::path::PathBuf;
 use std::sync::Arc;
 
@@ -177,10 +179,33 @@ impl BlockDB {
     }
 
     /**
-     * Return a `Path` of written data or `None` if not synchronized
+     * Return `Some` path of written data or `None` if not synchronized
      */
-    pub fn export(&self) -> Option<PathBuf> {
-        todo!();
+    pub fn export(&self, state: State) -> Option<PathBuf> {
+        let checkpoint = state.rolling_checkpoint();
+        if checkpoint == genesis::hash() {
+            return None;
+        }
+
+        let path = self.data_dir.join("bootstrap.dat.new");
+        let file = File::create(&path).ok()?;
+        let mut buffered = BufWriter::new(file);
+
+        let mut hash = genesis::hash();
+        let mut index = self.indexes.get(hash)?;
+        while hash != checkpoint {
+            hash = index.next;
+            index = self.indexes.get(hash)?;
+            let bytes = self.blocks.get_bytes(hash)?;
+            buffered
+                .write_all(&(bytes.len() as u32).to_be_bytes())
+                .ok()?;
+            buffered.write_all(&bytes).ok()?;
+        }
+
+        buffered.flush().ok()?;
+
+        Some(path)
     }
 
     pub fn warnings(&self, warnings: &mut Vec<String>) {
