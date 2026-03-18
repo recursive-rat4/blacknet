@@ -53,6 +53,10 @@ impl Batch {
         Self { multi_data }
     }
 
+    pub const fn is_empty(&self) -> bool {
+        self.multi_data.is_empty()
+    }
+
     pub const fn len(&self) -> usize {
         self.multi_data.len()
     }
