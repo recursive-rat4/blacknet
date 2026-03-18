@@ -183,11 +183,10 @@ impl<T> DenseMatrix<T> {
         let rows = self.rows;
         let columns = self.columns * rps.columns;
         let mut elements = Vec::<T>::with_capacity(rows * columns);
-        for (l, r) in zip(self.iter_row(), rps.iter_row()) {
-            #[allow(clippy::needless_range_loop)]
-            for j in 0..self.columns {
-                for k in 0..rps.columns {
-                    elements.push(&l[j] * &r[k])
+        for (left, right) in zip(self.iter_row(), rps.iter_row()) {
+            for l in left {
+                for r in right {
+                    elements.push(l * r)
                 }
             }
         }
@@ -207,10 +206,10 @@ impl<T> DenseMatrix<T> {
         let rows = self.rows * rps.rows;
         let columns = self.columns;
         let mut elements = Vec::<T>::with_capacity(rows * columns);
-        for i in 0..self.rows {
-            for j in 0..rps.rows {
-                for k in 0..columns {
-                    elements.push(&self[(i, k)] * &rps[(j, k)])
+        for left in self.iter_row() {
+            for right in rps.iter_row() {
+                for (l, r) in zip(left, right) {
+                    elements.push(l * r)
                 }
             }
         }

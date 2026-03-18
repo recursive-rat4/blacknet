@@ -15,12 +15,11 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#![allow(clippy::needless_range_loop)]
-
 use crate::algebra::{Double, PrimeField, RingOps, Square};
 use crate::circuit::builder::{CircuitBuilder, Constant, LinearCombination, Scope};
 use crate::poseidon2::Poseidon2Params;
 use core::array;
+use core::iter::zip;
 
 pub trait Poseidon2Circuit<
     F: PrimeField + Eq,
@@ -98,13 +97,11 @@ pub trait Poseidon2Circuit<
                 x[2] = (&x[2]).double() + s;
             }
             4 | 8 | 12 | 16 | 20 | 24 => {
-                let mut s = x[0].clone();
-                for i in 1..WIDTH {
-                    s += &x[i];
-                }
-                for i in 0..WIDTH {
-                    x[i] = &x[i] * Constant::new(Self::M[i]) + &s;
-                }
+                let s = x.iter().sum::<LinearCombination<F>>();
+                zip(x, Self::M).for_each(|(x, m)| {
+                    *x *= Constant::new(m);
+                    *x += &s;
+                });
             }
             _ => {
                 unreachable!();
@@ -113,9 +110,8 @@ pub trait Poseidon2Circuit<
     }
 
     fn rcb(round: usize, x: &mut [LinearCombination<F>; WIDTH]) {
-        for i in 0..WIDTH {
-            x[i] += Constant::new(Self::RCB[round * WIDTH + i]);
-        }
+        let rcb = &Self::RCB[round * WIDTH..(round + 1) * WIDTH];
+        zip(x, rcb).for_each(|(x, rcb)| *x += Constant::new(*rcb));
     }
 
     fn rcp(round: usize, x: &mut [LinearCombination<F>; WIDTH]) {
@@ -123,9 +119,8 @@ pub trait Poseidon2Circuit<
     }
 
     fn rce(round: usize, x: &mut [LinearCombination<F>; WIDTH]) {
-        for i in 0..WIDTH {
-            x[i] += Constant::new(Self::RCE[round * WIDTH + i]);
-        }
+        let rce = &Self::RCE[round * WIDTH..(round + 1) * WIDTH];
+        zip(x, rce).for_each(|(x, rce)| *x += Constant::new(*rce));
     }
 
     fn sboxp(scope: &Scope<F>, x: &mut LinearCombination<F>) {
@@ -177,9 +172,7 @@ pub trait Poseidon2Circuit<
     }
 
     fn sbox(scope: &Scope<F>, x: &mut [LinearCombination<F>; WIDTH]) {
-        for i in 0..WIDTH {
-            Self::sboxp(scope, &mut x[i]);
-        }
+        x.iter_mut().for_each(|x| Self::sboxp(scope, x));
     }
 
     fn permute(circuit: &CircuitBuilder<F>, x: &mut [LinearCombination<F>; WIDTH]) {

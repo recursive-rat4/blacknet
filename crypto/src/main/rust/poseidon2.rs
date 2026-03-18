@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Pavel Vasin
+ * Copyright (c) 2024-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,9 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#![allow(clippy::needless_range_loop)]
-
 use crate::algebra::PrimeField;
+use core::iter::zip;
 
 // https://eprint.iacr.org/2023/323
 
@@ -111,13 +110,11 @@ pub trait Poseidon2Plain<
                 x[2] = x[2].double() + s;
             }
             4 | 8 | 12 | 16 | 20 | 24 => {
-                let mut s = x[0];
-                for i in 1..WIDTH {
-                    s += x[i];
-                }
-                for i in 0..WIDTH {
-                    x[i] = x[i] * Self::M[i] + s;
-                }
+                let s = x.iter().sum::<F>();
+                zip(x, Self::M).for_each(|(x, m)| {
+                    *x *= m;
+                    *x += s;
+                });
             }
             _ => {
                 unreachable!();
@@ -126,9 +123,8 @@ pub trait Poseidon2Plain<
     }
 
     fn rcb(round: usize, x: &mut [F; WIDTH]) {
-        for i in 0..WIDTH {
-            x[i] += Self::RCB[round * WIDTH + i];
-        }
+        let rcb = &Self::RCB[round * WIDTH..(round + 1) * WIDTH];
+        zip(x, rcb).for_each(|(x, rcb)| *x += rcb);
     }
 
     fn rcp(round: usize, x: &mut [F; WIDTH]) {
@@ -136,9 +132,8 @@ pub trait Poseidon2Plain<
     }
 
     fn rce(round: usize, x: &mut [F; WIDTH]) {
-        for i in 0..WIDTH {
-            x[i] += Self::RCE[round * WIDTH + i];
-        }
+        let rce = &Self::RCE[round * WIDTH..(round + 1) * WIDTH];
+        zip(x, rce).for_each(|(x, rce)| *x += rce);
     }
 
     fn sboxp(x: &mut F) {
@@ -162,9 +157,7 @@ pub trait Poseidon2Plain<
     }
 
     fn sbox(x: &mut [F; WIDTH]) {
-        for i in 0..WIDTH {
-            Self::sboxp(&mut x[i]);
-        }
+        x.iter_mut().for_each(Self::sboxp);
     }
 
     fn permute(x: &mut [F; WIDTH]) {

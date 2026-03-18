@@ -27,7 +27,7 @@ use crate::convolution::{Convolution, Negacyclic};
 use crate::duplex::{Absorb, Duplex, Squeeze};
 use crate::numbertheoretictransform::{NTTConvolution, Twiddles, cooley_tukey, gentleman_sande};
 use core::fmt::{Debug, Formatter, Result};
-use core::iter::{Product, Sum};
+use core::iter::{Product, Sum, zip};
 use core::ops::{Add, AddAssign, Div, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign};
 #[cfg(feature = "rayon")]
 use rayon::iter::IntoParallelIterator;
@@ -519,9 +519,8 @@ impl<Z: Twiddles<M>, const M: usize, const N: usize> Inv for NTTRing<Z, M, N> {
     fn inv(self) -> Self::Output {
         if Self::INERTIA == 1 {
             let mut components = [Z::ZERO; N];
-            #[allow(clippy::needless_range_loop)]
-            for i in 0..N {
-                components[i] = self.spectrum[i].inv()?
+            for (c, s) in zip(&mut components, self.spectrum) {
+                *c = s.inv()?
             }
             Some(Self {
                 spectrum: FreeModule::<Z, N>::new(components),

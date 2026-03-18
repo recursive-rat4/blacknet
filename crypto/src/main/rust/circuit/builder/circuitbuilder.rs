@@ -30,6 +30,7 @@ use alloc::vec::Vec;
 use core::cell::{Cell, RefCell};
 use core::cmp::max;
 use core::fmt::{Display, Formatter, Result};
+use core::iter::zip;
 
 /// An expression to be constrained.
 pub trait Expression<'a, R: Semiring + 'a>: 'a {
@@ -278,20 +279,19 @@ impl<'a, R: UnitalRing + Clone + Eq> CircuitBuilder<'a, R> {
         });
 
         self.lay_out();
-        #[allow(clippy::needless_range_loop)]
         for constraint in constraints {
             let (lps_span, rps_span) = (constraint.lps.span(), constraint.rps.span());
-            for i in 0..lps_span.dimension() {
-                self.put(&mut lps_matrices[i], &lps_span[i])
+            for (matrix, lc) in zip(&mut lps_matrices, &lps_span) {
+                self.put(matrix, lc)
             }
-            for i in lps_span.dimension()..lps_degree {
-                self.pad(&mut lps_matrices[i]);
+            for matrix in lps_matrices.iter_mut().skip(lps_span.dimension()) {
+                self.pad(matrix)
             }
-            for i in 0..rps_span.dimension() {
-                self.put(&mut rps_matrices[i], &rps_span[i])
+            for (matrix, lc) in zip(&mut rps_matrices, &rps_span) {
+                self.put(matrix, lc)
             }
-            for i in rps_span.dimension()..rps_degree {
-                self.pad(&mut rps_matrices[i]);
+            for matrix in rps_matrices.iter_mut().skip(rps_span.dimension()) {
+                self.pad(matrix)
             }
         }
 

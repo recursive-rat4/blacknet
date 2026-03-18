@@ -227,9 +227,8 @@ impl<const N: usize> BigInt<N> {
     #[doc(hidden)]
     pub unsafe fn from_java(bytes: &[u8]) -> Self {
         let mut num = Self::ZERO;
-        #[allow(clippy::needless_range_loop)]
-        for i in 0..bytes.len() - 1 {
-            let digit = bytes[i];
+        for &byte in bytes.iter().take(bytes.len() - 1) {
+            let digit = byte;
             num |= digit as u64;
             num <<= u8::BITS;
         }
