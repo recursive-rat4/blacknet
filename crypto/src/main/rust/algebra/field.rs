@@ -26,7 +26,7 @@ pub trait Field
     + DivisionRing
     + Div<Output = Option<Self>>
     + for<'a> Div<&'a Self, Output = Option<Self>>
-    + Copy
+    + Clone
 {
 }
 
@@ -37,7 +37,7 @@ impl<R
     + DivisionRing
     + Div<Output = Option<Self>>
     + for<'a> Div<&'a Self, Output = Option<Self>>
-    + Copy
+    + Clone
 > Field for R
 {
 }

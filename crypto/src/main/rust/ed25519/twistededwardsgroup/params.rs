@@ -18,7 +18,7 @@
 use crate::algebra::{Field, One, Square};
 
 pub trait TwistedEdwardsGroupParams {
-    type F: Field;
+    type F: Field + Copy;
 
     const A: Self::F;
     const D: Self::F;

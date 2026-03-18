@@ -143,6 +143,15 @@ impl<R: Semiring> Add<Constant<R>> for LinearCombination<R> {
     }
 }
 
+impl<R: Semiring + Clone> Add<&Constant<R>> for LinearCombination<R> {
+    type Output = Self;
+
+    fn add(mut self, rps: &Constant<R>) -> Self::Output {
+        self += rps;
+        self
+    }
+}
+
 impl<R: Semiring> AddAssign<Constant<R>> for LinearCombination<R> {
     fn add_assign(&mut self, rps: Constant<R>) {
         *self += LinearTerm::new(Variable::CONSTANT, rps)
@@ -159,6 +168,14 @@ impl<R: Semiring + Clone> Add<Constant<R>> for &LinearCombination<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: Constant<R>) -> Self::Output {
+        self.clone() + rps
+    }
+}
+
+impl<R: Semiring + Clone> Add<&Constant<R>> for &LinearCombination<R> {
+    type Output = LinearCombination<R>;
+
+    fn add(self, rps: &Constant<R>) -> Self::Output {
         self.clone() + rps
     }
 }
@@ -339,9 +356,24 @@ impl<R: UnitalRing> Sub<Constant<R>> for LinearCombination<R> {
     }
 }
 
+impl<R: UnitalRing + Clone> Sub<&Constant<R>> for LinearCombination<R> {
+    type Output = Self;
+
+    fn sub(mut self, rps: &Constant<R>) -> Self::Output {
+        self -= rps;
+        self
+    }
+}
+
 impl<R: UnitalRing> SubAssign<Constant<R>> for LinearCombination<R> {
     fn sub_assign(&mut self, rps: Constant<R>) {
         *self -= LinearTerm::new(Variable::CONSTANT, rps)
+    }
+}
+
+impl<R: UnitalRing + Clone> SubAssign<&Constant<R>> for LinearCombination<R> {
+    fn sub_assign(&mut self, rps: &Constant<R>) {
+        *self -= LinearTerm::new(Variable::CONSTANT, rps.clone())
     }
 }
 
@@ -349,6 +381,14 @@ impl<R: UnitalRing + Clone> Sub<Constant<R>> for &LinearCombination<R> {
     type Output = LinearCombination<R>;
 
     fn sub(self, rps: Constant<R>) -> Self::Output {
+        self.clone() - rps
+    }
+}
+
+impl<R: UnitalRing + Clone> Sub<&Constant<R>> for &LinearCombination<R> {
+    type Output = LinearCombination<R>;
+
+    fn sub(self, rps: &Constant<R>) -> Self::Output {
         self.clone() - rps
     }
 }
@@ -460,10 +500,25 @@ impl<R: Semiring> Mul<Constant<R>> for LinearCombination<R> {
     }
 }
 
+impl<R: Semiring> Mul<&Constant<R>> for LinearCombination<R> {
+    type Output = Self;
+
+    fn mul(mut self, rps: &Constant<R>) -> Self::Output {
+        self *= rps;
+        self
+    }
+}
+
 impl<R: Semiring> MulAssign<Constant<R>> for LinearCombination<R> {
     fn mul_assign(&mut self, rps: Constant<R>) {
+        *self *= &rps
+    }
+}
+
+impl<R: Semiring> MulAssign<&Constant<R>> for LinearCombination<R> {
+    fn mul_assign(&mut self, rps: &Constant<R>) {
         for coefficient in self.terms.values_mut() {
-            *coefficient *= &rps
+            *coefficient *= rps
         }
     }
 }
@@ -475,9 +530,20 @@ where
     type Output = LinearCombination<R>;
 
     fn mul(self, rps: Constant<R>) -> Self::Output {
+        self * &rps
+    }
+}
+
+impl<R: Semiring> Mul<&Constant<R>> for &LinearCombination<R>
+where
+    for<'a> &'a R: SemiringOps<R>,
+{
+    type Output = LinearCombination<R>;
+
+    fn mul(self, rps: &Constant<R>) -> Self::Output {
         let mut lc = LinearCombination::new();
         for (&variable, coefficient) in &self.terms {
-            lc += LinearTerm::new(variable, coefficient * &rps);
+            lc += LinearTerm::new(variable, coefficient * rps);
         }
         lc
     }

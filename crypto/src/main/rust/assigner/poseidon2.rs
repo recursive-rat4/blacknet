@@ -21,7 +21,7 @@ use crate::poseidon2::Poseidon2Params;
 use core::iter::zip;
 
 pub trait Poseidon2Assigner<
-    F: PrimeField,
+    F: PrimeField + Copy,
     const WIDTH: usize,
     const RBC: usize,
     const RPC: usize,
@@ -197,7 +197,7 @@ pub trait Poseidon2Assigner<
 }
 
 impl<
-    F: PrimeField,
+    F: PrimeField + Copy,
     const WIDTH: usize,
     const RBC: usize,
     const RPC: usize,

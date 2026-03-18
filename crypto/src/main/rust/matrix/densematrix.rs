@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{Double, Field, Inv, Square, Tensor, Zero};
+use crate::algebra::{DivisionRingOps, Double, Field, Inv, Square, Tensor, Zero};
 use crate::matrix::{DenseVector, IdentityMatrix};
 use alloc::vec;
 use alloc::vec::Vec;
@@ -729,7 +729,10 @@ where
     }
 }
 
-impl<F: Field + Eq> Inv for DenseMatrix<F> {
+impl<F: Field + Eq> Inv for DenseMatrix<F>
+where
+    for<'a> &'a F: DivisionRingOps<F>,
+{
     type Output = Option<DenseMatrix<F>>;
 
     fn inv(mut self) -> Self::Output {
@@ -745,28 +748,28 @@ impl<F: Field + Eq> Inv for DenseMatrix<F> {
                 a.swap_row(i, pivot);
             }
 
-            let f = self[(i, i)].inv()?;
+            let f = (&self[(i, i)]).inv()?;
             let row = &mut self.elements[i * self.columns..(i + 1) * self.columns];
             for element in row {
-                *element *= f
+                *element *= &f
             }
             let row = &mut a.elements[i * a.columns..(i + 1) * a.columns];
             for element in row {
-                *element *= f
+                *element *= &f
             }
 
             for j in 0..self.rows {
                 if i == j {
                     continue;
                 }
-                let f = self[(j, i)];
+                let f = self[(j, i)].clone();
                 for k in 0..self.columns {
-                    let g = self[(i, k)];
-                    self[(j, k)] -= f * g;
+                    let g = self[(i, k)].clone();
+                    self[(j, k)] -= &f * g;
                 }
                 for k in 0..a.columns {
-                    let g = a[(i, k)];
-                    a[(j, k)] -= f * g;
+                    let g = a[(i, k)].clone();
+                    a[(j, k)] -= &f * g;
                 }
             }
         }
@@ -774,7 +777,10 @@ impl<F: Field + Eq> Inv for DenseMatrix<F> {
     }
 }
 
-impl<F: Field + Eq> Inv for &DenseMatrix<F> {
+impl<F: Field + Eq> Inv for &DenseMatrix<F>
+where
+    for<'a> &'a F: DivisionRingOps<F>,
+{
     type Output = Option<DenseMatrix<F>>;
 
     fn inv(self) -> Self::Output {

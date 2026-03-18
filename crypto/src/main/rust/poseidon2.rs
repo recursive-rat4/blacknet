@@ -36,7 +36,7 @@ pub trait Poseidon2Params<
 }
 
 pub trait Poseidon2Plain<
-    F: PrimeField,
+    F: PrimeField + Copy,
     const WIDTH: usize,
     const RBC: usize,
     const RPC: usize,
@@ -184,7 +184,7 @@ pub trait Poseidon2Plain<
 }
 
 impl<
-    F: PrimeField,
+    F: PrimeField + Copy,
     const WIDTH: usize,
     const RBC: usize,
     const RPC: usize,

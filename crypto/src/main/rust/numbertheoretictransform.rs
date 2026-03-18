@@ -28,7 +28,10 @@ pub trait Twiddles<const N: usize>: PrimeField {
     const SCALE: Self;
 }
 
-pub fn cooley_tukey<Z: Twiddles<M>, const M: usize, const N: usize>(a: &mut [Z; N]) {
+pub fn cooley_tukey<Z: Twiddles<M>, const M: usize, const N: usize>(a: &mut [Z; N])
+where
+    for<'a> &'a Z: RingOps<Z>,
+{
     let inertia: usize = const {
         assert!(N % M == 0);
         N / M
@@ -40,11 +43,11 @@ pub fn cooley_tukey<Z: Twiddles<M>, const M: usize, const N: usize>(a: &mut [Z; 
         let mut l = 0;
         while l < N {
             j += 1;
-            let zeta = Z::TWIDDLES[j];
+            let zeta = &Z::TWIDDLES[j];
             i = l;
             while i < l + k {
-                let t = a[i + k] * zeta;
-                a[i + k] = a[i] - t;
+                let t = &a[i + k] * zeta;
+                a[i + k] = &a[i] - &t;
                 a[i] += t;
                 i += 1;
             }
@@ -54,7 +57,10 @@ pub fn cooley_tukey<Z: Twiddles<M>, const M: usize, const N: usize>(a: &mut [Z; 
     }
 }
 
-pub fn gentleman_sande<Z: Twiddles<M>, const M: usize, const N: usize>(a: &mut [Z; N]) {
+pub fn gentleman_sande<Z: Twiddles<M>, const M: usize, const N: usize>(a: &mut [Z; N])
+where
+    for<'a> &'a Z: RingOps<Z>,
+{
     let inertia: usize = const {
         assert!(N % M == 0);
         N / M
@@ -66,13 +72,13 @@ pub fn gentleman_sande<Z: Twiddles<M>, const M: usize, const N: usize>(a: &mut [
         let mut l = 0;
         while l < N {
             j -= 1;
-            let zeta = -Z::TWIDDLES[j];
+            let zeta = -&Z::TWIDDLES[j];
             i = l;
             while i < l + k {
-                let t = a[i];
-                a[i] += a[i + k];
-                a[i + k] = t - a[i + k];
-                a[i + k] *= zeta;
+                let t = a[i].clone();
+                a[i] += a[i + k].clone();
+                a[i + k] = t - &a[i + k];
+                a[i + k] *= &zeta;
                 i += 1;
             }
             l = i + k;
@@ -96,7 +102,7 @@ where
             N / M
         };
         match inertia {
-            1 => array::from_fn(|i| a[i] * b[i]),
+            1 => array::from_fn(|i| &a[i] * &b[i]),
             4 => {
                 let k = inertia * 2;
                 let l = N / k;
@@ -112,7 +118,7 @@ where
                         &mut c[i * k + inertia..i * k + inertia + 4],
                         &a[i * k + inertia..i * k + inertia + 4],
                         &b[i * k + inertia..i * k + inertia + 4],
-                        &-Z::TWIDDLES[l + i],
+                        &-&Z::TWIDDLES[l + i],
                     );
                 }
                 c

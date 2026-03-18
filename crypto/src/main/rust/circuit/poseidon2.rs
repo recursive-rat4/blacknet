@@ -111,16 +111,16 @@ pub trait Poseidon2Circuit<
 
     fn rcb(round: usize, x: &mut [LinearCombination<F>; WIDTH]) {
         let rcb = &Self::RCB[round * WIDTH..(round + 1) * WIDTH];
-        zip(x, rcb).for_each(|(x, rcb)| *x += Constant::new(*rcb));
+        zip(x, rcb).for_each(|(x, rcb)| *x += Constant::new(rcb.clone()));
     }
 
     fn rcp(round: usize, x: &mut [LinearCombination<F>; WIDTH]) {
-        x[0] += Constant::new(Self::RCP[round]);
+        x[0] += Constant::new(Self::RCP[round].clone());
     }
 
     fn rce(round: usize, x: &mut [LinearCombination<F>; WIDTH]) {
         let rce = &Self::RCE[round * WIDTH..(round + 1) * WIDTH];
-        zip(x, rce).for_each(|(x, rce)| *x += Constant::new(*rce));
+        zip(x, rce).for_each(|(x, rce)| *x += Constant::new(rce.clone()));
     }
 
     fn sboxp(scope: &Scope<F>, x: &mut LinearCombination<F>) {
