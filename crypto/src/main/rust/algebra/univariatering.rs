@@ -34,8 +34,7 @@ use core::ops::{Add, AddAssign, Div, Index, IndexMut, Mul, MulAssign, Neg, Sub, 
 use rayon::iter::IntoParallelIterator;
 use serde::{Deserialize, Serialize};
 
-// Univariate polynomial ring in monomial basis
-
+/// Univariate quotient polynomial ring in monomial basis.
 #[derive(Deserialize, Serialize)]
 #[serde(bound(
     deserialize = "FreeModule<R, N>: Deserialize<'de>",
@@ -48,6 +47,7 @@ pub struct UnivariateRing<R: UnitalRing, const N: usize, C: Convolution<R, N>> {
 }
 
 impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> UnivariateRing<R, N, C> {
+    /// Construct a new polynomial given the coefficients.
     pub const fn new(coefficients: FreeModule<R, N>) -> Self {
         const {
             assert!(N.is_power_of_two(), "Not implemented");
@@ -58,6 +58,7 @@ impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> UnivariateRing<R, N, C
         }
     }
 
+    /// Construct a new polynomial given the constant term.
     pub const fn const_from(scalar: R) -> Self {
         let mut t = [const { MaybeUninit::<R>::uninit() }; N];
         t[0].write(scalar);
@@ -661,6 +662,7 @@ where
     }
 }
 
+/// Galois conjugation.
 impl<R: IntegerRing, const N: usize> Conjugate for UnivariateRing<R, N, Negacyclic>
 where
     for<'a> &'a R: RingOps<R>,
