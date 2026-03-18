@@ -57,7 +57,7 @@ where
     }
 }
 
-pub fn gentleman_sande<Z: Twiddles<M>, const M: usize, const N: usize>(a: &mut [Z; N])
+pub fn gentleman_sande<Z: Twiddles<M> + Clone, const M: usize, const N: usize>(a: &mut [Z; N])
 where
     for<'a> &'a Z: RingOps<Z>,
 {

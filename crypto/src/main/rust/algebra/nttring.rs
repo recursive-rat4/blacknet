@@ -89,7 +89,7 @@ where
     }
 }
 
-impl<Z: Twiddles<M>, const M: usize, const N: usize> From<Z> for NTTRing<Z, M, N> {
+impl<Z: Twiddles<M> + Clone, const M: usize, const N: usize> From<Z> for NTTRing<Z, M, N> {
     fn from(scalar: Z) -> Self {
         let spectrum = FreeModule::<Z, N>::from_fn(|i| {
             if i % Self::INERTIA == 0 {
@@ -112,7 +112,7 @@ where
     }
 }
 
-impl<Z: Twiddles<M>, const M: usize, const N: usize> From<NTTRing<Z, M, N>> for Iso<Z, N>
+impl<Z: Twiddles<M> + Clone, const M: usize, const N: usize> From<NTTRing<Z, M, N>> for Iso<Z, N>
 where
     for<'a> &'a Z: RingOps<Z>,
 {
@@ -568,7 +568,9 @@ impl<Z: Twiddles<M>, const M: usize, const N: usize> Sum for NTTRing<Z, M, N> {
     }
 }
 
-impl<'a, Z: Twiddles<M>, const M: usize, const N: usize> Sum<&'a Self> for NTTRing<Z, M, N> {
+impl<'a, Z: Twiddles<M> + Clone, const M: usize, const N: usize> Sum<&'a Self>
+    for NTTRing<Z, M, N>
+{
     fn sum<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
         let spectrum = iter.map(|i| &i.spectrum).sum();
         Self { spectrum }
@@ -584,7 +586,8 @@ where
     }
 }
 
-impl<'a, Z: Twiddles<M>, const M: usize, const N: usize> Product<&'a Self> for NTTRing<Z, M, N>
+impl<'a, Z: Twiddles<M> + Clone, const M: usize, const N: usize> Product<&'a Self>
+    for NTTRing<Z, M, N>
 where
     for<'b> &'b Z: RingOps<Z>,
 {
@@ -648,7 +651,7 @@ impl<Z: Twiddles<M>, const M: usize, const N: usize> AdditiveCommutativeMagma fo
 
 impl<Z: Twiddles<M>, const M: usize, const N: usize> AdditiveSemigroup for NTTRing<Z, M, N> {}
 
-impl<Z: Twiddles<M>, const M: usize, const N: usize> AdditiveMonoid for NTTRing<Z, M, N> {}
+impl<Z: Twiddles<M> + Clone, const M: usize, const N: usize> AdditiveMonoid for NTTRing<Z, M, N> {}
 
 impl<Z: Twiddles<M>, const M: usize, const N: usize> MultiplicativeCommutativeMagma
     for NTTRing<Z, M, N>
@@ -662,24 +665,26 @@ impl<Z: Twiddles<M>, const M: usize, const N: usize> MultiplicativeSemigroup for
 {
 }
 
-impl<Z: Twiddles<M>, const M: usize, const N: usize> MultiplicativeMonoid for NTTRing<Z, M, N> where
+impl<Z: Twiddles<M> + Clone, const M: usize, const N: usize> MultiplicativeMonoid
+    for NTTRing<Z, M, N>
+where
+    for<'a> &'a Z: RingOps<Z>,
+{
+}
+
+impl<Z: Twiddles<M> + Clone, const M: usize, const N: usize> Semimodule<Z> for NTTRing<Z, M, N> {}
+
+impl<Z: Twiddles<M> + Clone, const M: usize, const N: usize> Algebra<Z> for NTTRing<Z, M, N> where
     for<'a> &'a Z: RingOps<Z>
 {
 }
 
-impl<Z: Twiddles<M>, const M: usize, const N: usize> Semimodule<Z> for NTTRing<Z, M, N> {}
-
-impl<Z: Twiddles<M>, const M: usize, const N: usize> Algebra<Z> for NTTRing<Z, M, N> where
+impl<Z: Twiddles<M> + Clone, const M: usize, const N: usize> UnitalAlgebra<Z> for NTTRing<Z, M, N> where
     for<'a> &'a Z: RingOps<Z>
 {
 }
 
-impl<Z: Twiddles<M>, const M: usize, const N: usize> UnitalAlgebra<Z> for NTTRing<Z, M, N> where
-    for<'a> &'a Z: RingOps<Z>
-{
-}
-
-impl<Z: Twiddles<M>, const M: usize, const N: usize> Conjugate for NTTRing<Z, M, N>
+impl<Z: Twiddles<M> + Clone, const M: usize, const N: usize> Conjugate for NTTRing<Z, M, N>
 where
     for<'a> &'a Z: RingOps<Z>,
 {

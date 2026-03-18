@@ -729,7 +729,7 @@ where
     }
 }
 
-impl<F: Field + Eq> Inv for DenseMatrix<F>
+impl<F: Field + Clone + Eq> Inv for DenseMatrix<F>
 where
     for<'a> &'a F: DivisionRingOps<F>,
 {
@@ -777,7 +777,7 @@ where
     }
 }
 
-impl<F: Field + Eq> Inv for &DenseMatrix<F>
+impl<F: Field + Clone + Eq> Inv for &DenseMatrix<F>
 where
     for<'a> &'a F: DivisionRingOps<F>,
 {

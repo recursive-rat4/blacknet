@@ -22,7 +22,7 @@ use core::array;
 use core::iter::zip;
 
 pub trait Poseidon2Circuit<
-    F: PrimeField + Eq,
+    F: PrimeField + Clone + Eq,
     const WIDTH: usize,
     const RBC: usize,
     const RPC: usize,
@@ -201,7 +201,7 @@ pub trait Poseidon2Circuit<
 }
 
 impl<
-    F: PrimeField + Eq,
+    F: PrimeField + Clone + Eq,
     const WIDTH: usize,
     const RBC: usize,
     const RPC: usize,

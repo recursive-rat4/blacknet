@@ -23,7 +23,7 @@ use crate::circuit::convolution::{Convolution, binomial};
 use crate::numbertheoretictransform::Twiddles;
 use core::array;
 
-pub fn cooley_tukey<Z: Twiddles<M>, const M: usize, const N: usize>(
+pub fn cooley_tukey<Z: Twiddles<M> + Clone, const M: usize, const N: usize>(
     a: &mut [LinearCombination<Z>; N],
 ) where
     for<'a> &'a Z: RingOps<Z>,
@@ -53,7 +53,7 @@ pub fn cooley_tukey<Z: Twiddles<M>, const M: usize, const N: usize>(
     }
 }
 
-pub fn gentleman_sande<Z: Twiddles<M>, const M: usize, const N: usize>(
+pub fn gentleman_sande<Z: Twiddles<M> + Clone, const M: usize, const N: usize>(
     a: &mut [LinearCombination<Z>; N],
 ) where
     for<'a> &'a Z: RingOps<Z>,
@@ -88,7 +88,8 @@ pub fn gentleman_sande<Z: Twiddles<M>, const M: usize, const N: usize>(
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub struct NTTConvolution<const M: usize, const N: usize> {}
 
-impl<Z: Twiddles<M> + Eq, const M: usize, const N: usize> Convolution<Z, N> for NTTConvolution<M, N>
+impl<Z: Twiddles<M> + Clone + Eq, const M: usize, const N: usize> Convolution<Z, N>
+    for NTTConvolution<M, N>
 where
     for<'a> &'a Z: RingOps<Z>,
 {
