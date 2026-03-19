@@ -83,7 +83,7 @@ impl<I: Integer, G: UniformGenerator<Output = u8>> UniformIntDistribution<I, G> 
         }
     }
 
-    fn next(&mut self, generator: &mut G) -> I::CastUnsigned {
+    fn next(&self, generator: &mut G) -> I::CastUnsigned {
         let mut bytes = <I::CastUnsigned as Integer>::Bytes::default();
         generator.fill(&mut bytes.borrow_mut()[..self.length_bytes]);
         let int = I::CastUnsigned::from_le_bytes(bytes);

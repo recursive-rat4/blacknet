@@ -83,6 +83,7 @@ module_inception = "allow"
 too_many_arguments = "allow"
 type_complexity = "allow"
 missing_const_for_fn = "warn"
+needless_pass_by_ref_mut = "warn"
 needless_pass_by_value = "warn"
 
 [workspace.package]
