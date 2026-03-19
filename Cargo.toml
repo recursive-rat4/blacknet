@@ -82,6 +82,7 @@ windows-sys = { version = "0.61.2", features = [
 module_inception = "allow"
 too_many_arguments = "allow"
 type_complexity = "allow"
+assigning_clones = "warn"
 missing_const_for_fn = "warn"
 needless_pass_by_ref_mut = "warn"
 needless_pass_by_value = "warn"

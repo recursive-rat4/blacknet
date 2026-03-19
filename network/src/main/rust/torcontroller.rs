@@ -163,9 +163,9 @@ impl TorConnection {
             if reply_line == "250 OK\r\n" {
                 break;
             } else if reply_line.starts_with("250-ServiceID=") && reply_line.ends_with("\r\n") {
-                service_id = reply_line[14..reply_line.len() - 14 - 2].to_owned();
+                reply_line[14..reply_line.len() - 14 - 2].clone_into(&mut service_id);
             } else if reply_line.starts_with("250-PrivateKey=") && reply_line.ends_with("\r\n") {
-                new_key = reply_line[15..reply_line.len() - 15 - 2].to_owned();
+                reply_line[15..reply_line.len() - 15 - 2].clone_into(&mut new_key);
             } else if !reply_line.starts_with("250-") {
                 return Err("Unknown Tor reply line".into());
             }
