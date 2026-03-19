@@ -136,7 +136,7 @@ impl TxPool {
         let tx = from_bytes::<Transaction>(bytes, false)?;
         let fee = tx.fee();
         self.check_fee(bytes.len() as u32, fee)?;
-        let result = self.process_transaction_impl(tx, hash);
+        let result = self.process_transaction_impl(&tx, hash);
         self.undo_impl(result)?;
         self.map.insert(hash, bytes.into());
         self.data_len += bytes.len();

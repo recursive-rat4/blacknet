@@ -44,7 +44,7 @@ pub trait CoinTx: Sized {
     fn get_multisig(&mut self, id: MultiSignatureLockContractId) -> Result<Multisig>;
     fn remove_multisig(&mut self, id: MultiSignatureLockContractId);
 
-    fn process_transaction_impl(&mut self, tx: Transaction, hash: Hash) -> Result<()> {
+    fn process_transaction_impl(&mut self, tx: &Transaction, hash: Hash) -> Result<()> {
         tx.verify_signature(hash)?;
         self.check_anchor(tx.anchor())?;
         match tx.kind() {

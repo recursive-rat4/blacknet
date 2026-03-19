@@ -29,7 +29,7 @@ pub trait TxData {
         coin_tx: &mut impl CoinTx,
     ) -> Result<()>;
 
-    fn process(&self, tx: Transaction, hash: Hash, coin_tx: &mut impl CoinTx) -> Result<()> {
+    fn process(&self, tx: &Transaction, hash: Hash, coin_tx: &mut impl CoinTx) -> Result<()> {
         let mut account = coin_tx.get_account(tx.from())?;
         if tx.seq() != account.seq() {
             let msg = format!("sequence {} expected {}", tx.seq(), account.seq());
@@ -42,6 +42,6 @@ pub trait TxData {
         account.credit(tx.fee())?;
         account.increment_seq();
         coin_tx.set_account(tx.from(), account);
-        self.process_impl(&tx, hash, 0, coin_tx)
+        self.process_impl(tx, hash, 0, coin_tx)
     }
 }
