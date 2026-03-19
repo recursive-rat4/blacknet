@@ -39,7 +39,7 @@ pub struct SymmetricTridiagonalMatrix<T: Zero> {
 impl<T: Zero> SymmetricTridiagonalMatrix<T> {
     /// Construct a new matrix given the concatenation of leading and following diagonals.
     pub const fn new(elements: Vec<T>) -> Self {
-        debug_assert!(elements.len() & 1 == 1 || elements.len() == 0);
+        debug_assert!(elements.len() & 1 == 1 || elements.is_empty());
         Self { elements }
     }
 
