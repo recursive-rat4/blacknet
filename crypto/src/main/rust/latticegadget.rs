@@ -20,6 +20,7 @@ use crate::integer::Integer;
 use crate::matrix::{DenseMatrix, DenseVector, IdentityMatrix};
 use alloc::vec;
 use alloc::vec::Vec;
+use core::iter::zip;
 
 // https://eprint.iacr.org/2018/946
 
@@ -45,13 +46,8 @@ fn decompose_slice<Z: IntegerRing, R: PolynomialRing<Z> + Clone>(
     digits: usize,
 ) -> Vec<R> {
     let mut pieces = vec![R::ZERO; slice.len() * digits];
-    for (i, polynomial) in slice.iter().enumerate() {
-        decompose_impl(
-            polynomial,
-            radix_mask,
-            radix_shift,
-            &mut pieces[i * digits..(i + 1) * digits],
-        );
+    for (polynomial, pieces) in zip(slice.iter(), pieces.chunks_exact_mut(digits)) {
+        decompose_impl(polynomial, radix_mask, radix_shift, pieces)
     }
     pieces
 }

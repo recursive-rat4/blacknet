@@ -20,6 +20,7 @@ use alloc::vec::Vec;
 use core::array;
 use core::cmp::Ordering;
 use core::fmt;
+use core::iter::zip;
 use core::ops::{
     Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, Div, DivAssign, Neg, Rem, Shl,
     ShlAssign, Shr, ShrAssign, Sub, SubAssign,
@@ -202,13 +203,12 @@ impl<const N: usize> BigInt<N> {
         const {
             assert!(M == N * size_of::<u64>());
         };
+        let (chunks, []) = bytes.as_chunks::<{ size_of::<u64>() }>() else {
+            unreachable!()
+        };
         let mut limbs = [0_u64; N];
-        for i in 0..N {
-            limbs[i] = u64::from_le_bytes(
-                bytes[i * size_of::<u64>()..(i + 1) * size_of::<u64>()]
-                    .try_into()
-                    .unwrap(),
-            );
+        for (limb, chunk) in zip(&mut limbs, chunks) {
+            *limb = u64::from_le_bytes(*chunk);
         }
         limbs.into()
     }
@@ -217,9 +217,8 @@ impl<const N: usize> BigInt<N> {
             assert!(M == N * size_of::<u64>());
         };
         let mut bytes = [0_u8; M];
-        for i in 0..N {
-            bytes[i * size_of::<u64>()..(i + 1) * size_of::<u64>()]
-                .copy_from_slice(&self.limbs[i].to_le_bytes());
+        for (chunk, limb) in zip(bytes.chunks_exact_mut(size_of::<u64>()), self.limbs) {
+            chunk.copy_from_slice(&limb.to_le_bytes());
         }
         bytes
     }
