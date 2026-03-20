@@ -217,6 +217,7 @@ dependencies = [
  "blacknet-time",
  "blacknet-wallet",
  "data-encoding",
+ "futures-util",
  "serde",
  "serde_json",
  "spdlog-rs",

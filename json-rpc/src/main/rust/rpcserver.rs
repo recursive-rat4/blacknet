@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -17,7 +17,7 @@
 
 use crate::{Settings, v2};
 use axum::{Router, routing::get};
-use blacknet_log::{LogManager, error};
+use blacknet_log::{LogManager, error, info};
 use blacknet_network::node::Node;
 use std::sync::Arc;
 use tokio::net::TcpListener;
@@ -37,10 +37,14 @@ pub async fn rpc_server(
         .merge(v2::routes())
         .with_state(node);
     let addr = format!("{}:{}", settings.host, settings.port);
+    let logger = log_manager.logger("RPCServer").unwrap();
     match TcpListener::bind(&addr).await {
-        Ok(listener) => axum::serve(listener, router).await.unwrap(),
+        Ok(listener) => {
+            info!(logger, "Serving RPC at {addr}");
+            drop(logger);
+            axum::serve(listener, router).await.unwrap();
+        }
         Err(err) => {
-            let logger = log_manager.logger("RPCServer").unwrap();
             error!(logger, "Can't bind to {addr} because {err}");
             panic!();
         }

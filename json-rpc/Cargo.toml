@@ -41,6 +41,7 @@ blacknet-time.workspace = true
 blacknet-wallet.workspace = true
 axum.workspace = true
 data-encoding.workspace = true
+futures-util.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 spdlog-rs.workspace = true
