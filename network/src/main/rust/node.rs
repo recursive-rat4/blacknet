@@ -41,7 +41,6 @@ use blacknet_serialization::format::to_write;
 use blacknet_time::{Milliseconds, Seconds, SystemClock};
 use blacknet_wallet::walletdb::WalletDB;
 use core::error::Error as StdError;
-use core::num::NonZero;
 use fjall::Database;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
@@ -88,13 +87,13 @@ impl Node {
     ) -> Result<Arc<Self>, Box<dyn StdError>> {
         let (os_name, os_version, os_machine) = uname();
         let (agent_name, agent_version) = (mode.agent_name(), env!("CARGO_PKG_VERSION"));
-        let cpu_cores = std::thread::available_parallelism()
-            .map(NonZero::get)
-            .unwrap_or(0);
 
         let logger = log_manager.logger("Node")?;
         info!(logger, "Starting up {agent_name} node {agent_version}");
-        info!(logger, "CPU: {cpu_cores} cores {os_machine}");
+        match std::thread::available_parallelism() {
+            Ok(cpu_cores) => info!(logger, "CPU: {cpu_cores} cores {os_machine}"),
+            Err(err) => warn!(logger, "CPU: {os_machine} ({err})"),
+        }
         info!(logger, "OS: {os_name} version {os_version}");
         info!(logger, "Using config directory {}", dirs.config().display());
         info!(logger, "Using data directory {}", dirs.data().display());
