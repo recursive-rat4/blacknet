@@ -37,6 +37,7 @@ impl<G, T
     + for<'a> Sub<&'a G, Output = G>
 > AdditiveGroupOps<G> for T {}
 
+/// An additive monoid in which each element has an inverse.
 #[rustfmt::skip]
 pub trait AdditiveGroup
     : AdditiveMonoid
@@ -71,6 +72,9 @@ impl<G, T
     + for<'a> Div<&'a G, Output = G>
 > MultiplicativeGroupOps<G> for T {}
 
+/// A multiplicative monoid in which each element has a reciprocal.
+///
+/// Zero is either not in the group or division by it is defined.
 #[rustfmt::skip]
 pub trait MultiplicativeGroup
     : MultiplicativeMonoid
