@@ -31,12 +31,12 @@ impl TwistedEdwardsGroupParams for Edwards25519GroupParams {
 
     const A: Self::F = unsafe {
         Field25519::from_unchecked(UInt256::from_hex(
-            "7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFC7",
+            "7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEC",
         ))
     };
     const D: Self::F = unsafe {
         Field25519::from_unchecked(UInt256::from_hex(
-            "2C822B5A729FC526E5939207BC18869010A18777AFC6297380ED8BFEDF47E9FA",
+            "52036CEE2B6FFE738CC740797779E89800700A4D4141D8AB75EB4DCA135978A3",
         ))
     };
 

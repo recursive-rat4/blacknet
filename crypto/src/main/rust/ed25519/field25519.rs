@@ -23,6 +23,7 @@ use crate::algebra::{
 };
 use crate::bigint::{UInt256, UInt512};
 use crate::integer::Integer;
+use core::array;
 use core::fmt;
 use core::iter::{Product, Sum};
 use core::ops::{Add, AddAssign, Div, Mul, MulAssign, Neg, Sub, SubAssign};
@@ -41,47 +42,37 @@ impl Field25519 {
 
     /// Construct an element.
     /// # Safety
-    /// `n` requires spare bit and Montgomery form.
+    /// `n` is canonical representative.
     pub const unsafe fn from_unchecked(n: UInt256) -> Self {
         Self { n }
     }
 
-    fn to_form(x: UInt256) -> UInt256 {
-        Self::reduce_mul(x.widening_mul(Self::R2))
-    }
-
-    fn from_form(x: UInt256) -> UInt256 {
-        let limbs = x.limbs();
-        Self::reduce_mul(UInt512::from([
-            limbs[0], limbs[1], limbs[2], limbs[3], 0, 0, 0, 0,
-        ]))
-    }
-
-    fn reduce_add(mut x: UInt256) -> UInt256 {
+    fn reduce_256(mut x: UInt256) -> UInt256 {
         if x >= Self::MODULUS {
             x -= Self::MODULUS
         }
         x
     }
 
-    fn reduce_mul(x: UInt512) -> UInt256 {
-        let mut limbs = x.limbs();
-        // Montgomery reduction
-        let mut c: u128 = 0;
-        for i in 0..4 {
-            let mut ll: u128 = 0;
-            let l = limbs[i].wrapping_mul(Self::RN);
-            for j in 0..4 {
-                ll += l as u128 * Self::MODULUS.limbs()[j] as u128 + limbs[i + j] as u128;
-                limbs[i + j] = ll as u64;
-                ll >>= u64::BITS;
-            }
-            c += limbs[i + 4] as u128 + ll;
-            limbs[i + 4] = c as u64;
-            c >>= u64::BITS;
-        }
-        let n = UInt256::from([limbs[4], limbs[5], limbs[6], limbs[7]]);
-        Self::reduce_add(n)
+    fn reduce_512(x: UInt512) -> UInt256 {
+        let mut c: bool = false;
+        let mut x = x.limbs();
+        let mut y: [u64; 4] = array::from_fn(|i| {
+            let ll = x[i + 4] as u128 * 38;
+            (x[i], c) = x[i].carrying_add(ll as u64, c);
+            (ll >> 64) as u64
+        });
+        (y[3], _) = y[3].carrying_add(0, c);
+
+        y[3] = (y[3] << 1) | (x[3] >> 63);
+        x[3] &= 0x7FFFFFFFFFFFFFFF;
+        (x[0], c) = x[0].carrying_add(y[3] * 19, false);
+        (x[1], c) = x[1].carrying_add(y[0], c);
+        (x[2], c) = x[2].carrying_add(y[1], c);
+        (x[3], _) = x[3].carrying_add(y[2], c);
+
+        let n = UInt256::from([x[0], x[1], x[2], x[3]]);
+        Self::reduce_256(n)
     }
 
     fn halve(mut self) -> Self {
@@ -92,9 +83,6 @@ impl Field25519 {
         self
     }
 
-    const R2: UInt256 =
-        UInt256::from_hex("00000000000000000000000000000000000000000000000000000000000005A4");
-    const RN: u64 = 0x86BCA1AF286BCA1B;
     const P_MINUS_5_EIGHTH: [bool; 252] =
         UInt256::from_hex("0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFD")
             .bits();
@@ -165,7 +153,7 @@ impl Add for Field25519 {
 
     fn add(self, rps: Self) -> Self::Output {
         Self {
-            n: Self::reduce_add(self.n + rps.n),
+            n: Self::reduce_256(self.n + rps.n),
         }
     }
 }
@@ -175,7 +163,7 @@ impl Add<&Self> for Field25519 {
 
     fn add(self, rps: &Self) -> Self::Output {
         Self {
-            n: Self::reduce_add(self.n + rps.n),
+            n: Self::reduce_256(self.n + rps.n),
         }
     }
 }
@@ -185,7 +173,7 @@ impl Add<Field25519> for &Field25519 {
 
     fn add(self, rps: Field25519) -> Self::Output {
         Self::Output {
-            n: Self::Output::reduce_add(self.n + rps.n),
+            n: Self::Output::reduce_256(self.n + rps.n),
         }
     }
 }
@@ -195,7 +183,7 @@ impl<'a> Add<&'a Field25519> for &Field25519 {
 
     fn add(self, rps: &'a Field25519) -> Self::Output {
         Self::Output {
-            n: Self::Output::reduce_add(self.n + rps.n),
+            n: Self::Output::reduce_256(self.n + rps.n),
         }
     }
 }
@@ -219,7 +207,7 @@ impl Double for Field25519 {
 
     fn double(self) -> Self {
         Self {
-            n: Self::reduce_add(self.n << 1),
+            n: Self::reduce_256(self.n << 1),
         }
     }
 }
@@ -229,7 +217,7 @@ impl Double for &Field25519 {
 
     fn double(self) -> Self::Output {
         Self::Output {
-            n: Self::Output::reduce_add(self.n << 1),
+            n: Self::Output::reduce_256(self.n << 1),
         }
     }
 }
@@ -329,7 +317,7 @@ impl Mul for Field25519 {
 
     fn mul(self, rps: Self) -> Self::Output {
         Self {
-            n: Self::reduce_mul(self.n.widening_mul(rps.n)),
+            n: Self::reduce_512(self.n.widening_mul(rps.n)),
         }
     }
 }
@@ -339,7 +327,7 @@ impl Mul<&Self> for Field25519 {
 
     fn mul(self, rps: &Self) -> Self::Output {
         Self {
-            n: Self::reduce_mul(self.n.widening_mul(rps.n)),
+            n: Self::reduce_512(self.n.widening_mul(rps.n)),
         }
     }
 }
@@ -349,7 +337,7 @@ impl Mul<Field25519> for &Field25519 {
 
     fn mul(self, rps: Field25519) -> Self::Output {
         Self::Output {
-            n: Self::Output::reduce_mul(self.n.widening_mul(rps.n)),
+            n: Self::Output::reduce_512(self.n.widening_mul(rps.n)),
         }
     }
 }
@@ -359,7 +347,7 @@ impl<'a> Mul<&'a Field25519> for &Field25519 {
 
     fn mul(self, rps: &'a Field25519) -> Self::Output {
         Self::Output {
-            n: Self::Output::reduce_mul(self.n.widening_mul(rps.n)),
+            n: Self::Output::reduce_512(self.n.widening_mul(rps.n)),
         }
     }
 }
@@ -383,7 +371,7 @@ impl Square for Field25519 {
 
     fn square(self) -> Self {
         Self {
-            n: Self::reduce_mul(self.n.widening_square()),
+            n: Self::reduce_512(self.n.widening_square()),
         }
     }
 }
@@ -393,7 +381,7 @@ impl Square for &Field25519 {
 
     fn square(self) -> Self::Output {
         Self::Output {
-            n: Self::Output::reduce_mul(self.n.widening_square()),
+            n: Self::Output::reduce_512(self.n.widening_square()),
         }
     }
 }
@@ -508,21 +496,15 @@ impl Zero for Field25519 {
 }
 
 impl LeftOne for Field25519 {
-    const LEFT_ONE: Self = Self {
-        n: UInt256::from_hex("0000000000000000000000000000000000000000000000000000000000000026"),
-    };
+    const LEFT_ONE: Self = Self { n: UInt256::ONE };
 }
 
 impl RightOne for Field25519 {
-    const RIGHT_ONE: Self = Self {
-        n: UInt256::from_hex("0000000000000000000000000000000000000000000000000000000000000026"),
-    };
+    const RIGHT_ONE: Self = Self { n: UInt256::ONE };
 }
 
 impl One for Field25519 {
-    const ONE: Self = Self {
-        n: UInt256::from_hex("0000000000000000000000000000000000000000000000000000000000000026"),
-    };
+    const ONE: Self = Self { n: UInt256::ONE };
 }
 
 impl Set for Field25519 {}
@@ -546,17 +528,15 @@ impl IntegerRing for Field25519 {
 
     fn new(n: UInt256) -> Self {
         Self {
-            n: Self::to_form(n),
+            n: Self::reduce_256(n),
         }
     }
     fn with_limb(n: <Self::Int as Integer>::Limb) -> Self {
-        Self {
-            n: Self::to_form(n.into()),
-        }
+        Self { n: n.into() }
     }
 
     fn canonical(&self) -> UInt256 {
-        Self::from_form(self.n)
+        self.n
     }
     fn absolute(&self) -> UInt256 {
         let n = self.canonical();
