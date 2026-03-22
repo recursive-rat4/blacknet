@@ -18,7 +18,6 @@
 use crate::algebra::AdditiveGroup;
 use crate::permutation::Permutation;
 use crate::random::UniformGenerator;
-use core::array;
 use core::marker::PhantomData;
 
 /// The phase of sponge state
@@ -31,64 +30,45 @@ pub enum Phase {
     Squeeze,
 }
 
-pub trait Duplex<T>: Sized + UniformGenerator {
+pub trait Duplexer: Sized + UniformGenerator {
+    type Msg;
+
     fn reset(&mut self);
 
-    fn absorb_native(&mut self, e: T);
-    fn squeeze_native(&mut self) -> T;
+    fn absorb_msg(&mut self, e: Self::Msg);
+    fn squeeze_msg(&mut self) -> Self::Msg;
 
     #[inline]
-    fn absorb<S: Absorb<T>>(&mut self, e: S) {
+    fn absorb<S: Absorb<Self::Msg>>(&mut self, e: S) {
         e.absorb_into(self)
     }
 
     #[inline]
-    fn absorb_iter<S: Absorb<T>, I: Iterator<Item = S>>(&mut self, iter: I) {
+    fn absorb_iter<S: Absorb<Self::Msg>, I: Iterator<Item = S>>(&mut self, iter: I) {
         iter.for_each(|i| i.absorb_into(self));
     }
 
     #[inline]
-    fn squeeze<S: Squeeze<T>>(&mut self) -> S {
+    fn squeeze<S: Squeeze<Self::Msg>>(&mut self) -> S {
         S::squeeze_from(self)
     }
 
     #[inline]
-    fn squeeze_with_size<S: SqueezeWithSize<T>>(&mut self, size: usize) -> S {
+    fn squeeze_with_size<S: SqueezeWithSize<Self::Msg>>(&mut self, size: usize) -> S {
         S::squeeze_from(self, size)
     }
 }
 
 pub trait Absorb<T> {
-    fn absorb_into(self, duplex: &mut impl Duplex<T>);
-}
-
-impl<T> Absorb<T> for T {
-    #[inline]
-    fn absorb_into(self, duplex: &mut impl Duplex<T>) {
-        duplex.absorb_native(self)
-    }
+    fn absorb_into<D: Duplexer<Msg = T>>(self, duplex: &mut D);
 }
 
 pub trait Squeeze<T> {
-    fn squeeze_from(duplex: &mut impl Duplex<T>) -> Self;
-}
-
-impl<T> Squeeze<T> for T {
-    #[inline]
-    fn squeeze_from(duplex: &mut impl Duplex<T>) -> Self {
-        duplex.squeeze_native()
-    }
-}
-
-impl<T, const N: usize> Squeeze<T> for [T; N] {
-    #[inline]
-    fn squeeze_from(duplex: &mut impl Duplex<T>) -> Self {
-        array::from_fn(|_| duplex.squeeze())
-    }
+    fn squeeze_from<D: Duplexer<Msg = T>>(duplex: &mut D) -> Self;
 }
 
 pub trait SqueezeWithSize<T> {
-    fn squeeze_from(duplex: &mut impl Duplex<T>, size: usize) -> Self;
+    fn squeeze_from<D: Duplexer<Msg = T>>(duplex: &mut D, size: usize) -> Self;
 }
 
 /// An implementation of the duplex construction.
@@ -100,7 +80,7 @@ pub trait SqueezeWithSize<T> {
 /// Non-injective padding: <http://fuee.u-fukui.ac.jp/~hirose/publication/ask20160930.pdf>
 ///
 #[derive(Clone, Copy)]
-pub struct DuplexImpl<
+pub struct Duplex<
     S: AdditiveGroup + From<i8>,
     const RATE: usize,
     const CAPACITY: usize,
@@ -119,7 +99,7 @@ impl<
     const CAPACITY: usize,
     const WIDTH: usize,
     P: Permutation<Domain = [S; WIDTH]>,
-> DuplexImpl<S, RATE, CAPACITY, WIDTH, P>
+> Duplex<S, RATE, CAPACITY, WIDTH, P>
 {
     pub const fn new() -> Self {
         const {
@@ -169,7 +149,7 @@ impl<
     const CAPACITY: usize,
     const WIDTH: usize,
     P: Permutation<Domain = [S; WIDTH]>,
-> Default for DuplexImpl<S, RATE, CAPACITY, WIDTH, P>
+> Default for Duplex<S, RATE, CAPACITY, WIDTH, P>
 {
     fn default() -> Self {
         Self::new()
@@ -182,15 +162,17 @@ impl<
     const CAPACITY: usize,
     const WIDTH: usize,
     P: Permutation<Domain = [S; WIDTH]>,
-> Duplex<S> for DuplexImpl<S, RATE, CAPACITY, WIDTH, P>
+> Duplexer for Duplex<S, RATE, CAPACITY, WIDTH, P>
 {
+    type Msg = S;
+
     fn reset(&mut self) {
         self.phase = Phase::Absorb;
         self.position = 0;
         self.state = [S::ZERO; WIDTH];
     }
 
-    fn absorb_native(&mut self, e: S) {
+    fn absorb_msg(&mut self, e: S) {
         if self.phase == Phase::Squeeze {
             self.phase = Phase::Absorb;
             self.position = 0;
@@ -202,7 +184,7 @@ impl<
         self.position += 1
     }
 
-    fn squeeze_native(&mut self) -> S {
+    fn squeeze_msg(&mut self) -> S {
         if self.phase == Phase::Absorb {
             self.phase = Phase::Squeeze;
             self.pad();
@@ -224,12 +206,12 @@ impl<
     const CAPACITY: usize,
     const WIDTH: usize,
     P: Permutation<Domain = [S; WIDTH]>,
-> UniformGenerator for DuplexImpl<S, RATE, CAPACITY, WIDTH, P>
+> UniformGenerator for Duplex<S, RATE, CAPACITY, WIDTH, P>
 {
     type Output = S;
 
     #[inline]
     fn generate(&mut self) -> Self::Output {
-        self.squeeze_native()
+        self.squeeze_msg()
     }
 }

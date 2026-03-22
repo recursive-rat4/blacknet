@@ -19,7 +19,7 @@ use crate::algebra::UnitalRing;
 use crate::assigner::assigment::Assigment;
 use crate::assigner::polynomial::UnivariatePolynomial;
 use crate::assigner::random::Distribution;
-use crate::duplex::Duplex;
+use crate::duplex::{Absorb, Duplexer};
 use crate::polynomial::{MultivariatePolynomial, Polynomial};
 use alloc::vec::Vec;
 use core::marker::PhantomData;
@@ -38,7 +38,7 @@ pub struct SumCheck<
     'a,
     R: UnitalRing,
     P: MultivariatePolynomial<Coefficient = R, Point: From<Vec<R>>>,
-    D: Duplex<R>,
+    D: Duplexer,
     E: Distribution<'a, R, D, Output = R>,
 > {
     _assigment: &'a Assigment<R>,
@@ -49,9 +49,9 @@ pub struct SumCheck<
 
 impl<
     'a,
-    R: UnitalRing + Clone,
+    R: UnitalRing + Absorb<D::Msg> + Clone,
     P: MultivariatePolynomial<Coefficient = R, Point: From<Vec<R>>>,
-    D: Duplex<R>,
+    D: Duplexer,
     E: Distribution<'a, R, D, Output = R>,
 > SumCheck<'a, R, P, D, E>
 {

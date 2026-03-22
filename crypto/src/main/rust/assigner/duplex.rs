@@ -18,11 +18,11 @@
 use crate::algebra::AdditiveGroup;
 use crate::assigner::assigment::Assigment;
 use crate::assigner::permutation::Permutation;
-use crate::duplex::{Duplex, Phase};
+use crate::duplex::{Duplexer, Phase};
 use crate::random::UniformGenerator;
 use core::marker::PhantomData;
 
-pub struct DuplexImpl<
+pub struct Duplex<
     'a,
     S: AdditiveGroup + From<i8>,
     const RATE: usize,
@@ -44,7 +44,7 @@ impl<
     const CAPACITY: usize,
     const WIDTH: usize,
     P: Permutation<S, Domain = [S; WIDTH]>,
-> DuplexImpl<'a, S, RATE, CAPACITY, WIDTH, P>
+> Duplex<'a, S, RATE, CAPACITY, WIDTH, P>
 {
     pub const fn new(assigment: &'a Assigment<S>) -> Self {
         Self {
@@ -89,15 +89,17 @@ impl<
     const CAPACITY: usize,
     const WIDTH: usize,
     P: Permutation<S, Domain = [S; WIDTH]>,
-> Duplex<S> for DuplexImpl<'a, S, RATE, CAPACITY, WIDTH, P>
+> Duplexer for Duplex<'a, S, RATE, CAPACITY, WIDTH, P>
 {
+    type Msg = S;
+
     fn reset(&mut self) {
         self.phase = Phase::Absorb;
         self.position = 0;
         self.state = [S::ZERO; WIDTH];
     }
 
-    fn absorb_native(&mut self, e: S) {
+    fn absorb_msg(&mut self, e: S) {
         if self.phase == Phase::Squeeze {
             self.phase = Phase::Absorb;
             self.position = 0;
@@ -109,7 +111,7 @@ impl<
         self.position += 1
     }
 
-    fn squeeze_native(&mut self) -> S {
+    fn squeeze_msg(&mut self) -> S {
         if self.phase == Phase::Absorb {
             self.phase = Phase::Squeeze;
             self.pad();
@@ -132,12 +134,12 @@ impl<
     const CAPACITY: usize,
     const WIDTH: usize,
     P: Permutation<S, Domain = [S; WIDTH]>,
-> UniformGenerator for DuplexImpl<'a, S, RATE, CAPACITY, WIDTH, P>
+> UniformGenerator for Duplex<'a, S, RATE, CAPACITY, WIDTH, P>
 {
     type Output = S;
 
     #[inline]
     fn generate(&mut self) -> Self::Output {
-        self.squeeze_native()
+        self.squeeze_msg()
     }
 }

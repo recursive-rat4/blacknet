@@ -18,13 +18,13 @@
 use blacknet_compat::assert_ok;
 use blacknet_crypto::algebra::One;
 use blacknet_crypto::assigner::assigment::Assigment;
-use blacknet_crypto::assigner::duplex::DuplexImpl as Assigner;
+use blacknet_crypto::assigner::duplex::Duplex as Assigner;
 use blacknet_crypto::assigner::permutation::Permutation as PermutationAssigner;
 use blacknet_crypto::circuit::builder::{CircuitBuilder, Constant, LinearCombination};
-use blacknet_crypto::circuit::duplex::DuplexImpl as Circuit;
+use blacknet_crypto::circuit::duplex::Duplex as Circuit;
 use blacknet_crypto::circuit::permutation::Permutation as PermutationCircuit;
 use blacknet_crypto::constraintsystem::ConstraintSystem;
-use blacknet_crypto::duplex::{Duplex, DuplexImpl};
+use blacknet_crypto::duplex::{Duplex, Duplexer};
 use blacknet_crypto::permutation::Permutation as PermutationPlain;
 use core::array;
 
@@ -41,7 +41,7 @@ impl PermutationPlain for TestPermutation {
     }
 }
 
-type DuplexPlain = DuplexImpl<Z, 2, 2, 4, TestPermutation>;
+type DuplexPlain = Duplex<Z, 2, 2, 4, TestPermutation>;
 
 #[test]
 fn plain_blacknet() {
@@ -109,7 +109,7 @@ fn circuit_blacknet() {
     let mut duplex_circuit = DuplexCircuit::new(&circuit);
     let x_circuit: [LinearCombination<Z>; 3] = array::from_fn(|_| scope.public_input().into());
     duplex_circuit.absorb_iter(x_circuit.into_iter());
-    let y_circuit: [LinearCombination<Z>; 3] = duplex_circuit.squeeze();
+    let y_circuit: [LinearCombination<Z>; 3] = array::from_fn(|_| duplex_circuit.squeeze());
     scope.constrain(y_circuit[0].clone(), Constant::new(y_plain[0]));
     scope.constrain(y_circuit[1].clone(), Constant::new(y_plain[1]));
     scope.constrain(y_circuit[2].clone(), Constant::new(y_plain[2]));
@@ -121,7 +121,7 @@ fn circuit_blacknet() {
 
     let mut duplex_assigner = DuplexAssigner::new(&z);
     duplex_assigner.absorb_iter(x_plain.into_iter());
-    let y_assigned: [Z; 3] = duplex_assigner.squeeze();
+    let y_assigned: [Z; 3] = array::from_fn(|_| duplex_assigner.squeeze());
 
     assert_eq!(y_assigned, y_plain);
     assert_ok!(r1cs.is_satisfied(&z.finish()));

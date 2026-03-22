@@ -15,8 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{Conjugate, Double, One, Set, Square, Tensor, Zero};
-use crate::duplex::{Absorb, Duplex};
+use crate::algebra::{Conjugate, Double, One, Square, Tensor, Zero};
+use crate::duplex::{Absorb, Duplexer};
 use crate::matrix::DenseMatrix;
 use alloc::borrow::{Borrow, BorrowMut};
 use alloc::vec;
@@ -615,14 +615,14 @@ where
     }
 }
 
-impl<S: Set, T: Absorb<S>> Absorb<S> for DenseVector<T> {
-    fn absorb_into(self, duplex: &mut impl Duplex<S>) {
+impl<Msg, T: Absorb<Msg>> Absorb<Msg> for DenseVector<T> {
+    fn absorb_into<D: Duplexer<Msg = Msg>>(self, duplex: &mut D) {
         duplex.absorb_iter(self.elements.into_iter())
     }
 }
 
-impl<S: Set, T: Absorb<S> + Clone> Absorb<S> for &DenseVector<T> {
-    fn absorb_into(self, duplex: &mut impl Duplex<S>) {
+impl<Msg, T: Absorb<Msg> + Clone> Absorb<Msg> for &DenseVector<T> {
+    fn absorb_into<D: Duplexer<Msg = Msg>>(self, duplex: &mut D) {
         duplex.absorb_iter(self.elements.iter().cloned())
     }
 }

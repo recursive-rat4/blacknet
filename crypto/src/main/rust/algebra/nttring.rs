@@ -24,7 +24,7 @@ use crate::algebra::{
     Set, Square, UnitalAlgebra, UnivariateRing, Zero,
 };
 use crate::convolution::{Convolution, Negacyclic};
-use crate::duplex::{Absorb, Duplex, Squeeze};
+use crate::duplex::{Absorb, Duplexer, Squeeze};
 use crate::numbertheoretictransform::{NTTConvolution, Twiddles, cooley_tukey, gentleman_sande};
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum, zip};
@@ -705,13 +705,13 @@ where
 }
 
 impl<Z: Twiddles<M> + Absorb<Z>, const M: usize, const N: usize> Absorb<Z> for NTTRing<Z, M, N> {
-    fn absorb_into(self, duplex: &mut impl Duplex<Z>) {
+    fn absorb_into<D: Duplexer<Msg = Z>>(self, duplex: &mut D) {
         duplex.absorb(self.spectrum)
     }
 }
 
 impl<Z: Twiddles<M> + Squeeze<Z>, const M: usize, const N: usize> Squeeze<Z> for NTTRing<Z, M, N> {
-    fn squeeze_from(duplex: &mut impl Duplex<Z>) -> Self {
+    fn squeeze_from<D: Duplexer<Msg = Z>>(duplex: &mut D) -> Self {
         Self {
             spectrum: duplex.squeeze::<FreeModule<Z, N>>(),
         }

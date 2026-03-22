@@ -23,6 +23,7 @@ use crate::algebra::{
     square_and_multiply,
 };
 use crate::convolution::Negacyclic;
+use crate::duplex::{Absorb, Duplexer, Squeeze};
 use crate::integer::{Integer, bits_u64};
 use crate::polynomial::interpolation::InterpolationConsts;
 use core::fmt::{Debug, Formatter, Result};
@@ -566,6 +567,18 @@ impl BalancedRepresentative for PervushinField {
         } else {
             x
         }
+    }
+}
+
+impl Absorb<Self> for PervushinField {
+    fn absorb_into<D: Duplexer<Msg = Self>>(self, duplex: &mut D) {
+        duplex.absorb_msg(self)
+    }
+}
+
+impl Squeeze<Self> for PervushinField {
+    fn squeeze_from<D: Duplexer<Msg = Self>>(duplex: &mut D) -> Self {
+        duplex.squeeze_msg()
     }
 }
 

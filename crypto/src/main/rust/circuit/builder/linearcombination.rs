@@ -19,6 +19,7 @@ use crate::algebra::{Double, RingOps, Semiring, SemiringOps, Square, UnitalRing}
 use crate::circuit::builder::{
     Constant, Expression, LinearMonoid, LinearSpan, LinearTerm, Variable,
 };
+use crate::duplex::{Absorb, Duplexer, Squeeze};
 use alloc::collections::BTreeMap;
 use alloc::vec;
 use core::iter::Sum;
@@ -704,5 +705,17 @@ impl<'a, R: Semiring + Clone> Sum<&'a Self> for LinearCombination<R> {
             lc += i
         }
         lc
+    }
+}
+
+impl<R: Semiring> Absorb<Self> for LinearCombination<R> {
+    fn absorb_into<D: Duplexer<Msg = Self>>(self, duplex: &mut D) {
+        duplex.absorb_msg(self)
+    }
+}
+
+impl<R: Semiring> Squeeze<Self> for LinearCombination<R> {
+    fn squeeze_from<D: Duplexer<Msg = Self>>(duplex: &mut D) -> Self {
+        duplex.squeeze_msg()
     }
 }

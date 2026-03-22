@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::duplex::DuplexImpl;
+use crate::duplex::Duplex;
 use crate::jive::Jive;
 use crate::lm::LMField;
 use crate::permutation::Permutation;
@@ -186,7 +186,7 @@ impl Permutation for Poseidon2LM12 {
     }
 }
 
-pub type DuplexPoseidon2LM = DuplexImpl<LMField, 8, 4, 12, Poseidon2LM12>;
+pub type DuplexPoseidon2LM = Duplex<LMField, 8, 4, 12, Poseidon2LM12>;
 
 pub struct Poseidon2LM8 {}
 

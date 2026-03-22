@@ -22,6 +22,7 @@ use crate::algebra::{
     PolynomialRing, RightOne, RightZero, Set, Square, UnivariateRing, Zero,
 };
 use crate::convolution::{Binomial, Convolution, Negacyclic};
+use crate::duplex::{Absorb, Duplexer, Squeeze};
 use crate::integer::Integer;
 use crate::polynomial::interpolation::InterpolationConsts;
 use core::fmt::{Debug, Formatter, Result};
@@ -539,6 +540,18 @@ impl BalancedRepresentative for LMField {
         } else {
             x
         }
+    }
+}
+
+impl Absorb<Self> for LMField {
+    fn absorb_into<D: Duplexer<Msg = Self>>(self, duplex: &mut D) {
+        duplex.absorb_msg(self)
+    }
+}
+
+impl Squeeze<Self> for LMField {
+    fn squeeze_from<D: Duplexer<Msg = Self>>(duplex: &mut D) -> Self {
+        duplex.squeeze_msg()
     }
 }
 

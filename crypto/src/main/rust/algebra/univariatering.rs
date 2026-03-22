@@ -23,7 +23,7 @@ use crate::algebra::{
     Square, UnitalAlgebra, UnitalRing, Zero,
 };
 use crate::convolution::{Convolution, Negacyclic};
-use crate::duplex::{Absorb, Duplex, Squeeze};
+use crate::duplex::{Absorb, Duplexer, Squeeze};
 use core::borrow::{Borrow, BorrowMut};
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
@@ -692,7 +692,7 @@ where
 impl<R: UnitalRing + Absorb<R>, const N: usize, C: Convolution<R, N>> Absorb<R>
     for UnivariateRing<R, N, C>
 {
-    fn absorb_into(self, duplex: &mut impl Duplex<R>) {
+    fn absorb_into<D: Duplexer<Msg = R>>(self, duplex: &mut D) {
         duplex.absorb(self.coefficients)
     }
 }
@@ -700,7 +700,7 @@ impl<R: UnitalRing + Absorb<R>, const N: usize, C: Convolution<R, N>> Absorb<R>
 impl<R: UnitalRing + Squeeze<R>, const N: usize, C: Convolution<R, N>> Squeeze<R>
     for UnivariateRing<R, N, C>
 {
-    fn squeeze_from(duplex: &mut impl Duplex<R>) -> Self {
+    fn squeeze_from<D: Duplexer<Msg = R>>(duplex: &mut D) -> Self {
         duplex.squeeze::<FreeModule<R, N>>().into()
     }
 }

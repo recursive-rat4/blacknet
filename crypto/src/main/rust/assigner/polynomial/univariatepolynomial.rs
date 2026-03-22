@@ -17,7 +17,7 @@
 
 use crate::algebra::{Double, Semiring, SemiringOps};
 use crate::assigner::assigment::Assigment;
-use crate::duplex::{Absorb, Duplex};
+use crate::duplex::{Absorb, Duplexer};
 use crate::polynomial::Polynomial;
 use alloc::vec::Vec;
 use core::iter::zip;
@@ -113,14 +113,14 @@ impl<'a, R: Semiring> Double for UnivariatePolynomial<'a, R> {
     }
 }
 
-impl<'a, R: Semiring + Absorb<R>> Absorb<R> for UnivariatePolynomial<'a, R> {
-    fn absorb_into(self, duplex: &mut impl Duplex<R>) {
+impl<'a, Msg, R: Semiring + Absorb<Msg>> Absorb<Msg> for UnivariatePolynomial<'a, R> {
+    fn absorb_into<D: Duplexer<Msg = Msg>>(self, duplex: &mut D) {
         duplex.absorb_iter(self.coefficients.into_iter())
     }
 }
 
-impl<'a, R: Semiring + Absorb<R> + Clone> Absorb<R> for &UnivariatePolynomial<'a, R> {
-    fn absorb_into(self, duplex: &mut impl Duplex<R>) {
+impl<'a, Msg, R: Semiring + Absorb<Msg> + Clone> Absorb<Msg> for &UnivariatePolynomial<'a, R> {
+    fn absorb_into<D: Duplexer<Msg = Msg>>(self, duplex: &mut D) {
         duplex.absorb_iter(self.coefficients.iter().cloned())
     }
 }

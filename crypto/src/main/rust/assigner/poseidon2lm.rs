@@ -16,7 +16,7 @@
  */
 
 use crate::assigner::assigment::Assigment;
-use crate::assigner::duplex::DuplexImpl;
+use crate::assigner::duplex::Duplex;
 use crate::assigner::jive::Jive;
 use crate::assigner::permutation::Permutation;
 use crate::assigner::poseidon2::Poseidon2Assigner;
@@ -32,7 +32,7 @@ impl Permutation<LMField> for Poseidon2LM12 {
     }
 }
 
-pub type DuplexPoseidon2LM<'a> = DuplexImpl<'a, LMField, 8, 4, 12, Poseidon2LM12>;
+pub type DuplexPoseidon2LM<'a> = Duplex<'a, LMField, 8, 4, 12, Poseidon2LM12>;
 
 impl Permutation<LMField> for Poseidon2LM8 {
     type Domain = [LMField; 8];

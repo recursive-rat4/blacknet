@@ -16,7 +16,7 @@
  */
 
 use crate::circuit::builder::{CircuitBuilder, LinearCombination};
-use crate::circuit::duplex::DuplexImpl;
+use crate::circuit::duplex::Duplex;
 use crate::circuit::jive::Jive;
 use crate::circuit::permutation::Permutation;
 use crate::circuit::poseidon2::Poseidon2Circuit;
@@ -32,7 +32,7 @@ impl Permutation<LMField> for Poseidon2LM12 {
     }
 }
 
-pub type DuplexPoseidon2LM<'a, 'b> = DuplexImpl<'a, 'b, LMField, 8, 4, 12, Poseidon2LM12>;
+pub type DuplexPoseidon2LM<'a, 'b> = Duplex<'a, 'b, LMField, 8, 4, 12, Poseidon2LM12>;
 
 impl Permutation<LMField> for Poseidon2LM8 {
     type Domain = [LinearCombination<LMField>; 8];

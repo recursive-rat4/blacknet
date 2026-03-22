@@ -16,7 +16,7 @@
  */
 
 use crate::assigner::assigment::Assigment;
-use crate::assigner::duplex::DuplexImpl;
+use crate::assigner::duplex::Duplex;
 use crate::assigner::jive::Jive;
 use crate::assigner::permutation::Permutation;
 use crate::assigner::poseidon2::Poseidon2Assigner;
@@ -32,8 +32,7 @@ impl Permutation<PervushinField> for Poseidon2Pervushin12 {
     }
 }
 
-pub type DuplexPoseidon2Pervushin<'a> =
-    DuplexImpl<'a, PervushinField, 8, 4, 12, Poseidon2Pervushin12>;
+pub type DuplexPoseidon2Pervushin<'a> = Duplex<'a, PervushinField, 8, 4, 12, Poseidon2Pervushin12>;
 
 impl Permutation<PervushinField> for Poseidon2Pervushin8 {
     type Domain = [PervushinField; 8];

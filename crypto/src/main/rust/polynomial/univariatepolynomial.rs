@@ -15,8 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{Double, Inv, RingOps, Semiring, SemiringOps, Set, Square, UnitalRing};
-use crate::duplex::{Absorb, Duplex, Squeeze, SqueezeWithSize};
+use crate::algebra::{Double, Inv, RingOps, Semiring, SemiringOps, Square, UnitalRing};
+use crate::duplex::{Absorb, Duplexer, Squeeze, SqueezeWithSize};
 use crate::matrix::DenseVector;
 use crate::polynomial::{InBasis, Polynomial, TensorBasis};
 use alloc::borrow::{Borrow, BorrowMut};
@@ -396,20 +396,20 @@ where
     }
 }
 
-impl<S: Set, R: Semiring + Absorb<S>> Absorb<S> for UnivariatePolynomial<R> {
-    fn absorb_into(self, duplex: &mut impl Duplex<S>) {
+impl<Msg, R: Semiring + Absorb<Msg>> Absorb<Msg> for UnivariatePolynomial<R> {
+    fn absorb_into<D: Duplexer<Msg = Msg>>(self, duplex: &mut D) {
         duplex.absorb_iter(self.coefficients.into_iter())
     }
 }
 
-impl<S: Set, R: Semiring + Absorb<S> + Clone> Absorb<S> for &UnivariatePolynomial<R> {
-    fn absorb_into(self, duplex: &mut impl Duplex<S>) {
+impl<Msg, R: Semiring + Absorb<Msg> + Clone> Absorb<Msg> for &UnivariatePolynomial<R> {
+    fn absorb_into<D: Duplexer<Msg = Msg>>(self, duplex: &mut D) {
         duplex.absorb_iter(self.coefficients.iter().cloned())
     }
 }
 
-impl<S: Set, R: Semiring + Squeeze<S>> SqueezeWithSize<S> for UnivariatePolynomial<R> {
-    fn squeeze_from(duplex: &mut impl Duplex<S>, size: usize) -> Self {
+impl<Msg, R: Semiring + Squeeze<Msg>> SqueezeWithSize<Msg> for UnivariatePolynomial<R> {
+    fn squeeze_from<D: Duplexer<Msg = Msg>>(duplex: &mut D, size: usize) -> Self {
         (0..size)
             .map(|_| duplex.squeeze::<R>())
             .collect::<Vec<R>>()

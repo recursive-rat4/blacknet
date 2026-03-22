@@ -15,8 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{Double, RingOps, Set, UnitalRing};
-use crate::duplex::{Absorb, Duplex, Squeeze, SqueezeWithSize};
+use crate::algebra::{Double, RingOps, UnitalRing};
+use crate::duplex::{Absorb, Duplexer, Squeeze, SqueezeWithSize};
 use crate::matrix::DenseVector;
 use crate::polynomial::{MultivariatePolynomial, Point, Polynomial};
 use alloc::vec;
@@ -264,15 +264,15 @@ impl<R: UnitalRing> MulAssign<&R> for EqExtension<R> {
     }
 }
 
-impl<S: Set, R: UnitalRing + Absorb<S>> Absorb<S> for EqExtension<R> {
-    fn absorb_into(self, duplex: &mut impl Duplex<S>) {
+impl<Msg, R: UnitalRing + Absorb<Msg>> Absorb<Msg> for EqExtension<R> {
+    fn absorb_into<D: Duplexer<Msg = Msg>>(self, duplex: &mut D) {
         duplex.absorb_iter(self.coefficients.into_iter());
         duplex.absorb(self.z);
     }
 }
 
-impl<S: Set, R: UnitalRing + Squeeze<S>> SqueezeWithSize<S> for EqExtension<R> {
-    fn squeeze_from(duplex: &mut impl Duplex<S>, size: usize) -> Self {
+impl<Msg, R: UnitalRing + Squeeze<Msg>> SqueezeWithSize<Msg> for EqExtension<R> {
+    fn squeeze_from<D: Duplexer<Msg = Msg>>(duplex: &mut D, size: usize) -> Self {
         (0..size)
             .map(|_| duplex.squeeze::<R>())
             .collect::<Vec<R>>()

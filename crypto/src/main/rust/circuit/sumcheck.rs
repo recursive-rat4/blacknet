@@ -19,7 +19,7 @@ use crate::algebra::{RingOps, UnitalRing};
 use crate::circuit::builder::{CircuitBuilder, LinearCombination, VariableKind};
 use crate::circuit::polynomial::{Point, UnivariatePolynomial};
 use crate::circuit::random::Distribution;
-use crate::duplex::Duplex;
+use crate::duplex::Duplexer;
 use crate::polynomial::{MultivariatePolynomial, Polynomial};
 use alloc::vec::Vec;
 use core::marker::PhantomData;
@@ -54,7 +54,7 @@ pub struct SumCheck<
     'b,
     R: UnitalRing,
     P: MultivariatePolynomial<Coefficient = R>,
-    D: Duplex<LinearCombination<R>>,
+    D: Duplexer<Msg = LinearCombination<R>>,
     E: Distribution<'a, 'b, R, D, Output = LinearCombination<R>>,
 > {
     circuit: &'a CircuitBuilder<'b, R>,
@@ -68,7 +68,7 @@ impl<
     'b,
     R: UnitalRing + Clone + Eq,
     P: MultivariatePolynomial<Coefficient = R>,
-    D: Duplex<LinearCombination<R>>,
+    D: Duplexer<Msg = LinearCombination<R>>,
     E: Distribution<'a, 'b, R, D, Output = LinearCombination<R>>,
 > SumCheck<'a, 'b, R, P, D, E>
 where

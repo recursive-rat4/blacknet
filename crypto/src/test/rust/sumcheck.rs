@@ -23,7 +23,7 @@ use blacknet_crypto::circuit::builder::{CircuitBuilder, VariableKind};
 use blacknet_crypto::circuit::poseidon2pervushin::DuplexPoseidon2Pervushin as DuplexPoseidon2PervushinCircuit;
 use blacknet_crypto::circuit::sumcheck::{Proof as ProofCircuit, SumCheck as SumCheckCircuit};
 use blacknet_crypto::constraintsystem::ConstraintSystem;
-use blacknet_crypto::duplex::Duplex;
+use blacknet_crypto::duplex::Duplexer;
 use blacknet_crypto::pervushin::PervushinField;
 use blacknet_crypto::polynomial::{
     EqExtension, MultilinearExtension, MultivariatePolynomial, Polynomial,

@@ -16,7 +16,7 @@
  */
 
 use blacknet_crypto::algebra::{IntegerRing, One, Zero};
-use blacknet_crypto::duplex::Duplex;
+use blacknet_crypto::duplex::Duplexer;
 use blacknet_crypto::lm::LMField;
 use blacknet_crypto::polynomial::{
     BinarityPolynomial, EqExtension, MaskingPolynomial, MultilinearExtension,

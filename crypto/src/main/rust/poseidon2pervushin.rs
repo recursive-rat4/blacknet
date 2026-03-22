@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::duplex::DuplexImpl;
+use crate::duplex::Duplex;
 use crate::jive::Jive;
 use crate::permutation::Permutation;
 use crate::pervushin::PervushinField;
@@ -172,7 +172,7 @@ impl Permutation for Poseidon2Pervushin12 {
     }
 }
 
-pub type DuplexPoseidon2Pervushin = DuplexImpl<PervushinField, 8, 4, 12, Poseidon2Pervushin12>;
+pub type DuplexPoseidon2Pervushin = Duplex<PervushinField, 8, 4, 12, Poseidon2Pervushin12>;
 
 pub struct Poseidon2Pervushin8 {}
 

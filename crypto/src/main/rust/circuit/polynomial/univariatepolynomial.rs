@@ -17,7 +17,7 @@
 
 use crate::algebra::{Double, Semiring, SemiringOps};
 use crate::circuit::builder::{CircuitBuilder, LinearCombination, VariableKind};
-use crate::duplex::{Absorb, Duplex};
+use crate::duplex::{Absorb, Duplexer};
 use crate::polynomial::Polynomial;
 use alloc::vec::Vec;
 use core::iter::zip;
@@ -100,7 +100,7 @@ impl<'a, 'b, R: Semiring> AddAssign for UnivariatePolynomial<'a, 'b, R> {
 }
 
 impl<'a, 'b, R: Semiring> Absorb<LinearCombination<R>> for UnivariatePolynomial<'a, 'b, R> {
-    fn absorb_into(self, duplex: &mut impl Duplex<LinearCombination<R>>) {
+    fn absorb_into<D: Duplexer<Msg = LinearCombination<R>>>(self, duplex: &mut D) {
         duplex.absorb_iter(self.coefficients.into_iter())
     }
 }
@@ -108,7 +108,7 @@ impl<'a, 'b, R: Semiring> Absorb<LinearCombination<R>> for UnivariatePolynomial<
 impl<'a, 'b, R: Semiring + Clone> Absorb<LinearCombination<R>>
     for &UnivariatePolynomial<'a, 'b, R>
 {
-    fn absorb_into(self, duplex: &mut impl Duplex<LinearCombination<R>>) {
+    fn absorb_into<D: Duplexer<Msg = LinearCombination<R>>>(self, duplex: &mut D) {
         duplex.absorb_iter(self.coefficients.iter().cloned())
     }
 }

@@ -19,7 +19,7 @@ use crate::algebra::{
     AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, DivisionRingOps, Double, Inv,
     LeftZero, RightZero, Ring, RingOps, Semimodule, Set, Zero,
 };
-use crate::duplex::{Absorb, Duplex, Squeeze};
+use crate::duplex::{Absorb, Duplexer, Squeeze};
 use core::array;
 use core::borrow::{Borrow, BorrowMut};
 use core::fmt::{Debug, Formatter, Result};
@@ -507,13 +507,13 @@ impl<R: Ring + Clone, const N: usize> AdditiveMonoid for FreeModule<R, N> {}
 impl<R: Ring + Clone, const N: usize> Semimodule<R> for FreeModule<R, N> {}
 
 impl<R: Ring + Absorb<R>, const N: usize> Absorb<R> for FreeModule<R, N> {
-    fn absorb_into(self, duplex: &mut impl Duplex<R>) {
+    fn absorb_into<D: Duplexer<Msg = R>>(self, duplex: &mut D) {
         duplex.absorb_iter(self.components.into_iter())
     }
 }
 
 impl<R: Ring + Squeeze<R>, const N: usize> Squeeze<R> for FreeModule<R, N> {
-    fn squeeze_from(duplex: &mut impl Duplex<R>) -> Self {
-        duplex.squeeze::<[R; N]>().into()
+    fn squeeze_from<D: Duplexer<Msg = R>>(duplex: &mut D) -> Self {
+        Self::from_fn(|_| duplex.squeeze())
     }
 }

@@ -18,12 +18,12 @@
 use crate::algebra::Semiring;
 use crate::circuit::builder::{CircuitBuilder, Constant, LinearCombination};
 use crate::circuit::permutation::Permutation;
-use crate::duplex::{Duplex, Phase};
+use crate::duplex::{Duplexer, Phase};
 use crate::random::UniformGenerator;
 use core::array;
 use core::marker::PhantomData;
 
-pub struct DuplexImpl<
+pub struct Duplex<
     'a,
     'b,
     S: Semiring + From<i8>,
@@ -47,7 +47,7 @@ impl<
     const CAPACITY: usize,
     const WIDTH: usize,
     P: Permutation<S, Domain = [LinearCombination<S>; WIDTH]>,
-> DuplexImpl<'a, 'b, S, RATE, CAPACITY, WIDTH, P>
+> Duplex<'a, 'b, S, RATE, CAPACITY, WIDTH, P>
 {
     pub fn new(circuit: &'a CircuitBuilder<'b, S>) -> Self {
         Self {
@@ -100,15 +100,17 @@ impl<
     const CAPACITY: usize,
     const WIDTH: usize,
     P: Permutation<S, Domain = [LinearCombination<S>; WIDTH]>,
-> Duplex<LinearCombination<S>> for DuplexImpl<'a, 'b, S, RATE, CAPACITY, WIDTH, P>
+> Duplexer for Duplex<'a, 'b, S, RATE, CAPACITY, WIDTH, P>
 {
+    type Msg = LinearCombination<S>;
+
     fn reset(&mut self) {
         self.phase = Phase::Absorb;
         self.position = 0;
         self.state.iter_mut().for_each(LinearCombination::clear);
     }
 
-    fn absorb_native(&mut self, e: LinearCombination<S>) {
+    fn absorb_msg(&mut self, e: LinearCombination<S>) {
         if self.phase == Phase::Squeeze {
             self.phase = Phase::Absorb;
             self.position = 0;
@@ -120,7 +122,7 @@ impl<
         self.position += 1
     }
 
-    fn squeeze_native(&mut self) -> LinearCombination<S> {
+    fn squeeze_msg(&mut self) -> LinearCombination<S> {
         if self.phase == Phase::Absorb {
             self.phase = Phase::Squeeze;
             self.pad();
@@ -144,12 +146,12 @@ impl<
     const CAPACITY: usize,
     const WIDTH: usize,
     P: Permutation<S, Domain = [LinearCombination<S>; WIDTH]>,
-> UniformGenerator for DuplexImpl<'a, 'b, S, RATE, CAPACITY, WIDTH, P>
+> UniformGenerator for Duplex<'a, 'b, S, RATE, CAPACITY, WIDTH, P>
 {
     type Output = LinearCombination<S>;
 
     #[inline]
     fn generate(&mut self) -> Self::Output {
-        self.squeeze_native()
+        self.squeeze_msg()
     }
 }
