@@ -38,7 +38,7 @@ type E = UniformDistribution<D>;
 
 #[test]
 fn mle() {
-    type SC = SumCheckPlain<Z, MultilinearExtension<Z>, D, E>;
+    type SC = SumCheckPlain<Z, Z, MultilinearExtension<Z>, D, E>;
     let mut duplex = D::default();
     let mut exceptional_set = E::default();
 
@@ -141,7 +141,7 @@ fn mle() {
 
 #[test]
 fn eq() {
-    type SC = SumCheckPlain<Z, EqExtension<Z>, D, E>;
+    type SC = SumCheckPlain<Z, Z, EqExtension<Z>, D, E>;
     let mut duplex = D::default();
     let mut exceptional_set = E::default();
 
@@ -233,7 +233,7 @@ fn eq() {
 
 #[test]
 fn early_stopping() {
-    type SC = SumCheckPlain<Z, EqExtension<Z>, D, E>;
+    type SC = SumCheckPlain<Z, Z, EqExtension<Z>, D, E>;
     let mut duplex = D::default();
     let mut exceptional_set = E::default();
 
@@ -302,7 +302,7 @@ fn early_stopping() {
 
 #[test]
 fn circuit() {
-    type SCPlain = SumCheckPlain<Z, MultilinearExtension<Z>, D, E>;
+    type SCPlain = SumCheckPlain<Z, Z, MultilinearExtension<Z>, D, E>;
     let mut duplex_plain = D::default();
     let mut exceptional_set_plain = E::default();
 
