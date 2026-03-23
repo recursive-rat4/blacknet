@@ -155,7 +155,7 @@ impl<P: TwistedEdwardsGroupParams> AddAssign for TwistedEdwardsGroupProjective<P
 impl<P: TwistedEdwardsGroupParams> AddAssign<&Self> for TwistedEdwardsGroupProjective<P> {
     #[inline]
     fn add_assign(&mut self, rps: &Self) {
-        *self = *self + *rps
+        *self = *self + rps
     }
 }
 
@@ -283,7 +283,7 @@ impl<P: TwistedEdwardsGroupParams> SubAssign for TwistedEdwardsGroupProjective<P
 impl<P: TwistedEdwardsGroupParams> SubAssign<&Self> for TwistedEdwardsGroupProjective<P> {
     #[inline]
     fn sub_assign(&mut self, rps: &Self) {
-        *self = *self - *rps
+        *self = *self - rps
     }
 }
 

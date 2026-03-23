@@ -160,7 +160,7 @@ impl<P: TwistedEdwardsGroupParams> AddAssign for TwistedEdwardsGroupAffine<P> {
 impl<P: TwistedEdwardsGroupParams> AddAssign<&Self> for TwistedEdwardsGroupAffine<P> {
     #[inline]
     fn add_assign(&mut self, rps: &Self) {
-        *self = *self + *rps
+        *self = *self + rps
     }
 }
 
@@ -276,7 +276,7 @@ impl<P: TwistedEdwardsGroupParams> SubAssign for TwistedEdwardsGroupAffine<P> {
 impl<P: TwistedEdwardsGroupParams> SubAssign<&Self> for TwistedEdwardsGroupAffine<P> {
     #[inline]
     fn sub_assign(&mut self, rps: &Self) {
-        *self = *self - *rps
+        *self = *self - rps
     }
 }
 

@@ -212,7 +212,7 @@ impl AddAssign for Scalar25519 {
 impl AddAssign<&Self> for Scalar25519 {
     #[inline]
     fn add_assign(&mut self, rps: &Self) {
-        *self = *self + *rps
+        *self = *self + rps
     }
 }
 
@@ -322,7 +322,7 @@ impl SubAssign for Scalar25519 {
 impl SubAssign<&Self> for Scalar25519 {
     #[inline]
     fn sub_assign(&mut self, rps: &Self) {
-        *self = *self - *rps
+        *self = *self - rps
     }
 }
 
@@ -376,7 +376,7 @@ impl MulAssign for Scalar25519 {
 impl MulAssign<&Self> for Scalar25519 {
     #[inline]
     fn mul_assign(&mut self, rps: &Self) {
-        *self = *self * *rps
+        *self = *self * rps
     }
 }
 

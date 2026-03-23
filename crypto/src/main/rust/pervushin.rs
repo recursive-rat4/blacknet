@@ -161,7 +161,7 @@ impl AddAssign for PervushinField {
 impl AddAssign<&Self> for PervushinField {
     #[inline]
     fn add_assign(&mut self, rps: &Self) {
-        *self = *self + *rps
+        *self = *self + rps
     }
 }
 
@@ -251,7 +251,7 @@ impl SubAssign for PervushinField {
 impl SubAssign<&Self> for PervushinField {
     #[inline]
     fn sub_assign(&mut self, rps: &Self) {
-        *self = *self - *rps
+        *self = *self - rps
     }
 }
 
@@ -305,7 +305,7 @@ impl MulAssign for PervushinField {
 impl MulAssign<&Self> for PervushinField {
     #[inline]
     fn mul_assign(&mut self, rps: &Self) {
-        *self = *self * *rps
+        *self = *self * rps
     }
 }
 

@@ -159,7 +159,7 @@ impl AddAssign for LMField {
 impl AddAssign<&Self> for LMField {
     #[inline]
     fn add_assign(&mut self, rps: &Self) {
-        *self = *self + *rps
+        *self = *self + rps
     }
 }
 
@@ -249,7 +249,7 @@ impl SubAssign for LMField {
 impl SubAssign<&Self> for LMField {
     #[inline]
     fn sub_assign(&mut self, rps: &Self) {
-        *self = *self - *rps
+        *self = *self - rps
     }
 }
 
@@ -303,7 +303,7 @@ impl MulAssign for LMField {
 impl MulAssign<&Self> for LMField {
     #[inline]
     fn mul_assign(&mut self, rps: &Self) {
-        *self = *self * *rps
+        *self = *self * rps
     }
 }
 
