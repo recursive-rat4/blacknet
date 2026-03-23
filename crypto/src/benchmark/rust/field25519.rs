@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -23,10 +23,10 @@ use std::hint::black_box;
 type F = Field25519;
 
 fn criterion_benchmark(crit: &mut Criterion) {
-    let a = black_box(F::from_hex(
+    let a = black_box(F::with_hex(
         "67B0007C5617DA6052BB49A64A741BC138790506AB0778F58720910B6C450013",
     ));
-    let b = black_box(F::from_hex(
+    let b = black_box(F::with_hex(
         "138DF5B7F9B0821874C7A7D8D80DED276442FB148F1A19790C6FE9315640F917",
     ));
 

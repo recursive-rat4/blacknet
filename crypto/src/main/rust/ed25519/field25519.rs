@@ -36,7 +36,9 @@ pub struct Field25519 {
 }
 
 impl Field25519 {
-    pub fn from_hex(hex: &str) -> Self {
+    /// # Panics
+    /// On inappropriate string.
+    pub fn with_hex(hex: &str) -> Self {
         Self::new(UInt256::from_hex(hex))
     }
 
@@ -111,9 +113,13 @@ impl From<i32> for Field25519 {
 impl From<i64> for Field25519 {
     fn from(n: i64) -> Self {
         if n >= 0 {
-            Self::new((n as u64).into())
+            Self {
+                n: (n as u64).into(),
+            }
         } else {
-            Self::new(Self::MODULUS - n.unsigned_abs().into())
+            Self {
+                n: Self::MODULUS - n.unsigned_abs().into(),
+            }
         }
     }
 }
@@ -138,7 +144,7 @@ impl From<u32> for Field25519 {
 
 impl From<u64> for Field25519 {
     fn from(n: u64) -> Self {
-        Self::new(n.into())
+        Self { n: n.into() }
     }
 }
 

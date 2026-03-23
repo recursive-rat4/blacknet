@@ -35,7 +35,9 @@ pub struct Scalar25519 {
 }
 
 impl Scalar25519 {
-    pub fn from_hex(hex: &str) -> Self {
+    /// # Panics
+    /// On inappropriate string.
+    pub fn with_hex(hex: &str) -> Self {
         Self::new(UInt256::from_hex(hex))
     }
 
