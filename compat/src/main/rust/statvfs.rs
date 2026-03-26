@@ -56,7 +56,7 @@ use windows_sys::Win32::Storage::FileSystem::GetDiskFreeSpaceExW;
 #[cfg(target_family = "windows")]
 pub fn statvfs(path: &Path) -> Result<u64, Error> {
     let path: Vec<u16> = path.as_os_str().encode_wide().collect();
-    let available = MaybeUninit::<u64>::uninit();
+    let mut available = MaybeUninit::<u64>::uninit();
     let rc = unsafe {
         GetDiskFreeSpaceExW(
             path.as_ptr(),

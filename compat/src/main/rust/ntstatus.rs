@@ -72,6 +72,6 @@ impl From<NtStatus> for Win32Error {
 
 impl fmt::Display for Win32Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "WIN32 ERROR (0x{:08X})", self.status)
+        write!(f, "WIN32 ERROR (0x{:08X})", self.error)
     }
 }
