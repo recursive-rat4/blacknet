@@ -94,6 +94,34 @@ impl Scalar25519 {
         self
     }
 
+    fn egcd(self, rps: Self) -> Option<Self> {
+        // Extended Binary GCD (classic algorithm)
+        // https://eprint.iacr.org/2020/972
+        let mut a = self.canonical();
+        let mut b = Scalar25519::MODULUS;
+        let mut c = rps;
+        let mut d = Scalar25519::ZERO;
+        while a != UInt256::ZERO {
+            if a.is_even() {
+                a >>= 1;
+                c = c.halve();
+            } else {
+                if a < b {
+                    (a, b) = (b, a);
+                    (c, d) = (d, c);
+                }
+                a -= b;
+                a >>= 1;
+                c -= d;
+                c = c.halve();
+            }
+        }
+        if b != UInt256::ONE {
+            return None;
+        }
+        Some(d)
+    }
+
     const R2: UInt256 =
         UInt256::from_hex("0399411B7C309A3DCEEC73D217F5BE65D00E1BA768859347A40611E3449C0F01");
     const RN: u64 = 0xD2B51DA312547E1B;
@@ -403,9 +431,8 @@ impl Square for &Scalar25519 {
 impl Inv for Scalar25519 {
     type Output = Option<Self>;
 
-    #[inline]
     fn inv(self) -> Self::Output {
-        (&self).inv()
+        Scalar25519::egcd(self, Scalar25519::ONE)
     }
 }
 
@@ -413,31 +440,7 @@ impl Inv for &Scalar25519 {
     type Output = Option<Scalar25519>;
 
     fn inv(self) -> Self::Output {
-        // Extended Binary GCD (classic algorithm)
-        // https://eprint.iacr.org/2020/972
-        let mut a = self.canonical();
-        let mut b = Scalar25519::MODULUS;
-        let mut c = Scalar25519::ONE;
-        let mut d = Scalar25519::ZERO;
-        while a != UInt256::ZERO {
-            if a.is_even() {
-                a >>= 1;
-                c = c.halve();
-            } else {
-                if a < b {
-                    (a, b) = (b, a);
-                    (c, d) = (d, c);
-                }
-                a -= b;
-                a >>= 1;
-                c -= d;
-                c = c.halve();
-            }
-        }
-        if b != UInt256::ONE {
-            return None;
-        }
-        Some(d)
+        Scalar25519::egcd(*self, Scalar25519::ONE)
     }
 }
 
@@ -445,16 +448,31 @@ impl Div for Scalar25519 {
     type Output = Option<Self>;
 
     fn div(self, rps: Self) -> Self::Output {
-        rps.inv().map(|v| self * v)
+        Scalar25519::egcd(rps, self)
     }
 }
 
 impl Div<&Self> for Scalar25519 {
     type Output = Option<Self>;
 
-    #[inline]
     fn div(self, rps: &Self) -> Self::Output {
-        self / *rps
+        Scalar25519::egcd(*rps, self)
+    }
+}
+
+impl Div<Scalar25519> for &Scalar25519 {
+    type Output = Option<Scalar25519>;
+
+    fn div(self, rps: Scalar25519) -> Self::Output {
+        Scalar25519::egcd(rps, *self)
+    }
+}
+
+impl Div for &Scalar25519 {
+    type Output = Option<Scalar25519>;
+
+    fn div(self, rps: Self) -> Self::Output {
+        Scalar25519::egcd(*rps, *self)
     }
 }
 

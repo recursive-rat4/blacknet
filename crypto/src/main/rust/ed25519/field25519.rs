@@ -85,6 +85,34 @@ impl Field25519 {
         self
     }
 
+    fn egcd(self, rps: Self) -> Option<Self> {
+        // Extended Binary GCD (classic algorithm)
+        // https://eprint.iacr.org/2020/972
+        let mut a = self.canonical();
+        let mut b = Self::MODULUS;
+        let mut c = rps;
+        let mut d = Self::ZERO;
+        while a != UInt256::ZERO {
+            if a.is_even() {
+                a >>= 1;
+                c = c.halve();
+            } else {
+                if a < b {
+                    (a, b) = (b, a);
+                    (c, d) = (d, c);
+                }
+                a -= b;
+                a >>= 1;
+                c -= d;
+                c = c.halve();
+            }
+        }
+        if b != UInt256::ONE {
+            return None;
+        }
+        Some(d)
+    }
+
     const P_MINUS_5_EIGHTH: [bool; 252] =
         UInt256::from_hex("0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFD")
             .bits();
@@ -395,9 +423,8 @@ impl Square for &Field25519 {
 impl Inv for Field25519 {
     type Output = Option<Self>;
 
-    #[inline]
     fn inv(self) -> Self::Output {
-        (&self).inv()
+        Field25519::egcd(self, Field25519::ONE)
     }
 }
 
@@ -405,31 +432,7 @@ impl Inv for &Field25519 {
     type Output = Option<Field25519>;
 
     fn inv(self) -> Self::Output {
-        // Extended Binary GCD (classic algorithm)
-        // https://eprint.iacr.org/2020/972
-        let mut a = self.canonical();
-        let mut b = Field25519::MODULUS;
-        let mut c = Field25519::ONE;
-        let mut d = Field25519::ZERO;
-        while a != UInt256::ZERO {
-            if a.is_even() {
-                a >>= 1;
-                c = c.halve();
-            } else {
-                if a < b {
-                    (a, b) = (b, a);
-                    (c, d) = (d, c);
-                }
-                a -= b;
-                a >>= 1;
-                c -= d;
-                c = c.halve();
-            }
-        }
-        if b != UInt256::ONE {
-            return None;
-        }
-        Some(d)
+        Field25519::egcd(*self, Field25519::ONE)
     }
 }
 
@@ -437,16 +440,31 @@ impl Div for Field25519 {
     type Output = Option<Self>;
 
     fn div(self, rps: Self) -> Self::Output {
-        rps.inv().map(|v| self * v)
+        Field25519::egcd(rps, self)
     }
 }
 
 impl Div<&Self> for Field25519 {
     type Output = Option<Self>;
 
-    #[inline]
     fn div(self, rps: &Self) -> Self::Output {
-        self / *rps
+        Field25519::egcd(*rps, self)
+    }
+}
+
+impl Div<Field25519> for &Field25519 {
+    type Output = Option<Field25519>;
+
+    fn div(self, rps: Field25519) -> Self::Output {
+        Field25519::egcd(rps, *self)
+    }
+}
+
+impl Div for &Field25519 {
+    type Output = Option<Field25519>;
+
+    fn div(self, rps: Self) -> Self::Output {
+        Field25519::egcd(*rps, *self)
     }
 }
 

@@ -106,6 +106,17 @@ fn z_inv() {
 }
 
 #[test]
+fn z_div() {
+    let a = Z::new(0x1C31);
+    let b = Z::new(0xFCDD);
+    let c = Z::new(0x619A2686D8FA9A1);
+    let d = Z::new(0x1BCACAD3E896AF31);
+    assert_eq!((a / b).unwrap(), c);
+    assert_eq!((b / a).unwrap(), d);
+    assert_eq!(Z::ONE / Z::ZERO, None);
+}
+
+#[test]
 fn z_sqrt() {
     let a = Z::new(0xC8F7B5AA744AF1);
     let b = Z::new(0x121B318906FE12B);

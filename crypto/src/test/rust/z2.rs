@@ -68,6 +68,14 @@ fn inv() {
 }
 
 #[test]
+fn div() {
+    assert_eq!(Z2::new(0) / Z2::new(0), None);
+    assert_eq!((Z2::new(0) / Z2::new(1)).unwrap(), Z2::new(0));
+    assert_eq!(Z2::new(1) / Z2::new(0), None);
+    assert_eq!((Z2::new(1) / Z2::new(1)).unwrap(), Z2::new(1));
+}
+
+#[test]
 fn sqrt() {
     assert_eq!(Z2::new(0).sqrt(), Z2::new(0));
     assert_eq!(Z2::new(1).sqrt(), Z2::new(1));

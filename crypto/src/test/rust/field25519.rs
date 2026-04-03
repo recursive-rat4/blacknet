@@ -83,18 +83,6 @@ fn mul() {
 }
 
 #[test]
-fn div() {
-    let a = F::with_hex("3FACED132F5641F57B1162D06ED827D8CA9FA69F0C7B14822818EEF4DB6F6FDC");
-    let b = F::with_hex("152D43A9A19991AA7F8C98ED185A79EDA9B2562E4C456BB554C0C0D4D0362904");
-    let c = F::with_hex("58C4824D139DC383C143CBB9CC8329AEFEE44752E3B33771AD362FE03ACF52A8");
-    assert_eq!((a / b).unwrap(), c);
-    assert_eq!((F::ZERO / c).unwrap(), F::ZERO);
-    assert!((c / F::ZERO).is_none());
-    assert_eq!((F::ONE / F::ONE).unwrap(), F::ONE);
-    assert_eq!((c / F::ONE).unwrap(), c);
-}
-
-#[test]
 fn sqr() {
     let a = F::with_hex("38938AB74D9B6E57EB0DF50C3E9EF34F283948072D011E24A3F27F73A68CC0DB");
     let b = F::with_hex("6BF8A5C2B6D265BF399F5BB05C70E62E9DFB403BE7548DB98E1DA13BD6EDC9D9");
@@ -110,6 +98,18 @@ fn inv() {
     assert_eq!(b.inv().unwrap(), a);
     assert_eq!(a.inv().unwrap(), b);
     assert!(F::ZERO.inv().is_none());
+}
+
+#[test]
+fn div() {
+    let a = F::with_hex("3FACED132F5641F57B1162D06ED827D8CA9FA69F0C7B14822818EEF4DB6F6FDC");
+    let b = F::with_hex("152D43A9A19991AA7F8C98ED185A79EDA9B2562E4C456BB554C0C0D4D0362904");
+    let c = F::with_hex("58C4824D139DC383C143CBB9CC8329AEFEE44752E3B33771AD362FE03ACF52A8");
+    assert_eq!((a / b).unwrap(), c);
+    assert_eq!((F::ZERO / c).unwrap(), F::ZERO);
+    assert!((c / F::ZERO).is_none());
+    assert_eq!((F::ONE / F::ONE).unwrap(), F::ONE);
+    assert_eq!((c / F::ONE).unwrap(), c);
 }
 
 #[test]

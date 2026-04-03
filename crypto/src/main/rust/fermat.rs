@@ -56,6 +56,34 @@ impl FermatField {
         self.n >>= 1;
         self
     }
+
+    fn egcd(self, rps: Self) -> Option<Self> {
+        // Extended Binary GCD (classic algorithm)
+        // https://eprint.iacr.org/2020/972
+        let mut a = self.canonical();
+        let mut b = Self::MODULUS;
+        let mut c = rps;
+        let mut d = Self::ZERO;
+        while a != 0 {
+            if a & 1 == 0 {
+                a >>= 1;
+                c = c.halve();
+            } else {
+                if a < b {
+                    (a, b) = (b, a);
+                    (c, d) = (d, c);
+                }
+                a -= b;
+                a >>= 1;
+                c -= d;
+                c = c.halve();
+            }
+        }
+        if b != 1 {
+            return None;
+        }
+        Some(d)
+    }
 }
 
 impl Debug for FermatField {
@@ -297,9 +325,8 @@ impl Square for &FermatField {
 impl Inv for FermatField {
     type Output = Option<Self>;
 
-    #[inline]
     fn inv(self) -> Self::Output {
-        (&self).inv()
+        FermatField::egcd(self, FermatField::ONE)
     }
 }
 
@@ -307,31 +334,7 @@ impl Inv for &FermatField {
     type Output = Option<FermatField>;
 
     fn inv(self) -> Self::Output {
-        // Extended Binary GCD (classic algorithm)
-        // https://eprint.iacr.org/2020/972
-        let mut a = self.canonical();
-        let mut b = FermatField::MODULUS;
-        let mut c = FermatField::ONE;
-        let mut d = FermatField::ZERO;
-        while a != 0 {
-            if a & 1 == 0 {
-                a >>= 1;
-                c = c.halve();
-            } else {
-                if a < b {
-                    (a, b) = (b, a);
-                    (c, d) = (d, c);
-                }
-                a -= b;
-                a >>= 1;
-                c -= d;
-                c = c.halve();
-            }
-        }
-        if b != 1 {
-            return None;
-        }
-        Some(d)
+        FermatField::egcd(*self, FermatField::ONE)
     }
 }
 
@@ -339,7 +342,7 @@ impl Div for FermatField {
     type Output = Option<Self>;
 
     fn div(self, rps: Self) -> Self::Output {
-        rps.inv().map(|v| self * v)
+        FermatField::egcd(rps, self)
     }
 }
 
@@ -347,7 +350,23 @@ impl Div<&Self> for FermatField {
     type Output = Option<Self>;
 
     fn div(self, rps: &Self) -> Self::Output {
-        rps.inv().map(|v| self * v)
+        FermatField::egcd(*rps, self)
+    }
+}
+
+impl Div<FermatField> for &FermatField {
+    type Output = Option<FermatField>;
+
+    fn div(self, rps: FermatField) -> Self::Output {
+        FermatField::egcd(rps, *self)
+    }
+}
+
+impl Div for &FermatField {
+    type Output = Option<FermatField>;
+
+    fn div(self, rps: Self) -> Self::Output {
+        FermatField::egcd(*rps, *self)
     }
 }
 

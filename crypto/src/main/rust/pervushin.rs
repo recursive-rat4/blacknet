@@ -60,6 +60,34 @@ impl PervushinField {
         self
     }
 
+    fn egcd(self, rps: Self) -> Option<Self> {
+        // Extended Binary GCD (classic algorithm)
+        // https://eprint.iacr.org/2020/972
+        let mut a = self.canonical();
+        let mut b = Self::MODULUS;
+        let mut c = rps;
+        let mut d = Self::ZERO;
+        while a != 0 {
+            if a & 1 == 0 {
+                a >>= 1;
+                c = c.halve();
+            } else {
+                if a < b {
+                    (a, b) = (b, a);
+                    (c, d) = (d, c);
+                }
+                a -= b;
+                a >>= 1;
+                c -= d;
+                c = c.halve();
+            }
+        }
+        if b != 1 {
+            return None;
+        }
+        Some(d)
+    }
+
     const P_PLUS_1_QUARTER: [bool; 60] = bits_u64(0x800000000000000);
 }
 
@@ -330,9 +358,8 @@ impl Square for &PervushinField {
 impl Inv for PervushinField {
     type Output = Option<Self>;
 
-    #[inline]
     fn inv(self) -> Self::Output {
-        (&self).inv()
+        PervushinField::egcd(self, PervushinField::ONE)
     }
 }
 
@@ -340,31 +367,7 @@ impl Inv for &PervushinField {
     type Output = Option<PervushinField>;
 
     fn inv(self) -> Self::Output {
-        // Extended Binary GCD (classic algorithm)
-        // https://eprint.iacr.org/2020/972
-        let mut a = self.canonical();
-        let mut b = PervushinField::MODULUS;
-        let mut c = PervushinField::ONE;
-        let mut d = PervushinField::ZERO;
-        while a != 0 {
-            if a & 1 == 0 {
-                a >>= 1;
-                c = c.halve();
-            } else {
-                if a < b {
-                    (a, b) = (b, a);
-                    (c, d) = (d, c);
-                }
-                a -= b;
-                a >>= 1;
-                c -= d;
-                c = c.halve();
-            }
-        }
-        if b != 1 {
-            return None;
-        }
-        Some(d)
+        PervushinField::egcd(*self, PervushinField::ONE)
     }
 }
 
@@ -372,7 +375,7 @@ impl Div for PervushinField {
     type Output = Option<Self>;
 
     fn div(self, rps: Self) -> Self::Output {
-        rps.inv().map(|v| self * v)
+        PervushinField::egcd(rps, self)
     }
 }
 
@@ -380,7 +383,7 @@ impl Div<&Self> for PervushinField {
     type Output = Option<Self>;
 
     fn div(self, rps: &Self) -> Self::Output {
-        rps.inv().map(|v| self * v)
+        PervushinField::egcd(*rps, self)
     }
 }
 
@@ -388,7 +391,7 @@ impl Div<PervushinField> for &PervushinField {
     type Output = Option<PervushinField>;
 
     fn div(self, rps: PervushinField) -> Self::Output {
-        rps.inv().map(|v| self * v)
+        PervushinField::egcd(rps, *self)
     }
 }
 
@@ -396,7 +399,7 @@ impl Div for &PervushinField {
     type Output = Option<PervushinField>;
 
     fn div(self, rps: Self) -> Self::Output {
-        rps.inv().map(|v| self * v)
+        PervushinField::egcd(*rps, *self)
     }
 }
 

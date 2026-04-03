@@ -103,6 +103,17 @@ fn inv() {
 }
 
 #[test]
+fn div() {
+    let a = Z::new(0xE9);
+    let b = Z::new(0x40);
+    let c = Z::new(0x5C04);
+    let d = Z::new(0xFEE8);
+    assert_eq!((a / b).unwrap(), c);
+    assert_eq!((b / a).unwrap(), d);
+    assert_eq!(Z::ONE / Z::ZERO, None);
+}
+
+#[test]
 fn sum() {
     let a = [-1, -2, -3, -4, 11].map(Z::new);
     assert_eq!(a.into_iter().sum::<Z>(), Z::ONE);

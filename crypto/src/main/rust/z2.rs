@@ -260,7 +260,7 @@ impl Div for Z2 {
     type Output = Option<Self>;
 
     fn div(self, rps: Self) -> Self::Output {
-        rps.inv().map(|v| self * v)
+        if rps.n { Some(self) } else { None }
     }
 }
 
@@ -268,7 +268,7 @@ impl Div<&Self> for Z2 {
     type Output = Option<Self>;
 
     fn div(self, rps: &Self) -> Self::Output {
-        rps.inv().map(|v| self * v)
+        if rps.n { Some(self) } else { None }
     }
 }
 
@@ -276,7 +276,7 @@ impl Div<Z2> for &Z2 {
     type Output = Option<Z2>;
 
     fn div(self, rps: Z2) -> Self::Output {
-        rps.inv().map(|v| self * v)
+        if rps.n { Some(*self) } else { None }
     }
 }
 
@@ -284,7 +284,7 @@ impl Div for &Z2 {
     type Output = Option<Z2>;
 
     fn div(self, rps: Self) -> Self::Output {
-        rps.inv().map(|v| self * v)
+        if rps.n { Some(*self) } else { None }
     }
 }
 
