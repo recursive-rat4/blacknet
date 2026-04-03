@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -22,7 +22,7 @@ use blacknet_network::node::Node;
 use std::env::args;
 use std::error::Error;
 use std::process::ExitCode;
-use tokio::runtime::Runtime;
+use std::sync::atomic::{AtomicU64, Ordering};
 use tokio::select;
 use tokio::signal::ctrl_c;
 use tokio::sync::mpsc::unbounded_channel;
@@ -35,7 +35,15 @@ fn daemon() -> Result<(), Box<dyn Error>> {
     let mode = mode()?;
     let dirs = XDGDirectories::new(mode.subdirectory())?;
     let log_manager = LogManager::new(Strategy::Daemon, dirs.state())?;
-    let runtime = Runtime::new()?;
+    let runtime = tokio::runtime::Builder::new_multi_thread()
+        .enable_all()
+        .name("blacknet-runtime")
+        .thread_name_fn(|| {
+            static THREAD_ID: AtomicU64 = AtomicU64::new(1);
+            let id = THREAD_ID.fetch_add(1, Ordering::Relaxed);
+            format!("tokio-thread-{}", id)
+        })
+        .build()?;
     let (shutdown_send, mut shutdown_recv) = unbounded_channel::<()>();
     let rpc_settings = RPCSettings::default(&mode);
     let node = Node::new(mode, &dirs, &log_manager, &runtime)?;
