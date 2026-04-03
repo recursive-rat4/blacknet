@@ -105,7 +105,7 @@ impl From<u32> for LMField {
 
 impl PartialEq for LMField {
     fn eq(&self, rps: &Self) -> bool {
-        self.balanced() == rps.balanced()
+        self.canonical() == rps.canonical()
     }
 }
 
@@ -466,9 +466,9 @@ impl IntegerRing for LMField {
     }
 
     fn canonical(&self) -> Self::Int {
-        let x = Self::reduce_64(self.n);
-        if x >= Self::MODULUS {
-            x - Self::MODULUS
+        let x = self.n;
+        if x == Self::MODULUS {
+            0
         } else if x < 0 {
             x + Self::MODULUS
         } else {
@@ -531,8 +531,8 @@ impl InterpolationConsts for LMField {
 impl BalancedRepresentative for LMField {
     type Output = i64;
 
-    fn balanced(self) -> Self::Output {
-        let x = Self::reduce_64(self.n);
+    fn balanced(&self) -> Self::Output {
+        let x = self.n;
         if x > Self::MODULUS / 2 {
             x - Self::MODULUS
         } else if x < -Self::MODULUS / 2 {

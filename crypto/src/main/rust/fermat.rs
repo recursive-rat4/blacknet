@@ -78,7 +78,7 @@ impl From<u8> for FermatField {
 
 impl PartialEq for FermatField {
     fn eq(&self, rps: &Self) -> bool {
-        self.balanced() == rps.balanced()
+        self.canonical() == rps.canonical()
     }
 }
 
@@ -434,9 +434,9 @@ impl IntegerRing for FermatField {
     }
 
     fn canonical(&self) -> Self::Int {
-        let x = Self::reduce_32(self.n);
-        if x >= Self::MODULUS {
-            x - Self::MODULUS
+        let x = self.n;
+        if x == Self::MODULUS {
+            0
         } else if x < 0 {
             x + Self::MODULUS
         } else {
@@ -454,8 +454,8 @@ impl IntegerRing for FermatField {
 impl BalancedRepresentative for FermatField {
     type Output = i32;
 
-    fn balanced(self) -> Self::Output {
-        let x = Self::reduce_32(self.n);
+    fn balanced(&self) -> Self::Output {
+        let x = self.n;
         if x > Self::MODULUS / 2 {
             x - Self::MODULUS
         } else if x < -Self::MODULUS / 2 {

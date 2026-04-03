@@ -140,7 +140,7 @@ pub trait BalancedRepresentative {
     type Output: SignedInteger;
 
     /// Balanced representative
-    fn balanced(self) -> Self::Output;
+    fn balanced(&self) -> Self::Output;
 }
 
 #[rustfmt::skip]

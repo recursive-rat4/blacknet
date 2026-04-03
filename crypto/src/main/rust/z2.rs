@@ -396,7 +396,7 @@ impl IntegerRing for Z2 {
 impl BalancedRepresentative for Z2 {
     type Output = i8;
 
-    fn balanced(self) -> Self::Output {
+    fn balanced(&self) -> Self::Output {
         self.n.into()
     }
 }
