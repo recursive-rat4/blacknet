@@ -107,9 +107,9 @@ fn div() {
     let c = F::with_hex("58C4824D139DC383C143CBB9CC8329AEFEE44752E3B33771AD362FE03ACF52A8");
     assert_eq!((a / b).unwrap(), c);
     assert_eq!((F::ZERO / c).unwrap(), F::ZERO);
-    assert!((c / F::ZERO).is_none());
-    assert_eq!((F::ONE / F::ONE).unwrap(), F::ONE);
     assert_eq!((c / F::ONE).unwrap(), c);
+    assert_eq!((-F::ONE / -F::ONE).unwrap(), F::ONE);
+    assert_eq!(F::ONE / F::ZERO, None);
 }
 
 #[test]

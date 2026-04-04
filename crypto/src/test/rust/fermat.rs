@@ -110,6 +110,7 @@ fn div() {
     let d = Z::new(0xFEE8);
     assert_eq!((a / b).unwrap(), c);
     assert_eq!((b / a).unwrap(), d);
+    assert_eq!((-Z::ONE / -Z::ONE).unwrap(), Z::ONE);
     assert_eq!(Z::ONE / Z::ZERO, None);
 }
 
