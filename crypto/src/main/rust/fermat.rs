@@ -49,39 +49,30 @@ impl FermatField {
         ((x & 0xFFFF) - (x >> 16)) as i32
     }
 
-    const fn halve(mut self) -> Self {
-        if self.n & 1 == 1 {
-            self.n += Self::MODULUS;
-        }
-        self.n >>= 1;
-        self
-    }
-
     fn egcd(self, rps: Self) -> Option<Self> {
-        // Extended Binary GCD (classic algorithm)
+        // Extended Binary GCD
         // https://eprint.iacr.org/2020/972
         let mut a = self.canonical();
         let mut b = Self::MODULUS;
-        let mut c = rps;
-        let mut d = Self::ZERO;
-        while a != 0 {
-            if a & 1 == 0 {
-                a >>= 1;
-                c = c.halve();
-            } else {
+        let mut c: i64 = rps.canonical().into();
+        let mut d: i64 = 0;
+        for _ in 0..32 {
+            if a & 1 == 1 {
                 if a < b {
                     (a, b) = (b, a);
                     (c, d) = (d, c);
                 }
                 a -= b;
-                a >>= 1;
                 c -= d;
-                c = c.halve();
             }
+            a >>= 1;
+            d <<= 1;
         }
         if b != 1 {
             return None;
         }
+        let d = Self::reduce_64(d);
+        let d = Self::new(d);
         Some(d)
     }
 }
