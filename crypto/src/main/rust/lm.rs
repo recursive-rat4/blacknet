@@ -23,6 +23,7 @@ use crate::algebra::{
 };
 use crate::convolution::{Binomial, Convolution, Negacyclic};
 use crate::duplex::{Absorb, Duplexer, Squeeze};
+use crate::gcd::gcd_inner;
 use crate::integer::Integer;
 use crate::polynomial::interpolation::InterpolationConsts;
 use core::fmt::{Debug, Formatter, Result};
@@ -52,41 +53,27 @@ impl LMField {
         ((t & 0xFFFFFFFFFFFFFFF) - 33 * (t >> 60)) as i64
     }
 
-    const fn halve(mut self) -> Self {
-        if self.n & 1 == 1 {
-            self.n += Self::MODULUS;
-        }
-        self.n >>= 1;
-        self
-    }
-
-    fn egcd(self, rps: Self) -> Option<Self> {
-        // Extended Binary GCD (classic algorithm)
-        // https://eprint.iacr.org/2020/972
-        let mut a = self.canonical();
-        let mut b = Self::MODULUS;
-        let mut c = rps;
-        let mut d = Self::ZERO;
-        while a != 0 {
-            if a & 1 == 0 {
-                a >>= 1;
-                c = c.halve();
-            } else {
-                if a < b {
-                    (a, b) = (b, a);
-                    (c, d) = (d, c);
-                }
-                a -= b;
-                a >>= 1;
-                c -= d;
-                c = c.halve();
-            }
-        }
+    fn egcd(self) -> Option<Self> {
+        // Extended Binary GCD
+        let mut a = self.canonical() as u64;
+        let mut b = Self::MODULUS as u64;
+        let (f00, _, f10, _) = gcd_inner::<60>(&mut a, &mut b);
+        let (_, _, f11, g11) = gcd_inner::<60>(&mut a, &mut b);
         if b != 1 {
             return None;
         }
-        Some(d)
+        let f00 = Self { n: f00 };
+        let f10 = Self { n: f10 };
+        let f11 = Self { n: f11 };
+        let g11 = Self { n: g11 };
+        let mut f = f00 * f11 + f10 * g11;
+        f *= Self::HALF_IN_120;
+        Some(f)
     }
+
+    const HALF_IN_120: Self = Self {
+        n: 0xAA6E7C9763E87F6,
+    };
 }
 
 impl Debug for LMField {
@@ -357,7 +344,7 @@ impl Inv for LMField {
     type Output = Option<Self>;
 
     fn inv(self) -> Self::Output {
-        LMField::egcd(self, LMField::ONE)
+        LMField::egcd(self)
     }
 }
 
@@ -365,7 +352,7 @@ impl Inv for &LMField {
     type Output = Option<LMField>;
 
     fn inv(self) -> Self::Output {
-        LMField::egcd(*self, LMField::ONE)
+        LMField::egcd(*self)
     }
 }
 
@@ -373,7 +360,7 @@ impl Div for LMField {
     type Output = Option<Self>;
 
     fn div(self, rps: Self) -> Self::Output {
-        LMField::egcd(rps, self)
+        LMField::egcd(rps).map(|v| self * v)
     }
 }
 
@@ -381,7 +368,7 @@ impl Div<&Self> for LMField {
     type Output = Option<Self>;
 
     fn div(self, rps: &Self) -> Self::Output {
-        LMField::egcd(*rps, self)
+        LMField::egcd(*rps).map(|v| self * v)
     }
 }
 
@@ -389,7 +376,7 @@ impl Div<LMField> for &LMField {
     type Output = Option<LMField>;
 
     fn div(self, rps: LMField) -> Self::Output {
-        LMField::egcd(rps, *self)
+        LMField::egcd(rps).map(|v| self * v)
     }
 }
 
@@ -397,7 +384,7 @@ impl Div for &LMField {
     type Output = Option<LMField>;
 
     fn div(self, rps: Self) -> Self::Output {
-        LMField::egcd(*rps, *self)
+        LMField::egcd(*rps).map(|v| self * v)
     }
 }
 

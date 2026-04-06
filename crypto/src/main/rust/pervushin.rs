@@ -24,6 +24,7 @@ use crate::algebra::{
 };
 use crate::convolution::Negacyclic;
 use crate::duplex::{Absorb, Duplexer, Squeeze};
+use crate::gcd::gcd_inner;
 use crate::integer::{Integer, bits_u64};
 use crate::polynomial::interpolation::InterpolationConsts;
 use core::fmt::{Debug, Formatter, Result};
@@ -52,40 +53,22 @@ impl PervushinField {
         Self::reduce_64(((x & 0x1FFFFFFFFFFFFFFF) + (x >> 61)) as i64)
     }
 
-    const fn halve(mut self) -> Self {
-        if self.n & 1 == 1 {
-            self.n += Self::MODULUS;
-        }
-        self.n >>= 1;
-        self
-    }
-
-    fn egcd(self, rps: Self) -> Option<Self> {
-        // Extended Binary GCD (classic algorithm)
-        // https://eprint.iacr.org/2020/972
-        let mut a = self.canonical();
-        let mut b = Self::MODULUS;
-        let mut c = rps;
-        let mut d = Self::ZERO;
-        while a != 0 {
-            if a & 1 == 0 {
-                a >>= 1;
-                c = c.halve();
-            } else {
-                if a < b {
-                    (a, b) = (b, a);
-                    (c, d) = (d, c);
-                }
-                a -= b;
-                a >>= 1;
-                c -= d;
-                c = c.halve();
-            }
-        }
+    fn egcd(self) -> Option<Self> {
+        // Extended Binary GCD
+        let mut a = self.canonical() as u64;
+        let mut b = Self::MODULUS as u64;
+        let (f00, _, f10, _) = gcd_inner::<60>(&mut a, &mut b);
+        let (_, _, f11, g11) = gcd_inner::<60>(&mut a, &mut b);
         if b != 1 {
             return None;
         }
-        Some(d)
+        let f00 = Self { n: f00 };
+        let f10 = Self { n: f10 };
+        let f11 = Self { n: f11 };
+        let g11 = Self { n: g11 };
+        let mut f = f00 * f11 + f10 * g11;
+        f.n = Self::reduce_64(f.n << 2);
+        Some(f)
     }
 
     const P_PLUS_1_QUARTER: [bool; 60] = bits_u64(0x800000000000000);
@@ -359,7 +342,7 @@ impl Inv for PervushinField {
     type Output = Option<Self>;
 
     fn inv(self) -> Self::Output {
-        PervushinField::egcd(self, PervushinField::ONE)
+        PervushinField::egcd(self)
     }
 }
 
@@ -367,7 +350,7 @@ impl Inv for &PervushinField {
     type Output = Option<PervushinField>;
 
     fn inv(self) -> Self::Output {
-        PervushinField::egcd(*self, PervushinField::ONE)
+        PervushinField::egcd(*self)
     }
 }
 
@@ -375,7 +358,7 @@ impl Div for PervushinField {
     type Output = Option<Self>;
 
     fn div(self, rps: Self) -> Self::Output {
-        PervushinField::egcd(rps, self)
+        PervushinField::egcd(rps).map(|v| self * v)
     }
 }
 
@@ -383,7 +366,7 @@ impl Div<&Self> for PervushinField {
     type Output = Option<Self>;
 
     fn div(self, rps: &Self) -> Self::Output {
-        PervushinField::egcd(*rps, self)
+        PervushinField::egcd(*rps).map(|v| self * v)
     }
 }
 
@@ -391,7 +374,7 @@ impl Div<PervushinField> for &PervushinField {
     type Output = Option<PervushinField>;
 
     fn div(self, rps: PervushinField) -> Self::Output {
-        PervushinField::egcd(rps, *self)
+        PervushinField::egcd(rps).map(|v| self * v)
     }
 }
 
@@ -399,7 +382,7 @@ impl Div for &PervushinField {
     type Output = Option<PervushinField>;
 
     fn div(self, rps: Self) -> Self::Output {
-        PervushinField::egcd(*rps, *self)
+        PervushinField::egcd(*rps).map(|v| self * v)
     }
 }
 

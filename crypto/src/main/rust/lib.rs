@@ -38,6 +38,7 @@ pub mod duplex;
 pub mod ed25519;
 pub mod fermat;
 pub mod float;
+pub mod gcd;
 pub mod integer;
 pub mod jive;
 pub mod johnsonlindenstrauss;
