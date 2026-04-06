@@ -18,9 +18,8 @@
 use crate::algebra::{
     AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, BalancedRepresentative,
     DivisionAlgebra, DivisionRing, Double, IntegerRing, Inv, LeftOne, LeftZero,
-    MultiplicativeCommutativeMagma, MultiplicativeMonoid, MultiplicativeSemigroup, One,
-    PolynomialRing, RightOne, RightZero, Set, Sqrt, Square, UnivariateRing, Zero,
-    square_and_multiply,
+    MultiplicativeCommutativeMagma, MultiplicativeMonoid, MultiplicativeSemigroup, One, RightOne,
+    RightZero, Set, Sqrt, Square, UnivariateRing, Zero, square_and_multiply,
 };
 use crate::convolution::Negacyclic;
 use crate::duplex::{Absorb, Duplexer, Squeeze};
@@ -573,9 +572,8 @@ impl Squeeze<Self> for PervushinField {
 pub type PervushinField2 = UnivariateRing<PervushinField, 2, Negacyclic>;
 
 impl PervushinField2 {
-    fn frobenius(mut self) -> Self {
-        self[1] = -self[1];
-        self
+    fn field_norm(self) -> PervushinField {
+        self[0].square() + self[1].square()
     }
 }
 
@@ -583,14 +581,11 @@ impl Inv for PervushinField2 {
     type Output = Option<Self>;
 
     fn inv(self) -> Self::Output {
-        if self != Self::ZERO {
-            // Feng and Itoh-Tsujii algorithm
-            let r1 = self.frobenius();
-            let r0 = (r1 * self).constant_term();
-            Some((r1 / r0).expect("multiplicative group of subfield"))
-        } else {
-            None
-        }
+        let f = self.field_norm().inv()?;
+        let mut r = self;
+        r[0] *= f;
+        r[1] *= -f;
+        Some(r)
     }
 }
 
