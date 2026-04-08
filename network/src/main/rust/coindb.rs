@@ -30,6 +30,7 @@ use blacknet_kernel::htlc::HTLC;
 use blacknet_kernel::multisig::Multisig;
 use blacknet_kernel::proofofstake::{
     DEFAULT_MAX_BLOCK_SIZE, INITIAL_DIFFICULTY, ROLLBACK_LIMIT, UPGRADE_THRESHOLD,
+    Version as PoSVersion,
 };
 use blacknet_kernel::transaction::{CoinTx, HashTimeLockContractId, MultiSignatureLockContractId};
 use blacknet_serialization::format::{from_bytes, to_bytes};
@@ -181,6 +182,11 @@ impl State {
             upgraded: 0,
             fork_v2: 0,
         }
+    }
+
+    #[expect(unused)]
+    pub fn pos_version(self, mode: &Mode) -> PoSVersion {
+        todo!();
     }
 
     pub const fn height(self) -> u32 {

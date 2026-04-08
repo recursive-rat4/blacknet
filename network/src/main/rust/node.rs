@@ -203,10 +203,10 @@ impl Node {
         warnings
     }
 
-    #[expect(unused)]
     pub fn warnings(&self, warnings: &mut Vec<String>) {
         let time_offset = self.time_offset();
-        let time_slot = time_slot(todo!());
+        let pos_version = self.coin_db.state().pos_version(&self.mode);
+        let time_slot = time_slot(pos_version);
 
         if time_offset <= -time_slot || time_offset >= time_slot {
             warnings.push(
@@ -215,19 +215,19 @@ impl Node {
         }
     }
 
-    pub const fn max_packet_size(&self) -> u32 {
-        todo!();
+    pub fn max_packet_size(&self) -> u32 {
+        self.coin_db.state().max_block_size() + BLOCK_RESERVED_SIZE
     }
 
     pub const fn min_packet_size(&self) -> u32 {
         DEFAULT_MAX_BLOCK_SIZE + BLOCK_RESERVED_SIZE
     }
 
-    #[expect(unreachable_code)]
     pub fn is_initial_synchronization(&self) -> bool {
+        let pos_version = self.coin_db.state().pos_version(&self.mode);
         self.block_fetcher.is_synchronizing()
             && guess_initial_synchronization(
-                todo!(),
+                pos_version,
                 SystemClock::secs(),
                 self.coin_db.state().block_time(),
             )
