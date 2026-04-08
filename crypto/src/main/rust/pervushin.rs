@@ -22,10 +22,10 @@ use crate::algebra::{
     RightZero, Set, Sqrt, Square, UnivariateRing, Zero, square_and_multiply,
 };
 use crate::convolution::Negacyclic;
-use crate::duplex::{Absorb, Duplexer, Squeeze};
 use crate::gcd::gcd_inner;
 use crate::integer::{Integer, bits_u64};
 use crate::polynomial::interpolation::InterpolationConsts;
+use crate::symmetric::{Absorb, Duplexer, Squeeze};
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
 use core::ops::{Add, AddAssign, Div, Mul, MulAssign, Neg, Sub, SubAssign};

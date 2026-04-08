@@ -19,7 +19,7 @@ use crate::algebra::{
     AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, DivisionRingOps, Double, Inv,
     LeftZero, RightZero, Ring, RingOps, Semimodule, Set, Zero,
 };
-use crate::duplex::{Absorb, Duplexer, Squeeze};
+use crate::symmetric::{Absorb, Duplexer, Squeeze};
 use core::array;
 use core::borrow::{Borrow, BorrowMut};
 use core::fmt::{Debug, Formatter, Result};

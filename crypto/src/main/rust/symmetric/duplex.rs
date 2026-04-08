@@ -16,8 +16,8 @@
  */
 
 use crate::algebra::AdditiveGroup;
-use crate::permutation::Permutation;
 use crate::random::UniformGenerator;
+use crate::symmetric::Permutation;
 use core::marker::PhantomData;
 
 /// The phase of sponge state

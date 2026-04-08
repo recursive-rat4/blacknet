@@ -16,14 +16,13 @@
  */
 
 use blacknet_crypto::algebra::{IntegerRing, One, Zero};
-use blacknet_crypto::duplex::Duplexer;
 use blacknet_crypto::lm::LMField;
 use blacknet_crypto::polynomial::{
     BinarityPolynomial, EqExtension, MaskingPolynomial, MultilinearExtension,
 };
-use blacknet_crypto::poseidon2lm::DuplexPoseidon2LM;
 use blacknet_crypto::random::{Distribution, UniformDistribution};
 use blacknet_crypto::sumcheck::SumCheck;
+use blacknet_crypto::symmetric::{DuplexPoseidon2LM, Duplexer};
 use criterion::{Criterion, criterion_group, criterion_main};
 use std::hint::black_box;
 

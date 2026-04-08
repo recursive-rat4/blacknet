@@ -17,9 +17,9 @@
 
 use crate::algebra::AdditiveGroup;
 use crate::assigner::assigment::Assigment;
-use crate::assigner::permutation::Permutation;
-use crate::duplex::{Duplexer, Phase};
+use crate::assigner::symmetric::Permutation;
 use crate::random::UniformGenerator;
+use crate::symmetric::{Duplexer, Phase};
 use core::marker::PhantomData;
 
 pub struct Duplex<

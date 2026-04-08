@@ -19,7 +19,7 @@ use crate::algebra::{Double, RingOps, Semiring, SemiringOps, Square, UnitalRing}
 use crate::circuit::builder::{
     Constant, Expression, LinearMonoid, LinearSpan, LinearTerm, Variable,
 };
-use crate::duplex::{Absorb, Duplexer, Squeeze};
+use crate::symmetric::{Absorb, Duplexer, Squeeze};
 use alloc::collections::BTreeMap;
 use alloc::vec;
 use core::iter::Sum;

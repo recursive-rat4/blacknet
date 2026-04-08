@@ -20,7 +20,7 @@ use blacknet_crypto::matrix::DenseVector;
 use blacknet_crypto::norm::EuclideanNorm;
 
 type Z = blacknet_crypto::pervushin::PervushinField;
-type DRG = blacknet_crypto::poseidon2pervushin::DuplexPoseidon2Pervushin;
+type DRG = blacknet_crypto::symmetric::DuplexPoseidon2Pervushin;
 
 #[test]
 fn test() {

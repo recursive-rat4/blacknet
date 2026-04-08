@@ -16,8 +16,8 @@
  */
 
 use crate::algebra::{Conjugate, Double, One, Square, Tensor, Zero};
-use crate::duplex::{Absorb, Duplexer};
 use crate::matrix::DenseMatrix;
+use crate::symmetric::{Absorb, Duplexer};
 use alloc::borrow::{Borrow, BorrowMut};
 use alloc::vec;
 use alloc::vec::Vec;

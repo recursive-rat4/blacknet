@@ -18,14 +18,13 @@
 use blacknet_compat::assert_ok;
 use blacknet_crypto::algebra::One;
 use blacknet_crypto::assigner::assigment::Assigment;
-use blacknet_crypto::assigner::duplex::Duplex as Assigner;
-use blacknet_crypto::assigner::permutation::Permutation as PermutationAssigner;
+use blacknet_crypto::assigner::symmetric::{
+    Duplex as Assigner, Permutation as PermutationAssigner,
+};
 use blacknet_crypto::circuit::builder::{CircuitBuilder, Constant, LinearCombination};
-use blacknet_crypto::circuit::duplex::Duplex as Circuit;
-use blacknet_crypto::circuit::permutation::Permutation as PermutationCircuit;
+use blacknet_crypto::circuit::symmetric::{Duplex as Circuit, Permutation as PermutationCircuit};
 use blacknet_crypto::constraintsystem::ConstraintSystem;
-use blacknet_crypto::duplex::{Duplex, Duplexer};
-use blacknet_crypto::permutation::Permutation as PermutationPlain;
+use blacknet_crypto::symmetric::{Duplex, Duplexer, Permutation as PermutationPlain};
 use core::array;
 
 type Z = blacknet_crypto::pervushin::PervushinField;

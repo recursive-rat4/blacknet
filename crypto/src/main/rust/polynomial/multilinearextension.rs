@@ -16,11 +16,11 @@
  */
 
 use crate::algebra::{Double, RingOps, UnitalRing};
-use crate::duplex::{Absorb, Duplexer, Squeeze, SqueezeWithSize};
 use crate::matrix::{DenseMatrix, DenseVector};
 use crate::polynomial::{
     EqExtension, InBasis, MultivariatePolynomial, Point, Polynomial, TensorBasis,
 };
+use crate::symmetric::{Absorb, Duplexer, Squeeze, SqueezeWithSize};
 use alloc::borrow::{Borrow, BorrowMut};
 use alloc::vec::Vec;
 use core::iter::zip;

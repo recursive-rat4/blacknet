@@ -23,7 +23,7 @@ use crate::algebra::{
     Square, UnitalAlgebra, UnitalRing, Zero,
 };
 use crate::convolution::{Convolution, Negacyclic};
-use crate::duplex::{Absorb, Duplexer, Squeeze};
+use crate::symmetric::{Absorb, Duplexer, Squeeze};
 use core::borrow::{Borrow, BorrowMut};
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};

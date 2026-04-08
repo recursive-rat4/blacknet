@@ -16,11 +16,11 @@
  */
 
 use crate::algebra::{AlgebraOps, UnitalAlgebra, UnitalRing};
-use crate::duplex::{Absorb, Duplexer};
 use crate::polynomial::{
     MultivariatePolynomial, Polynomial, UnivariatePolynomial, interpolation::*,
 };
 use crate::random::Distribution;
+use crate::symmetric::{Absorb, Duplexer};
 use alloc::vec::Vec;
 use core::fmt;
 use core::marker::PhantomData;

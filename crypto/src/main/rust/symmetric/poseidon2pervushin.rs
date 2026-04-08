@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Pavel Vasin
+ * Copyright (c) 2024-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,11 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::duplex::Duplex;
-use crate::jive::Jive;
-use crate::permutation::Permutation;
 use crate::pervushin::PervushinField;
-use crate::poseidon2::{Poseidon2Params, Poseidon2Plain};
+use crate::symmetric::{Duplex, Jive, Permutation, Poseidon2Params, Poseidon2Plain};
 
 pub struct Poseidon2Pervushin12 {}
 

@@ -19,8 +19,8 @@ use crate::algebra::{RingOps, UnitalRing};
 use crate::circuit::builder::{CircuitBuilder, LinearCombination, VariableKind};
 use crate::circuit::polynomial::{Point, UnivariatePolynomial};
 use crate::circuit::random::Distribution;
-use crate::duplex::Duplexer;
 use crate::polynomial::{MultivariatePolynomial, Polynomial};
+use crate::symmetric::Duplexer;
 use alloc::vec::Vec;
 use core::marker::PhantomData;
 

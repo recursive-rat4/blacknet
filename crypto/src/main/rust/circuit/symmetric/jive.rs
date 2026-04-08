@@ -18,8 +18,7 @@
 use crate::algebra::AdditiveCyclicGroup;
 use crate::algebra::Semiring;
 use crate::circuit::builder::{CircuitBuilder, LinearCombination};
-use crate::circuit::compressionfunction::CompressionFunction;
-use crate::circuit::permutation::Permutation;
+use crate::circuit::symmetric::{CompressionFunction, Permutation};
 use core::array;
 use core::marker::PhantomData;
 

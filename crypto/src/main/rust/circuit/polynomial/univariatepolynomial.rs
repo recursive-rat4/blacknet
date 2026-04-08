@@ -17,8 +17,8 @@
 
 use crate::algebra::{Double, Semiring, SemiringOps};
 use crate::circuit::builder::{CircuitBuilder, LinearCombination, VariableKind};
-use crate::duplex::{Absorb, Duplexer};
 use crate::polynomial::Polynomial;
+use crate::symmetric::{Absorb, Duplexer};
 use alloc::vec::Vec;
 use core::iter::zip;
 use core::ops::{Add, AddAssign};

@@ -17,7 +17,7 @@
 
 use crate::algebra::PrimeField;
 use crate::assigner::assigment::Assigment;
-use crate::poseidon2::Poseidon2Params;
+use crate::symmetric::Poseidon2Params;
 use core::iter::zip;
 
 pub trait Poseidon2Assigner<

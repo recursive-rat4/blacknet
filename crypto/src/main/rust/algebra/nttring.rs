@@ -24,8 +24,8 @@ use crate::algebra::{
     Set, Square, UnitalAlgebra, UnivariateRing, Zero,
 };
 use crate::convolution::{Convolution, Negacyclic};
-use crate::duplex::{Absorb, Duplexer, Squeeze};
 use crate::numbertheoretictransform::{NTTConvolution, Twiddles, cooley_tukey, gentleman_sande};
+use crate::symmetric::{Absorb, Duplexer, Squeeze};
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum, zip};
 use core::mem::{MaybeUninit, transmute_copy};

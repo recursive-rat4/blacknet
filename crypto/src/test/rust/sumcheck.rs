@@ -17,20 +17,21 @@
 
 use blacknet_compat::{assert_err, assert_ok};
 use blacknet_crypto::assigner::polynomial::UnivariatePolynomial as UnivariatePolynomialAssigner;
-use blacknet_crypto::assigner::poseidon2pervushin::DuplexPoseidon2Pervushin as DuplexPoseidon2PervushinAssigner;
 use blacknet_crypto::assigner::sumcheck::{Proof as ProofAssigner, SumCheck as SumCheckAssigner};
+use blacknet_crypto::assigner::symmetric::DuplexPoseidon2Pervushin as DuplexPoseidon2PervushinAssigner;
 use blacknet_crypto::circuit::builder::{CircuitBuilder, VariableKind};
-use blacknet_crypto::circuit::poseidon2pervushin::DuplexPoseidon2Pervushin as DuplexPoseidon2PervushinCircuit;
 use blacknet_crypto::circuit::sumcheck::{Proof as ProofCircuit, SumCheck as SumCheckCircuit};
+use blacknet_crypto::circuit::symmetric::DuplexPoseidon2Pervushin as DuplexPoseidon2PervushinCircuit;
 use blacknet_crypto::constraintsystem::ConstraintSystem;
-use blacknet_crypto::duplex::Duplexer;
 use blacknet_crypto::pervushin::PervushinField;
 use blacknet_crypto::polynomial::{
     EqExtension, MultilinearExtension, MultivariatePolynomial, Polynomial,
 };
-use blacknet_crypto::poseidon2pervushin::DuplexPoseidon2Pervushin as DuplexPoseidon2PervushinPlain;
 use blacknet_crypto::random::{Distribution, UniformDistribution};
 use blacknet_crypto::sumcheck::{Proof as ProofPlain, SumCheck as SumCheckPlain};
+use blacknet_crypto::symmetric::{
+    DuplexPoseidon2Pervushin as DuplexPoseidon2PervushinPlain, Duplexer,
+};
 
 type Z = PervushinField;
 type D = DuplexPoseidon2PervushinPlain;

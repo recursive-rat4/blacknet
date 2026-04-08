@@ -17,7 +17,7 @@
 
 use crate::algebra::{Double, PrimeField, RingOps, Square};
 use crate::circuit::builder::{CircuitBuilder, Constant, LinearCombination, Scope};
-use crate::poseidon2::Poseidon2Params;
+use crate::symmetric::Poseidon2Params;
 use core::array;
 use core::iter::zip;
 

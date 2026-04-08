@@ -18,17 +18,17 @@
 use blacknet_compat::assert_ok;
 use blacknet_crypto::algebra::One;
 use blacknet_crypto::assigner::assigment::Assigment;
-use blacknet_crypto::assigner::compressionfunction::CompressionFunction as CompressionFunctionAssigner;
-use blacknet_crypto::assigner::jive::Jive as Assigner;
-use blacknet_crypto::assigner::permutation::Permutation as PermutationAssigner;
+use blacknet_crypto::assigner::symmetric::{
+    CompressionFunction as CompressionFunctionAssigner, Jive as Assigner,
+    Permutation as PermutationAssigner,
+};
 use blacknet_crypto::circuit::builder::{CircuitBuilder, Constant, LinearCombination};
-use blacknet_crypto::circuit::compressionfunction::CompressionFunction as CompressionFunctionCircuit;
-use blacknet_crypto::circuit::jive::Jive as Circuit;
-use blacknet_crypto::circuit::permutation::Permutation as PermutationCircuit;
-use blacknet_crypto::compressionfunction::CompressionFunction;
+use blacknet_crypto::circuit::symmetric::{
+    CompressionFunction as CompressionFunctionCircuit, Jive as Circuit,
+    Permutation as PermutationCircuit,
+};
 use blacknet_crypto::constraintsystem::ConstraintSystem;
-use blacknet_crypto::jive::Jive;
-use blacknet_crypto::permutation::Permutation as PermutationPlain;
+use blacknet_crypto::symmetric::{CompressionFunction, Jive, Permutation as PermutationPlain};
 use core::array;
 
 type Z = blacknet_crypto::pervushin::PervushinField;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -16,12 +16,9 @@
  */
 
 use crate::assigner::assigment::Assigment;
-use crate::assigner::duplex::Duplex;
-use crate::assigner::jive::Jive;
-use crate::assigner::permutation::Permutation;
-use crate::assigner::poseidon2::Poseidon2Assigner;
+use crate::assigner::symmetric::{Duplex, Jive, Permutation, Poseidon2Assigner};
 use crate::pervushin::PervushinField;
-use crate::poseidon2pervushin::{Poseidon2Pervushin8, Poseidon2Pervushin12};
+use crate::symmetric::{Poseidon2Pervushin8, Poseidon2Pervushin12};
 
 impl Permutation<PervushinField> for Poseidon2Pervushin12 {
     type Domain = [PervushinField; 12];

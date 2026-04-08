@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Pavel Vasin
+ * Copyright (c) 2024-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -17,15 +17,15 @@
 
 use blacknet_compat::assert_ok;
 use blacknet_crypto::algebra::IntegerRing;
-use blacknet_crypto::assigner::poseidon2::Poseidon2Assigner;
+use blacknet_crypto::assigner::symmetric::Poseidon2Assigner;
 use blacknet_crypto::circuit::builder::{CircuitBuilder, LinearCombination};
-use blacknet_crypto::circuit::poseidon2::Poseidon2Circuit;
+use blacknet_crypto::circuit::symmetric::Poseidon2Circuit;
 use blacknet_crypto::constraintsystem::ConstraintSystem;
 use blacknet_crypto::lm::LMField;
 use blacknet_crypto::pervushin::PervushinField;
-use blacknet_crypto::poseidon2::Poseidon2Plain;
-use blacknet_crypto::poseidon2lm::{Poseidon2LM8, Poseidon2LM12};
-use blacknet_crypto::poseidon2pervushin::{Poseidon2Pervushin8, Poseidon2Pervushin12};
+use blacknet_crypto::symmetric::{
+    Poseidon2LM8, Poseidon2LM12, Poseidon2Pervushin8, Poseidon2Pervushin12, Poseidon2Plain,
+};
 use core::array;
 use core::iter::zip;
 

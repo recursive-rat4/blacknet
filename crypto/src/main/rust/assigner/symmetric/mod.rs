@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025-2026 Pavel Vasin
+ * Copyright (c) 2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,21 +15,18 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_crypto::random::{FastDRG, UniformGenerator};
-use blacknet_crypto::symmetric::chacha::BLOCK_SIZE;
-use core::array;
+mod compressionfunction;
+mod duplex;
+mod jive;
+mod permutation;
+mod poseidon2;
+mod poseidon2lm;
+mod poseidon2pervushin;
 
-#[test]
-fn discard() {
-    const SIZE: usize = BLOCK_SIZE * 2 + 1;
-    let mut drg = FastDRG::default();
-
-    let _: [u8; SIZE] = array::from_fn(|_| drg.generate());
-    let buf1: [u8; SIZE] = array::from_fn(|_| drg.generate());
-
-    drg.seed(Default::default());
-    drg.discard(SIZE);
-    let buf2: [u8; SIZE] = array::from_fn(|_| drg.generate());
-
-    assert_eq!(buf2, buf1);
-}
+pub use compressionfunction::CompressionFunction;
+pub use duplex::Duplex;
+pub use jive::Jive;
+pub use permutation::Permutation;
+pub use poseidon2::Poseidon2Assigner;
+pub use poseidon2lm::{DuplexPoseidon2LM, JivePoseidon2LM};
+pub use poseidon2pervushin::{DuplexPoseidon2Pervushin, JivePoseidon2Pervushin};

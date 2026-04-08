@@ -16,9 +16,9 @@
  */
 
 use crate::algebra::{Double, RingOps, UnitalRing};
-use crate::duplex::{Absorb, Duplexer, Squeeze, SqueezeWithSize};
 use crate::matrix::DenseVector;
 use crate::polynomial::{MultivariatePolynomial, Point, Polynomial};
+use crate::symmetric::{Absorb, Duplexer, Squeeze, SqueezeWithSize};
 use alloc::vec;
 use alloc::vec::Vec;
 use core::iter::zip;

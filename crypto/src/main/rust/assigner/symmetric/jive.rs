@@ -16,63 +16,55 @@
  */
 
 use crate::algebra::AdditiveCyclicGroup;
-use crate::compressionfunction::CompressionFunction;
-use crate::permutation::Permutation;
+use crate::assigner::assigment::Assigment;
+use crate::assigner::symmetric::{CompressionFunction, Permutation};
 use core::marker::PhantomData;
 
-/// Jive mode <https://eprint.iacr.org/2022/840>
 pub struct Jive<
+    'a,
     G: AdditiveCyclicGroup,
     const RANK: usize,
     const WIDTH: usize,
-    P: Permutation<Domain = [G; WIDTH]>,
+    P: Permutation<G, Domain = [G; WIDTH]>,
 > {
     phantom: PhantomData<P>,
+    assigment: &'a Assigment<G>,
 }
 
 impl<
+    'a,
     G: AdditiveCyclicGroup,
     const RANK: usize,
     const WIDTH: usize,
-    P: Permutation<Domain = [G; WIDTH]>,
-> Jive<G, RANK, WIDTH, P>
+    P: Permutation<G, Domain = [G; WIDTH]>,
+> Jive<'a, G, RANK, WIDTH, P>
 {
-    pub const fn new() -> Self {
+    pub const fn new(assigment: &'a Assigment<G>) -> Self {
         const {
             assert!(RANK * 2 == WIDTH);
         }
         Self {
             phantom: PhantomData,
+            assigment,
         }
     }
 }
 
 impl<
-    G: AdditiveCyclicGroup,
-    const RANK: usize,
-    const WIDTH: usize,
-    P: Permutation<Domain = [G; WIDTH]>,
-> Default for Jive<G, RANK, WIDTH, P>
-{
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl<
+    'a,
     G: AdditiveCyclicGroup + Clone,
     const RANK: usize,
     const WIDTH: usize,
-    P: Permutation<Domain = [G; WIDTH]>,
-> CompressionFunction for Jive<G, RANK, WIDTH, P>
+    P: Permutation<G, Domain = [G; WIDTH]>,
+> CompressionFunction for Jive<'a, G, RANK, WIDTH, P>
 {
     type Hash = [G; RANK];
 
-    fn compress(a: Self::Hash, b: Self::Hash) -> Self::Hash {
+    fn compress(&self, a: Self::Hash, b: Self::Hash) -> Self::Hash {
         let mut state = [G::ZERO; WIDTH];
         state[..WIDTH / 2].clone_from_slice(&a);
         state[WIDTH / 2..].clone_from_slice(&b);
-        P::permute(&mut state);
+        P::permute(self.assigment, &mut state);
         let mut hash = a;
         for i in 0..RANK {
             hash[i] += &b[i];

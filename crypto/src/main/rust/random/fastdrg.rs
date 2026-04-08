@@ -15,8 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::chacha::{BLOCK_SIZE, ChaCha, KEY_SIZE, L, Word};
 use crate::random::UniformGenerator;
+use crate::symmetric::chacha::{BLOCK_SIZE, ChaCha, KEY_SIZE, L, Word};
 use core::mem::transmute;
 
 pub const SEED_SIZE: usize = KEY_SIZE;

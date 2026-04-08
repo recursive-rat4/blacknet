@@ -17,9 +17,9 @@
 
 use crate::algebra::Semiring;
 use crate::circuit::builder::{CircuitBuilder, Constant, LinearCombination};
-use crate::circuit::permutation::Permutation;
-use crate::duplex::{Duplexer, Phase};
+use crate::circuit::symmetric::Permutation;
 use crate::random::UniformGenerator;
+use crate::symmetric::{Duplexer, Phase};
 use core::array;
 use core::marker::PhantomData;
 

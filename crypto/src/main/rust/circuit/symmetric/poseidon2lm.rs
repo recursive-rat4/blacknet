@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -16,12 +16,9 @@
  */
 
 use crate::circuit::builder::{CircuitBuilder, LinearCombination};
-use crate::circuit::duplex::Duplex;
-use crate::circuit::jive::Jive;
-use crate::circuit::permutation::Permutation;
-use crate::circuit::poseidon2::Poseidon2Circuit;
+use crate::circuit::symmetric::{Duplex, Jive, Permutation, Poseidon2Circuit};
 use crate::lm::LMField;
-use crate::poseidon2lm::{Poseidon2LM8, Poseidon2LM12};
+use crate::symmetric::{Poseidon2LM8, Poseidon2LM12};
 
 impl Permutation<LMField> for Poseidon2LM12 {
     type Domain = [LinearCombination<LMField>; 12];

@@ -19,8 +19,8 @@ use crate::algebra::UnitalRing;
 use crate::assigner::assigment::Assigment;
 use crate::assigner::polynomial::UnivariatePolynomial;
 use crate::assigner::random::Distribution;
-use crate::duplex::{Absorb, Duplexer};
 use crate::polynomial::{MultivariatePolynomial, Polynomial};
+use crate::symmetric::{Absorb, Duplexer};
 use alloc::vec::Vec;
 use core::marker::PhantomData;
 

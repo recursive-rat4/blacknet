@@ -18,14 +18,8 @@
 //! Variable assigners for proof systems.
 
 pub mod assigment;
-pub mod compressionfunction;
-pub mod duplex;
-pub mod jive;
 pub mod logicgate;
-pub mod permutation;
 pub mod polynomial;
-pub mod poseidon2;
-pub mod poseidon2lm;
-pub mod poseidon2pervushin;
 pub mod random;
 pub mod sumcheck;
+pub mod symmetric;

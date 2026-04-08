@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,12 +15,12 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_crypto::compressionfunction::CompressionFunction;
+use blacknet_crypto::symmetric::CompressionFunction;
 
 type Z = blacknet_crypto::pervushin::PervushinField;
-type Jive = blacknet_crypto::poseidon2pervushin::JivePoseidon2Pervushin;
+type Jive = blacknet_crypto::symmetric::JivePoseidon2Pervushin;
 type Hash = <Jive as CompressionFunction>::Hash;
-type MerkleTree = blacknet_crypto::merkletree::MerkleTree<Jive>;
+type MerkleTree = blacknet_crypto::symmetric::MerkleTree<Jive>;
 
 #[test]
 fn empty() {

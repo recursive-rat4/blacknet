@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Pavel Vasin
+ * Copyright (c) 2024-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -18,9 +18,7 @@
 use blacknet_crypto::algebra::IntegerRing;
 use blacknet_crypto::lm::LMField;
 use blacknet_crypto::pervushin::PervushinField;
-use blacknet_crypto::poseidon2::Poseidon2Plain;
-use blacknet_crypto::poseidon2lm::Poseidon2LM12;
-use blacknet_crypto::poseidon2pervushin::Poseidon2Pervushin12;
+use blacknet_crypto::symmetric::{Poseidon2LM12, Poseidon2Pervushin12, Poseidon2Plain};
 use criterion::{Criterion, criterion_group, criterion_main};
 use std::hint::black_box;
 
