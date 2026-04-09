@@ -87,6 +87,7 @@ assigning_clones = "warn"
 missing_const_for_fn = "warn"
 needless_pass_by_ref_mut = "warn"
 needless_pass_by_value = "warn"
+redundant_closure_for_method_calls = "warn"
 
 [workspace.package]
 version = "0.3.0"

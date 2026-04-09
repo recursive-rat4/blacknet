@@ -71,7 +71,7 @@ impl<R: Ring + EuclideanNorm, const N: usize> EuclideanNorm for FreeModule<R, N>
     fn euclidean_norm(&self) -> f64 {
         libm::sqrt(
             self.into_iter()
-                .map(|i| i.euclidean_norm())
+                .map(EuclideanNorm::euclidean_norm)
                 .map(|i| i * i)
                 .sum::<f64>(),
         )
@@ -82,7 +82,7 @@ impl<R: Ring + EuclideanNorm> EuclideanNorm for DenseVector<R> {
     fn euclidean_norm(&self) -> f64 {
         libm::sqrt(
             self.iter()
-                .map(|i| i.euclidean_norm())
+                .map(EuclideanNorm::euclidean_norm)
                 .map(|i| i * i)
                 .sum::<f64>(),
         )
@@ -94,7 +94,7 @@ impl<R: Ring + EuclideanNorm> EuclideanNorm for SparseVector<R> {
         libm::sqrt(
             self.as_ref()
                 .iter()
-                .map(|i| i.euclidean_norm())
+                .map(EuclideanNorm::euclidean_norm)
                 .map(|i| i * i)
                 .sum::<f64>(),
         )
