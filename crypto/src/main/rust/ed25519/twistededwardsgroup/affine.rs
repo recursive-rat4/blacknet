@@ -62,6 +62,16 @@ impl<P: TwistedEdwardsGroupParams> TwistedEdwardsGroupAffine<P> {
             Some(Self { x: -x, y })
         }
     }
+
+    pub fn encode(&self) -> [u8; 32]
+    where
+        P: TwistedEdwardsGroupParams<F = Field25519>,
+    {
+        let mut bytes: [u8; 32] = self.y.canonical().to_le_bytes();
+        let x_is_odd = self.x.canonical().is_odd();
+        bytes[31] |= (x_is_odd as u8) << 7;
+        bytes
+    }
 }
 
 impl<P: TwistedEdwardsGroupParams<F: Clone>> Clone for TwistedEdwardsGroupAffine<P> {

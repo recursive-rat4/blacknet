@@ -58,6 +58,10 @@ name = "block"
 path = "src/test/rust/block.rs"
 
 [[test]]
+name = "ed25519"
+path = "src/test/rust/ed25519.rs"
+
+[[test]]
 name = "hashlock"
 path = "src/test/rust/hashlock.rs"
 

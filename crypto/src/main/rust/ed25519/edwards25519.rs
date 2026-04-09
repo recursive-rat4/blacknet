@@ -47,10 +47,7 @@ pub type Edwards25519GroupAffine = TwistedEdwardsGroupAffine<Edwards25519GroupPa
 
 impl Serialize for Edwards25519GroupAffine {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let (x, y) = (*self).into();
-        let mut bytes: [u8; 32] = y.canonical().to_le_bytes();
-        let x_is_odd = x.canonical().is_odd();
-        bytes[31] |= (x_is_odd as u8) << 7;
+        let bytes: [u8; 32] = self.encode();
         bytes.serialize(serializer)
     }
 }
