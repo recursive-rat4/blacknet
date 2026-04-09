@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2025 Pavel Vasin
+ * Copyright (c) 2018-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -20,16 +20,18 @@ use crate::packet::{BlockAnnounce, Blocks, ConsensusFault};
 use blacknet_kernel::blake2b::Hash;
 use blacknet_kernel::error::Result;
 
-pub struct BlockFetcher {}
+pub struct BlockFetcher {
+    connection_id: u64,
+}
 
 impl BlockFetcher {
     #[expect(clippy::new_without_default)]
     pub const fn new() -> Self {
-        Self {}
+        Self { connection_id: 0 }
     }
 
-    pub fn is_synchronizing(&self) -> bool {
-        todo!();
+    pub const fn is_synchronizing(&self) -> bool {
+        self.connection_id != 0
     }
 
     pub fn disconnected(&self, _connection: &Connection) {
