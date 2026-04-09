@@ -219,11 +219,10 @@ impl BlockDB {
         }
     }
 
-    #[expect(unused)]
-    pub fn check(&self) -> Check {
+    pub fn check(&self, state: State) -> Check {
         let mut check = Check {
             result: false,
-            height: todo!(),
+            height: state.height(),
             indexes: 0,
             blocks: 0,
         };
