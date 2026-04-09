@@ -184,9 +184,16 @@ impl State {
         }
     }
 
-    #[expect(unused)]
-    pub fn pos_version(self, mode: &Mode) -> PoSVersion {
-        todo!();
+    pub const fn pos_version(self, mode: &Mode) -> PoSVersion {
+        if mode.requires_network() {
+            if self.fork_v2 == UPGRADE_THRESHOLD + 1 {
+                PoSVersion::V4_1
+            } else {
+                PoSVersion::V4
+            }
+        } else {
+            PoSVersion::V4
+        }
     }
 
     pub const fn height(self) -> u32 {
