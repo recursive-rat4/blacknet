@@ -130,7 +130,7 @@ impl BlockDB {
         Some(result)
     }
 
-    pub fn hash(&self, height: u32, state: State) -> Option<Hash> {
+    pub fn hash(&self, height: u32, state: &State) -> Option<Hash> {
         if height > state.height() {
             return None;
         } else if height == 0 {
@@ -181,7 +181,7 @@ impl BlockDB {
     /**
      * Return `Some` path of written data or `None` if not synchronized
      */
-    pub fn export(&self, state: State) -> Option<PathBuf> {
+    pub fn export(&self, state: &State) -> Option<PathBuf> {
         let checkpoint = state.rolling_checkpoint();
         if checkpoint == genesis::hash() {
             return None;
@@ -219,7 +219,7 @@ impl BlockDB {
         }
     }
 
-    pub fn check(&self, state: State) -> Check {
+    pub fn check(&self, state: &State) -> Check {
         let mut check = Check {
             result: false,
             height: state.height(),

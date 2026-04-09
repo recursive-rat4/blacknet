@@ -29,7 +29,7 @@ use blacknet_kernel::error::{Error, Result};
 use blacknet_kernel::htlc::HTLC;
 use blacknet_kernel::multisig::Multisig;
 use blacknet_kernel::proofofstake::{
-    DEFAULT_MAX_BLOCK_SIZE, INITIAL_DIFFICULTY, ROLLBACK_LIMIT, UPGRADE_THRESHOLD,
+    BLOCK_SIZE_SPAN, DEFAULT_MAX_BLOCK_SIZE, INITIAL_DIFFICULTY, ROLLBACK_LIMIT, UPGRADE_THRESHOLD,
     Version as PoSVersion,
 };
 use blacknet_kernel::transaction::{CoinTx, HashTimeLockContractId, MultiSignatureLockContractId};
@@ -37,7 +37,7 @@ use blacknet_serialization::format::{from_bytes, to_bytes};
 use blacknet_time::Seconds;
 use fjall::{Database, Error as FjallError, OwnedWriteBatch as WriteBatch};
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, hash_map};
+use std::collections::{HashMap, VecDeque, hash_map};
 use std::sync::Arc;
 
 pub struct CoinDB {
@@ -63,8 +63,8 @@ impl CoinDB {
         }))
     }
 
-    pub const fn state(&self) -> State {
-        self.state
+    pub const fn state(&self) -> &State {
+        &self.state
     }
 
     pub fn account(&self, public_key: PublicKey) -> Option<Account> {
@@ -150,7 +150,7 @@ impl CoinDB {
     }
 }
 
-#[derive(Clone, Copy, Deserialize, Serialize)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct State {
     height: u32,
     block_hash: Hash,
@@ -163,12 +163,15 @@ pub struct State {
     max_block_size: u32,
     upgraded: u16,
     fork_v2: u16,
+    block_sizes: VecDeque<u32>,
 }
 
 impl State {
     pub fn genesis(mode: &Mode) -> Self {
         let balances = genesis::balances(mode);
         let supply = balances.values().copied().sum();
+        let mut block_sizes = VecDeque::with_capacity(BLOCK_SIZE_SPAN);
+        block_sizes.push_back(0);
         Self {
             height: 0,
             block_hash: genesis::hash(),
@@ -181,10 +184,11 @@ impl State {
             max_block_size: DEFAULT_MAX_BLOCK_SIZE,
             upgraded: 0,
             fork_v2: 0,
+            block_sizes,
         }
     }
 
-    pub const fn pos_version(self, mode: &Mode) -> PoSVersion {
+    pub const fn pos_version(&self, mode: &Mode) -> PoSVersion {
         if mode.requires_network() {
             if self.fork_v2 == UPGRADE_THRESHOLD + 1 {
                 PoSVersion::V4_1
@@ -196,47 +200,47 @@ impl State {
         }
     }
 
-    pub const fn height(self) -> u32 {
+    pub const fn height(&self) -> u32 {
         self.height
     }
 
-    pub const fn block_hash(self) -> Hash {
+    pub const fn block_hash(&self) -> Hash {
         self.block_hash
     }
 
-    pub const fn block_time(self) -> Seconds {
+    pub const fn block_time(&self) -> Seconds {
         self.block_time
     }
 
-    pub const fn difficulty(self) -> UInt256 {
+    pub const fn difficulty(&self) -> UInt256 {
         self.difficulty
     }
 
-    pub const fn cumulative_difficulty(self) -> UInt256 {
+    pub const fn cumulative_difficulty(&self) -> UInt256 {
         self.cumulative_difficulty
     }
 
-    pub const fn supply(self) -> Amount {
+    pub const fn supply(&self) -> Amount {
         self.supply
     }
 
-    pub const fn nxtrng(self) -> Hash {
+    pub const fn nxtrng(&self) -> Hash {
         self.nxtrng
     }
 
-    pub const fn rolling_checkpoint(self) -> Hash {
+    pub const fn rolling_checkpoint(&self) -> Hash {
         self.rolling_checkpoint
     }
 
-    pub const fn max_block_size(self) -> u32 {
+    pub const fn max_block_size(&self) -> u32 {
         self.max_block_size
     }
 
-    pub const fn upgraded(self) -> u16 {
+    pub const fn upgraded(&self) -> u16 {
         self.upgraded
     }
 
-    pub const fn fork_v2(self) -> u16 {
+    pub const fn fork_v2(&self) -> u16 {
         self.fork_v2
     }
 }
@@ -275,8 +279,21 @@ impl Update {
         block_size: u32,
         block_generator: PublicKey,
     ) -> Self {
-        let state = coin_db.state();
+        let state = coin_db.state().clone();
+        let height = state.height() + 1;
+        let supply = state.supply();
         let rolling_checkpoint = coin_db.next_rolling_checkpoint();
+        let undo = UndoBlock::new(
+            state.block_time(),
+            state.difficulty(),
+            state.cumulative_difficulty(),
+            state.supply(),
+            state.nxtrng(),
+            state.rolling_checkpoint(),
+            state.upgraded(),
+            *state.block_sizes.front().expect("consistent coin db state"),
+            state.fork_v2(),
+        );
         Self {
             coin_db,
             write_batch,
@@ -287,23 +304,13 @@ impl Update {
             block_size,
             block_generator,
             state,
-            height: state.height() + 1,
-            supply: state.supply(),
+            height,
+            supply,
             rolling_checkpoint,
             accounts: HashMap::new(),
             htlcs: HashMap::new(),
             multisigs: HashMap::new(),
-            undo: UndoBlock::new(
-                state.block_time(),
-                state.difficulty(),
-                state.cumulative_difficulty(),
-                state.supply(),
-                state.nxtrng(),
-                state.rolling_checkpoint(),
-                state.upgraded(),
-                todo!(),
-                state.fork_v2(),
-            ),
+            undo,
             block_index: None,
             prev_index: None,
         }

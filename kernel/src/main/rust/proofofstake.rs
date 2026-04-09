@@ -71,6 +71,11 @@ pub const ROLLBACK_LIMIT: usize = 1350;
 pub const UPGRADE_THRESHOLD: u16 = 1350;
 
 /**
+ * Number of blocks used to calculate the maximum block size
+ */
+pub const BLOCK_SIZE_SPAN: usize = 1351;
+
+/**
  * Minimum amount that can be leased out for cold staking
  */
 pub const MIN_LEASE: Amount = Amount::new(1000 * Amount::COIN.value());
