@@ -29,13 +29,11 @@ pub struct UnivariatePolynomial<'a, 'b, R: Semiring> {
 }
 
 impl<'a, 'b, R: Semiring + Clone> UnivariatePolynomial<'a, 'b, R> {
-    pub fn allocate(circuit: &'a CircuitBuilder<'b, R>, kind: VariableKind, degree: usize) -> Self {
+    pub fn allocate(circuit: &'a CircuitBuilder<'b, R>, kind: VariableKind, len: usize) -> Self {
         let scope = circuit.scope("UnivariatePolynomial::allocate");
         Self {
             circuit,
-            coefficients: (0..degree + 1)
-                .map(|_| scope.variable(kind).into())
-                .collect(),
+            coefficients: (0..len).map(|_| scope.variable(kind).into()).collect(),
         }
     }
 

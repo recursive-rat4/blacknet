@@ -21,7 +21,7 @@ use crate::polynomial::Polynomial;
 use crate::symmetric::{Absorb, Duplexer};
 use alloc::vec::Vec;
 use core::iter::zip;
-use core::ops::{Add, AddAssign};
+use core::ops::{Add, AddAssign, Deref};
 
 pub struct UnivariatePolynomial<'a, R: Semiring> {
     coefficients: Vec<R>,
@@ -46,9 +46,14 @@ impl<'a, R: Semiring> UnivariatePolynomial<'a, R> {
             _ => (&self.coefficients[0]).double() + self.coefficients.iter().skip(1).sum::<R>(),
         }
     }
+}
 
-    pub const fn degree(&self) -> usize {
-        self.coefficients.len() - 1
+impl<'a, R: Semiring> Deref for UnivariatePolynomial<'a, R> {
+    type Target = [R];
+
+    #[inline]
+    fn deref(&self) -> &[R] {
+        &self.coefficients
     }
 }
 

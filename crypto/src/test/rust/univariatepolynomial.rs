@@ -27,12 +27,6 @@ use blacknet_crypto::polynomial::{InBasis, Polynomial, TensorBasis, UnivariatePo
 type R = blacknet_crypto::pervushin::PervushinField;
 
 #[test]
-fn polynomial() {
-    let p = UnivariatePolynomial::from([2, 3, 4, 5].map(R::from));
-    assert_eq!(p.degree(), 3);
-}
-
-#[test]
 fn add() {
     let a = UnivariatePolynomial::from([1, 2, 3, 4].map(R::from));
     let b = UnivariatePolynomial::from([5, 6, 1, 5].map(R::from));
@@ -128,7 +122,7 @@ fn circuit_evaluate() {
 
     let circuit = CircuitBuilder::<R>::new(2);
     let scope = circuit.scope("test");
-    let p_circuit = Circuit::<R>::allocate(&circuit, VariableKind::PublicInput, p_plain.degree());
+    let p_circuit = Circuit::<R>::allocate(&circuit, VariableKind::PublicInput, p_plain.len());
     let x_circuit = scope.public_input();
     let _y_circuit = p_circuit.point(&x_circuit.into());
     drop(scope);

@@ -37,7 +37,7 @@ impl<'a, 'b, R: UnitalRing + Clone + Eq> Proof<'a, 'b, R> {
     ) -> Self {
         Self {
             claims: (0..variables)
-                .map(|_| UnivariatePolynomial::allocate(circuit, kind, degree))
+                .map(|_| UnivariatePolynomial::allocate(circuit, kind, degree + 1))
                 .collect(),
         }
     }

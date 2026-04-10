@@ -25,7 +25,7 @@ use blacknet_crypto::circuit::symmetric::DuplexPoseidon2Pervushin as DuplexPosei
 use blacknet_crypto::constraintsystem::ConstraintSystem;
 use blacknet_crypto::pervushin::PervushinField;
 use blacknet_crypto::polynomial::{
-    EqExtension, MultilinearExtension, MultivariatePolynomial, Polynomial,
+    EqExtension, MultilinearExtension, MultivariatePolynomial, Polynomial, UnivariatePolynomial,
 };
 use blacknet_crypto::random::{Distribution, UniformDistribution};
 use blacknet_crypto::sumcheck::{Proof as ProofPlain, SumCheck as SumCheckPlain};
@@ -133,6 +133,18 @@ fn mle() {
         &p1,
         s1,
         &proof3,
+        &mut duplex,
+        &mut exceptional_set
+    ));
+    duplex.reset();
+    exceptional_set.reset();
+
+    let proof4 = ProofPlain::new(vec![UnivariatePolynomial::default(); 2]);
+
+    assert_err!(SC::verify(
+        &p1,
+        s1,
+        &proof4,
         &mut duplex,
         &mut exceptional_set
     ));

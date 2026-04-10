@@ -128,8 +128,8 @@ where
         let mut coordinates = Vec::<A>::with_capacity(polynomial.variables());
         for i in 0..polynomial.variables() {
             let claim = proof.claim(i);
-            if claim.degree() != polynomial.degree() {
-                return Err(Error::Degree(i, claim.degree(), polynomial.degree()));
+            if claim.len() != polynomial.degree() + 1 {
+                return Err(Error::Degree(i, claim.len(), polynomial.degree() + 1));
             }
             if claim.at_0_plus_1() != sum {
                 return Err(Error::Sum(i, claim.at_0_plus_1(), sum));

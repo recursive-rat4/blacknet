@@ -43,10 +43,6 @@ impl<R: Semiring> UnivariatePolynomial<R> {
             _ => (&self.coefficients[0]).double() + self.coefficients.iter().skip(1).sum::<R>(),
         }
     }
-
-    pub const fn degree(&self) -> usize {
-        self.coefficients.len() - 1
-    }
 }
 
 impl<R: Semiring, const N: usize> From<[R; N]> for UnivariatePolynomial<R> {
