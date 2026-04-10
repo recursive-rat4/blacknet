@@ -24,7 +24,9 @@ use blacknet_crypto::{
     ed25519::{Edwards25519GroupAffine, Edwards25519GroupExtended, Field25519, Scalar25519},
 };
 use core::array::TryFromSliceError;
+use core::fmt::{Debug, Formatter, Result as FmtResult};
 use core::mem::transmute;
+use data_encoding::HEXUPPER;
 use digest::Digest;
 use serde::{Deserialize, Serialize};
 
@@ -43,7 +45,7 @@ const BASE: Edwards25519GroupExtended = unsafe {
     )
 };
 
-#[derive(Clone, Copy, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Copy, Default, Deserialize, Eq, PartialEq, Serialize)]
 pub struct Signature {
     r: [u8; 32],
     s: [u8; 32],
@@ -56,6 +58,17 @@ impl Signature {
 
     pub const fn raw_s(self) -> [u8; 32] {
         self.s
+    }
+}
+
+impl Debug for Signature {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+        write!(
+            f,
+            "{}{}",
+            HEXUPPER.encode(&self.r),
+            HEXUPPER.encode(&self.s)
+        )
     }
 }
 
@@ -73,10 +86,7 @@ pub type PublicKey = [u8; 32];
 
 pub fn to_public_key(private_key: PrivateKey) -> PublicKey {
     let (scalar, _) = parse_private_key(private_key);
-    let bits = scalar.canonical().bits::<{ Scalar25519::BITS as usize }>();
-    let extended = BASE * bits;
-    let affine: Edwards25519GroupAffine = extended.into();
-    affine.encode()
+    mul_base_encode(scalar)
 }
 
 pub type PrivateKey = [u8; 32];
@@ -94,8 +104,27 @@ pub fn to_private_key(mnemonic: &str) -> Option<PrivateKey> {
     }
 }
 
-pub fn sign(_hash: Hash, _private_key: PrivateKey) -> Signature {
-    todo!();
+pub fn sign(hash: Hash, private_key: PrivateKey) -> Signature {
+    let (scalar, h) = parse_private_key(private_key);
+
+    let mut hasher = Blake2b512::new();
+    hasher.update(h);
+    hasher.update(hash);
+    let r: [u8; 64] = hasher.finalize().into();
+    let r_scalar = Scalar25519::with_512(r);
+    let r = mul_base_encode(r_scalar);
+
+    let a = mul_base_encode(scalar);
+    let mut hasher = Blake2b512::new();
+    hasher.update(r);
+    hasher.update(a);
+    hasher.update(hash);
+    let s: [u8; 64] = hasher.finalize().into();
+    let s = Scalar25519::with_512(s);
+    let s = r_scalar + s * scalar;
+    let s = s.canonical().to_le_bytes();
+
+    Signature { r, s }
 }
 
 pub fn verify(_signature: Signature, _hash: Hash, _public_key: PublicKey) -> Result<(), Error> {
@@ -111,4 +140,11 @@ fn parse_private_key(private_key: PrivateKey) -> (Scalar25519, [u8; 32]) {
     let integer = UInt256::from_le_bytes(hash[0]);
     let scalar = Scalar25519::new(integer);
     (scalar, hash[1])
+}
+
+fn mul_base_encode(scalar: Scalar25519) -> [u8; 32] {
+    let bits = scalar.canonical().bits::<{ Scalar25519::BITS as usize }>();
+    let extended = BASE * bits;
+    let affine: Edwards25519GroupAffine = extended.into();
+    affine.encode()
 }

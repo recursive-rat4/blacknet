@@ -25,6 +25,7 @@ use crate::bigint::{UInt256, UInt512};
 use crate::integer::Integer;
 use core::fmt;
 use core::iter::{Product, Sum};
+use core::mem::transmute;
 use core::ops::{Add, AddAssign, Div, Mul, MulAssign, Neg, Sub, SubAssign};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
@@ -46,6 +47,17 @@ impl Scalar25519 {
     /// `n` requires spare bit and Montgomery form.
     pub const unsafe fn from_unchecked(n: UInt256) -> Self {
         Self { n }
+    }
+
+    /// Construct an element.
+    pub fn with_512(bytes: [u8; 64]) -> Self {
+        let bytes: [[u8; 32]; 2] = unsafe { transmute(bytes) };
+        let x = UInt256::from_le_bytes(bytes[0]);
+        let l = Scalar25519::new(x);
+        let x = UInt256::from_le_bytes(bytes[1]);
+        let x = Self::to_form(x);
+        let r = Scalar25519::new(x);
+        l + r
     }
 
     fn to_form(x: UInt256) -> UInt256 {

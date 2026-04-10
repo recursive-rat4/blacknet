@@ -15,8 +15,10 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use blacknet_kernel::blake2b::Blake2b256;
 use blacknet_kernel::ed25519::*;
 use data_encoding::HEXUPPER;
+use digest::Digest;
 
 #[test]
 fn public_key() {
@@ -29,4 +31,19 @@ fn public_key() {
         .try_into()
         .unwrap();
     assert_eq!(public_key, bytes);
+}
+
+#[test]
+fn signing() {
+    let mnemonic = "疗 昨 示 穿 偏 贷 五 袁 色 烂 撒 殖";
+    let private_key = to_private_key(mnemonic).unwrap();
+    let message = "Blacknet Signed Message:\nBlacknet test message 2";
+    let hash = Blake2b256::digest(message).into();
+    let signature = sign(hash, private_key);
+    let bytes: Signature = HEXUPPER
+        .decode(b"6D5D4F6A81C601B1834701BDE84785470F92DFA517975BED9AAEA035FBDB0072327EFD207195B7202B5A72BB9CC37443A011C35137E1DF1C11BB5E9C60125B04")
+        .unwrap()
+        .try_into()
+        .unwrap();
+    assert_eq!(signature, bytes);
 }
