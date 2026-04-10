@@ -298,14 +298,28 @@ impl<const N: usize> BigInt<N> {
         (Self { limbs }, c)
     }
 
-    pub fn to_decimal(mut self) -> String {
+    pub const fn quo_rem(self, rps: u64) -> (Self, u64) {
+        let mut n = self;
+        let mut c: u64 = 0;
+        let mut i = N;
+        while i > 0 {
+            let ll = ((c as u128) << u64::BITS) | n.limbs[i - 1] as u128;
+            n.limbs[i - 1] = (ll / rps as u128) as u64;
+            c = (ll % rps as u128) as u64;
+            i -= 1;
+        }
+        (n, c)
+    }
+
+    pub fn to_decimal(self) -> String {
         const ALPHABET: [char; 10] = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
         let mut decimal = Vec::<char>::with_capacity(Self::BITS as usize >> 1);
+        let mut n = self;
+        let mut digit;
         loop {
-            let digit = self % 10;
-            self /= 10;
+            (n, digit) = n.quo_rem(10);
             decimal.push(ALPHABET[digit as usize]);
-            if self == Self::ZERO {
+            if n == Self::ZERO {
                 return decimal.into_iter().rev().collect();
             }
         }
@@ -438,13 +452,7 @@ impl<const N: usize> Div<u64> for BigInt<N> {
     type Output = Self;
 
     fn div(self, rps: u64) -> Self::Output {
-        let mut n = Self::ZERO;
-        let mut c: u64 = 0;
-        for i in (0..N).rev() {
-            let ll = ((c as u128) << u64::BITS) | self.limbs[i] as u128;
-            n.limbs[i] = (ll / rps as u128) as u64;
-            c = (ll % rps as u128) as u64;
-        }
+        let (n, _) = self.quo_rem(rps);
         n
     }
 }
