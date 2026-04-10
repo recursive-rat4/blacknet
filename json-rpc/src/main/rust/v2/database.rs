@@ -69,7 +69,8 @@ async fn block(
 
 async fn block_db_check(State(node): State<Arc<Node>>) -> Json<BlockDBCheck> {
     let block_db = node.block_db();
-    Json(block_db.check())
+    let coin_db = node.coin_db();
+    Json(block_db.check(coin_db.state()))
 }
 
 async fn block_hash(Path(height): Path<u32>, State(node): State<Arc<Node>>) -> Response<String> {

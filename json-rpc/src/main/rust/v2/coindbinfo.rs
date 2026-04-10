@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2025 Pavel Vasin
+ * Copyright (c) 2018-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -33,7 +33,7 @@ pub struct CoinDBInfo {
 }
 
 impl CoinDBInfo {
-    pub fn new(state: State) -> Self {
+    pub fn new(state: &State) -> Self {
         Self {
             height: state.height(),
             blockHash: state.block_hash().into(),
