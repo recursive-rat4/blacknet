@@ -263,6 +263,11 @@ impl<const N: usize> BigInt<N> {
     }
 
     pub const fn const_add(self, rps: Self) -> Self {
+        let (n, _) = self.overflowing_add(rps);
+        n
+    }
+
+    pub const fn overflowing_add(self, rps: Self) -> (Self, bool) {
         let mut c: bool = false;
         let mut limbs = [0_u64; N];
         let mut i = 0;
@@ -272,10 +277,15 @@ impl<const N: usize> BigInt<N> {
             c |= o;
             i += 1;
         }
-        Self { limbs }
+        (Self { limbs }, c)
     }
 
     pub const fn const_sub(self, rps: Self) -> Self {
+        let (n, _) = self.overflowing_sub(rps);
+        n
+    }
+
+    pub const fn overflowing_sub(self, rps: Self) -> (Self, bool) {
         let mut c: bool = false;
         let mut limbs = [0_u64; N];
         let mut i = 0;
@@ -285,7 +295,7 @@ impl<const N: usize> BigInt<N> {
             c |= o;
             i += 1;
         }
-        Self { limbs }
+        (Self { limbs }, c)
     }
 
     pub fn to_decimal(mut self) -> String {
