@@ -104,6 +104,19 @@ fn group_mul_affine() {
 }
 
 #[test]
+fn group_recode_affine() {
+    type G = blacknet_crypto::ed25519::Edwards25519GroupAffine;
+    let a = UInt256::from_hex("7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEA")
+        .to_le_bytes();
+    let b = UInt256::from_hex("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEA")
+        .to_le_bytes();
+    let c = G::decode(a).unwrap();
+    let d = G::decode(b).unwrap();
+    assert_eq!(c.encode(), a);
+    assert_eq!(d.encode(), b);
+}
+
+#[test]
 fn group_add_extended() {
     type G = blacknet_crypto::ed25519::Edwards25519GroupExtended;
     let ax = F::with_hex("1E3DBD8EF7121F586A32C8789BE6C1BD516EA0B7B5E00D356527F3B9137C7F13");

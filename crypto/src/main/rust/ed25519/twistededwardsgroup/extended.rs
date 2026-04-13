@@ -84,6 +84,15 @@ impl<P: TwistedEdwardsGroupParams<F: Clone>> Clone for TwistedEdwardsGroupExtend
 
 impl<P: TwistedEdwardsGroupParams<F: Copy>> Copy for TwistedEdwardsGroupExtended<P> {}
 
+impl<P: TwistedEdwardsGroupParams> From<TwistedEdwardsGroupAffine<P>>
+    for TwistedEdwardsGroupExtended<P>
+{
+    fn from(affine: TwistedEdwardsGroupAffine<P>) -> TwistedEdwardsGroupExtended<P> {
+        let (x, y) = affine.into();
+        unsafe { Self::from_unchecked(x, y) }
+    }
+}
+
 impl<P: TwistedEdwardsGroupParams> From<TwistedEdwardsGroupExtended<P>>
     for TwistedEdwardsGroupAffine<P>
 {

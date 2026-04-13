@@ -161,6 +161,10 @@ impl<const N: usize> BigInt<N> {
         self.limbs
     }
 
+    pub const fn bit_width(self) -> u32 {
+        Self::BITS - self.leading_zeros()
+    }
+
     pub const fn count_ones(self) -> u32 {
         let mut ones = 0;
         let mut i = 0;
@@ -210,7 +214,7 @@ impl<const N: usize> BigInt<N> {
         for (limb, chunk) in zip(&mut limbs, chunks) {
             *limb = u64::from_le_bytes(*chunk);
         }
-        limbs.into()
+        Self { limbs }
     }
     pub fn to_le_bytes<const M: usize>(self) -> [u8; M] {
         const {

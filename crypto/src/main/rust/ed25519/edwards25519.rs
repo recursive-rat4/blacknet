@@ -15,7 +15,6 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::IntegerRing;
 use crate::bigint::UInt256;
 use crate::ed25519::field25519::Field25519;
 use crate::ed25519::{
@@ -54,13 +53,8 @@ impl Serialize for Edwards25519GroupAffine {
 
 impl<'de> Deserialize<'de> for Edwards25519GroupAffine {
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-        let mut bytes = <[u8; 32]>::deserialize(deserializer)?;
-        let x_is_odd = (bytes[31] & 0x7F) != 0;
-        bytes[31] &= 0x7F;
-        let n = UInt256::from_le_bytes(bytes);
-        let y = Field25519::new(n);
-        Self::try_from_y(x_is_odd, y)
-            .ok_or_else(|| D::Error::custom("Not a point on the elliptic curve"))
+        let bytes = <[u8; 32]>::deserialize(deserializer)?;
+        Self::decode(bytes).ok_or_else(|| D::Error::custom("Not a point on the elliptic curve"))
     }
 }
 

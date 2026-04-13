@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2025 Pavel Vasin
+ * Copyright (c) 2018-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -88,8 +88,8 @@ impl Transaction {
         let mut bytes = to_bytes(&self).expect("Transaction serialization");
         let hash = Self::compute_hash(&bytes).expect("Transaction serialized");
         self.signature = sign(hash, private_key);
-        bytes[0..32].copy_from_slice(&self.signature.raw_r());
-        bytes[32..64].copy_from_slice(&self.signature.raw_s());
+        bytes[0..32].copy_from_slice(self.signature.raw_r());
+        bytes[32..64].copy_from_slice(self.signature.raw_s());
         (hash, bytes)
     }
 

@@ -17,6 +17,7 @@
 
 use crate::blake2b::{Blake2b256, Blake2b512, Hash};
 use crate::error::Error;
+use alloc::borrow::ToOwned;
 use alloc::vec::Vec;
 use blacknet_crypto::{
     algebra::{IntegerRing, One},
@@ -29,6 +30,9 @@ use core::mem::transmute;
 use data_encoding::HEXUPPER;
 use digest::Digest;
 use serde::{Deserialize, Serialize};
+
+// For compatibility, implementation follows eddsa-java 0.3.0
+// https://eprint.iacr.org/2020/1244
 
 const BASE: Edwards25519GroupExtended = unsafe {
     Edwards25519GroupExtended::const_from_unchecked(
@@ -52,12 +56,12 @@ pub struct Signature {
 }
 
 impl Signature {
-    pub const fn raw_r(self) -> [u8; 32] {
-        self.r
+    pub const fn raw_r(&self) -> &[u8; 32] {
+        &self.r
     }
 
-    pub const fn raw_s(self) -> [u8; 32] {
-        self.s
+    pub const fn raw_s(&self) -> &[u8; 32] {
+        &self.s
     }
 }
 
@@ -127,8 +131,29 @@ pub fn sign(hash: Hash, private_key: PrivateKey) -> Signature {
     Signature { r, s }
 }
 
-pub fn verify(_signature: Signature, _hash: Hash, _public_key: PublicKey) -> Result<(), Error> {
-    todo!();
+pub fn verify(signature: Signature, hash: Hash, public_key: PublicKey) -> Result<(), Error> {
+    let a = Edwards25519GroupAffine::decode(public_key)
+        .ok_or_else(|| Error::Invalid("Invalid public key".to_owned()))?;
+    let mut hasher = Blake2b512::new();
+    hasher.update(signature.r);
+    hasher.update(a.encode());
+    hasher.update(hash);
+    let h: [u8; 64] = hasher.finalize().into();
+    let h = Scalar25519::with_512(h);
+    let h = h.canonical().bits::<{ Scalar25519::BITS as usize }>();
+    let a: Edwards25519GroupExtended = a.into();
+    let s = UInt256::from_le_bytes(signature.s);
+    let s = s
+        .bits::<{ UInt256::BITS as usize }>()
+        .into_iter()
+        .take(s.bit_width() as usize);
+    let r = BASE * s - a * h;
+    let r: Edwards25519GroupAffine = r.into();
+    if r.encode() == signature.r {
+        Ok(())
+    } else {
+        Err(Error::Invalid("Invalid signature".to_owned()))
+    }
 }
 
 fn parse_private_key(private_key: PrivateKey) -> (Scalar25519, [u8; 32]) {

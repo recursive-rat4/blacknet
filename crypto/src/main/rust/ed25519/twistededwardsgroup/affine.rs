@@ -19,6 +19,7 @@ use crate::algebra::{
     AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, Double, IntegerRing, LeftZero,
     One, RightZero, Set, Sqrt, Square, Zero, add_sub_chain,
 };
+use crate::bigint::UInt256;
 use crate::ed25519::field25519::Field25519;
 use crate::ed25519::{TwistedEdwardsGroupParams, is_on_curve};
 use core::fmt::{Debug, Formatter, Result};
@@ -71,6 +72,17 @@ impl<P: TwistedEdwardsGroupParams> TwistedEdwardsGroupAffine<P> {
         let x_is_odd = self.x.canonical().is_odd();
         bytes[31] |= (x_is_odd as u8) << 7;
         bytes
+    }
+
+    pub fn decode(mut bytes: [u8; 32]) -> Option<Self>
+    where
+        P: TwistedEdwardsGroupParams<F = Field25519>,
+    {
+        let x_is_odd = (bytes[31] & 0x80) != 0;
+        bytes[31] &= 0x7F;
+        let n = UInt256::from_le_bytes(bytes);
+        let y = Field25519::new(n);
+        Self::try_from_y(x_is_odd, y)
     }
 }
 

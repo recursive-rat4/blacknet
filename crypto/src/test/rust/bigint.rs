@@ -206,3 +206,15 @@ fn clz() {
     assert_eq!(c.leading_zeros(), 16);
     assert_eq!(d.leading_zeros(), 0);
 }
+
+#[test]
+fn bit_width() {
+    let a = UInt256::MIN;
+    let b = UInt256::from_hex("00000000000000000000FFFFFFFF0000FFFFFFFFFFFFFFFFFFFFFFFF00000000");
+    let c = UInt256::from_hex("0000FFFFFFFFFFFFFFFFFFFFFFFF0000FFFFFFFFFFFFFFFFFFFFFFFF00000000");
+    let d = UInt256::MAX;
+    assert_eq!(a.bit_width(), 0);
+    assert_eq!(b.bit_width(), 176);
+    assert_eq!(c.bit_width(), 240);
+    assert_eq!(d.bit_width(), 256);
+}

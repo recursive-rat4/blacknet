@@ -15,6 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use blacknet_compat::{assert_err, assert_ok};
 use blacknet_kernel::blake2b::Blake2b256;
 use blacknet_kernel::ed25519::*;
 use data_encoding::HEXUPPER;
@@ -46,4 +47,26 @@ fn signing() {
         .try_into()
         .unwrap();
     assert_eq!(signature, bytes);
+}
+
+#[test]
+fn verifying() {
+    let public_key: PublicKey = HEXUPPER
+        .decode(b"27A2C7CE9EE9AF0458832079017A5FBBB1F1551932C4CB901396BAE95F7D0F0A")
+        .unwrap()
+        .try_into()
+        .unwrap();
+    let signature: Signature = HEXUPPER
+        .decode(b"6D5D4F6A81C601B1834701BDE84785470F92DFA517975BED9AAEA035FBDB0072327EFD207195B7202B5A72BB9CC37443A011C35137E1DF1C11BB5E9C60125B04")
+        .unwrap()
+        .try_into()
+        .unwrap();
+
+    let message = "Blacknet Signed Message:\nBlacknet test message 1";
+    let hash = Blake2b256::digest(message).into();
+    assert_err!(verify(signature, hash, public_key));
+
+    let message = "Blacknet Signed Message:\nBlacknet test message 2";
+    let hash = Blake2b256::digest(message).into();
+    assert_ok!(verify(signature, hash, public_key));
 }
