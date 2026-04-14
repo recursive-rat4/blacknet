@@ -66,15 +66,7 @@ impl<R: Semiring> Add for LinearTerm<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: Self) -> Self::Output {
-        if self.variable != rps.variable {
-            [self, rps].into()
-        } else {
-            let term = Self {
-                variable: self.variable,
-                coefficient: self.coefficient + rps.coefficient,
-            };
-            term.into()
-        }
+        LinearCombination::with_terms([self, rps])
     }
 }
 
@@ -156,15 +148,7 @@ impl<R: UnitalRing> Sub for LinearTerm<R> {
     type Output = LinearCombination<R>;
 
     fn sub(self, rps: Self) -> Self::Output {
-        if self.variable != rps.variable {
-            [self, -rps].into()
-        } else {
-            let term = Self {
-                variable: self.variable,
-                coefficient: self.coefficient - rps.coefficient,
-            };
-            term.into()
-        }
+        LinearCombination::with_terms([self, -rps])
     }
 }
 
@@ -377,15 +361,7 @@ impl<R: Semiring> Add<Variable<R>> for LinearTerm<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: Variable<R>) -> Self::Output {
-        if self.variable != rps {
-            [self, (rps, Constant::ONE).into()].into()
-        } else {
-            let term = Self {
-                variable: self.variable,
-                coefficient: self.coefficient + Constant::ONE,
-            };
-            term.into()
-        }
+        LinearCombination::with_terms([self, (rps, Constant::ONE).into()])
     }
 }
 
@@ -417,15 +393,7 @@ impl<R: UnitalRing> Sub<Variable<R>> for LinearTerm<R> {
     type Output = LinearCombination<R>;
 
     fn sub(self, rps: Variable<R>) -> Self::Output {
-        if self.variable != rps {
-            [self, (rps, -Constant::ONE).into()].into()
-        } else {
-            let term = Self {
-                variable: self.variable,
-                coefficient: self.coefficient - Constant::ONE,
-            };
-            term.into()
-        }
+        LinearCombination::with_terms([self, (rps, -Constant::ONE).into()])
     }
 }
 

@@ -43,6 +43,13 @@ impl<R: Semiring> LinearCombination<R> {
     pub fn clear(&mut self) {
         self.terms.clear()
     }
+
+    /// Construct a new linear combination given some terms.
+    pub fn with_terms<const N: usize>(terms: [LinearTerm<R>; N]) -> Self {
+        let mut lc = Self::new();
+        terms.into_iter().for_each(|term| lc += term);
+        lc
+    }
 }
 
 impl<'a, R: Semiring + Clone + Eq + 'a> Expression<'a, R> for LinearCombination<R> {
@@ -84,17 +91,6 @@ impl<R: Semiring> From<LinearTerm<R>> for LinearCombination<R> {
         let mut terms = BTreeMap::new();
         terms.insert(term.variable, term.coefficient);
         Self { terms }
-    }
-}
-
-impl<R: Semiring, const N: usize> From<[LinearTerm<R>; N]> for LinearCombination<R> {
-    fn from(terms: [LinearTerm<R>; N]) -> Self {
-        let iter = terms
-            .into_iter()
-            .map(|term| (term.variable, term.coefficient));
-        Self {
-            terms: BTreeMap::from_iter(iter),
-        }
     }
 }
 

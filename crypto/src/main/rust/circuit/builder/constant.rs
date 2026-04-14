@@ -299,11 +299,10 @@ impl<R: Semiring> Add<Variable<R>> for Constant<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: Variable<R>) -> Self::Output {
-        [
+        LinearCombination::with_terms([
             (Variable::CONSTANT, self).into(),
             (rps, Constant::ONE).into(),
-        ]
-        .into()
+        ])
     }
 }
 
@@ -319,11 +318,10 @@ impl<R: UnitalRing> Sub<Variable<R>> for Constant<R> {
     type Output = LinearCombination<R>;
 
     fn sub(self, rps: Variable<R>) -> Self::Output {
-        [
+        LinearCombination::with_terms([
             (Variable::CONSTANT, self).into(),
             (rps, -Constant::ONE).into(),
-        ]
-        .into()
+        ])
     }
 }
 
@@ -355,7 +353,7 @@ impl<R: Semiring> Add<LinearTerm<R>> for Constant<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: LinearTerm<R>) -> Self::Output {
-        [(Variable::CONSTANT, self).into(), rps].into()
+        LinearCombination::with_terms([(Variable::CONSTANT, self).into(), rps])
     }
 }
 
@@ -387,7 +385,7 @@ impl<R: UnitalRing> Sub<LinearTerm<R>> for Constant<R> {
     type Output = LinearCombination<R>;
 
     fn sub(self, rps: LinearTerm<R>) -> Self::Output {
-        [(Variable::CONSTANT, self).into(), -rps].into()
+        LinearCombination::with_terms([(Variable::CONSTANT, self).into(), -rps])
     }
 }
 
