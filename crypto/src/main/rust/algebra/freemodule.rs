@@ -30,8 +30,9 @@ use core::ops::{
 #[cfg(feature = "rayon")]
 use rayon::iter::IntoParallelIterator;
 use serde::{Deserialize, Serialize};
+use zeroize::Zeroize;
 
-#[derive(Clone, Copy, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Copy, Deserialize, Eq, PartialEq, Serialize, Zeroize)]
 #[serde(bound(
     deserialize = "[R; N]: Deserialize<'de>",
     serialize = "[R; N]: Serialize"

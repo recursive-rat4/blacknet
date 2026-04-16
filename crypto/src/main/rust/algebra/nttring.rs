@@ -33,16 +33,18 @@ use core::ops::{Add, AddAssign, Div, Index, IndexMut, Mul, MulAssign, Neg, Sub, 
 #[cfg(feature = "rayon")]
 use rayon::iter::IntoParallelIterator;
 use serde::{Deserialize, Serialize};
+use zeroize::Zeroize;
 
 // Univariate polynomial ring in NTT form
 
 type Iso<Z, const N: usize> = UnivariateRing<Z, N, Negacyclic>;
 
-#[derive(Clone, Copy, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Copy, Deserialize, Eq, PartialEq, Serialize, Zeroize)]
 #[serde(bound(
     deserialize = "FreeModule<Z, N>: Deserialize<'de>",
     serialize = "FreeModule<Z, N>: Serialize"
 ))]
+#[zeroize(bound = "Z: Zeroize")]
 pub struct NTTRing<Z: Twiddles<M>, const M: usize, const N: usize> {
     spectrum: FreeModule<Z, N>,
 }

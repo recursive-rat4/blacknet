@@ -26,6 +26,7 @@ use crate::integer::Integer;
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
 use core::ops::{Add, AddAssign, Div, Mul, MulAssign, Neg, Sub, SubAssign};
+use zeroize::DefaultIsZeroes;
 
 /// The prime field of Fermat number `2¹⁶ + 1`.
 #[derive(Clone, Copy, Default, Eq)]
@@ -475,6 +476,8 @@ impl BalancedRepresentative for FermatField {
         }
     }
 }
+
+impl DefaultIsZeroes for FermatField {}
 
 // (2¹⁶ + 1) / (x¹⁰²⁴ + 1)
 

@@ -26,6 +26,7 @@ use core::ops::{
     ShlAssign, Shr, ShrAssign, Sub, SubAssign,
 };
 use serde::{Deserialize, Serialize};
+use zeroize::DefaultIsZeroes;
 
 pub type UInt256 = BigInt<4>;
 pub type UInt512 = BigInt<8>;
@@ -601,3 +602,5 @@ impl<const N: usize> SubAssign for BigInt<N> {
         *self = *self - rps
     }
 }
+
+impl<const N: usize> DefaultIsZeroes for BigInt<N> {}

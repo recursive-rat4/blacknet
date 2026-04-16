@@ -25,9 +25,10 @@ use core::iter::{Product, Sum, zip};
 use core::mem::{MaybeUninit, transmute_copy};
 use core::ops::{Add, AddAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign};
 use serde::{Deserialize, Serialize};
+use zeroize::Zeroize;
 
 /// A ring of square matrices.
-#[derive(Clone, Copy, Deserialize, Debug, Eq, PartialEq, Serialize)]
+#[derive(Clone, Copy, Deserialize, Debug, Eq, PartialEq, Serialize, Zeroize)]
 #[serde(bound(
     deserialize = "[R; NN]: Deserialize<'de>",
     serialize = "[R; NN]: Serialize"

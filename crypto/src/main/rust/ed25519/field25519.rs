@@ -28,6 +28,7 @@ use core::fmt;
 use core::iter::{Product, Sum};
 use core::ops::{Add, AddAssign, Div, Mul, MulAssign, Neg, Sub, SubAssign};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use zeroize::DefaultIsZeroes;
 
 /// The prime field `2²⁵⁵ - 19`.
 #[derive(Clone, Copy, Default, Eq, PartialEq)]
@@ -590,3 +591,5 @@ impl<'de> Deserialize<'de> for Field25519 {
         Ok(Self::new(n))
     }
 }
+
+impl DefaultIsZeroes for Field25519 {}

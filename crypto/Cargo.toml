@@ -35,6 +35,7 @@ blacknet-compat = { workspace = true, optional = true }
 libm.workspace = true
 rayon = { workspace = true, optional = true }
 serde.workspace = true
+zeroize.workspace = true
 
 [dev-dependencies]
 blacknet-compat.workspace = true

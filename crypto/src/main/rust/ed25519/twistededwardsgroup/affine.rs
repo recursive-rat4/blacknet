@@ -25,7 +25,10 @@ use crate::ed25519::{TwistedEdwardsGroupParams, is_on_curve};
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::Sum;
 use core::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
+use zeroize::Zeroize;
 
+#[derive(Zeroize)]
+#[zeroize(bound = "P::F: Zeroize")]
 pub struct TwistedEdwardsGroupAffine<P: TwistedEdwardsGroupParams> {
     x: P::F,
     y: P::F,

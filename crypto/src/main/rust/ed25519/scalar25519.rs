@@ -28,6 +28,7 @@ use core::iter::{Product, Sum};
 use core::mem::transmute;
 use core::ops::{Add, AddAssign, Div, Mul, MulAssign, Neg, Sub, SubAssign};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use zeroize::DefaultIsZeroes;
 
 /// The prime field `2²⁵² + 27742317777372353535851937790883648493`.
 #[derive(Clone, Copy, Default, Eq, PartialEq)]
@@ -618,3 +619,5 @@ impl<'de> Deserialize<'de> for Scalar25519 {
         Ok(Self::new(n))
     }
 }
+
+impl DefaultIsZeroes for Scalar25519 {}

@@ -33,13 +33,15 @@ use core::ops::{Add, AddAssign, Div, Index, IndexMut, Mul, MulAssign, Neg, Sub, 
 #[cfg(feature = "rayon")]
 use rayon::iter::IntoParallelIterator;
 use serde::{Deserialize, Serialize};
+use zeroize::Zeroize;
 
 /// Univariate quotient polynomial ring in monomial basis.
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Zeroize)]
 #[serde(bound(
     deserialize = "FreeModule<R, N>: Deserialize<'de>",
     serialize = "FreeModule<R, N>: Serialize"
 ))]
+#[zeroize(bound = "R: Zeroize")]
 pub struct UnivariateRing<R: UnitalRing, const N: usize, C: Convolution<R, N>> {
     coefficients: FreeModule<R, N>,
     #[serde(skip)]

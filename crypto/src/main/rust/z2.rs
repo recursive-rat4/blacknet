@@ -29,6 +29,7 @@ use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
 use core::ops::{Add, AddAssign, Div, Mul, MulAssign, Neg, Sub, SubAssign};
 use serde::{Deserialize, Serialize};
+use zeroize::DefaultIsZeroes;
 
 /// The quotient ring `ℤ/2ℤ`.
 #[derive(Clone, Copy, Default, Deserialize, Eq, PartialEq, Serialize)]
@@ -400,3 +401,5 @@ impl BalancedRepresentative for Z2 {
         self.n.into()
     }
 }
+
+impl DefaultIsZeroes for Z2 {}

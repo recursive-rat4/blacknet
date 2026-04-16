@@ -21,7 +21,9 @@ use crate::assigner::symmetric::Permutation;
 use crate::random::UniformGenerator;
 use crate::symmetric::{Duplexer, Phase};
 use core::marker::PhantomData;
+use zeroize::Zeroize;
 
+#[derive(Zeroize)]
 pub struct Duplex<
     'a,
     S: AdditiveGroup + From<i8>,
@@ -34,6 +36,7 @@ pub struct Duplex<
     position: usize,
     state: [S; WIDTH],
     phantom: PhantomData<P>,
+    #[zeroize(skip)]
     assigment: &'a Assigment<S>,
 }
 
@@ -80,6 +83,37 @@ impl<
             self.state[WIDTH - 1] += S::from(1);
         }
     }
+}
+
+impl<
+    'a,
+    S: AdditiveGroup + Clone + From<i8>,
+    const RATE: usize,
+    const CAPACITY: usize,
+    const WIDTH: usize,
+    P: Permutation<S, Domain = [S; WIDTH]>,
+> Clone for Duplex<'a, S, RATE, CAPACITY, WIDTH, P>
+{
+    fn clone(&self) -> Self {
+        Self {
+            phase: self.phase,
+            position: self.position,
+            state: self.state.clone(),
+            phantom: PhantomData,
+            assigment: self.assigment,
+        }
+    }
+}
+
+impl<
+    'a,
+    S: AdditiveGroup + Copy + From<i8>,
+    const RATE: usize,
+    const CAPACITY: usize,
+    const WIDTH: usize,
+    P: Permutation<S, Domain = [S; WIDTH]>,
+> Copy for Duplex<'a, S, RATE, CAPACITY, WIDTH, P>
+{
 }
 
 impl<

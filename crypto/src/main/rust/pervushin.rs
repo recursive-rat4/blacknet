@@ -29,6 +29,7 @@ use crate::symmetric::{Absorb, Duplexer, Squeeze};
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
 use core::ops::{Add, AddAssign, Div, Mul, MulAssign, Neg, Sub, SubAssign};
+use zeroize::DefaultIsZeroes;
 
 /// The prime field of Pervushin number `2⁶¹ - 1`.
 #[derive(Clone, Copy, Default, Eq)]
@@ -566,6 +567,8 @@ impl Squeeze<Self> for PervushinField {
         duplex.squeeze_msg()
     }
 }
+
+impl DefaultIsZeroes for PervushinField {}
 
 // (2⁶¹ - 1) / (x² + 1)
 

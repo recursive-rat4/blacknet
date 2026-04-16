@@ -19,6 +19,7 @@ use crate::algebra::AdditiveGroup;
 use crate::random::UniformGenerator;
 use crate::symmetric::Permutation;
 use core::marker::PhantomData;
+use zeroize::{DefaultIsZeroes, Zeroize};
 
 /// The phase of sponge state
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
@@ -29,6 +30,8 @@ pub enum Phase {
     /// Squeezing from sponge
     Squeeze,
 }
+
+impl DefaultIsZeroes for Phase {}
 
 pub trait Duplexer: Sized + UniformGenerator {
     type Msg;
@@ -79,7 +82,7 @@ pub trait SqueezeWithSize<T> {
 ///
 /// Non-injective padding: <http://fuee.u-fukui.ac.jp/~hirose/publication/ask20160930.pdf>
 ///
-#[derive(Clone, Copy)]
+#[derive(Zeroize)]
 pub struct Duplex<
     S: AdditiveGroup + From<i8>,
     const RATE: usize,
@@ -141,6 +144,34 @@ impl<
     pub fn sneak(self) -> [S; WIDTH] {
         self.state
     }
+}
+
+impl<
+    S: AdditiveGroup + Clone + From<i8>,
+    const RATE: usize,
+    const CAPACITY: usize,
+    const WIDTH: usize,
+    P: Permutation<Domain = [S; WIDTH]>,
+> Clone for Duplex<S, RATE, CAPACITY, WIDTH, P>
+{
+    fn clone(&self) -> Self {
+        Self {
+            phase: self.phase,
+            position: self.position,
+            state: self.state.clone(),
+            phantom: PhantomData,
+        }
+    }
+}
+
+impl<
+    S: AdditiveGroup + Copy + From<i8>,
+    const RATE: usize,
+    const CAPACITY: usize,
+    const WIDTH: usize,
+    P: Permutation<Domain = [S; WIDTH]>,
+> Copy for Duplex<S, RATE, CAPACITY, WIDTH, P>
+{
 }
 
 impl<

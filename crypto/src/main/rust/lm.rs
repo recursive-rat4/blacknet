@@ -29,6 +29,7 @@ use crate::symmetric::{Absorb, Duplexer, Squeeze};
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
 use core::ops::{Add, AddAssign, Div, Mul, MulAssign, Neg, Sub, SubAssign};
+use zeroize::DefaultIsZeroes;
 
 /// `2⁶⁰ + 2⁵ + 1`
 #[derive(Clone, Copy, Default, Eq)]
@@ -559,6 +560,8 @@ impl Squeeze<Self> for LMField {
         duplex.squeeze_msg()
     }
 }
+
+impl DefaultIsZeroes for LMField {}
 
 // (2⁶⁰ + 2⁵ + 1) / (x² - ³²√1)
 

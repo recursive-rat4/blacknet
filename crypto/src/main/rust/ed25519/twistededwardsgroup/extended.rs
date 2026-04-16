@@ -23,7 +23,10 @@ use crate::ed25519::{TwistedEdwardsGroupAffine, TwistedEdwardsGroupParams, is_on
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::Sum;
 use core::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
+use zeroize::Zeroize;
 
+#[derive(Zeroize)]
+#[zeroize(bound = "P::F: Zeroize")]
 pub struct TwistedEdwardsGroupExtended<P: TwistedEdwardsGroupParams> {
     x: P::F,
     y: P::F,
