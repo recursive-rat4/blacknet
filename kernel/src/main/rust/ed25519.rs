@@ -88,18 +88,18 @@ impl TryFrom<Vec<u8>> for Signature {
 
 pub type PublicKey = [u8; 32];
 
-pub fn to_public_key(private_key: PrivateKey) -> PublicKey {
-    let (scalar, _) = parse_private_key(private_key);
+pub fn to_public_key(secret_key: SecretKey) -> PublicKey {
+    let (scalar, _) = parse_secret_key(secret_key);
     mul_base_encode(scalar)
 }
 
-pub type PrivateKey = [u8; 32];
+pub type SecretKey = [u8; 32];
 
 const fn check_version(bytes: [u8; 32]) -> bool {
     bytes[0] & 0xF0 == 0x10
 }
 
-pub fn to_private_key(mnemonic: &str) -> Option<PrivateKey> {
+pub fn to_secret_key(mnemonic: &str) -> Option<SecretKey> {
     let hash: [u8; 32] = Blake2b256::digest(mnemonic).into();
     if check_version(hash) {
         Some(hash)
@@ -108,8 +108,8 @@ pub fn to_private_key(mnemonic: &str) -> Option<PrivateKey> {
     }
 }
 
-pub fn sign(hash: Hash, private_key: PrivateKey) -> Signature {
-    let (scalar, h) = parse_private_key(private_key);
+pub fn sign(hash: Hash, secret_key: SecretKey) -> Signature {
+    let (scalar, h) = parse_secret_key(secret_key);
 
     let mut hasher = Blake2b512::new();
     hasher.update(h);
@@ -156,8 +156,8 @@ pub fn verify(signature: Signature, hash: Hash, public_key: PublicKey) -> Result
     }
 }
 
-fn parse_private_key(private_key: PrivateKey) -> (Scalar25519, [u8; 32]) {
-    let mut hash: [u8; 64] = Blake2b512::digest(private_key).into();
+fn parse_secret_key(secret_key: SecretKey) -> (Scalar25519, [u8; 32]) {
+    let mut hash: [u8; 64] = Blake2b512::digest(secret_key).into();
     hash[0] &= 0xF8;
     hash[31] &= 0x7F;
     hash[31] |= 0x40;

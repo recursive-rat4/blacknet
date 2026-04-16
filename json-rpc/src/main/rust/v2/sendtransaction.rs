@@ -25,7 +25,7 @@ use axum::{
 };
 use blacknet_kernel::amount::Amount;
 use blacknet_kernel::blake2b::Hash;
-use blacknet_kernel::ed25519::{to_private_key, to_public_key};
+use blacknet_kernel::ed25519::{to_public_key, to_secret_key};
 use blacknet_kernel::hashlock::HashLock;
 use blacknet_kernel::timelock::TimeLock;
 use blacknet_kernel::transaction::*;
@@ -55,8 +55,8 @@ async fn bundle(
             return respond_error(format!("Invalid hex: {err}"));
         }
     };
-    let private_key = if let Some(private_key) = to_private_key(&request.mnemonic) {
-        private_key
+    let secret_key = if let Some(secret_key) = to_secret_key(&request.mnemonic) {
+        secret_key
     } else {
         return respond_error("Invalid mnemonic".to_owned());
     };
@@ -65,7 +65,7 @@ async fn bundle(
     } else {
         node.wallet_db().anchor()
     };
-    let from = to_public_key(private_key);
+    let from = to_public_key(secret_key);
     let seq = match node.wallet_db().sequence(from) {
         Some(seq) => seq,
         None => {
@@ -93,7 +93,7 @@ async fn bundle(
         }
     };
     let mut tx = Transaction::new(from, seq, anchor, request.fee, TxKind::Blob, data.into());
-    let (hash, bytes) = tx.sign(private_key);
+    let (hash, bytes) = tx.sign(secret_key);
 
     match node.broadcast_tx(hash, &bytes) {
         Ok(()) => respond_text(hash.to_string()),
@@ -117,8 +117,8 @@ async fn burn(State(node): State<Arc<Node>>, Form(request): Form<BurnRequest>) -
             return respond_error(format!("Invalid hex: {err}"));
         }
     };
-    let private_key = if let Some(private_key) = to_private_key(&request.mnemonic) {
-        private_key
+    let secret_key = if let Some(secret_key) = to_secret_key(&request.mnemonic) {
+        secret_key
     } else {
         return respond_error("Invalid mnemonic".to_owned());
     };
@@ -127,7 +127,7 @@ async fn burn(State(node): State<Arc<Node>>, Form(request): Form<BurnRequest>) -
     } else {
         node.wallet_db().anchor()
     };
-    let from = to_public_key(private_key);
+    let from = to_public_key(secret_key);
     let seq = match node.wallet_db().sequence(from) {
         Some(seq) => seq,
         None => {
@@ -141,7 +141,7 @@ async fn burn(State(node): State<Arc<Node>>, Form(request): Form<BurnRequest>) -
         }
     };
     let mut tx = Transaction::new(from, seq, anchor, request.fee, TxKind::Burn, data.into());
-    let (hash, bytes) = tx.sign(private_key);
+    let (hash, bytes) = tx.sign(secret_key);
 
     match node.broadcast_tx(hash, &bytes) {
         Ok(()) => respond_text(hash.to_string()),
@@ -163,8 +163,8 @@ async fn cancel_lease(
     State(node): State<Arc<Node>>,
     Form(request): Form<CancelLeaseRequest>,
 ) -> Response<String> {
-    let private_key = if let Some(private_key) = to_private_key(&request.mnemonic) {
-        private_key
+    let secret_key = if let Some(secret_key) = to_secret_key(&request.mnemonic) {
+        secret_key
     } else {
         return respond_error("Invalid mnemonic".to_owned());
     };
@@ -173,7 +173,7 @@ async fn cancel_lease(
     } else {
         node.wallet_db().anchor()
     };
-    let from = to_public_key(private_key);
+    let from = to_public_key(secret_key);
     let seq = match node.wallet_db().sequence(from) {
         Some(seq) => seq,
         None => {
@@ -200,7 +200,7 @@ async fn cancel_lease(
         TxKind::CancelLease,
         data.into(),
     );
-    let (hash, bytes) = tx.sign(private_key);
+    let (hash, bytes) = tx.sign(secret_key);
 
     match node.broadcast_tx(hash, &bytes) {
         Ok(()) => respond_text(hash.to_string()),
@@ -227,8 +227,8 @@ async fn claim_swap(
             return respond_error(format!("Invalid hex: {err}"));
         }
     };
-    let private_key = if let Some(private_key) = to_private_key(&request.mnemonic) {
-        private_key
+    let secret_key = if let Some(secret_key) = to_secret_key(&request.mnemonic) {
+        secret_key
     } else {
         return respond_error("Invalid mnemonic".to_owned());
     };
@@ -237,7 +237,7 @@ async fn claim_swap(
     } else {
         node.wallet_db().anchor()
     };
-    let from = to_public_key(private_key);
+    let from = to_public_key(secret_key);
     let seq = match node.wallet_db().sequence(from) {
         Some(seq) => seq,
         None => {
@@ -272,7 +272,7 @@ async fn claim_swap(
         TxKind::ClaimHTLC,
         data.into(),
     );
-    let (hash, bytes) = tx.sign(private_key);
+    let (hash, bytes) = tx.sign(secret_key);
 
     match node.broadcast_tx(hash, &bytes) {
         Ok(()) => respond_text(hash.to_string()),
@@ -303,8 +303,8 @@ async fn create_swap(
             return respond_error(format!("Invalid hex: {err}"));
         }
     };
-    let private_key = if let Some(private_key) = to_private_key(&request.mnemonic) {
-        private_key
+    let secret_key = if let Some(secret_key) = to_secret_key(&request.mnemonic) {
+        secret_key
     } else {
         return respond_error("Invalid mnemonic".to_owned());
     };
@@ -313,7 +313,7 @@ async fn create_swap(
     } else {
         node.wallet_db().anchor()
     };
-    let from = to_public_key(private_key);
+    let from = to_public_key(secret_key);
     let seq = match node.wallet_db().sequence(from) {
         Some(seq) => seq,
         None => {
@@ -342,7 +342,7 @@ async fn create_swap(
         TxKind::CreateHTLC,
         data.into(),
     );
-    let (hash, bytes) = tx.sign(private_key);
+    let (hash, bytes) = tx.sign(secret_key);
 
     match node.broadcast_tx(hash, &bytes) {
         Ok(()) => respond_text(hash.to_string()),
@@ -363,8 +363,8 @@ async fn lease(
     State(node): State<Arc<Node>>,
     Form(request): Form<LeaseRequest>,
 ) -> Response<String> {
-    let private_key = if let Some(private_key) = to_private_key(&request.mnemonic) {
-        private_key
+    let secret_key = if let Some(secret_key) = to_secret_key(&request.mnemonic) {
+        secret_key
     } else {
         return respond_error("Invalid mnemonic".to_owned());
     };
@@ -373,7 +373,7 @@ async fn lease(
     } else {
         node.wallet_db().anchor()
     };
-    let from = to_public_key(private_key);
+    let from = to_public_key(secret_key);
     let seq = match node.wallet_db().sequence(from) {
         Some(seq) => seq,
         None => {
@@ -393,7 +393,7 @@ async fn lease(
         }
     };
     let mut tx = Transaction::new(from, seq, anchor, request.fee, TxKind::Lease, data.into());
-    let (hash, bytes) = tx.sign(private_key);
+    let (hash, bytes) = tx.sign(secret_key);
 
     match node.broadcast_tx(hash, &bytes) {
         Ok(()) => respond_text(hash.to_string()),
@@ -413,8 +413,8 @@ async fn refund_swap(
     State(node): State<Arc<Node>>,
     Form(request): Form<RefundSwapRequest>,
 ) -> Response<String> {
-    let private_key = if let Some(private_key) = to_private_key(&request.mnemonic) {
-        private_key
+    let secret_key = if let Some(secret_key) = to_secret_key(&request.mnemonic) {
+        secret_key
     } else {
         return respond_error("Invalid mnemonic".to_owned());
     };
@@ -423,7 +423,7 @@ async fn refund_swap(
     } else {
         node.wallet_db().anchor()
     };
-    let from = to_public_key(private_key);
+    let from = to_public_key(secret_key);
     let seq = match node.wallet_db().sequence(from) {
         Some(seq) => seq,
         None => {
@@ -458,7 +458,7 @@ async fn refund_swap(
         TxKind::RefundHTLC,
         data.into(),
     );
-    let (hash, bytes) = tx.sign(private_key);
+    let (hash, bytes) = tx.sign(secret_key);
 
     match node.broadcast_tx(hash, &bytes) {
         Ok(()) => respond_text(hash.to_string()),
@@ -481,8 +481,8 @@ async fn transfer(
     State(node): State<Arc<Node>>,
     Form(request): Form<TransferRequest>,
 ) -> Response<String> {
-    let private_key = if let Some(private_key) = to_private_key(&request.mnemonic) {
-        private_key
+    let secret_key = if let Some(secret_key) = to_secret_key(&request.mnemonic) {
+        secret_key
     } else {
         return respond_error("Invalid mnemonic".to_owned());
     };
@@ -491,7 +491,7 @@ async fn transfer(
     } else {
         node.wallet_db().anchor()
     };
-    let from = to_public_key(private_key);
+    let from = to_public_key(secret_key);
     let seq = match node.wallet_db().sequence(from) {
         Some(seq) => seq,
         None => {
@@ -525,7 +525,7 @@ async fn transfer(
         TxKind::Transfer,
         data.into(),
     );
-    let (hash, bytes) = tx.sign(private_key);
+    let (hash, bytes) = tx.sign(secret_key);
 
     match node.broadcast_tx(hash, &bytes) {
         Ok(()) => respond_text(hash.to_string()),
@@ -548,8 +548,8 @@ async fn withdraw_from_lease(
     State(node): State<Arc<Node>>,
     Form(request): Form<WithdrawFromLeaseRequest>,
 ) -> Response<String> {
-    let private_key = if let Some(private_key) = to_private_key(&request.mnemonic) {
-        private_key
+    let secret_key = if let Some(secret_key) = to_secret_key(&request.mnemonic) {
+        secret_key
     } else {
         return respond_error("Invalid mnemonic".to_owned());
     };
@@ -558,7 +558,7 @@ async fn withdraw_from_lease(
     } else {
         node.wallet_db().anchor()
     };
-    let from = to_public_key(private_key);
+    let from = to_public_key(secret_key);
     let seq = match node.wallet_db().sequence(from) {
         Some(seq) => seq,
         None => {
@@ -590,7 +590,7 @@ async fn withdraw_from_lease(
         TxKind::WithdrawFromLease,
         data.into(),
     );
-    let (hash, bytes) = tx.sign(private_key);
+    let (hash, bytes) = tx.sign(secret_key);
 
     match node.broadcast_tx(hash, &bytes) {
         Ok(()) => respond_text(hash.to_string()),

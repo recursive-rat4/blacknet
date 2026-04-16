@@ -24,7 +24,7 @@ use axum::{
     routing::get,
     routing::post,
 };
-use blacknet_kernel::ed25519::to_private_key;
+use blacknet_kernel::ed25519::to_secret_key;
 use blacknet_network::node::Node;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -38,8 +38,8 @@ async fn start_staking(
     State(_node): State<Arc<Node>>,
     Form(request): Form<StartStakingRequest>,
 ) -> Response<String> {
-    let _private_key = if let Some(private_key) = to_private_key(&request.mnemonic) {
-        private_key
+    let _secret_key = if let Some(secret_key) = to_secret_key(&request.mnemonic) {
+        secret_key
     } else {
         return respond_error("Invalid mnemonic".to_owned());
     };
@@ -55,8 +55,8 @@ async fn stop_staking(
     State(_node): State<Arc<Node>>,
     Form(request): Form<StopStakingRequest>,
 ) -> Response<String> {
-    let _private_key = if let Some(private_key) = to_private_key(&request.mnemonic) {
-        private_key
+    let _secret_key = if let Some(secret_key) = to_secret_key(&request.mnemonic) {
+        secret_key
     } else {
         return respond_error("Invalid mnemonic".to_owned());
     };
@@ -72,8 +72,8 @@ async fn is_staking(
     State(_node): State<Arc<Node>>,
     Form(request): Form<IsStakingRequest>,
 ) -> Response<String> {
-    let _private_key = if let Some(private_key) = to_private_key(&request.mnemonic) {
-        private_key
+    let _secret_key = if let Some(secret_key) = to_secret_key(&request.mnemonic) {
+        secret_key
     } else {
         return respond_error("Invalid mnemonic".to_owned());
     };

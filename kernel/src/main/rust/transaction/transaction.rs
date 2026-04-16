@@ -17,7 +17,7 @@
 
 use crate::amount::Amount;
 use crate::blake2b::{Blake2b256, Hash};
-use crate::ed25519::{PrivateKey, PublicKey, Signature, sign, verify};
+use crate::ed25519::{PublicKey, SecretKey, Signature, sign, verify};
 use crate::error::Result;
 use crate::transaction::TxKind;
 use alloc::boxed::Box;
@@ -84,10 +84,10 @@ impl Transaction {
         }
     }
 
-    pub fn sign(&mut self, private_key: PrivateKey) -> (Hash, Vec<u8>) {
+    pub fn sign(&mut self, secret_key: SecretKey) -> (Hash, Vec<u8>) {
         let mut bytes = to_bytes(&self).expect("Transaction serialization");
         let hash = Self::compute_hash(&bytes).expect("Transaction serialized");
-        self.signature = sign(hash, private_key);
+        self.signature = sign(hash, secret_key);
         bytes[0..32].copy_from_slice(self.signature.raw_r());
         bytes[32..64].copy_from_slice(self.signature.raw_s());
         (hash, bytes)
