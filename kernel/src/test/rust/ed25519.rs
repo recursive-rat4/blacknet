@@ -24,8 +24,8 @@ use digest::Digest;
 #[test]
 fn public_key() {
     let mnemonic = "疗 昨 示 穿 偏 贷 五 袁 色 烂 撒 殖";
-    let private_key = to_private_key(mnemonic).unwrap();
-    let public_key = to_public_key(private_key);
+    let secret_key = to_secret_key(mnemonic).unwrap();
+    let public_key = to_public_key(secret_key);
     let bytes: PublicKey = HEXUPPER
         .decode(b"27A2C7CE9EE9AF0458832079017A5FBBB1F1551932C4CB901396BAE95F7D0F0A")
         .unwrap()
@@ -37,10 +37,10 @@ fn public_key() {
 #[test]
 fn signing() {
     let mnemonic = "疗 昨 示 穿 偏 贷 五 袁 色 烂 撒 殖";
-    let private_key = to_private_key(mnemonic).unwrap();
+    let secret_key = to_secret_key(mnemonic).unwrap();
     let message = "Blacknet Signed Message:\nBlacknet test message 2";
     let hash = Blake2b256::digest(message).into();
-    let signature = sign(hash, private_key);
+    let signature = sign(hash, secret_key);
     let bytes: Signature = HEXUPPER
         .decode(b"6D5D4F6A81C601B1834701BDE84785470F92DFA517975BED9AAEA035FBDB0072327EFD207195B7202B5A72BB9CC37443A011C35137E1DF1C11BB5E9C60125B04")
         .unwrap()

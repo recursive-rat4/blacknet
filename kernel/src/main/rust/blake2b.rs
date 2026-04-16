@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -52,8 +52,8 @@ impl From<[u8; 32]> for Hash {
     }
 }
 
-impl From<digest::generic_array::GenericArray<u8, digest::consts::U32>> for Hash {
-    fn from(array: digest::generic_array::GenericArray<u8, digest::consts::U32>) -> Self {
+impl From<digest::array::Array<u8, digest::consts::U32>> for Hash {
+    fn from(array: digest::array::Array<u8, digest::consts::U32>) -> Self {
         Self(array.into())
     }
 }
