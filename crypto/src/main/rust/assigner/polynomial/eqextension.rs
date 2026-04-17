@@ -57,13 +57,11 @@ where
         r[0] = R::ONE;
         let mut j = 1;
         for i in (0..self.coefficients.len()).rev() {
-            let mut l = j;
-            for k in 0..j {
+            for (k, l) in (0..j).zip(j..) {
                 let t = &self.coefficients[i] * &r[k];
                 self.assigment.push(t.clone());
                 r[k] -= &t;
                 r[l] = t;
-                l += 1;
             }
             j <<= 1;
         }

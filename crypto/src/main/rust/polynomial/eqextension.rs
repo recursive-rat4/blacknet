@@ -83,12 +83,10 @@ where
         r[0] = z;
         let mut j = 1;
         for i in (0..coefficients.len()).rev() {
-            let mut l = j;
-            for k in 0..j {
+            for (k, l) in (0..j).zip(j..) {
                 let t = &coefficients[i] * &r[k];
                 r[k] -= &t;
                 r[l] = t;
-                l += 1;
             }
             j <<= 1;
         }

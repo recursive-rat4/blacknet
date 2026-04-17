@@ -74,13 +74,11 @@ impl<'a, 'b, R: UnitalRing + Clone + Eq> EqExtension<'a, 'b, R> {
         r[0] = Constant::ONE.into();
         let mut j = 1;
         for i in (0..self.coefficients.len()).rev() {
-            let mut l = j;
-            for k in 0..j {
+            for (k, l) in (0..j).zip(j..) {
                 let t = scope.auxiliary();
                 scope.constrain(&self.coefficients[i] * &r[k], t);
                 r[k] -= t;
                 r[l] = t.into();
-                l += 1;
             }
             j <<= 1;
         }
