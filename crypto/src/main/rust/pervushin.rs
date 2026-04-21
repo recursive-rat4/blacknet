@@ -378,10 +378,10 @@ impl Div<PervushinField> for &PervushinField {
     }
 }
 
-impl Div for &PervushinField {
+impl<'a> Div<&'a PervushinField> for &PervushinField {
     type Output = Option<PervushinField>;
 
-    fn div(self, rps: Self) -> Self::Output {
+    fn div(self, rps: &'a PervushinField) -> Self::Output {
         PervushinField::egcd(*rps).map(|v| self * v)
     }
 }

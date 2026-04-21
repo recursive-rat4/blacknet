@@ -281,10 +281,10 @@ impl Div<Z2> for &Z2 {
     }
 }
 
-impl Div for &Z2 {
+impl<'a> Div<&'a Z2> for &Z2 {
     type Output = Option<Z2>;
 
-    fn div(self, rps: Self) -> Self::Output {
+    fn div(self, rps: &'a Z2) -> Self::Output {
         if rps.n { Some(*self) } else { None }
     }
 }

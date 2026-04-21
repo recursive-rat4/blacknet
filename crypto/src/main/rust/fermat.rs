@@ -354,10 +354,10 @@ impl Div<FermatField> for &FermatField {
     }
 }
 
-impl Div for &FermatField {
+impl<'a> Div<&'a FermatField> for &FermatField {
     type Output = Option<FermatField>;
 
-    fn div(self, rps: Self) -> Self::Output {
+    fn div(self, rps: &'a FermatField) -> Self::Output {
         FermatField::egcd(*rps, *self)
     }
 }

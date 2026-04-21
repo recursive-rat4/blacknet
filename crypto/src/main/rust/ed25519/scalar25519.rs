@@ -481,10 +481,10 @@ impl Div<Scalar25519> for &Scalar25519 {
     }
 }
 
-impl Div for &Scalar25519 {
+impl<'a> Div<&'a Scalar25519> for &Scalar25519 {
     type Output = Option<Scalar25519>;
 
-    fn div(self, rps: Self) -> Self::Output {
+    fn div(self, rps: &'a Scalar25519) -> Self::Output {
         Scalar25519::egcd(*rps, *self)
     }
 }

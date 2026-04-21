@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{Double, PrimeField, RingOps, Square};
+use crate::algebra::{Double, FieldOps, PrimeField, Square};
 use crate::circuit::builder::{CircuitBuilder, Constant, LinearCombination, Scope};
 use crate::symmetric::Poseidon2Params;
 use core::array;
@@ -28,7 +28,7 @@ pub trait Poseidon2Circuit<
     const RPC: usize,
     const REC: usize,
 >: Poseidon2Params<F, WIDTH, RBC, RPC, REC> where
-    for<'a> &'a F: RingOps<F>,
+    for<'a> &'a F: FieldOps<F>,
 {
     fn m4(x: &mut [LinearCombination<F>; WIDTH]) {
         for i in 0..WIDTH >> 2 {
@@ -209,6 +209,6 @@ impl<
     P: Poseidon2Params<F, WIDTH, RBC, RPC, REC>,
 > Poseidon2Circuit<F, WIDTH, RBC, RPC, REC> for P
 where
-    for<'a> &'a F: RingOps<F>,
+    for<'a> &'a F: FieldOps<F>,
 {
 }

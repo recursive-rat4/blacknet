@@ -15,8 +15,23 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{CommutativeRing, DivisionRing, IntegerRing, UnitalRing};
+use crate::algebra::{CommutativeRing, DivisionRing, DivisionRingOps, IntegerRing, UnitalRing};
 use core::ops::Div;
+
+#[rustfmt::skip]
+pub trait FieldOps<F>
+    : DivisionRingOps<F>
+    + Div<F, Output = Option<F>>
+    + for<'a> Div<&'a F, Output = Option<F>>
+{
+}
+
+#[rustfmt::skip]
+impl<F, T
+    : DivisionRingOps<F>
+    + Div<F, Output = Option<F>>
+    + for<'a> Div<&'a F, Output = Option<F>>
+> FieldOps<F> for T {}
 
 /// A unital commutative division ring.
 #[rustfmt::skip]

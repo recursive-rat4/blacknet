@@ -461,10 +461,10 @@ impl Div<Field25519> for &Field25519 {
     }
 }
 
-impl Div for &Field25519 {
+impl<'a> Div<&'a Field25519> for &Field25519 {
     type Output = Option<Field25519>;
 
-    fn div(self, rps: Self) -> Self::Output {
+    fn div(self, rps: &'a Field25519) -> Self::Output {
         Field25519::egcd(*rps, *self)
     }
 }

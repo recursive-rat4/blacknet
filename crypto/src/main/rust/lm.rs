@@ -381,10 +381,10 @@ impl Div<LMField> for &LMField {
     }
 }
 
-impl Div for &LMField {
+impl<'a> Div<&'a LMField> for &LMField {
     type Output = Option<LMField>;
 
-    fn div(self, rps: Self) -> Self::Output {
+    fn div(self, rps: &'a LMField) -> Self::Output {
         LMField::egcd(*rps).map(|v| self * v)
     }
 }
