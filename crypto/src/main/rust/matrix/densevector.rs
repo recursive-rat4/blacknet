@@ -129,6 +129,14 @@ impl<T> From<Vec<T>> for DenseVector<T> {
     }
 }
 
+impl<T: Clone> From<&[T]> for DenseVector<T> {
+    fn from(elements: &[T]) -> Self {
+        Self {
+            elements: elements.into(),
+        }
+    }
+}
+
 impl<T> From<DenseVector<T>> for Vec<T> {
     #[inline]
     fn from(vector: DenseVector<T>) -> Self {

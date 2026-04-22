@@ -46,24 +46,19 @@ impl<R: UnitalRing + Clone> MultilinearExtension<R> {
         match VAL {
             -2 => zip(left, right)
                 .map(|(l, r)| l + l.double() - r.double())
-                .collect::<Vec<R>>(),
-            -1 => zip(left, right)
-                .map(|(l, r)| l.double() - r)
-                .collect::<Vec<R>>(),
-            0 => left.to_vec(),
-            1 => right.to_vec(),
-            2 => zip(left, right)
-                .map(|(l, r)| r.double() - l)
-                .collect::<Vec<R>>(),
+                .collect(),
+            -1 => zip(left, right).map(|(l, r)| l.double() - r).collect(),
+            0 => left.into(),
+            1 => right.into(),
+            2 => zip(left, right).map(|(l, r)| r.double() - l).collect(),
             3 => zip(left, right)
                 .map(|(l, r)| r + r.double() - l.double())
-                .collect::<Vec<R>>(),
+                .collect(),
             4 => zip(left, right)
                 .map(|(l, r)| r.double().double() - l.double() - l)
-                .collect::<Vec<R>>(),
+                .collect(),
             _ => unimplemented!("hypercube_with_var for val = {VAL}"),
         }
-        .into()
     }
 }
 
@@ -473,9 +468,8 @@ impl<Msg, R: UnitalRing + Absorb<Msg>> Absorb<Msg> for MultilinearExtension<R> {
 
 impl<Msg, R: UnitalRing + Squeeze<Msg>> SqueezeWithSize<Msg> for MultilinearExtension<R> {
     fn squeeze_from<D: Duplexer<Msg = Msg>>(duplex: &mut D, size: usize) -> Self {
-        (0..size)
-            .map(|_| duplex.squeeze::<R>())
-            .collect::<Vec<R>>()
-            .into()
+        Self {
+            coefficients: (0..size).map(|_| duplex.squeeze::<R>()).collect(),
+        }
     }
 }

@@ -271,9 +271,9 @@ impl<Msg, R: UnitalRing + Absorb<Msg>> Absorb<Msg> for EqExtension<R> {
 
 impl<Msg, R: UnitalRing + Squeeze<Msg>> SqueezeWithSize<Msg> for EqExtension<R> {
     fn squeeze_from<D: Duplexer<Msg = Msg>>(duplex: &mut D, size: usize) -> Self {
-        (0..size)
-            .map(|_| duplex.squeeze::<R>())
-            .collect::<Vec<R>>()
-            .into()
+        Self {
+            coefficients: (0..size).map(|_| duplex.squeeze::<R>()).collect(),
+            z: R::ONE,
+        }
     }
 }

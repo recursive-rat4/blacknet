@@ -406,9 +406,8 @@ impl<Msg, R: Semiring + Absorb<Msg> + Clone> Absorb<Msg> for &UnivariatePolynomi
 
 impl<Msg, R: Semiring + Squeeze<Msg>> SqueezeWithSize<Msg> for UnivariatePolynomial<R> {
     fn squeeze_from<D: Duplexer<Msg = Msg>>(duplex: &mut D, size: usize) -> Self {
-        (0..size)
-            .map(|_| duplex.squeeze::<R>())
-            .collect::<Vec<R>>()
-            .into()
+        Self {
+            coefficients: (0..size).map(|_| duplex.squeeze::<R>()).collect(),
+        }
     }
 }
