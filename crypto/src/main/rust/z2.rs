@@ -19,10 +19,9 @@
 #![allow(clippy::suspicious_op_assign_impl)]
 
 use crate::algebra::{
-    AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, BalancedRepresentative,
-    DivisionRing, Double, IntegerRing, Inv, LeftOne, LeftZero, MultiplicativeCommutativeMagma,
-    MultiplicativeMonoid, MultiplicativeSemigroup, One, RightOne, RightZero, Set, Sqrt, Square,
-    Zero,
+    AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, BalancedRepresentative, Double,
+    IntegerRing, Inv, LeftOne, LeftZero, MultiplicativeCommutativeMagma, MultiplicativeMonoid,
+    MultiplicativeSemigroup, One, RightOne, RightZero, Semifield, Set, Sqrt, Square, Zero,
 };
 use crate::integer::Integer;
 use core::fmt::{Debug, Formatter, Result};
@@ -371,7 +370,7 @@ impl MultiplicativeSemigroup for Z2 {}
 
 impl MultiplicativeMonoid for Z2 {}
 
-impl DivisionRing for Z2 {}
+impl Semifield for Z2 {}
 
 impl IntegerRing for Z2 {
     type Int = i8;

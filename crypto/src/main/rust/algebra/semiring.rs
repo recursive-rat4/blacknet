@@ -16,7 +16,7 @@
  */
 
 use crate::algebra::{
-    AdditiveCommutativeMonoid, AdditiveMagmaOps, MultiplicativeCommutativeSemigroup,
+    AdditiveCommutativeMonoid, AdditiveMagmaOps, Inv, MultiplicativeCommutativeSemigroup,
     MultiplicativeMagmaOps, MultiplicativeMonoid, MultiplicativeSemigroup,
 };
 
@@ -32,6 +32,19 @@ impl<R, T
     : AdditiveMagmaOps<R>
     + MultiplicativeMagmaOps<R>
 > SemiringOps<R> for T {}
+
+#[rustfmt::skip]
+pub trait SemifieldOps<R>
+    : SemiringOps<R>
+    + Inv<Output = Option<R>>
+{
+}
+
+#[rustfmt::skip]
+impl<R, T
+    : SemiringOps<R>
+    + Inv<Output = Option<R>>
+> SemifieldOps<R> for T {}
 
 /// A generalization of [nonunital ring][`crate::algebra::Ring`]
 /// that doesn't require subtraction.
@@ -81,3 +94,12 @@ impl<R
     : Presemiring
     + MultiplicativeCommutativeSemigroup
 > CommutativeSemiring for R {}
+
+/// A generalization of [division ring][`crate::algebra::DivisionRing`]
+/// that doesn't require subtraction.
+#[rustfmt::skip]
+pub trait Semifield
+    : Presemiring
+    + SemifieldOps<Self>
+{
+}

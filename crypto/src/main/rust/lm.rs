@@ -17,9 +17,9 @@
 
 use crate::algebra::{
     AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, BalancedRepresentative,
-    DivisionAlgebra, DivisionRing, Double, IntegerRing, Inv, LeftOne, LeftZero,
-    MultiplicativeCommutativeMagma, MultiplicativeMonoid, MultiplicativeSemigroup, NTTRing, One,
-    PolynomialRing, RightOne, RightZero, Set, Square, UnivariateRing, Zero,
+    DivisionAlgebra, Double, IntegerRing, Inv, LeftOne, LeftZero, MultiplicativeCommutativeMagma,
+    MultiplicativeMonoid, MultiplicativeSemigroup, NTTRing, One, PolynomialRing, RightOne,
+    RightZero, Semifield, Set, Square, UnivariateRing, Zero,
 };
 use crate::convolution::{Binomial, Convolution, Negacyclic};
 use crate::gcd::gcd_inner;
@@ -457,7 +457,7 @@ impl MultiplicativeSemigroup for LMField {}
 
 impl MultiplicativeMonoid for LMField {}
 
-impl DivisionRing for LMField {}
+impl Semifield for LMField {}
 
 impl IntegerRing for LMField {
     type Int = i64;
@@ -616,7 +616,7 @@ impl Div<&Self> for LMField2 {
     }
 }
 
-impl DivisionRing for LMField2 {}
+impl Semifield for LMField2 {}
 
 impl DivisionAlgebra<LMField> for LMField2 {}
 
@@ -690,7 +690,7 @@ impl Div<&Self> for LMField4 {
     }
 }
 
-impl DivisionRing for LMField4 {}
+impl Semifield for LMField4 {}
 
 impl DivisionAlgebra<LMField> for LMField4 {}
 

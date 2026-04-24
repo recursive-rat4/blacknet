@@ -16,10 +16,9 @@
  */
 
 use crate::algebra::{
-    AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, DivisionRing, Double, IntegerRing,
-    Inv, LeftOne, LeftZero, MultiplicativeCommutativeMagma, MultiplicativeMonoid,
-    MultiplicativeSemigroup, One, RightOne, RightZero, Set, Sqrt, Square, Zero,
-    square_and_multiply,
+    AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, Double, IntegerRing, Inv, LeftOne,
+    LeftZero, MultiplicativeCommutativeMagma, MultiplicativeMonoid, MultiplicativeSemigroup, One,
+    RightOne, RightZero, Semifield, Set, Sqrt, Square, Zero, square_and_multiply,
 };
 use crate::bigint::{UInt256, UInt512};
 use crate::integer::Integer;
@@ -572,7 +571,7 @@ impl MultiplicativeSemigroup for Scalar25519 {}
 
 impl MultiplicativeMonoid for Scalar25519 {}
 
-impl DivisionRing for Scalar25519 {}
+impl Semifield for Scalar25519 {}
 
 impl IntegerRing for Scalar25519 {
     type Int = UInt256;

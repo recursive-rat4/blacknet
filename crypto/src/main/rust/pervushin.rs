@@ -17,9 +17,9 @@
 
 use crate::algebra::{
     AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, BalancedRepresentative,
-    DivisionAlgebra, DivisionRing, Double, IntegerRing, Inv, LeftOne, LeftZero,
-    MultiplicativeCommutativeMagma, MultiplicativeMonoid, MultiplicativeSemigroup, One, RightOne,
-    RightZero, Set, Sqrt, Square, UnivariateRing, Zero, square_and_multiply,
+    DivisionAlgebra, Double, IntegerRing, Inv, LeftOne, LeftZero, MultiplicativeCommutativeMagma,
+    MultiplicativeMonoid, MultiplicativeSemigroup, One, RightOne, RightZero, Semifield, Set, Sqrt,
+    Square, UnivariateRing, Zero, square_and_multiply,
 };
 use crate::convolution::Negacyclic;
 use crate::gcd::gcd_inner;
@@ -464,7 +464,7 @@ impl MultiplicativeSemigroup for PervushinField {}
 
 impl MultiplicativeMonoid for PervushinField {}
 
-impl DivisionRing for PervushinField {}
+impl Semifield for PervushinField {}
 
 impl IntegerRing for PervushinField {
     type Int = i64;
@@ -608,6 +608,6 @@ impl Div<&Self> for PervushinField2 {
     }
 }
 
-impl DivisionRing for PervushinField2 {}
+impl Semifield for PervushinField2 {}
 
 impl DivisionAlgebra<PervushinField> for PervushinField2 {}

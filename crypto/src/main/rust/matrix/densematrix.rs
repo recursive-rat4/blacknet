@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{DivisionRingOps, Double, Field, Inv, Square, Tensor, Zero};
+use crate::algebra::{Double, Field, Inv, SemifieldOps, Square, Tensor, Zero};
 use crate::matrix::{DenseVector, IdentityMatrix};
 use alloc::vec;
 use alloc::vec::Vec;
@@ -731,7 +731,7 @@ where
 
 impl<F: Field + Clone + Eq> Inv for DenseMatrix<F>
 where
-    for<'a> &'a F: DivisionRingOps<F>,
+    for<'a> &'a F: SemifieldOps<F>,
 {
     type Output = Option<DenseMatrix<F>>;
 
@@ -779,7 +779,7 @@ where
 
 impl<F: Field + Clone + Eq> Inv for &DenseMatrix<F>
 where
-    for<'a> &'a F: DivisionRingOps<F>,
+    for<'a> &'a F: SemifieldOps<F>,
 {
     type Output = Option<DenseMatrix<F>>;
 

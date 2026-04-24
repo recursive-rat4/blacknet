@@ -17,8 +17,8 @@
 
 use crate::algebra::{
     AdditiveAbelianGroup, AdditiveCyclicGroup, AdditiveGroupOps, CommutativeAlgebra,
-    CommutativeSemiring, Conjugate, Inv, MultiplicativeMagmaOps, Presemiring, Semiring,
-    UnitalAlgebra,
+    CommutativeSemiring, Conjugate, MultiplicativeMagmaOps, Presemiring, Semifield, SemifieldOps,
+    Semiring, UnitalAlgebra,
 };
 use crate::integer::{Integer, SignedInteger};
 use alloc::vec::Vec;
@@ -41,14 +41,14 @@ impl<R, T
 #[rustfmt::skip]
 pub trait DivisionRingOps<R>
     : RingOps<R>
-    + Inv<Output = Option<R>>
+    + SemifieldOps<R>
 {
 }
 
 #[rustfmt::skip]
 impl<R, T
     : RingOps<R>
-    + Inv<Output = Option<R>>
+    + SemifieldOps<R>
 > DivisionRingOps<R> for T {}
 
 #[rustfmt::skip]
@@ -99,9 +99,15 @@ impl<R
 #[rustfmt::skip]
 pub trait DivisionRing
     : Ring
-    + DivisionRingOps<Self>
+    + Semifield
 {
 }
+
+#[rustfmt::skip]
+impl<R
+    : Ring
+    + Semifield
+> DivisionRing for R {}
 
 #[rustfmt::skip]
 pub trait IntegerRing

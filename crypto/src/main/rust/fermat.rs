@@ -16,9 +16,9 @@
  */
 
 use crate::algebra::{
-    AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, BalancedRepresentative,
-    DivisionRing, Double, IntegerRing, Inv, LeftOne, LeftZero, MultiplicativeCommutativeMagma,
-    MultiplicativeMonoid, MultiplicativeSemigroup, NTTRing, One, RightOne, RightZero, Set, Square,
+    AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, BalancedRepresentative, Double,
+    IntegerRing, Inv, LeftOne, LeftZero, MultiplicativeCommutativeMagma, MultiplicativeMonoid,
+    MultiplicativeSemigroup, NTTRing, One, RightOne, RightZero, Semifield, Set, Square,
     UnivariateRing, Zero,
 };
 use crate::convolution::Negacyclic;
@@ -430,7 +430,7 @@ impl MultiplicativeSemigroup for FermatField {}
 
 impl MultiplicativeMonoid for FermatField {}
 
-impl DivisionRing for FermatField {}
+impl Semifield for FermatField {}
 
 impl IntegerRing for FermatField {
     type Int = i32;
