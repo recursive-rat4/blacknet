@@ -58,7 +58,7 @@ digest = { version = "0.11.2", default-features = false }
 fjall = { version = "3.1.4", default-features = false }
 futures-util = { version = "0.3.32", default-features = false }
 hashlink = { version = "0.11.0" }
-libc = { version = "0.2.185" }
+libc = { version = "0.2.186" }
 libm = { version = "0.2.16" }
 log = { version = "0.4.29" }
 natpmp = { version = "0.5.0" }
