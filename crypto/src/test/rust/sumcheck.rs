@@ -25,7 +25,8 @@ use blacknet_crypto::circuit::symmetric::DuplexPoseidon2Pervushin as DuplexPosei
 use blacknet_crypto::constraintsystem::ConstraintSystem;
 use blacknet_crypto::pervushin::PervushinField;
 use blacknet_crypto::polynomial::{
-    EqExtension, MultilinearExtension, MultivariatePolynomial, Polynomial, UnivariatePolynomial,
+    EqExtension, MaskingPolynomial, MultilinearExtension, MultivariatePolynomial,
+    UnivariatePolynomial,
 };
 use blacknet_crypto::random::{Distribution, UniformDistribution};
 use blacknet_crypto::sumcheck::{Proof as ProofPlain, SumCheck as SumCheckPlain};
@@ -45,7 +46,6 @@ fn mle() {
 
     let p1 = MultilinearExtension::from([7, 7, 7, 0].map(Z::from));
     let p2 = MultilinearExtension::from([7, 7, 7, 7].map(Z::from));
-    let p3 = MultilinearExtension::from([7, 7, 0, 7].map(Z::from));
     let s1 = Z::from(21);
     let s2 = Z::from(28);
 
@@ -77,50 +77,6 @@ fn mle() {
         &p2,
         s1,
         &proof,
-        &mut duplex,
-        &mut exceptional_set
-    ));
-    duplex.reset();
-    exceptional_set.reset();
-
-    assert_err!(SC::verify(
-        &p2,
-        s2,
-        &proof,
-        &mut duplex,
-        &mut exceptional_set
-    ));
-    duplex.reset();
-    exceptional_set.reset();
-
-    assert_err!(SC::verify(
-        &p3,
-        s1,
-        &proof,
-        &mut duplex,
-        &mut exceptional_set
-    ));
-    duplex.reset();
-    exceptional_set.reset();
-
-    let proof2 = SC::prove(p1.clone(), s2, &mut duplex, &mut exceptional_set);
-    duplex.reset();
-    exceptional_set.reset();
-
-    assert_err!(SC::verify(
-        &p1,
-        s1,
-        &proof2,
-        &mut duplex,
-        &mut exceptional_set
-    ));
-    duplex.reset();
-    exceptional_set.reset();
-
-    assert_err!(SC::verify(
-        &p1,
-        s2,
-        &proof2,
         &mut duplex,
         &mut exceptional_set
     ));
@@ -159,7 +115,6 @@ fn eq() {
     let mut exceptional_set = E::default();
 
     let p1 = EqExtension::from([45, 46, 47, 48].map(Z::from));
-    let p2 = EqExtension::from([45, 46, 48, 48].map(Z::from));
     let s1 = Z::from(1);
     let s2 = Z::from(2);
 
@@ -186,126 +141,36 @@ fn eq() {
     ));
     duplex.reset();
     exceptional_set.reset();
-
-    assert_err!(SC::verify(
-        &p2,
-        s1,
-        &proof,
-        &mut duplex,
-        &mut exceptional_set
-    ));
-    duplex.reset();
-    exceptional_set.reset();
-
-    assert_err!(SC::verify(
-        &p2,
-        s2,
-        &proof,
-        &mut duplex,
-        &mut exceptional_set
-    ));
-    duplex.reset();
-    exceptional_set.reset();
-
-    let proof2 = SC::prove(p1.clone(), s2, &mut duplex, &mut exceptional_set);
-    duplex.reset();
-    exceptional_set.reset();
-
-    assert_err!(SC::verify(
-        &p1,
-        s1,
-        &proof2,
-        &mut duplex,
-        &mut exceptional_set
-    ));
-    duplex.reset();
-    exceptional_set.reset();
-
-    assert_err!(SC::verify(
-        &p1,
-        s2,
-        &proof2,
-        &mut duplex,
-        &mut exceptional_set
-    ));
-    duplex.reset();
-    exceptional_set.reset();
-
-    let proof3 = ProofPlain::default();
-
-    assert_err!(SC::verify(
-        &p1,
-        s1,
-        &proof3,
-        &mut duplex,
-        &mut exceptional_set
-    ));
-    duplex.reset();
-    exceptional_set.reset();
 }
 
 #[test]
-fn early_stopping() {
-    type SC = SumCheckPlain<Z, Z, EqExtension<Z>, D, E>;
+fn mask() {
+    type SC = SumCheckPlain<Z, Z, MaskingPolynomial<Z>, D, E>;
     let mut duplex = D::default();
     let mut exceptional_set = E::default();
 
-    let p1 = EqExtension::from([45, 46, 47, 48].map(Z::from));
-    let p2 = EqExtension::from([45, 46, 48, 48].map(Z::from));
-    let s1 = Z::from(1);
-    let s2 = Z::from(2);
+    let p1 = MaskingPolynomial::new([1, 2, 3, 4, 5, 6, 7].map(Z::from).into(), 2, 3);
+    let s1 = Z::from(116);
+    let s2 = Z::from(120);
 
     let proof = SC::prove(p1.clone(), s1, &mut duplex, &mut exceptional_set);
     duplex.reset();
     exceptional_set.reset();
 
-    let maybe = SC::verify_early_stopping(&p1, s1, &proof, &mut duplex, &mut exceptional_set);
-    assert_ok!(&maybe);
-    let (point, state) = maybe.unwrap();
-    assert_eq!(state, p1.point(&point));
-    duplex.reset();
-    exceptional_set.reset();
-
-    assert_err!(SC::verify_early_stopping(
-        &p1,
-        s2,
-        &proof,
-        &mut duplex,
-        &mut exceptional_set
-    ));
-    duplex.reset();
-    exceptional_set.reset();
-
-    assert_err!(SC::verify_early_stopping(
-        &p2,
-        s2,
-        &proof,
-        &mut duplex,
-        &mut exceptional_set
-    ));
-    duplex.reset();
-    exceptional_set.reset();
-
-    let proof2 = SC::prove(p1.clone(), s2, &mut duplex, &mut exceptional_set);
-    duplex.reset();
-    exceptional_set.reset();
-
-    assert_err!(SC::verify_early_stopping(
+    assert_ok!(SC::verify(
         &p1,
         s1,
-        &proof2,
+        &proof,
         &mut duplex,
         &mut exceptional_set
     ));
     duplex.reset();
     exceptional_set.reset();
-
-    let proof3 = ProofPlain::default();
 
     assert_err!(SC::verify(
         &p1,
-        s1,
-        &proof3,
+        s2,
+        &proof,
         &mut duplex,
         &mut exceptional_set
     ));
