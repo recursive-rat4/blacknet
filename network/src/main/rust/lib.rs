@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -32,6 +32,7 @@ pub mod rollinghashset;
 pub mod router;
 pub mod settings;
 pub mod socks5;
+pub mod staker;
 pub mod torcontroller;
 pub mod txfetcher;
 pub mod txpool;

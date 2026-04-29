@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -18,73 +18,86 @@
 use crate::v2::StakingInfo;
 use crate::v2::response::*;
 use axum::{
-    Form, Json, Router,
+    Form, Router,
     extract::{Path, State},
     response::Response,
     routing::get,
     routing::post,
 };
-use blacknet_kernel::ed25519::to_secret_key;
+use blacknet_kernel::ed25519::{PublicKey, to_secret_key};
 use blacknet_network::node::Node;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
+use zeroize::ZeroizeOnDrop;
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, ZeroizeOnDrop)]
 pub struct StartStakingRequest {
     pub mnemonic: String,
 }
 
 async fn start_staking(
-    State(_node): State<Arc<Node>>,
+    State(node): State<Arc<Node>>,
     Form(request): Form<StartStakingRequest>,
 ) -> Response<String> {
-    let _secret_key = if let Some(secret_key) = to_secret_key(&request.mnemonic) {
+    let secret_key = if let Some(secret_key) = to_secret_key(&request.mnemonic) {
         secret_key
     } else {
         return respond_error("Invalid mnemonic".to_owned());
     };
-    todo!();
+    respond_bool(node.staker().start_staking(&secret_key))
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, ZeroizeOnDrop)]
 pub struct StopStakingRequest {
     pub mnemonic: String,
 }
 
 async fn stop_staking(
-    State(_node): State<Arc<Node>>,
+    State(node): State<Arc<Node>>,
     Form(request): Form<StopStakingRequest>,
 ) -> Response<String> {
-    let _secret_key = if let Some(secret_key) = to_secret_key(&request.mnemonic) {
+    let secret_key = if let Some(secret_key) = to_secret_key(&request.mnemonic) {
         secret_key
     } else {
         return respond_error("Invalid mnemonic".to_owned());
     };
-    todo!();
+    respond_bool(node.staker().stop_staking(&secret_key))
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, ZeroizeOnDrop)]
 pub struct IsStakingRequest {
     pub mnemonic: String,
 }
 
 async fn is_staking(
-    State(_node): State<Arc<Node>>,
+    State(node): State<Arc<Node>>,
     Form(request): Form<IsStakingRequest>,
 ) -> Response<String> {
-    let _secret_key = if let Some(secret_key) = to_secret_key(&request.mnemonic) {
+    let secret_key = if let Some(secret_key) = to_secret_key(&request.mnemonic) {
         secret_key
     } else {
         return respond_error("Invalid mnemonic".to_owned());
     };
-    todo!();
+    respond_bool(node.staker().is_staking(&secret_key))
 }
 
 async fn staking(
-    State(_node): State<Arc<Node>>,
-    Path(_address): Path<Option<String>>,
-) -> Json<StakingInfo> {
-    todo!();
+    State(node): State<Arc<Node>>,
+    Path(address): Path<Option<String>>,
+) -> Response<String> {
+    let address_codec = node.wallet_db().address_codec();
+    let public_key: Option<PublicKey> = match address {
+        Some(address) => match address_codec.decode(&address) {
+            Ok(public_key) => Some(public_key),
+            Err(err) => {
+                return respond_error(format!("Invalid public key: {err}"));
+            }
+        },
+        None => None,
+    };
+    let stats = node.staker().stats(&public_key);
+    let info = StakingInfo::new(&stats);
+    respond_json(&info)
 }
 
 pub fn routes() -> Router<Arc<Node>> {

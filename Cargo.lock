@@ -223,6 +223,7 @@ dependencies = [
  "serde_json",
  "spdlog-rs",
  "tokio",
+ "zeroize",
 ]
 
 [[package]]

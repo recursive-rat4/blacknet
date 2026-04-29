@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -19,6 +19,14 @@ use axum::response::Response;
 use data_encoding::HEXUPPER;
 use serde::Serialize;
 use serde_json::to_string;
+
+pub fn respond_bool(message: bool) -> Response<String> {
+    Response::builder()
+        .status(200)
+        .header("Content-Type", "text/plain")
+        .body((if message { "true" } else { "false" }).to_owned())
+        .unwrap()
+}
 
 pub fn respond_hex(message: &[u8]) -> Response<String> {
     Response::builder()

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2025 Pavel Vasin
+ * Copyright (c) 2019-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -16,8 +16,7 @@
  */
 
 use crate::v2::AmountInfo;
-use blacknet_kernel::amount::Amount;
-use blacknet_time::Seconds;
+use blacknet_network::staker::StakerStats;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]
@@ -30,19 +29,13 @@ pub struct StakingInfo {
 }
 
 impl StakingInfo {
-    pub fn new(
-        staking_accounts: u32,
-        hash_rate: f64,
-        weight: Amount,
-        network_weight: Amount,
-        expected_time: Seconds,
-    ) -> Self {
+    pub fn new(stats: &StakerStats) -> Self {
         Self {
-            stakingAccounts: staking_accounts,
-            hashRate: hash_rate,
-            weight: weight.into(),
-            networkWeight: network_weight.into(),
-            expectedTime: expected_time.into(),
+            stakingAccounts: stats.staking_accounts(),
+            hashRate: stats.hash_rate(),
+            weight: stats.weight().into(),
+            networkWeight: stats.network_weight().into(),
+            expectedTime: stats.expected_time().into(),
         }
     }
 }

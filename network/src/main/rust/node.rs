@@ -25,6 +25,7 @@ use crate::packet::UnfilteredInvList;
 use crate::peertable::PeerTable;
 use crate::router::Router;
 use crate::settings::Settings;
+use crate::staker::Staker;
 use crate::txfetcher::TxFetcher;
 use crate::txpool::TxPool;
 use blacknet_compat::{Mode, XDGDirectories, getuid, uname};
@@ -70,6 +71,7 @@ pub struct Node {
     tx_pool: Arc<RwLock<TxPool>>,
     tx_fetcher: Arc<TxFetcher>,
     wallet_db: WalletDB,
+    staker: Staker,
     agent_string: String,
     prober_agent_string: String,
     agent_name: String,
@@ -128,6 +130,7 @@ impl Node {
             tx_pool: tx_pool.clone(),
             tx_fetcher: TxFetcher::new(runtime, Arc::downgrade(&tx_pool)),
             wallet_db: WalletDB::new(&mode, dirs, log_manager)?,
+            staker: Staker::new(),
             agent_string: format!("/{agent_name}:{agent_version}/"),
             prober_agent_string: format!("/{agent_name}-prober:{agent_version}/"),
             agent_name: agent_name.to_owned(),
@@ -259,6 +262,10 @@ impl Node {
 
     pub const fn wallet_db(&self) -> &WalletDB {
         &self.wallet_db
+    }
+
+    pub const fn staker(&self) -> &Staker {
+        &self.staker
     }
 
     pub const fn mode(&self) -> &Mode {

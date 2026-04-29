@@ -46,6 +46,7 @@ serde.workspace = true
 serde_json.workspace = true
 spdlog-rs.workspace = true
 tokio.workspace = true
+zeroize.workspace = true
 
 [lints]
 workspace = true
