@@ -17,6 +17,7 @@
 
 use blacknet_compat::Mode;
 use blacknet_kernel::blake2b::Hash;
+use blacknet_kernel::transaction::{HashTimeLockContractId, MultiSignatureLockContractId};
 use core::fmt;
 use rusqlite::{Connection, Error as SqliteError, OpenFlags};
 use std::path::Path;
@@ -85,6 +86,8 @@ impl Wallet {
     }
 
     fn create_schema(connection: &Connection) -> Result<()> {
+        connection.execute("CREATE TABLE htlcs(id BLOB PRIMARY KEY) STRICT;", ())?;
+        connection.execute("CREATE TABLE multisigs(id BLOB PRIMARY KEY) STRICT;", ())?;
         connection.execute(
             "CREATE TABLE transactions(id BLOB PRIMARY KEY, bytes BLOB NOT NULL) STRICT;",
             (),
@@ -119,6 +122,50 @@ impl Wallet {
         let connection = self.connection.lock().unwrap();
         let mut statement = connection.prepare_cached("INSERT INTO transactions VALUES(?, ?);")?;
         statement.execute((id, bytes))?;
+        Ok(())
+    }
+
+    pub fn has_htlc(&self, id: HashTimeLockContractId) -> Result<bool> {
+        let connection = self.connection.lock().unwrap();
+        let mut statement =
+            connection.prepare_cached("SELECT EXISTS(SELECT 1 FROM htlcs WHERE id = ?);")?;
+        let exists = statement.query_one((id,), |row| row.get(0))?;
+        Ok(exists)
+    }
+
+    pub fn put_htlc(&self, id: HashTimeLockContractId) -> Result<()> {
+        let connection = self.connection.lock().unwrap();
+        let mut statement = connection.prepare_cached("INSERT INTO htlcs VALUES(?);")?;
+        statement.execute((id,))?;
+        Ok(())
+    }
+
+    pub fn remove_htlc(&self, id: HashTimeLockContractId) -> Result<()> {
+        let connection = self.connection.lock().unwrap();
+        let mut statement = connection.prepare_cached("DELETE FROM htlcs WHERE id = ?;")?;
+        statement.execute((id,))?;
+        Ok(())
+    }
+
+    pub fn has_multisig(&self, id: MultiSignatureLockContractId) -> Result<bool> {
+        let connection = self.connection.lock().unwrap();
+        let mut statement =
+            connection.prepare_cached("SELECT EXISTS(SELECT 1 FROM multisigs WHERE id = ?);")?;
+        let exists = statement.query_one((id,), |row| row.get(0))?;
+        Ok(exists)
+    }
+
+    pub fn put_multisig(&self, id: MultiSignatureLockContractId) -> Result<()> {
+        let connection = self.connection.lock().unwrap();
+        let mut statement = connection.prepare_cached("INSERT INTO multisigs VALUES(?);")?;
+        statement.execute((id,))?;
+        Ok(())
+    }
+
+    pub fn remove_multisig(&self, id: MultiSignatureLockContractId) -> Result<()> {
+        let connection = self.connection.lock().unwrap();
+        let mut statement = connection.prepare_cached("DELETE FROM multisigs WHERE id = ?;")?;
+        statement.execute((id,))?;
         Ok(())
     }
 }
