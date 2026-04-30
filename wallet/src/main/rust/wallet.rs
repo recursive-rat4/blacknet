@@ -16,6 +16,8 @@
  */
 
 use blacknet_compat::Mode;
+use blacknet_kernel::account::Lease;
+use blacknet_kernel::amount::Amount;
 use blacknet_kernel::blake2b::Hash;
 use blacknet_kernel::transaction::{HashTimeLockContractId, MultiSignatureLockContractId};
 use core::fmt;
@@ -88,6 +90,14 @@ impl Wallet {
     fn create_schema(connection: &Connection) -> Result<()> {
         connection.execute("CREATE TABLE htlcs(id BLOB PRIMARY KEY) STRICT;", ())?;
         connection.execute("CREATE TABLE multisigs(id BLOB PRIMARY KEY) STRICT;", ())?;
+        connection.execute(
+            "CREATE TABLE out_leases(\
+                 public_key BLOB NOT NULL,\
+                 height INTEGER NOT NULL,\
+                 amount INTEGER NOT NULL\
+             ) STRICT;",
+            (),
+        )?;
         connection.execute(
             "CREATE TABLE transactions(id BLOB PRIMARY KEY, bytes BLOB NOT NULL) STRICT;",
             (),
@@ -166,6 +176,67 @@ impl Wallet {
         let connection = self.connection.lock().unwrap();
         let mut statement = connection.prepare_cached("DELETE FROM multisigs WHERE id = ?;")?;
         statement.execute((id,))?;
+        Ok(())
+    }
+
+    pub fn put_out_lease(&self, lease: Lease) -> Result<()> {
+        let connection = self.connection.lock().unwrap();
+        let mut statement = connection.prepare_cached("INSERT INTO out_leases VALUES(?, ?, ?);")?;
+        statement.execute((lease.public_key(), lease.height(), lease.balance().value()))?;
+        Ok(())
+    }
+
+    pub fn remove_out_lease(&self, lease: Lease) -> Result<()> {
+        let connection = self.connection.lock().unwrap();
+        let mut statement = connection.prepare_cached(
+            "DELETE FROM out_leases \
+             WHERE ROWID = (\
+                 SELECT ROWID FROM out_leases \
+                 WHERE public_key = ? AND height = ? AND amount = ? \
+                 LIMIT 1\
+             );",
+        )?;
+        statement.execute((lease.public_key(), lease.height(), lease.balance().value()))?;
+        Ok(())
+    }
+
+    pub fn set_out_lease_height(&self, lease: Lease, height: u32) -> Result<()> {
+        let connection = self.connection.lock().unwrap();
+        let mut statement = connection.prepare_cached(
+            "UPDATE out_leases \
+             SET height = ? \
+             WHERE ROWID = (\
+                SELECT ROWID FROM out_leases \
+                WHERE public_key = ? AND height = ? AND amount = ? \
+                LIMIT 1\
+             );",
+        )?;
+        statement.execute((
+            height,
+            lease.public_key(),
+            lease.height(),
+            lease.balance().value(),
+        ))?;
+        Ok(())
+    }
+
+    pub fn withdraw_from_out_lease(&self, lease: Lease, withdraw: Amount) -> Result<()> {
+        let connection = self.connection.lock().unwrap();
+        let mut statement = connection.prepare_cached(
+            "UPDATE out_leases \
+             SET amount = amount - ? \
+             WHERE ROWID = (\
+                SELECT ROWID FROM out_leases \
+                WHERE public_key = ? AND height = ? AND amount = ? \
+                LIMIT 1\
+             );",
+        )?;
+        statement.execute((
+            withdraw.value(),
+            lease.public_key(),
+            lease.height(),
+            lease.balance().value(),
+        ))?;
         Ok(())
     }
 }

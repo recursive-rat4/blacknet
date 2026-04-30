@@ -16,7 +16,10 @@
  */
 
 use blacknet_compat::{Mode, assert_err, assert_ok};
+use blacknet_kernel::account::Lease;
+use blacknet_kernel::amount::Amount;
 use blacknet_kernel::blake2b::Hash;
+use blacknet_kernel::ed25519::PublicKey;
 use blacknet_kernel::transaction::{HashTimeLockContractId, MultiSignatureLockContractId};
 use blacknet_wallet::wallet::Wallet;
 use rusqlite::Connection;
@@ -54,6 +57,19 @@ fn multisig() {
     assert!(wallet.has_multisig(multisig_id).unwrap());
     assert_ok!(wallet.remove_multisig(multisig_id));
     assert!(!wallet.has_multisig(multisig_id).unwrap());
+}
+
+#[test]
+fn out_lease() {
+    let mode = Mode::regtest();
+    let wallet = Wallet::ephemeral(&mode).unwrap();
+    let lease1 = Lease::new(PublicKey::default(), 1, Amount::new(123));
+    let lease2 = Lease::new(PublicKey::default(), 2, Amount::new(123));
+    let lease3 = Lease::new(PublicKey::default(), 2, Amount::new(100));
+    assert_ok!(wallet.put_out_lease(lease1));
+    assert_ok!(wallet.set_out_lease_height(lease1, lease2.height()));
+    assert_ok!(wallet.withdraw_from_out_lease(lease2, Amount::new(23)));
+    assert_ok!(wallet.remove_out_lease(lease3));
 }
 
 #[test]

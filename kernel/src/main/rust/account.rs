@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2025 Pavel Vasin
+ * Copyright (c) 2018-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -226,7 +226,7 @@ impl Input {
     }
 }
 
-#[derive(Clone, Copy, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Copy, Default, Deserialize, Eq, PartialEq, Serialize)]
 pub struct Lease {
     public_key: PublicKey,
     height: u32,
@@ -234,6 +234,13 @@ pub struct Lease {
 }
 
 impl Lease {
+    pub const fn new(public_key: PublicKey, height: u32, amount: Amount) -> Self {
+        Self {
+            public_key,
+            height,
+            amount,
+        }
+    }
     pub const fn public_key(self) -> PublicKey {
         self.public_key
     }
