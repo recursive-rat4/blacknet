@@ -64,10 +64,10 @@ pub struct Node {
     connections: RwLock<Vec<Connection>>,
     peer_table: Arc<PeerTable>,
     router: Arc<Router>,
+    fjall: Database,
     block_db: Arc<BlockDB>,
     block_fetcher: BlockFetcher,
     coin_db: Arc<CoinDB>,
-    fjall: Database,
     tx_pool: Arc<RwLock<TxPool>>,
     tx_fetcher: Arc<TxFetcher>,
     wallet_db: WalletDB,
@@ -123,10 +123,10 @@ impl Node {
             connections: RwLock::new(Vec::new()),
             peer_table: peer_table.clone(),
             router: Router::new(&mode, dirs, log_manager, runtime, &settings, peer_table)?,
+            fjall,
             block_db,
             block_fetcher: BlockFetcher::new(),
             coin_db,
-            fjall,
             tx_pool: tx_pool.clone(),
             tx_fetcher: TxFetcher::new(runtime, Arc::downgrade(&tx_pool)),
             wallet_db: WalletDB::new(&mode, dirs, log_manager)?,
@@ -234,6 +234,10 @@ impl Node {
                 SystemClock::secs(),
                 self.coin_db.state().block_time(),
             )
+    }
+
+    pub const fn fjall(&self) -> &Database {
+        &self.fjall
     }
 
     pub const fn block_db(&self) -> &Arc<BlockDB> {
