@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -49,7 +49,7 @@ fn operate() {
 
 #[test]
 fn literate() {
-    assert_eq!(Seconds::from_minutes(4), Seconds::from(4 * 60));
-    assert_eq!(Seconds::from_hours(4), Seconds::from(4 * 60 * 60));
-    assert_eq!(Seconds::from_days(4), Seconds::from(4 * 24 * 60 * 60));
+    assert_eq!(Seconds::with_minutes(4), Seconds::from(4 * 60));
+    assert_eq!(Seconds::with_hours(4), Seconds::from(4 * 60 * 60));
+    assert_eq!(Seconds::with_days(4), Seconds::from(4 * 24 * 60 * 60));
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,16 +15,15 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#![cfg(feature = "std")]
-
 use crate::milliseconds::Milliseconds;
 use crate::seconds::Seconds;
 use std::time::SystemTime;
 
-// Since UNIX epoch not counting leap seconds
+/// The clock since UNIX epoch not counting leap seconds.
 pub struct SystemClock {}
 
 impl SystemClock {
+    /// Get current time in milliseconds.
     pub fn millis() -> Milliseconds {
         let now = SystemTime::now();
         match now.duration_since(SystemTime::UNIX_EPOCH) {
@@ -33,6 +32,7 @@ impl SystemClock {
         }
     }
 
+    /// Get current time in seconds.
     pub fn secs() -> Seconds {
         let now = SystemTime::now();
         match now.duration_since(SystemTime::UNIX_EPOCH) {

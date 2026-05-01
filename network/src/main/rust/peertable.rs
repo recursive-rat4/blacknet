@@ -433,7 +433,7 @@ impl Entry {
             return true;
         }
         if self.last_connected != Milliseconds::ZERO
-            && now - self.last_connected > Milliseconds::from_days(15)
+            && now - self.last_connected > Milliseconds::with_days(15)
         {
             return true;
         }
@@ -445,7 +445,7 @@ impl Entry {
         let age = now - self.last_try;
         let attempts = min(self.attempts, i32::MAX as u64) as i32;
         let chance = 0.66_f32.powi(min(attempts, 8));
-        if age > Milliseconds::from_minutes(15) {
+        if age > Milliseconds::with_minutes(15) {
             chance
         } else {
             chance * 0.01

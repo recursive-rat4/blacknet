@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -22,8 +22,7 @@ use core::ops::{
 };
 use serde::{Deserialize, Serialize};
 
-// A timestamp or a time interval measured in seconds. The value may be negative.
-
+/// A timestamp or a time interval measured in seconds. The value may be negative.
 #[derive(Clone, Copy, Deserialize, Eq, NoUninit, Ord, PartialEq, PartialOrd, Serialize)]
 #[repr(transparent)]
 pub struct Seconds {
@@ -35,19 +34,21 @@ impl Seconds {
         Self { n }
     }
 
-    pub const fn from_minutes(n: i64) -> Self {
+    pub const fn with_minutes(n: i64) -> Self {
         Self { n: n * 60 }
     }
 
-    pub const fn from_hours(n: i64) -> Self {
+    pub const fn with_hours(n: i64) -> Self {
         Self { n: n * 3600 }
     }
 
-    pub const fn from_days(n: i64) -> Self {
+    pub const fn with_days(n: i64) -> Self {
         Self { n: n * 86400 }
     }
 
+    /// The maximum value that can be represented by this type.
     pub const MAX: Self = Self { n: i64::MAX };
+    /// The minimum value that can be represented by this type.
     pub const MIN: Self = Self { n: i64::MIN };
     pub const ZERO: Self = Self { n: 0 };
 }

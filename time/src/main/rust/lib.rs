@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -22,9 +22,10 @@ extern crate std;
 
 mod milliseconds;
 mod seconds;
+#[cfg(feature = "std")]
 mod systemclock;
 
-pub use milliseconds::*;
-pub use seconds::*;
+pub use milliseconds::Milliseconds;
+pub use seconds::Seconds;
 #[cfg(feature = "std")]
-pub use systemclock::*;
+pub use systemclock::SystemClock;

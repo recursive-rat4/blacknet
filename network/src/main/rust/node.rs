@@ -51,7 +51,7 @@ use std::sync::{Arc, RwLock};
 use tokio::runtime::Runtime;
 use tokio::time::{Duration, sleep};
 
-pub const NETWORK_TIMEOUT: Milliseconds = Milliseconds::from_seconds(90);
+pub const NETWORK_TIMEOUT: Milliseconds = Milliseconds::with_seconds(90);
 pub const PROTOCOL_VERSION: u32 = 15;
 pub const MIN_PROTOCOL_VERSION: u32 = 12;
 

@@ -24,7 +24,7 @@ use std::sync::Arc;
 
 pub const MAX_INVENTORY: usize = 50000;
 pub const INVENTORY_SEND_MAX: usize = 512;
-pub const INVENTORY_SEND_TIMEOUT: Milliseconds = Milliseconds::from_seconds(5);
+pub const INVENTORY_SEND_TIMEOUT: Milliseconds = Milliseconds::with_seconds(5);
 
 #[derive(Deserialize, Serialize)]
 pub struct Inventory {
