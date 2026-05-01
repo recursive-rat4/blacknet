@@ -27,7 +27,10 @@ use rusqlite::Connection;
 #[test]
 fn ephemeral() {
     let mode = Mode::regtest();
-    assert_ok!(Wallet::ephemeral(&mode));
+    let public_key = PublicKey::default();
+    let wallet = Wallet::ephemeral(public_key, &mode).unwrap();
+    assert_eq!(wallet.public_key().unwrap(), public_key);
+    assert_eq!(wallet.sequence().unwrap(), 0);
 }
 
 #[test]
@@ -40,7 +43,7 @@ fn magic() {
 #[test]
 fn htlc() {
     let mode = Mode::regtest();
-    let wallet = Wallet::ephemeral(&mode).unwrap();
+    let wallet = Wallet::ephemeral(PublicKey::default(), &mode).unwrap();
     let htlc_id = HashTimeLockContractId::default();
     assert_ok!(wallet.put_htlc(htlc_id));
     assert!(wallet.has_htlc(htlc_id).unwrap());
@@ -51,7 +54,7 @@ fn htlc() {
 #[test]
 fn multisig() {
     let mode = Mode::regtest();
-    let wallet = Wallet::ephemeral(&mode).unwrap();
+    let wallet = Wallet::ephemeral(PublicKey::default(), &mode).unwrap();
     let multisig_id = MultiSignatureLockContractId::default();
     assert_ok!(wallet.put_multisig(multisig_id));
     assert!(wallet.has_multisig(multisig_id).unwrap());
@@ -62,7 +65,7 @@ fn multisig() {
 #[test]
 fn out_lease() {
     let mode = Mode::regtest();
-    let wallet = Wallet::ephemeral(&mode).unwrap();
+    let wallet = Wallet::ephemeral(PublicKey::default(), &mode).unwrap();
     let lease1 = Lease::new(PublicKey::default(), 1, Amount::new(123));
     let lease2 = Lease::new(PublicKey::default(), 2, Amount::new(123));
     let lease3 = Lease::new(PublicKey::default(), 2, Amount::new(100));
@@ -75,7 +78,7 @@ fn out_lease() {
 #[test]
 fn transaction() {
     let mode = Mode::regtest();
-    let wallet = Wallet::ephemeral(&mode).unwrap();
+    let wallet = Wallet::ephemeral(PublicKey::default(), &mode).unwrap();
     let tx_id = Hash::ZERO;
     let tx_bytes = [10, 11, 12, 13];
     assert_ok!(wallet.put_transaction(tx_id, &tx_bytes));

@@ -15,13 +15,14 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::walletdb::Error;
 use blacknet_compat::Mode;
 use blacknet_kernel::account::Lease;
 use blacknet_kernel::amount::Amount;
 use blacknet_kernel::blake2b::Hash;
+use blacknet_kernel::ed25519::PublicKey;
 use blacknet_kernel::transaction::{HashTimeLockContractId, MultiSignatureLockContractId};
-use core::fmt;
-use rusqlite::{Connection, Error as SqliteError, OpenFlags};
+use rusqlite::{Connection, OpenFlags};
 use std::path::Path;
 use std::sync::Mutex;
 
@@ -40,9 +41,9 @@ impl Wallet {
         Self::open_flags() | OpenFlags::SQLITE_OPEN_CREATE
     }
 
-    pub fn create(path: &Path, mode: &Mode) -> Result<Self> {
+    pub fn create(path: &Path, public_key: PublicKey, mode: &Mode) -> Result<Self> {
         let connection = Connection::open_with_flags(path, Self::create_flags())?;
-        Self::initialize(connection, mode)
+        Self::initialize(connection, public_key, mode)
     }
 
     pub fn open(path: &Path, mode: &Mode) -> Result<Self> {
@@ -50,9 +51,9 @@ impl Wallet {
         Self::attach(connection, mode)
     }
 
-    pub fn ephemeral(mode: &Mode) -> Result<Self> {
+    pub fn ephemeral(public_key: PublicKey, mode: &Mode) -> Result<Self> {
         let connection = Connection::open_in_memory_with_flags(Self::create_flags())?;
-        Self::initialize(connection, mode)
+        Self::initialize(connection, public_key, mode)
     }
 
     pub fn attach(connection: Connection, mode: &Mode) -> Result<Self> {
@@ -88,6 +89,14 @@ impl Wallet {
     }
 
     fn create_schema(connection: &Connection) -> Result<()> {
+        connection.execute(
+            "CREATE TABLE wallet(\
+                id INTEGER PRIMARY KEY CHECK (id = 0),\
+                public_key BLOB NOT NULL,\
+                sequence INTEGER NOT NULL\
+             ) STRICT;",
+            (),
+        )?;
         connection.execute("CREATE TABLE htlcs(id BLOB PRIMARY KEY) STRICT;", ())?;
         connection.execute("CREATE TABLE multisigs(id BLOB PRIMARY KEY) STRICT;", ())?;
         connection.execute(
@@ -105,17 +114,30 @@ impl Wallet {
         Ok(())
     }
 
-    fn initialize(connection: Connection, mode: &Mode) -> Result<Self> {
+    fn initialize(connection: Connection, public_key: PublicKey, mode: &Mode) -> Result<Self> {
         Self::configure(&connection)?;
         Self::set_magic(&connection, mode)?;
         Self::create_schema(&connection)?;
+
+        connection.execute("INSERT INTO wallet VALUES(?, ?, ?);", (0, public_key, 0))?;
+
         Ok(Self {
             connection: Mutex::new(connection),
         })
     }
 
-    pub fn sequence(&self) -> u32 {
-        todo!();
+    pub fn public_key(&self) -> Result<PublicKey> {
+        let connection = self.connection.lock().unwrap();
+        let mut statement = connection.prepare_cached("SELECT public_key FROM wallet;")?;
+        let public_key = statement.query_one((), |row| row.get(0))?;
+        Ok(public_key)
+    }
+
+    pub fn sequence(&self) -> Result<u32> {
+        let connection = self.connection.lock().unwrap();
+        let mut statement = connection.prepare_cached("SELECT sequence FROM wallet;")?;
+        let sequence = statement.query_one((), |row| row.get(0))?;
+        Ok(sequence)
     }
 
     pub fn get_transaction(&self, id: Hash) -> Result<Box<[u8]>> {
@@ -240,30 +262,5 @@ impl Wallet {
         Ok(())
     }
 }
-
-#[derive(Debug)]
-pub enum Error {
-    WrongMagic(String),
-    Sqlite(SqliteError),
-}
-
-impl From<SqliteError> for Error {
-    fn from(error: SqliteError) -> Self {
-        Self::Sqlite(error)
-    }
-}
-
-impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::WrongMagic(name) => {
-                write!(f, "This SQLite database doesn't look like {name} wallet")
-            }
-            Self::Sqlite(err) => write!(f, "{err}"),
-        }
-    }
-}
-
-impl core::error::Error for Error {}
 
 pub type Result<T> = core::result::Result<T, Error>;

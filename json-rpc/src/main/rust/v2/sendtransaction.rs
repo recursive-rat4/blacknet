@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -67,9 +67,9 @@ async fn bundle(
     };
     let from = to_public_key(secret_key);
     let seq = match node.wallet_db().sequence(from) {
-        Some(seq) => seq,
-        None => {
-            return respond_error("Unknown wallet".to_owned());
+        Ok(seq) => seq,
+        Err(err) => {
+            return respond_error(err.to_string());
         }
     };
     let tag = match node
@@ -129,9 +129,9 @@ async fn burn(State(node): State<Arc<Node>>, Form(request): Form<BurnRequest>) -
     };
     let from = to_public_key(secret_key);
     let seq = match node.wallet_db().sequence(from) {
-        Some(seq) => seq,
-        None => {
-            return respond_error("Unknown wallet".to_owned());
+        Ok(seq) => seq,
+        Err(err) => {
+            return respond_error(err.to_string());
         }
     };
     let data = match to_bytes(&Burn::new(request.amount, message.into())) {
@@ -175,9 +175,9 @@ async fn cancel_lease(
     };
     let from = to_public_key(secret_key);
     let seq = match node.wallet_db().sequence(from) {
-        Some(seq) => seq,
-        None => {
-            return respond_error("Unknown wallet".to_owned());
+        Ok(seq) => seq,
+        Err(err) => {
+            return respond_error(err.to_string());
         }
     };
     let to = match node.wallet_db().address_codec().decode(&request.to) {
@@ -239,9 +239,9 @@ async fn claim_swap(
     };
     let from = to_public_key(secret_key);
     let seq = match node.wallet_db().sequence(from) {
-        Some(seq) => seq,
-        None => {
-            return respond_error("Unknown wallet".to_owned());
+        Ok(seq) => seq,
+        Err(err) => {
+            return respond_error(err.to_string());
         }
     };
     let id = match node
@@ -315,9 +315,9 @@ async fn create_swap(
     };
     let from = to_public_key(secret_key);
     let seq = match node.wallet_db().sequence(from) {
-        Some(seq) => seq,
-        None => {
-            return respond_error("Unknown wallet".to_owned());
+        Ok(seq) => seq,
+        Err(err) => {
+            return respond_error(err.to_string());
         }
     };
     let to = match node.wallet_db().address_codec().decode(&request.to) {
@@ -375,9 +375,9 @@ async fn lease(
     };
     let from = to_public_key(secret_key);
     let seq = match node.wallet_db().sequence(from) {
-        Some(seq) => seq,
-        None => {
-            return respond_error("Unknown wallet".to_owned());
+        Ok(seq) => seq,
+        Err(err) => {
+            return respond_error(err.to_string());
         }
     };
     let to = match node.wallet_db().address_codec().decode(&request.to) {
@@ -425,9 +425,9 @@ async fn refund_swap(
     };
     let from = to_public_key(secret_key);
     let seq = match node.wallet_db().sequence(from) {
-        Some(seq) => seq,
-        None => {
-            return respond_error("Unknown wallet".to_owned());
+        Ok(seq) => seq,
+        Err(err) => {
+            return respond_error(err.to_string());
         }
     };
     let id = match node
@@ -493,9 +493,9 @@ async fn transfer(
     };
     let from = to_public_key(secret_key);
     let seq = match node.wallet_db().sequence(from) {
-        Some(seq) => seq,
-        None => {
-            return respond_error("Unknown wallet".to_owned());
+        Ok(seq) => seq,
+        Err(err) => {
+            return respond_error(err.to_string());
         }
     };
     let to = match node.wallet_db().address_codec().decode(&request.to) {
@@ -560,9 +560,9 @@ async fn withdraw_from_lease(
     };
     let from = to_public_key(secret_key);
     let seq = match node.wallet_db().sequence(from) {
-        Some(seq) => seq,
-        None => {
-            return respond_error("Unknown wallet".to_owned());
+        Ok(seq) => seq,
+        Err(err) => {
+            return respond_error(err.to_string());
         }
     };
     let to = match node.wallet_db().address_codec().decode(&request.to) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -21,7 +21,9 @@ use blacknet_compat::{Mode, XDGDirectories};
 use blacknet_kernel::blake2b::Hash;
 use blacknet_kernel::ed25519::PublicKey;
 use blacknet_log::{LogManager, Logger, error, info};
-use core::error::Error;
+use core::error::Error as StdError;
+use core::fmt;
+use rusqlite::Error as SqliteError;
 use std::collections::HashMap;
 use std::fs::{DirBuilder, read_dir};
 use std::io::Error as IoError;
@@ -36,12 +38,11 @@ pub struct WalletDB {
 }
 
 impl WalletDB {
-    #[expect(unused)]
     pub fn new(
         mode: &Mode,
         dirs: &XDGDirectories,
         log_manager: &LogManager,
-    ) -> Result<Self, Box<dyn Error>> {
+    ) -> Result<Self, Box<dyn StdError>> {
         let logger = log_manager.logger("WalletDB")?;
         info!(logger, "Driving SQLite {}", rusqlite::version());
 
@@ -56,7 +57,7 @@ impl WalletDB {
                         "Loaded wallet {}",
                         dir_entry.file_name().to_string_lossy()
                     );
-                    wallets.insert(todo!(), wallet);
+                    wallets.insert(wallet.public_key()?, wallet);
                 }
                 Err(err) => {
                     error!(
@@ -90,8 +91,11 @@ impl WalletDB {
         &self.address_codec
     }
 
-    pub fn sequence(&self, public_key: PublicKey) -> Option<u32> {
-        self.wallets.get(&public_key).map(Wallet::sequence)
+    pub fn sequence(&self, public_key: PublicKey) -> Result<u32, Error> {
+        self.wallets
+            .get(&public_key)
+            .ok_or(Error::UnknownWallet)?
+            .sequence()
     }
 
     pub fn anchor(&self) -> Hash {
@@ -104,3 +108,30 @@ impl Drop for WalletDB {
         info!(self.logger, "Braking SQLite");
     }
 }
+
+#[derive(Debug)]
+pub enum Error {
+    UnknownWallet,
+    WrongMagic(String),
+    Sqlite(SqliteError),
+}
+
+impl From<SqliteError> for Error {
+    fn from(error: SqliteError) -> Self {
+        Self::Sqlite(error)
+    }
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::UnknownWallet => write!(f, "Requested wallet not found"),
+            Self::WrongMagic(name) => {
+                write!(f, "This SQLite database doesn't look like {name} wallet")
+            }
+            Self::Sqlite(err) => write!(f, "{err}"),
+        }
+    }
+}
+
+impl StdError for Error {}
