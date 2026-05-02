@@ -179,6 +179,7 @@ name = "blacknet-crypto"
 version = "0.3.0"
 dependencies = [
  "blacknet-compat",
+ "bytemuck",
  "criterion",
  "libm",
  "rayon",

@@ -68,7 +68,7 @@ pub struct Connection {
     time_offset: Atomic<Seconds>,
     ping: Atomic<Milliseconds>,
     ping_request: ArcSwapOption<(u32, Milliseconds)>,
-    requested_difficulty: UInt256,
+    requested_difficulty: Atomic<UInt256>,
 
     id: u64,
     version: AtomicU32,
@@ -222,7 +222,12 @@ impl Connection {
     }
 
     pub fn requested_blocks(&self) -> bool {
-        self.requested_difficulty != UInt256::ZERO
+        self.requested_difficulty.load(Ordering::Acquire) != UInt256::ZERO
+    }
+
+    pub fn swap_requested_difficulty(&self, requested_difficulty: UInt256) -> UInt256 {
+        self.requested_difficulty
+            .swap(requested_difficulty, Ordering::AcqRel)
     }
 
     pub const fn connected_at(&self) -> Milliseconds {

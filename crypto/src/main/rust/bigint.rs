@@ -17,6 +17,7 @@
 
 use alloc::string::String;
 use alloc::vec::Vec;
+use bytemuck::NoUninit;
 use core::array;
 use core::cmp::Ordering;
 use core::fmt;
@@ -36,6 +37,7 @@ pub type UInt512 = BigInt<8>;
     deserialize = "[u64; N]: Deserialize<'de>",
     serialize = "[u64; N]: Serialize"
 ))]
+#[repr(transparent)]
 pub struct BigInt<const N: usize> {
     limbs: [u64; N],
 }
@@ -604,3 +606,5 @@ impl<const N: usize> SubAssign for BigInt<N> {
 }
 
 impl<const N: usize> DefaultIsZeroes for BigInt<N> {}
+
+unsafe impl<const N: usize> NoUninit for BigInt<N> {}
