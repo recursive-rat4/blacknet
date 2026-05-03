@@ -54,7 +54,7 @@ chrono = { version = "0.4.44", default-features = false }
 criterion = { version = "0.8.2", default-features = false, features = ["cargo_bench_support"] }
 data-encoding = { version = "2.10.0", default-features = false, features = ["alloc"] }
 data-encoding-macro = { version = "0.1.19" }
-digest = { version = "0.11.2", default-features = false }
+digest = { version = "0.11.3", default-features = false }
 fjall = { version = "3.1.4", default-features = false }
 futures-util = { version = "0.3.32", default-features = false }
 hashlink = { version = "0.11.0" }
