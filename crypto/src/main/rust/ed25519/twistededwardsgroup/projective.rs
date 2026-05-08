@@ -19,7 +19,7 @@ use crate::algebra::{
     AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, Double, Inv, LeftZero, One,
     RightZero, Set, Square, Zero, add_sub_chain,
 };
-use crate::ed25519::{TwistedEdwardsGroupParams, is_on_curve};
+use crate::ed25519::{TwistedEdwardsGroupAffine, TwistedEdwardsGroupParams, is_on_curve};
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::Sum;
 use core::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
@@ -68,6 +68,15 @@ impl<P: TwistedEdwardsGroupParams<F: Clone>> Clone for TwistedEdwardsGroupProjec
 }
 
 impl<P: TwistedEdwardsGroupParams<F: Copy>> Copy for TwistedEdwardsGroupProjective<P> {}
+
+impl<P: TwistedEdwardsGroupParams> From<TwistedEdwardsGroupProjective<P>>
+    for TwistedEdwardsGroupAffine<P>
+{
+    fn from(projective: TwistedEdwardsGroupProjective<P>) -> TwistedEdwardsGroupAffine<P> {
+        let a = projective.z.inv().expect("Elliptic curve arithmetic");
+        unsafe { TwistedEdwardsGroupAffine::from_unchecked(projective.x * a, projective.y * a) }
+    }
+}
 
 impl<P: TwistedEdwardsGroupParams<F: Debug>> Debug for TwistedEdwardsGroupProjective<P> {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {

@@ -133,19 +133,15 @@ impl<P: TwistedEdwardsGroupParams> Add for TwistedEdwardsGroupExtended<P> {
     type Output = Self;
 
     fn add(self, rps: Self) -> Self::Output {
-        // add-2008-hwcd-2
-        let x1x2 = self.x * rps.x;
-        let y1y2 = self.y * rps.y;
-        let z1t2 = self.z * rps.t;
-        let z2t1 = self.t * rps.z;
-        let e = z2t1 + z1t2;
-        let f = (self.x - self.y) * (rps.x + rps.y) + y1y2 - x1x2;
-        let g = if P::A_IS_MINUS_ONE {
-            y1y2 - x1x2
-        } else {
-            y1y2 + P::A * x1x2
-        };
-        let h = z2t1 - z1t2;
+        // add-2008-hwcd-3
+        let a = (self.y - self.x) * (rps.y - rps.x);
+        let b = (self.y + self.x) * (rps.y + rps.x);
+        let c = self.t * P::D_TWICE * rps.t;
+        let d = self.z.double() * rps.z;
+        let e = b - a;
+        let f = d - c;
+        let g = d + c;
+        let h = b + a;
         let xr = e * f;
         let yr = g * h;
         let zr = f * g;
@@ -269,18 +265,14 @@ impl<P: TwistedEdwardsGroupParams> Sub for TwistedEdwardsGroupExtended<P> {
     type Output = Self;
 
     fn sub(self, rps: Self) -> Self::Output {
-        let x1x2 = self.x * rps.x;
-        let y1y2 = self.y * rps.y;
-        let z1t2 = self.z * rps.t;
-        let z2t1 = self.t * rps.z;
-        let e = z2t1 - z1t2;
-        let f = (self.x - self.y) * (rps.y - rps.x) + y1y2 + x1x2;
-        let g = if P::A_IS_MINUS_ONE {
-            y1y2 + x1x2
-        } else {
-            y1y2 - P::A * x1x2
-        };
-        let h = z2t1 + z1t2;
+        let a = (self.y - self.x) * (rps.y + rps.x);
+        let b = (self.y + self.x) * (rps.y - rps.x);
+        let c = self.t * P::D_TWICE * rps.t;
+        let d = self.z.double() * rps.z;
+        let e = b - a;
+        let f = d + c;
+        let g = d - c;
+        let h = b + a;
         let xr = e * f;
         let yr = g * h;
         let zr = f * g;

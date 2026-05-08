@@ -40,6 +40,11 @@ impl TwistedEdwardsGroupParams for Edwards25519GroupParams {
     };
 
     const A_IS_MINUS_ONE: bool = true;
+    const D_TWICE: Self::F = unsafe {
+        Field25519::from_unchecked(UInt256::from_hex(
+            "2406D9DC56DFFCE7198E80F2EEF3D13000E0149A8283B156EBD69B9426B2F159",
+        ))
+    };
 }
 
 pub type Edwards25519GroupAffine = TwistedEdwardsGroupAffine<Edwards25519GroupParams>;

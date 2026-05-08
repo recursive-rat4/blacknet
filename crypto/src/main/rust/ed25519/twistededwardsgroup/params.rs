@@ -24,6 +24,7 @@ pub trait TwistedEdwardsGroupParams {
     const D: Self::F;
 
     const A_IS_MINUS_ONE: bool;
+    const D_TWICE: Self::F;
 }
 
 pub fn is_on_curve<P: TwistedEdwardsGroupParams<F: Eq>>(x: P::F, y: P::F) -> bool {
