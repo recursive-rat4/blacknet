@@ -237,6 +237,7 @@ dependencies = [
  "blacknet-time",
  "blake2",
  "bytemuck",
+ "criterion",
  "data-encoding",
  "digest 0.11.3",
  "ripemd",

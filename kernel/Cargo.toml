@@ -45,6 +45,7 @@ sha3.workspace = true
 
 [dev-dependencies]
 blacknet-compat.workspace = true
+criterion.workspace = true
 
 [lints]
 workspace = true
@@ -72,3 +73,8 @@ path = "src/test/rust/timelock.rs"
 [[test]]
 name = "transaction"
 path = "src/test/rust/transaction.rs"
+
+[[bench]]
+name = "ed25519"
+path = "src/benchmark/rust/ed25519.rs"
+harness = false

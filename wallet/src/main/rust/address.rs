@@ -55,7 +55,7 @@ impl AddressCodec {
     }
 
     pub fn encode(&self, public_key: PublicKey) -> Result<String> {
-        Ok(encode::<Bech32>(self.hrp, &public_key)?)
+        Ok(encode::<Bech32>(self.hrp, public_key.as_ref())?)
     }
 
     pub fn decode(&self, string: &str) -> Result<PublicKey> {
@@ -64,12 +64,11 @@ impl AddressCodec {
         if hrp != self.hrp {
             return Err(Error::WrongHrp);
         }
-        if data.len() != size_of::<PublicKey>() {
-            return Err(Error::WrongSize);
-        }
-        let mut public_key: PublicKey = Default::default();
-        public_key.copy_from_slice(&data);
-        Ok(public_key)
+        let bytes: [u8; 32] = match data.try_into() {
+            Ok(bytes) => bytes,
+            Err(_) => return Err(Error::WrongSize),
+        };
+        Ok(PublicKey::from(bytes))
     }
 
     pub fn encode_with_kind(&self, kind: AddressKind, data: &[u8]) -> Result<String> {

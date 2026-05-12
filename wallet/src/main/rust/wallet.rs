@@ -119,7 +119,10 @@ impl Wallet {
         Self::set_magic(&connection, mode)?;
         Self::create_schema(&connection)?;
 
-        connection.execute("INSERT INTO wallet VALUES(?, ?, ?);", (0, public_key, 0))?;
+        connection.execute(
+            "INSERT INTO wallet VALUES(?, ?, ?);",
+            (0, public_key.as_ref(), 0),
+        )?;
 
         Ok(Self {
             connection: Mutex::new(connection),
@@ -129,8 +132,8 @@ impl Wallet {
     pub fn public_key(&self) -> Result<PublicKey> {
         let connection = self.connection.lock().unwrap();
         let mut statement = connection.prepare_cached("SELECT public_key FROM wallet;")?;
-        let public_key = statement.query_one((), |row| row.get(0))?;
-        Ok(public_key)
+        let bytes: [u8; 32] = statement.query_one((), |row| row.get(0))?;
+        Ok(PublicKey::from(bytes))
     }
 
     pub fn sequence(&self) -> Result<u32> {
@@ -204,7 +207,11 @@ impl Wallet {
     pub fn put_out_lease(&self, lease: Lease) -> Result<()> {
         let connection = self.connection.lock().unwrap();
         let mut statement = connection.prepare_cached("INSERT INTO out_leases VALUES(?, ?, ?);")?;
-        statement.execute((lease.public_key(), lease.height(), lease.balance().value()))?;
+        statement.execute((
+            lease.public_key().as_ref(),
+            lease.height(),
+            lease.balance().value(),
+        ))?;
         Ok(())
     }
 
@@ -218,7 +225,11 @@ impl Wallet {
                  LIMIT 1\
              );",
         )?;
-        statement.execute((lease.public_key(), lease.height(), lease.balance().value()))?;
+        statement.execute((
+            lease.public_key().as_ref(),
+            lease.height(),
+            lease.balance().value(),
+        ))?;
         Ok(())
     }
 
@@ -235,7 +246,7 @@ impl Wallet {
         )?;
         statement.execute((
             height,
-            lease.public_key(),
+            lease.public_key().as_ref(),
             lease.height(),
             lease.balance().value(),
         ))?;
@@ -255,7 +266,7 @@ impl Wallet {
         )?;
         statement.execute((
             withdraw.value(),
-            lease.public_key(),
+            lease.public_key().as_ref(),
             lease.height(),
             lease.balance().value(),
         ))?;

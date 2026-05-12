@@ -27,7 +27,7 @@ use blacknet_crypto::{
 use core::array::TryFromSliceError;
 use core::fmt::{Debug, Formatter, Result as FmtResult};
 use core::mem::transmute;
-use data_encoding::HEXUPPER;
+use data_encoding::{DecodeError, DecodeKind, HEXUPPER};
 use digest::Digest;
 use serde::{Deserialize, Serialize};
 
@@ -76,33 +76,130 @@ impl Debug for Signature {
     }
 }
 
-impl TryFrom<Vec<u8>> for Signature {
-    type Error = TryFromSliceError;
+impl TryFrom<&str> for Signature {
+    type Error = DecodeError;
 
-    fn try_from(vec: Vec<u8>) -> Result<Self, Self::Error> {
-        let bytes = <[u8; 64]>::try_from(vec.as_slice())?;
-        let rs: [[u8; 32]; 2] = unsafe { transmute(bytes) };
-        Ok(Self { r: rs[0], s: rs[1] })
+    fn try_from(hex: &str) -> Result<Self, Self::Error> {
+        if hex.len() == 128 {
+            let (left, right) = hex.as_bytes().split_at(64);
+            let mut r = [0_u8; 32];
+            match HEXUPPER.decode_mut(left, &mut r) {
+                Ok(_) => {}
+                Err(err) => return Err(err.error),
+            };
+            let mut s = [0_u8; 32];
+            match HEXUPPER.decode_mut(right, &mut s) {
+                Ok(_) => {}
+                Err(err) => return Err(err.error),
+            };
+            Ok(Self { r, s })
+        } else {
+            Err(DecodeError {
+                position: 0,
+                kind: DecodeKind::Length,
+            })
+        }
     }
 }
 
-pub type PublicKey = [u8; 32];
+#[derive(Clone, Copy, Default, Deserialize, Eq, Hash, PartialEq, Serialize)]
+pub struct PublicKey([u8; 32]);
+
+impl AsRef<[u8]> for PublicKey {
+    fn as_ref(&self) -> &[u8] {
+        &self.0
+    }
+}
+
+impl Debug for PublicKey {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+        write!(f, "{}", HEXUPPER.encode(&self.0))
+    }
+}
+
+impl From<[u8; 32]> for PublicKey {
+    fn from(array: [u8; 32]) -> Self {
+        Self(array)
+    }
+}
+
+impl TryFrom<&[u8]> for PublicKey {
+    type Error = TryFromSliceError;
+
+    fn try_from(slice: &[u8]) -> Result<Self, Self::Error> {
+        Ok(Self(slice.try_into()?))
+    }
+}
+
+impl TryFrom<Vec<u8>> for PublicKey {
+    type Error = Vec<u8>;
+
+    fn try_from(vec: Vec<u8>) -> Result<Self, Self::Error> {
+        Ok(Self(vec.try_into()?))
+    }
+}
+
+impl TryFrom<&str> for PublicKey {
+    type Error = DecodeError;
+
+    fn try_from(hex: &str) -> Result<Self, Self::Error> {
+        if hex.len() == 64 {
+            let mut buf = [0_u8; 32];
+            match HEXUPPER.decode_mut(hex.as_bytes(), &mut buf) {
+                Ok(_) => Ok(Self(buf)),
+                Err(err) => Err(err.error),
+            }
+        } else {
+            Err(DecodeError {
+                position: 0,
+                kind: DecodeKind::Length,
+            })
+        }
+    }
+}
 
 pub fn to_public_key(secret_key: SecretKey) -> PublicKey {
     let (scalar, _) = parse_secret_key(secret_key);
-    mul_base_encode(scalar)
+    let bytes = mul_base_encode(scalar);
+    PublicKey(bytes)
 }
 
-pub type SecretKey = [u8; 32];
+#[derive(Clone, Copy, Default)]
+pub struct SecretKey([u8; 32]);
+
+impl AsRef<[u8]> for SecretKey {
+    fn as_ref(&self) -> &[u8] {
+        &self.0
+    }
+}
+
+impl TryFrom<&str> for SecretKey {
+    type Error = DecodeError;
+
+    fn try_from(hex: &str) -> Result<Self, Self::Error> {
+        if hex.len() == 64 {
+            let mut buf = [0_u8; 32];
+            match HEXUPPER.decode_mut(hex.as_bytes(), &mut buf) {
+                Ok(_) => Ok(Self(buf)),
+                Err(err) => Err(err.error),
+            }
+        } else {
+            Err(DecodeError {
+                position: 0,
+                kind: DecodeKind::Length,
+            })
+        }
+    }
+}
 
 const fn check_version(bytes: [u8; 32]) -> bool {
     bytes[0] & 0xF0 == 0x10
 }
 
 pub fn to_secret_key(mnemonic: &str) -> Option<SecretKey> {
-    let hash: [u8; 32] = Blake2b256::digest(mnemonic).into();
-    if check_version(hash) {
-        Some(hash)
+    let bytes: [u8; 32] = Blake2b256::digest(mnemonic).into();
+    if check_version(bytes) {
+        Some(SecretKey(bytes))
     } else {
         None
     }
@@ -132,7 +229,7 @@ pub fn sign(hash: Hash, secret_key: SecretKey) -> Signature {
 }
 
 pub fn verify(signature: Signature, hash: Hash, public_key: PublicKey) -> Result<(), Error> {
-    let a = Edwards25519GroupAffine::decode(public_key)
+    let a = Edwards25519GroupAffine::decode(public_key.0)
         .ok_or_else(|| Error::Invalid("Invalid public key".to_owned()))?;
     let mut hasher = Blake2b512::new();
     hasher.update(signature.r);
