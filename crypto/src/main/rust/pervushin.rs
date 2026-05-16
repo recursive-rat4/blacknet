@@ -19,11 +19,11 @@ use crate::algebra::{
     AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, BalancedRepresentative,
     DivisionAlgebra, Double, IntegerRing, Inv, LeftOne, LeftZero, MultiplicativeCommutativeMagma,
     MultiplicativeMonoid, MultiplicativeSemigroup, One, RightOne, RightZero, Semifield, Set, Sqrt,
-    Square, UnivariateRing, Zero, square_and_multiply,
+    Square, UnivariateRing, Zero,
 };
 use crate::convolution::Negacyclic;
 use crate::gcd::gcd_inner;
-use crate::integer::{Integer, bits_u64};
+use crate::integer::Integer;
 use crate::polynomial::interpolation::InterpolationConsts;
 use crate::symmetric::{Absorb, Duplexer, Squeeze};
 use core::fmt::{Debug, Formatter, Result};
@@ -71,7 +71,12 @@ impl PervushinField {
         Some(f)
     }
 
-    const P_PLUS_1_QUARTER: [bool; 60] = bits_u64(0x800000000000000);
+    fn pow_p_plus_1_quarter(mut self) -> Self {
+        for _ in 0..59 {
+            self = self.square()
+        }
+        self
+    }
 }
 
 impl Debug for PervushinField {
@@ -391,7 +396,7 @@ impl Sqrt for PervushinField {
 
     fn sqrt(self) -> Option<Self> {
         // p = 3 mod 4
-        let a = square_and_multiply(self, Self::P_PLUS_1_QUARTER);
+        let a = self.pow_p_plus_1_quarter();
         if a.square() == self { Some(a) } else { None }
     }
 }
