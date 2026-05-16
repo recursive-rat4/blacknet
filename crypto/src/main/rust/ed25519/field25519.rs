@@ -18,7 +18,7 @@
 use crate::algebra::{
     AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, Double, IntegerRing, Inv, LeftOne,
     LeftZero, MultiplicativeCommutativeMagma, MultiplicativeMonoid, MultiplicativeSemigroup, One,
-    RightOne, RightZero, Semifield, Set, Sqrt, Square, Zero, square_and_multiply,
+    RightOne, RightZero, Semifield, Set, Sqrt, Square, Zero,
 };
 use crate::bigint::{UInt256, UInt512};
 use crate::integer::Integer;
@@ -113,9 +113,33 @@ impl Field25519 {
         Some(d)
     }
 
-    const P_MINUS_5_EIGHTH: [bool; 252] =
-        UInt256::from_hex("0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFD")
-            .bits();
+    fn square_n<const N: usize>(mut self) -> Self {
+        for _ in 0..N {
+            self = self.square()
+        }
+        self
+    }
+
+    fn pow_p_minus_5_eighth(self) -> Self {
+        let b1 = self;
+        let b10 = b1.square();
+        let b100 = b10.square();
+        let b1000 = b100.square();
+        let b1001 = b1 * b1000;
+        let b1011 = b10 * b1001;
+        let b10110 = b1011.square();
+        let b11111 = b1001 * b10110;
+        let b111110 = b11111.square();
+        let x10 = b111110.square_n::<4>() * b11111;
+        let x20 = x10.square_n::<10>() * x10;
+        let x40 = x20.square_n::<20>() * x20;
+        let x50 = x40.square_n::<10>() * x10;
+        let x100 = x50.square_n::<50>() * x50;
+        let x200 = x100.square_n::<100>() * x100;
+        let x250 = x200.square_n::<50>() * x50;
+        x250.square_n::<2>() * b1
+    }
+
     const P_MINUS_1_HALF: UInt256 =
         UInt256::from_hex("3FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF6");
 }
@@ -478,7 +502,7 @@ impl Sqrt for Field25519 {
     fn sqrt(self) -> Option<Self> {
         // p = 5 mod 8
         let a = self.double();
-        let b = square_and_multiply(a, Self::P_MINUS_5_EIGHTH);
+        let b = a.pow_p_minus_5_eighth();
         let c = a * b.square();
         let d = self * b * (c - Self::ONE);
         if d.square() == self { Some(d) } else { None }

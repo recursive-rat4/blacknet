@@ -18,7 +18,7 @@
 use crate::algebra::{
     AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, Double, IntegerRing, Inv, LeftOne,
     LeftZero, MultiplicativeCommutativeMagma, MultiplicativeMonoid, MultiplicativeSemigroup, One,
-    RightOne, RightZero, Semifield, Set, Sqrt, Square, Zero, square_and_multiply,
+    RightOne, RightZero, Semifield, Set, Sqrt, Square, Zero,
 };
 use crate::bigint::{UInt256, UInt512};
 use crate::integer::Integer;
@@ -134,12 +134,49 @@ impl Scalar25519 {
         Some(d)
     }
 
+    fn square_n<const N: usize>(mut self) -> Self {
+        for _ in 0..N {
+            self = self.square()
+        }
+        self
+    }
+
+    fn pow_p_minus_5_eighth(self) -> Self {
+        // addchain: cost: 278
+        let b1 = self;
+        let b10 = b1.square();
+        let b11 = b1 * b10;
+        let b110 = b11.square();
+        let b1000 = b10 * b110;
+        let b1011 = b11 * b1000;
+        let b1100 = b1 * b1011;
+        let b10100 = b1000 * b1100;
+        let b11010 = b110 * b10100;
+        let b11101 = b11 * b11010;
+        let b100011 = b110 * b11101;
+        let b101111 = b1100 * b100011;
+        let b1001001 = b11010 * b101111;
+        let b1010001 = b1000 * b1001001;
+        let b1010011 = b10 * b1010001;
+        let b1100111 = b10100 * b1010011;
+        let b1101001 = b10 * b1100111;
+        let b1101011 = b10 * b1101001;
+        let b1110011 = b1000 * b1101011;
+        let b1111011 = b1000 * b1110011;
+        let b10000000 = b101111 * b1010001;
+        let i164 =
+            ((b10000000.square_n::<127>() * b1010011).square_n::<8>() * b1111011).square_n::<7>();
+        let i181 = ((b1110011 * i164).square_n::<6>() * b101111).square_n::<8>() * b1010001;
+        let i207 = ((i181.square_n::<8>() * b1111011).square_n::<7>() * b1100111).square_n::<9>();
+        let i229 = ((b1101011 * i207).square_n::<6>() * b1011).square_n::<13>() * b1001001;
+        let i255 = ((i229.square_n::<6>() * b100011).square_n::<10>() * b1101001).square_n::<8>();
+        let i272 = ((b1110011 * i255).square_n::<7>() * b1101011).square_n::<7>() * b1010011;
+        i272.square_n::<5>() * b11101
+    }
+
     const R2: UInt256 =
         UInt256::from_hex("0399411B7C309A3DCEEC73D217F5BE65D00E1BA768859347A40611E3449C0F01");
     const RN: u64 = 0xD2B51DA312547E1B;
-    const P_MINUS_5_EIGHTH: [bool; 250] =
-        UInt256::from_hex("02000000000000000000000000000000029BDF3BD45EF39ACB024C634B9EBA7D")
-            .bits();
     const P_MINUS_1_HALF: UInt256 =
         UInt256::from_hex("080000000000000000000000000000000A6F7CEF517BCE6B2C09318D2E7AE9F6");
 }
@@ -498,7 +535,7 @@ impl Sqrt for Scalar25519 {
     fn sqrt(self) -> Option<Self> {
         // p = 5 mod 8
         let a = self.double();
-        let b = square_and_multiply(a, Self::P_MINUS_5_EIGHTH);
+        let b = a.pow_p_minus_5_eighth();
         let c = a * b.square();
         let d = self * b * (c - Self::ONE);
         if d.square() == self { Some(d) } else { None }
