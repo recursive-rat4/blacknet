@@ -288,8 +288,9 @@ impl Sub for Field25519 {
     type Output = Self;
 
     fn sub(self, rps: Self) -> Self::Output {
-        let mut n = self.n - rps.n;
-        if n >= Self::MODULUS {
+        let (mut n, o) = self.n.overflowing_sub(rps.n);
+        #[allow(clippy::suspicious_arithmetic_impl)]
+        if o {
             n += Self::MODULUS
         }
         Self { n }
@@ -300,8 +301,9 @@ impl Sub<&Self> for Field25519 {
     type Output = Self;
 
     fn sub(self, rps: &Self) -> Self::Output {
-        let mut n = self.n - rps.n;
-        if n >= Self::MODULUS {
+        let (mut n, o) = self.n.overflowing_sub(rps.n);
+        #[allow(clippy::suspicious_arithmetic_impl)]
+        if o {
             n += Self::MODULUS
         }
         Self { n }
@@ -312,8 +314,9 @@ impl Sub<Field25519> for &Field25519 {
     type Output = Field25519;
 
     fn sub(self, rps: Field25519) -> Self::Output {
-        let mut n = self.n - rps.n;
-        if n >= Self::Output::MODULUS {
+        let (mut n, o) = self.n.overflowing_sub(rps.n);
+        #[allow(clippy::suspicious_arithmetic_impl)]
+        if o {
             n += Self::Output::MODULUS
         }
         Self::Output { n }
@@ -324,8 +327,9 @@ impl<'a> Sub<&'a Field25519> for &Field25519 {
     type Output = Field25519;
 
     fn sub(self, rps: &'a Field25519) -> Self::Output {
-        let mut n = self.n - rps.n;
-        if n >= Self::Output::MODULUS {
+        let (mut n, o) = self.n.overflowing_sub(rps.n);
+        #[allow(clippy::suspicious_arithmetic_impl)]
+        if o {
             n += Self::Output::MODULUS
         }
         Self::Output { n }
