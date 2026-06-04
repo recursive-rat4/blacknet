@@ -28,8 +28,8 @@ pub struct FastDRG {
 }
 
 impl FastDRG {
-    pub fn new(seed: [u8; SEED_SIZE]) -> Self {
-        let mut chacha = ChaCha::<8>::new(seed, Default::default());
+    pub fn new(seed: &[u8; SEED_SIZE]) -> Self {
+        let mut chacha = ChaCha::<8>::new(seed, &Default::default());
         let mut buffer = [0_u8; BLOCK_SIZE];
         Self::keystream(&mut chacha, &mut buffer);
         Self {
@@ -39,8 +39,8 @@ impl FastDRG {
         }
     }
 
-    pub fn seed(&mut self, seed: [u8; SEED_SIZE]) {
-        self.chacha.reset(seed, Default::default());
+    pub fn seed(&mut self, seed: &[u8; SEED_SIZE]) {
+        self.chacha.reset(seed, &Default::default());
         Self::keystream(&mut self.chacha, &mut self.buffer);
         self.position = 0;
     }
@@ -71,7 +71,7 @@ impl FastDRG {
 
 impl Default for FastDRG {
     fn default() -> Self {
-        Self::new(Default::default())
+        Self::new(&Default::default())
     }
 }
 

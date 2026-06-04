@@ -50,7 +50,7 @@ fn rfc8439() {
 
     let mut scratch: [u8; 114] = [0; 114];
 
-    let mut cipher = ChaCha20::new(key, iv);
+    let mut cipher = ChaCha20::new(&key, &iv);
     cipher.seek(1);
     cipher.decrypt(&mut scratch, &encrypted);
     assert_eq!(scratch, decrypted);
@@ -83,7 +83,7 @@ fn blacknet() {
 
     let mut scratch: [u8; 32] = [0; 32];
 
-    let mut cipher = ChaCha20::new(key, iv);
+    let mut cipher = ChaCha20::new(&key, &iv);
     cipher.decrypt(&mut scratch, &encrypted);
     assert_eq!(scratch, decrypted);
 

@@ -16,7 +16,7 @@
  */
 
 use core::cmp::min;
-use core::mem::transmute;
+use core::mem::{transmute, transmute_copy};
 use zeroize::DefaultIsZeroes;
 
 pub type Word = u32;
@@ -33,18 +33,18 @@ pub struct ChaCha<const ROUNDS: usize> {
 }
 
 impl<const ROUNDS: usize> ChaCha<ROUNDS> {
-    pub fn new(key: [u8; KEY_SIZE], iv: [u8; IV_SIZE]) -> Self {
+    pub fn new(key: &[u8; KEY_SIZE], iv: &[u8; IV_SIZE]) -> Self {
         let mut chacha = Self { input: [0; L] };
         chacha.reset(key, iv);
         chacha
     }
 
-    pub fn reset(&mut self, key: [u8; KEY_SIZE], iv: [u8; IV_SIZE]) {
+    pub fn reset(&mut self, key: &[u8; KEY_SIZE], iv: &[u8; IV_SIZE]) {
         self.input[..SIGMA.len()].copy_from_slice(&SIGMA);
-        let key: [Word; 8] = unsafe { transmute(key) };
+        let key: [Word; 8] = unsafe { transmute_copy(key) };
         self.input[SIGMA.len()..12].copy_from_slice(&key.map(Word::from_le));
         self.input[12] = 0;
-        let iv: [Word; 3] = unsafe { transmute(iv) };
+        let iv: [Word; 3] = unsafe { transmute_copy(iv) };
         self.input[13..].copy_from_slice(&iv.map(Word::from_le));
     }
 

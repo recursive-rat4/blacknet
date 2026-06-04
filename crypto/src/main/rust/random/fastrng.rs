@@ -31,7 +31,7 @@ impl FastSeeder {
         let mut seed = [0u8; SEED_SIZE];
         getentropy(&mut seed).expect("source of entropy");
         Self {
-            drg: FastDRG::new(seed),
+            drg: FastDRG::new(&seed),
         }
     }
 
@@ -51,7 +51,7 @@ impl FastRNG {
     fn new() -> Self {
         let seed = FAST_SEEDER.lock().unwrap().generate::<SEED_SIZE>();
         Self {
-            drg: FastDRG::new(seed),
+            drg: FastDRG::new(&seed),
         }
     }
 }

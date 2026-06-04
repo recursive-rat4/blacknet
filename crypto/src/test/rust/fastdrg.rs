@@ -27,7 +27,7 @@ fn discard() {
     let _: [u8; SIZE] = array::from_fn(|_| drg.generate());
     let buf1: [u8; SIZE] = array::from_fn(|_| drg.generate());
 
-    drg.seed(Default::default());
+    drg.seed(&Default::default());
     drg.discard(SIZE);
     let buf2: [u8; SIZE] = array::from_fn(|_| drg.generate());
 
