@@ -17,26 +17,30 @@
 
 use crate::random::{FastDRG, UniformGenerator, fastdrg::SEED_SIZE};
 use blacknet_compat::getentropy;
-use core::array;
 use core::cell::RefCell;
+use core::ops::DerefMut;
 use std::sync::{LazyLock, Mutex};
 use std::thread_local;
+use zeroize::Zeroizing;
 
 pub struct FastSeeder {
     drg: FastDRG,
 }
 
 impl FastSeeder {
+    /// # Panics
+    ///
+    /// If initial entropy can't be obtained.
     fn new() -> Self {
-        let mut seed = [0u8; SEED_SIZE];
-        getentropy(&mut seed).expect("source of entropy");
+        let mut seed: Zeroizing<[u8; SEED_SIZE]> = Default::default();
+        getentropy(seed.deref_mut()).expect("source of entropy");
         Self {
             drg: FastDRG::new(&seed),
         }
     }
 
-    pub fn generate<const N: usize>(&mut self) -> [u8; N] {
-        array::from_fn(|_| self.drg.generate())
+    pub fn generate(&mut self, buf: &mut [u8]) {
+        self.drg.fill(buf)
     }
 }
 
@@ -49,7 +53,8 @@ pub struct FastRNG {
 
 impl FastRNG {
     fn new() -> Self {
-        let seed = FAST_SEEDER.lock().unwrap().generate::<SEED_SIZE>();
+        let mut seed: Zeroizing<[u8; SEED_SIZE]> = Default::default();
+        FAST_SEEDER.lock().unwrap().generate(seed.deref_mut());
         Self {
             drg: FastDRG::new(&seed),
         }
