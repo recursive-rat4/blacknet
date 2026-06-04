@@ -25,10 +25,9 @@ use crate::errno::errno;
 const GETENTROPY_MAX: usize = 256;
 
 #[cfg(target_family = "unix")]
-pub fn getentropy<const N: usize>() -> Result<[u8; N], Error> {
-    let mut buf = [0_u8; N];
+pub fn getentropy(buf: &mut [u8]) -> Result<(), Error> {
     let mut offset = 0;
-    let mut remain = N;
+    let mut remain = buf.len();
     while remain > 0 {
         let process = min(remain, GETENTROPY_MAX);
         let ptr = unsafe { (buf.as_mut_ptr() as *mut libc::c_void).add(offset) };
@@ -41,7 +40,7 @@ pub fn getentropy<const N: usize>() -> Result<[u8; N], Error> {
             return Err(Error::Errno(errno()));
         }
     }
-    Ok(buf)
+    Ok(())
 }
 
 #[cfg(target_family = "windows")]
@@ -56,11 +55,10 @@ use windows_sys::Win32::Security::Cryptography::{
 const GETENTROPY_MAX: usize = u32::MAX as usize;
 
 #[cfg(target_family = "windows")]
-pub fn getentropy<const N: usize>() -> Result<[u8; N], Error> {
+pub fn getentropy(buf: &mut [u8]) -> Result<(), Error> {
     let bcrypt_alg_handle: BCRYPT_ALG_HANDLE = core::ptr::null_mut();
-    let mut buf = [0_u8; N];
     let mut offset = 0;
-    let mut remain = N;
+    let mut remain = buf.len();
     while remain > 0 {
         let process = min(remain, GETENTROPY_MAX);
         let ptr = unsafe { (buf.as_mut_ptr() as *mut u8).add(offset) };
@@ -80,5 +78,5 @@ pub fn getentropy<const N: usize>() -> Result<[u8; N], Error> {
             return Err(Error::NtStatus(status));
         }
     }
-    Ok(buf)
+    Ok(())
 }

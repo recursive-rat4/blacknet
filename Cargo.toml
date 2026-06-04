@@ -90,6 +90,9 @@ needless_pass_by_ref_mut = "warn"
 needless_pass_by_value = "warn"
 redundant_closure_for_method_calls = "warn"
 
+[workspace.lints.rust]
+unused_must_use = "deny"
+
 [workspace.package]
 version = "0.3.0"
 authors = ["Blacknet Team"]

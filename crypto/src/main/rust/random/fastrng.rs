@@ -28,7 +28,8 @@ pub struct FastSeeder {
 
 impl FastSeeder {
     fn new() -> Self {
-        let seed = getentropy::<SEED_SIZE>().expect("source of entropy");
+        let mut seed = [0u8; SEED_SIZE];
+        getentropy(&mut seed).expect("source of entropy");
         Self {
             drg: FastDRG::new(seed),
         }
