@@ -32,23 +32,23 @@ use zeroize::DefaultIsZeroes;
 
 /// The quotient ring `ℤ/2ℤ`.
 #[derive(Clone, Copy, Default, Deserialize, Eq, PartialEq, Serialize)]
-pub struct Z2 {
+pub struct GF2 {
     n: bool,
 }
 
-impl Debug for Z2 {
+impl Debug for GF2 {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         write!(f, "{}", self.n as i8)
     }
 }
 
-impl From<bool> for Z2 {
+impl From<bool> for GF2 {
     fn from(n: bool) -> Self {
         Self { n }
     }
 }
 
-impl Add for Z2 {
+impl Add for GF2 {
     type Output = Self;
 
     fn add(self, rps: Self) -> Self::Output {
@@ -56,7 +56,7 @@ impl Add for Z2 {
     }
 }
 
-impl Add<&Self> for Z2 {
+impl Add<&Self> for GF2 {
     type Output = Self;
 
     fn add(self, rps: &Self) -> Self::Output {
@@ -64,35 +64,35 @@ impl Add<&Self> for Z2 {
     }
 }
 
-impl Add<Z2> for &Z2 {
-    type Output = Z2;
+impl Add<GF2> for &GF2 {
+    type Output = GF2;
 
-    fn add(self, rps: Z2) -> Self::Output {
+    fn add(self, rps: GF2) -> Self::Output {
         Self::Output { n: self.n ^ rps.n }
     }
 }
 
-impl<'a> Add<&'a Z2> for &Z2 {
-    type Output = Z2;
+impl<'a> Add<&'a GF2> for &GF2 {
+    type Output = GF2;
 
-    fn add(self, rps: &'a Z2) -> Self::Output {
+    fn add(self, rps: &'a GF2) -> Self::Output {
         Self::Output { n: self.n ^ rps.n }
     }
 }
 
-impl AddAssign for Z2 {
+impl AddAssign for GF2 {
     fn add_assign(&mut self, rps: Self) {
         self.n ^= rps.n
     }
 }
 
-impl AddAssign<&Self> for Z2 {
+impl AddAssign<&Self> for GF2 {
     fn add_assign(&mut self, rps: &Self) {
         self.n ^= rps.n
     }
 }
 
-impl Double for Z2 {
+impl Double for GF2 {
     type Output = Self;
 
     #[inline]
@@ -101,8 +101,8 @@ impl Double for Z2 {
     }
 }
 
-impl Double for &Z2 {
-    type Output = Z2;
+impl Double for &GF2 {
+    type Output = GF2;
 
     #[inline]
     fn double(self) -> Self::Output {
@@ -110,7 +110,7 @@ impl Double for &Z2 {
     }
 }
 
-impl Neg for Z2 {
+impl Neg for GF2 {
     type Output = Self;
 
     #[inline]
@@ -119,8 +119,8 @@ impl Neg for Z2 {
     }
 }
 
-impl Neg for &Z2 {
-    type Output = Z2;
+impl Neg for &GF2 {
+    type Output = GF2;
 
     #[inline]
     fn neg(self) -> Self::Output {
@@ -128,7 +128,7 @@ impl Neg for &Z2 {
     }
 }
 
-impl Sub for Z2 {
+impl Sub for GF2 {
     type Output = Self;
 
     fn sub(self, rps: Self) -> Self::Output {
@@ -136,7 +136,7 @@ impl Sub for Z2 {
     }
 }
 
-impl Sub<&Self> for Z2 {
+impl Sub<&Self> for GF2 {
     type Output = Self;
 
     fn sub(self, rps: &Self) -> Self::Output {
@@ -144,35 +144,35 @@ impl Sub<&Self> for Z2 {
     }
 }
 
-impl Sub<Z2> for &Z2 {
-    type Output = Z2;
+impl Sub<GF2> for &GF2 {
+    type Output = GF2;
 
-    fn sub(self, rps: Z2) -> Self::Output {
+    fn sub(self, rps: GF2) -> Self::Output {
         Self::Output { n: self.n ^ rps.n }
     }
 }
 
-impl<'a> Sub<&'a Z2> for &Z2 {
-    type Output = Z2;
+impl<'a> Sub<&'a GF2> for &GF2 {
+    type Output = GF2;
 
-    fn sub(self, rps: &'a Z2) -> Self::Output {
+    fn sub(self, rps: &'a GF2) -> Self::Output {
         Self::Output { n: self.n ^ rps.n }
     }
 }
 
-impl SubAssign for Z2 {
+impl SubAssign for GF2 {
     fn sub_assign(&mut self, rps: Self) {
         self.n ^= rps.n
     }
 }
 
-impl SubAssign<&Self> for Z2 {
+impl SubAssign<&Self> for GF2 {
     fn sub_assign(&mut self, rps: &Self) {
         self.n ^= rps.n
     }
 }
 
-impl Mul for Z2 {
+impl Mul for GF2 {
     type Output = Self;
 
     fn mul(self, rps: Self) -> Self::Output {
@@ -180,7 +180,7 @@ impl Mul for Z2 {
     }
 }
 
-impl Mul<&Self> for Z2 {
+impl Mul<&Self> for GF2 {
     type Output = Self;
 
     fn mul(self, rps: &Self) -> Self::Output {
@@ -188,35 +188,35 @@ impl Mul<&Self> for Z2 {
     }
 }
 
-impl Mul<Z2> for &Z2 {
-    type Output = Z2;
+impl Mul<GF2> for &GF2 {
+    type Output = GF2;
 
-    fn mul(self, rps: Z2) -> Self::Output {
+    fn mul(self, rps: GF2) -> Self::Output {
         Self::Output { n: self.n & rps.n }
     }
 }
 
-impl<'a> Mul<&'a Z2> for &Z2 {
-    type Output = Z2;
+impl<'a> Mul<&'a GF2> for &GF2 {
+    type Output = GF2;
 
-    fn mul(self, rps: &'a Z2) -> Self::Output {
+    fn mul(self, rps: &'a GF2) -> Self::Output {
         Self::Output { n: self.n & rps.n }
     }
 }
 
-impl MulAssign for Z2 {
+impl MulAssign for GF2 {
     fn mul_assign(&mut self, rps: Self) {
         self.n &= rps.n
     }
 }
 
-impl MulAssign<&Self> for Z2 {
+impl MulAssign<&Self> for GF2 {
     fn mul_assign(&mut self, rps: &Self) {
         self.n &= rps.n
     }
 }
 
-impl Square for Z2 {
+impl Square for GF2 {
     type Output = Self;
 
     #[inline]
@@ -225,8 +225,8 @@ impl Square for Z2 {
     }
 }
 
-impl Square for &Z2 {
-    type Output = Z2;
+impl Square for &GF2 {
+    type Output = GF2;
 
     #[inline]
     fn square(self) -> Self::Output {
@@ -234,7 +234,7 @@ impl Square for &Z2 {
     }
 }
 
-impl Inv for Z2 {
+impl Inv for GF2 {
     type Output = Option<Self>;
 
     fn inv(self) -> Self::Output {
@@ -245,18 +245,18 @@ impl Inv for Z2 {
     }
 }
 
-impl Inv for &Z2 {
-    type Output = Option<Z2>;
+impl Inv for &GF2 {
+    type Output = Option<GF2>;
 
     fn inv(self) -> Self::Output {
         match self.n {
-            true => Some(Z2::ONE),
+            true => Some(GF2::ONE),
             false => None,
         }
     }
 }
 
-impl Div for Z2 {
+impl Div for GF2 {
     type Output = Option<Self>;
 
     fn div(self, rps: Self) -> Self::Output {
@@ -264,7 +264,7 @@ impl Div for Z2 {
     }
 }
 
-impl Div<&Self> for Z2 {
+impl Div<&Self> for GF2 {
     type Output = Option<Self>;
 
     fn div(self, rps: &Self) -> Self::Output {
@@ -272,23 +272,23 @@ impl Div<&Self> for Z2 {
     }
 }
 
-impl Div<Z2> for &Z2 {
-    type Output = Option<Z2>;
+impl Div<GF2> for &GF2 {
+    type Output = Option<GF2>;
 
-    fn div(self, rps: Z2) -> Self::Output {
+    fn div(self, rps: GF2) -> Self::Output {
         if rps.n { Some(*self) } else { None }
     }
 }
 
-impl<'a> Div<&'a Z2> for &Z2 {
-    type Output = Option<Z2>;
+impl<'a> Div<&'a GF2> for &GF2 {
+    type Output = Option<GF2>;
 
-    fn div(self, rps: &'a Z2) -> Self::Output {
+    fn div(self, rps: &'a GF2) -> Self::Output {
         if rps.n { Some(*self) } else { None }
     }
 }
 
-impl Sqrt for Z2 {
+impl Sqrt for GF2 {
     type Output = Self;
 
     #[inline]
@@ -297,8 +297,8 @@ impl Sqrt for Z2 {
     }
 }
 
-impl Sqrt for &Z2 {
-    type Output = Z2;
+impl Sqrt for &GF2 {
+    type Output = GF2;
 
     #[inline]
     fn sqrt(self) -> Self::Output {
@@ -306,73 +306,73 @@ impl Sqrt for &Z2 {
     }
 }
 
-impl Sum for Z2 {
+impl Sum for GF2 {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
         iter.reduce(|lps, rps| lps + rps).unwrap_or(Self::ZERO)
     }
 }
 
-impl<'a> Sum<&'a Self> for Z2 {
+impl<'a> Sum<&'a Self> for GF2 {
     #[inline]
     fn sum<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
         iter.copied().sum()
     }
 }
 
-impl Product for Z2 {
+impl Product for GF2 {
     fn product<I: Iterator<Item = Self>>(iter: I) -> Self {
         iter.reduce(|lps, rps| lps * rps).unwrap_or(Self::ONE)
     }
 }
 
-impl<'a> Product<&'a Self> for Z2 {
+impl<'a> Product<&'a Self> for GF2 {
     #[inline]
     fn product<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
         iter.copied().product()
     }
 }
 
-impl LeftZero for Z2 {
+impl LeftZero for GF2 {
     const LEFT_ZERO: Self = Self { n: false };
 }
 
-impl RightZero for Z2 {
+impl RightZero for GF2 {
     const RIGHT_ZERO: Self = Self { n: false };
 }
 
-impl Zero for Z2 {
+impl Zero for GF2 {
     const ZERO: Self = Self { n: false };
 }
 
-impl LeftOne for Z2 {
+impl LeftOne for GF2 {
     const LEFT_ONE: Self = Self { n: true };
 }
 
-impl RightOne for Z2 {
+impl RightOne for GF2 {
     const RIGHT_ONE: Self = Self { n: true };
 }
 
-impl One for Z2 {
+impl One for GF2 {
     const ONE: Self = Self { n: true };
 }
 
-impl Set for Z2 {}
+impl Set for GF2 {}
 
-impl AdditiveCommutativeMagma for Z2 {}
+impl AdditiveCommutativeMagma for GF2 {}
 
-impl AdditiveSemigroup for Z2 {}
+impl AdditiveSemigroup for GF2 {}
 
-impl AdditiveMonoid for Z2 {}
+impl AdditiveMonoid for GF2 {}
 
-impl MultiplicativeCommutativeMagma for Z2 {}
+impl MultiplicativeCommutativeMagma for GF2 {}
 
-impl MultiplicativeSemigroup for Z2 {}
+impl MultiplicativeSemigroup for GF2 {}
 
-impl MultiplicativeMonoid for Z2 {}
+impl MultiplicativeMonoid for GF2 {}
 
-impl Semifield for Z2 {}
+impl Semifield for GF2 {}
 
-impl IntegerRing for Z2 {
+impl IntegerRing for GF2 {
     type Int = i8;
 
     fn new(n: Self::Int) -> Self {
@@ -393,7 +393,7 @@ impl IntegerRing for Z2 {
     const MODULUS: Self::Int = 2;
 }
 
-impl BalancedRepresentative for Z2 {
+impl BalancedRepresentative for GF2 {
     type Output = i8;
 
     fn balanced(&self) -> Self::Output {
@@ -401,4 +401,4 @@ impl BalancedRepresentative for Z2 {
     }
 }
 
-impl DefaultIsZeroes for Z2 {}
+impl DefaultIsZeroes for GF2 {}

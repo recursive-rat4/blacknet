@@ -18,18 +18,18 @@
 use crate::algebra::{IntegerRing, One, UnivariateRing, Zero};
 use crate::convolution::Negacyclic;
 use crate::fermat::{FermatField, FermatNTT1024, FermatRing1024};
+use crate::gf2::GF2;
 use crate::integer::bits_u8;
 use crate::random::{
     DiscreteGaussianDistribution, Distribution, UniformGenerator, UniformIntDistribution,
     fill_with_weight,
 };
-use crate::z2::Z2;
 use core::array;
 use zeroize::Zeroize;
 
 // https://eprint.iacr.org/2013/293
 
-pub(crate) type Zt = Z2;
+pub(crate) type Zt = GF2;
 pub(crate) type Zq = FermatField;
 pub(crate) const D: usize = 1024;
 pub(crate) const H: usize = 64;

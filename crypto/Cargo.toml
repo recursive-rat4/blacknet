@@ -127,6 +127,10 @@ name = "freemodule"
 path = "src/test/rust/freemodule.rs"
 
 [[test]]
+name = "gf2"
+path = "src/test/rust/gf2.rs"
+
+[[test]]
 name = "hammingweight"
 path = "src/test/rust/hammingweight.rs"
 
@@ -229,10 +233,6 @@ path = "src/test/rust/uniformintdistribution.rs"
 [[test]]
 name = "univariatepolynomial"
 path = "src/test/rust/univariatepolynomial.rs"
-
-[[test]]
-name = "z2"
-path = "src/test/rust/z2.rs"
 
 [[bench]]
 name = "field25519"
