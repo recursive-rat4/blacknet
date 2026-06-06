@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2025 Pavel Vasin
+ * Copyright (c) 2018-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,11 +15,10 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::blake2b::{Blake2b256, Hash};
+use crate::blake2b::{Blake2b256, Digest, Hash};
 use crate::ed25519::{PublicKey, Signature};
 use alloc::boxed::Box;
 use blacknet_time::Seconds;
-use digest::Digest;
 use serde::{Deserialize, Serialize};
 
 const VERSION: u32 = 2;

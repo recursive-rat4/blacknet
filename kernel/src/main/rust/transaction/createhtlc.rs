@@ -16,7 +16,7 @@
  */
 
 use crate::amount::Amount;
-use crate::blake2b::{Blake2b256, Hash};
+use crate::blake2b::{Blake2b256, Digest, Hash};
 use crate::ed25519::PublicKey;
 use crate::error::{Error, Result};
 use crate::hashlock::HashLock;
@@ -24,7 +24,6 @@ use crate::htlc::HTLC;
 use crate::timelock::TimeLock;
 use crate::transaction::{CoinTx, Transaction, TxData};
 use alloc::borrow::ToOwned;
-use digest::Digest;
 use serde::{Deserialize, Serialize};
 
 pub type HashTimeLockContractId = [u8; 32];

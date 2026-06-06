@@ -16,9 +16,8 @@
  */
 
 use blacknet_compat::{assert_err, assert_ok};
-use blacknet_kernel::blake2b::Blake2b256;
+use blacknet_kernel::blake2b::{Blake2b256, Digest};
 use blacknet_kernel::ed25519::*;
-use digest::Digest;
 
 #[test]
 fn public_key() {

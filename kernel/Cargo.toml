@@ -37,7 +37,6 @@ blacknet-time.workspace = true
 blake2.workspace = true
 bytemuck.workspace = true
 data-encoding.workspace = true
-digest.workspace = true
 ripemd.workspace = true
 serde.workspace = true
 sha2.workspace = true

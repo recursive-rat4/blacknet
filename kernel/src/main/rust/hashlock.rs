@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2025 Pavel Vasin
+ * Copyright (c) 2018-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -20,7 +20,6 @@ use crate::error::{Error, Result};
 use alloc::borrow::ToOwned;
 use alloc::boxed::Box;
 use alloc::format;
-use digest::Digest;
 use ripemd::Ripemd160;
 use serde::{Deserialize, Serialize};
 use sha2::Sha256;
@@ -64,10 +63,18 @@ impl HashLock {
 
     pub fn verify(&self, preimage: &[u8]) -> Result<()> {
         let hash: Box<[u8]> = match self.algorithm {
-            BLAKE2B_256 => Box::new(Into::<[u8; 32]>::into(Blake2b256::digest(preimage))),
-            SHA2_256 => Box::new(Into::<[u8; 32]>::into(Sha256::digest(preimage))),
-            KECCAK_256 => Box::new(Into::<[u8; 32]>::into(Keccak256::digest(preimage))),
-            RIPEMD_160 => Box::new(Into::<[u8; 20]>::into(Ripemd160::digest(preimage))),
+            BLAKE2B_256 => Box::new(Into::<[u8; 32]>::into(
+                <Blake2b256 as blake2::Digest>::digest(preimage),
+            )),
+            SHA2_256 => Box::new(Into::<[u8; 32]>::into(<Sha256 as sha2::Digest>::digest(
+                preimage,
+            ))),
+            KECCAK_256 => Box::new(Into::<[u8; 32]>::into(<Keccak256 as sha3::Digest>::digest(
+                preimage,
+            ))),
+            RIPEMD_160 => Box::new(Into::<[u8; 20]>::into(
+                <Ripemd160 as ripemd::Digest>::digest(preimage),
+            )),
             _ => {
                 return Err(Error::Invalid(format!(
                     "Unknown hash type {0}",

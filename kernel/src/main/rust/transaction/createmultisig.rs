@@ -16,7 +16,7 @@
  */
 
 use crate::amount::Amount;
-use crate::blake2b::{Blake2b256, Hash};
+use crate::blake2b::{Blake2b256, Digest, Hash};
 use crate::ed25519::{PublicKey, Signature, verify};
 use crate::error::{Error, Result};
 use crate::multisig::{Deposit, Multisig};
@@ -24,7 +24,6 @@ use crate::transaction::{CoinTx, Transaction, TxData};
 use alloc::borrow::ToOwned;
 use alloc::boxed::Box;
 use blacknet_serialization::format::to_bytes;
-use digest::Digest;
 use serde::{Deserialize, Serialize};
 
 pub type MultiSignatureLockContractId = [u8; 32];

@@ -16,7 +16,7 @@
  */
 
 use crate::amount::Amount;
-use crate::blake2b::{Blake2b256, Hash};
+use crate::blake2b::{Blake2b256, Digest, Hash};
 use crate::ed25519::{PublicKey, verify};
 use crate::error::{Error, Result};
 use crate::multisig::Multisig;
@@ -25,7 +25,6 @@ use alloc::borrow::ToOwned;
 use alloc::boxed::Box;
 use alloc::collections::BTreeMap;
 use blacknet_serialization::format::to_bytes;
-use digest::Digest;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]

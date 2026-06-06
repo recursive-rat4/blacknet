@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::blake2b::{Blake2b256, Blake2b512, Hash};
+use crate::blake2b::{Blake2b256, Blake2b512, Digest, Hash};
 use crate::error::Error;
 use alloc::borrow::ToOwned;
 use alloc::vec::Vec;
@@ -28,7 +28,6 @@ use core::array::TryFromSliceError;
 use core::fmt::{Debug, Formatter, Result as FmtResult};
 use core::mem::transmute;
 use data_encoding::{DecodeError, DecodeKind, HEXUPPER};
-use digest::Digest;
 use serde::{Deserialize, Serialize};
 
 // For compatibility, implementation follows eddsa-java 0.3.0
