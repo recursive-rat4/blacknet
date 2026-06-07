@@ -21,6 +21,7 @@ pub trait Double {
     type Output;
 
     /// Perform the operation equivalent to `self + self`.
+    #[must_use = "returns a new value"]
     fn double(self) -> Self::Output;
 }
 
@@ -30,6 +31,7 @@ pub trait Square {
     type Output;
 
     /// Perform the operation equivalent to `self * self`.
+    #[must_use = "returns a new value"]
     fn square(self) -> Self::Output;
 }
 
@@ -39,6 +41,7 @@ pub trait Inv {
     type Output;
 
     /// Perform the unary `/` operation.
+    #[must_use = "returns a new value"]
     fn inv(self) -> Self::Output;
 }
 
@@ -48,6 +51,7 @@ pub trait Sqrt {
     type Output;
 
     /// Perform the unary `√` operation.
+    #[must_use = "returns a new value"]
     fn sqrt(self) -> Self::Output;
 }
 
@@ -57,6 +61,7 @@ pub trait Conjugate {
     type Output;
 
     /// Perform the unary operation.
+    #[must_use = "returns a new value"]
     fn conjugate(self) -> Self::Output;
 }
 
