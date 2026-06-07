@@ -17,30 +17,81 @@
 
 use blacknet_kernel::amount::Amount;
 use blacknet_kernel::ed25519::{PublicKey, SecretKey};
+use blacknet_log::{Error as LogError, LogManager, Logger, info};
 use blacknet_time::Seconds;
+use core::fmt;
 
-#[derive(Default)]
-pub struct Staker {}
+pub struct Staker {
+    logger: Logger,
+    state: State,
+}
 
 impl Staker {
-    pub const fn new() -> Self {
-        Self {}
+    pub fn new(log_manager: &LogManager) -> core::result::Result<Self, LogError> {
+        Ok(Self {
+            logger: log_manager.logger("Staker")?,
+            state: State::Initializing,
+        })
     }
 
-    pub const fn start_staking(&self, _secret_key: &SecretKey) -> bool {
+    #[expect(unused_variables)]
+    pub const fn start_staking(&self, secret_key: &SecretKey) -> bool {
         todo!();
     }
 
-    pub const fn stop_staking(&self, _secret_key: &SecretKey) -> bool {
+    #[expect(unused_variables)]
+    pub const fn stop_staking(&self, secret_key: &SecretKey) -> bool {
         todo!();
     }
 
-    pub const fn is_staking(&self, _secret_key: &SecretKey) -> bool {
+    #[expect(unused_variables)]
+    pub const fn is_staking(&self, secret_key: &SecretKey) -> bool {
         todo!();
     }
 
-    pub const fn stats(&self, _public_key: &Option<PublicKey>) -> StakerStats {
+    #[expect(unused_variables)]
+    pub const fn stats(&self, public_key: &Option<PublicKey>) -> StakerStats {
         todo!();
+    }
+
+    fn set_state(&mut self, state: State) {
+        if self.state == state {
+            return;
+        }
+        self.state = state;
+        info!(self.logger, "{state}");
+    }
+}
+
+impl Drop for Staker {
+    fn drop(&mut self) {
+        self.set_state(State::Terminating);
+    }
+}
+
+#[expect(dead_code)]
+#[derive(Clone, Copy, Eq, PartialEq)]
+enum State {
+    Initializing,
+    Terminating,
+    AwaitingOnline,
+    AwaitingSync,
+    Staking,
+    Started,
+    Stopped,
+}
+
+impl fmt::Display for State {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            State::Initializing => f.write_str("Initializing staker"),
+            State::Terminating => f.write_str("Terminating staker"),
+            State::AwaitingOnline => f.write_str("Awaiting to get online"),
+            State::AwaitingSync => f.write_str("Awaiting to get synchronized"),
+            State::Staking => f.write_str("Staking"),
+            State::Started => f.write_str("Started staker"),
+            State::Stopped => f.write_str("Stopped staker"),
+        }
     }
 }
 
