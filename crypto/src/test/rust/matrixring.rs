@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_crypto::algebra::{FreeModule, MatrixRing, One};
+use blacknet_crypto::algebra::{Commutator, FreeModule, MatrixRing, One};
 use blacknet_crypto::norm::InfinityNorm;
 
 type Z = blacknet_crypto::pervushin::PervushinField;
@@ -137,6 +137,24 @@ fn identity() {
         0, 1,
     ].map(Z::from));
     assert_eq!(R::ONE, i);
+}
+
+#[test]
+#[rustfmt::skip]
+fn commutator() {
+    let a = R::new([
+        1, 2,
+        3, 4,
+    ].map(Z::from));
+    let b = R::new([
+        5, 6,
+        7, 8,
+    ].map(Z::from));
+    let c = R::new([
+        -4, -12,
+        12,   4,
+    ].map(Z::from));
+    assert_eq!(a.commutator(b), c);
 }
 
 #[test]

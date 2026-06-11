@@ -73,3 +73,12 @@ pub trait Tensor<Rps = Self> {
     /// Perform the binary `⊗` operation.
     fn tensor(self, rps: Rps) -> Self::Output;
 }
+
+/// The binary commutator operator `[a,b]`.
+pub trait Commutator<Rps = Self> {
+    /// Result type.
+    type Output;
+
+    /// Perform the binary `[a,b]` operation.
+    fn commutator(self, rps: Rps) -> Self::Output;
+}

@@ -16,9 +16,9 @@
  */
 
 use crate::algebra::{
-    AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, Algebra, Double, FreeModule,
-    LeftOne, LeftZero, MultiplicativeMonoid, MultiplicativeSemigroup, One, RightOne, RightZero,
-    Ring, RingOps, Semimodule, Set, Square, UnitalAlgebra, UnitalRing, Zero,
+    AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, Algebra, Commutator, Double,
+    FreeModule, LeftOne, LeftZero, MultiplicativeMonoid, MultiplicativeSemigroup, One, RightOne,
+    RightZero, Ring, RingOps, Semimodule, Set, Square, UnitalAlgebra, UnitalRing, Zero,
 };
 use core::array;
 use core::iter::{Product, Sum, zip};
@@ -541,6 +541,52 @@ impl<R: Ring + Copy, const N: usize, const NN: usize> Mul<MatrixRing<R, N, NN>>
             }
         }
         m
+    }
+}
+
+impl<R: Ring, const N: usize, const NN: usize> Commutator<Self> for MatrixRing<R, N, NN>
+where
+    for<'a> &'a R: RingOps<R>,
+{
+    type Output = Self;
+
+    fn commutator(self, rps: Self) -> Self::Output {
+        &self * &rps - rps * self
+    }
+}
+
+impl<R: Ring, const N: usize, const NN: usize> Commutator<&Self> for MatrixRing<R, N, NN>
+where
+    for<'a> &'a R: RingOps<R>,
+{
+    type Output = Self;
+
+    fn commutator(self, rps: &Self) -> Self::Output {
+        &self * rps - rps * self
+    }
+}
+
+impl<R: Ring, const N: usize, const NN: usize> Commutator<MatrixRing<R, N, NN>>
+    for &MatrixRing<R, N, NN>
+where
+    for<'a> &'a R: RingOps<R>,
+{
+    type Output = MatrixRing<R, N, NN>;
+
+    fn commutator(self, rps: MatrixRing<R, N, NN>) -> Self::Output {
+        self * &rps - rps * self
+    }
+}
+
+impl<'a, R: Ring, const N: usize, const NN: usize> Commutator<&'a MatrixRing<R, N, NN>>
+    for &MatrixRing<R, N, NN>
+where
+    for<'b> &'b R: RingOps<R>,
+{
+    type Output = MatrixRing<R, N, NN>;
+
+    fn commutator(self, rps: &'a MatrixRing<R, N, NN>) -> Self::Output {
+        self * rps - rps * self
     }
 }
 
