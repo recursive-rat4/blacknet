@@ -19,6 +19,7 @@ use crate::algebra::{
     AdditiveCommutativeMonoid, AdditiveMagmaOps, Inv, MultiplicativeCommutativeSemigroup,
     MultiplicativeMagmaOps, MultiplicativeMonoid, MultiplicativeSemigroup,
 };
+use core::fmt;
 
 #[rustfmt::skip]
 pub trait SemiringOps<R>
@@ -103,3 +104,42 @@ pub trait Semifield
     + SemifieldOps<Self>
 {
 }
+
+/// Invert multiple elements.
+///
+/// Either all elements are inverted or the opaque error is returned.
+pub fn batched_inv<R: Semifield + Clone, const N: usize>(
+    a: &[R; N],
+    b: &mut [R; N],
+) -> Result<(), BatchedInvError>
+where
+    for<'a> &'a R: SemifieldOps<R>,
+{
+    // Montgomery trick
+    const {
+        assert!(N > 1);
+    }
+    b[1] = a[0].clone();
+    for i in 2..N {
+        b[i] = &b[i - 1] * &a[i - 1]
+    }
+    let p = &b[N - 1] * &a[N - 1];
+    let mut v = p.inv().ok_or(BatchedInvError {})?;
+    for i in (1..N).rev() {
+        b[i] = &v * &b[i];
+        v = &a[i] * &v;
+    }
+    b[0] = v;
+    Ok(())
+}
+
+#[derive(Debug)]
+pub struct BatchedInvError {}
+
+impl fmt::Display for BatchedInvError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str("Batch contains noninvertible elements")
+    }
+}
+
+impl core::error::Error for BatchedInvError {}

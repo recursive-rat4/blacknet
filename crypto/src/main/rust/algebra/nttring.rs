@@ -21,13 +21,13 @@ use crate::algebra::{
     AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, Algebra, Conjugate,
     DivisionRingOps, Double, FreeModule, Inv, LeftOne, LeftZero, MultiplicativeCommutativeMagma,
     MultiplicativeMonoid, MultiplicativeSemigroup, One, RightOne, RightZero, RingOps, Semimodule,
-    Set, Square, UnitalAlgebra, UnivariateRing, Zero,
+    Set, Square, UnitalAlgebra, UnivariateRing, Zero, batched_inv,
 };
 use crate::convolution::{Convolution, Negacyclic};
 use crate::numbertheoretictransform::{NTTConvolution, Twiddles, cooley_tukey, gentleman_sande};
 use crate::symmetric::{Absorb, Duplexer, Squeeze};
 use core::fmt::{Debug, Formatter, Result};
-use core::iter::{Product, Sum, zip};
+use core::iter::{Product, Sum};
 use core::mem::{MaybeUninit, transmute_copy};
 use core::ops::{Add, AddAssign, Div, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign};
 #[cfg(feature = "rayon")]
@@ -526,20 +526,31 @@ impl<Z: Twiddles<M>, const M: usize, const N: usize> MulAssign<&Z> for NTTRing<Z
     }
 }
 
-impl<Z: Twiddles<M>, const M: usize, const N: usize> Inv for NTTRing<Z, M, N> {
+impl<Z: Twiddles<M> + Clone, const M: usize, const N: usize> Inv for NTTRing<Z, M, N>
+where
+    for<'a> &'a Z: DivisionRingOps<Z>,
+{
+    type Output = Option<NTTRing<Z, M, N>>;
+
+    #[inline]
+    fn inv(self) -> Self::Output {
+        (&self).inv()
+    }
+}
+
+impl<Z: Twiddles<M> + Clone, const M: usize, const N: usize> Inv for &NTTRing<Z, M, N>
+where
+    for<'a> &'a Z: DivisionRingOps<Z>,
+{
     type Output = Option<NTTRing<Z, M, N>>;
 
     fn inv(self) -> Self::Output {
-        if Self::INERTIA == 1 {
-            let mut components = [Z::ZERO; N];
-            for (c, s) in zip(&mut components, self.spectrum) {
-                *c = s.inv()?
-            }
-            Some(Self {
-                spectrum: FreeModule::<Z, N>::new(components),
-            })
+        if NTTRing::<Z, M, N>::INERTIA == 1 {
+            let mut spectrum = FreeModule::<Z, N>::ZERO;
+            batched_inv::<Z, N>(&self.spectrum, &mut spectrum).ok()?;
+            Some(NTTRing { spectrum })
         } else {
-            unimplemented!("Inv with inertia = {}", Self::INERTIA);
+            unimplemented!("Inv with inertia = {}", NTTRing::<Z, M, N>::INERTIA);
         }
     }
 }
