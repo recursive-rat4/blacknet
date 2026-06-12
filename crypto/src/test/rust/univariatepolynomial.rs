@@ -15,7 +15,6 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_compat::assert_ok;
 use blacknet_crypto::algebra::{Double, Square, Zero};
 use blacknet_crypto::assigner::polynomial::UnivariatePolynomial as Assigner;
 use blacknet_crypto::circuit::builder::{CircuitBuilder, VariableKind};
@@ -23,6 +22,7 @@ use blacknet_crypto::circuit::polynomial::UnivariatePolynomial as Circuit;
 use blacknet_crypto::constraintsystem::ConstraintSystem;
 use blacknet_crypto::matrix::DenseVector;
 use blacknet_crypto::polynomial::{InBasis, Polynomial, TensorBasis, UnivariatePolynomial};
+use core::assert_matches;
 
 type R = blacknet_crypto::pervushin::PervushinField;
 
@@ -136,5 +136,5 @@ fn circuit_evaluate() {
     let y_assigned = p_assigner.point(&x_plain);
 
     assert_eq!(y_assigned, y_plain);
-    assert_ok!(r1cs.is_satisfied(&z.finish()));
+    assert_matches!(r1cs.is_satisfied(&z.finish()), Ok(()));
 }

@@ -39,7 +39,6 @@ serde.workspace = true
 zeroize.workspace = true
 
 [dev-dependencies]
-blacknet-compat.workspace = true
 criterion.workspace = true
 
 [features]

@@ -15,7 +15,6 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_compat::assert_ok;
 use blacknet_crypto::algebra::IntegerRing;
 use blacknet_crypto::assigner::symmetric::Poseidon2Assigner;
 use blacknet_crypto::circuit::builder::{CircuitBuilder, LinearCombination};
@@ -26,8 +25,8 @@ use blacknet_crypto::pervushin::PervushinField;
 use blacknet_crypto::symmetric::{
     Poseidon2LM8, Poseidon2LM12, Poseidon2Pervushin8, Poseidon2Pervushin12, Poseidon2Plain,
 };
-use core::array;
 use core::iter::zip;
+use core::{array, assert_matches};
 
 #[test]
 fn lm_12() {
@@ -86,7 +85,7 @@ fn lm_12() {
     <Poseidon2LM12 as Poseidon2Assigner<F, W, 48, 26, 48>>::permute(&z, &mut c_assigned);
 
     assert_eq!(c_assigned, c_plain);
-    assert_ok!(r1cs.is_satisfied(&z.finish()));
+    assert_matches!(r1cs.is_satisfied(&z.finish()), Ok(()));
 }
 
 #[test]
@@ -138,7 +137,7 @@ fn lm_8() {
     <Poseidon2LM8 as Poseidon2Assigner<F, W, 32, 26, 32>>::permute(&z, &mut c_assigned);
 
     assert_eq!(c_assigned, c_plain);
-    assert_ok!(r1cs.is_satisfied(&z.finish()));
+    assert_matches!(r1cs.is_satisfied(&z.finish()), Ok(()));
 }
 
 #[test]
@@ -198,7 +197,7 @@ fn pervushin_12() {
     <Poseidon2Pervushin12 as Poseidon2Assigner<F, W, 48, 12, 48>>::permute(&z, &mut c_assigned);
 
     assert_eq!(c_assigned, c_plain);
-    assert_ok!(r1cs.is_satisfied(&z.finish()));
+    assert_matches!(r1cs.is_satisfied(&z.finish()), Ok(()));
 }
 
 #[test]
@@ -250,5 +249,5 @@ fn pervushin_8() {
     <Poseidon2Pervushin8 as Poseidon2Assigner<F, W, 32, 12, 32>>::permute(&z, &mut c_assigned);
 
     assert_eq!(c_assigned, c_plain);
-    assert_ok!(r1cs.is_satisfied(&z.finish()));
+    assert_matches!(r1cs.is_satisfied(&z.finish()), Ok(()));
 }

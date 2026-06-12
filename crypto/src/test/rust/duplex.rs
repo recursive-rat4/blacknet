@@ -15,7 +15,6 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_compat::assert_ok;
 use blacknet_crypto::algebra::One;
 use blacknet_crypto::assigner::assigment::Assigment;
 use blacknet_crypto::assigner::symmetric::{
@@ -25,7 +24,7 @@ use blacknet_crypto::circuit::builder::{CircuitBuilder, Constant, LinearCombinat
 use blacknet_crypto::circuit::symmetric::{Duplex as Circuit, Permutation as PermutationCircuit};
 use blacknet_crypto::constraintsystem::ConstraintSystem;
 use blacknet_crypto::symmetric::{Duplex, Duplexer, Permutation as PermutationPlain};
-use core::array;
+use core::{array, assert_matches};
 
 type Z = blacknet_crypto::pervushin::PervushinField;
 
@@ -123,5 +122,5 @@ fn circuit_blacknet() {
     let y_assigned: [Z; 3] = array::from_fn(|_| duplex_assigner.squeeze());
 
     assert_eq!(y_assigned, y_plain);
-    assert_ok!(r1cs.is_satisfied(&z.finish()));
+    assert_matches!(r1cs.is_satisfied(&z.finish()), Ok(()));
 }

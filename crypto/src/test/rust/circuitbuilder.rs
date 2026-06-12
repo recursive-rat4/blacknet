@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Pavel Vasin
+ * Copyright (c) 2024-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,12 +15,12 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_compat::assert_ok;
 use blacknet_crypto::circuit::builder::{CircuitBuilder, Constant};
 use blacknet_crypto::constraintsystem::ConstraintSystem;
 use blacknet_crypto::customizableconstraintsystem::CustomizableConstraintSystem;
 use blacknet_crypto::matrix::{DenseMatrix, DenseVector, SparseMatrix};
 use blacknet_crypto::r1cs::R1CS;
+use core::assert_matches;
 
 type R = blacknet_crypto::pervushin::PervushinField;
 
@@ -116,7 +116,7 @@ fn comparatism() {
     assert_eq!(circuit.r1cs(), r1cs);
 
     let z = DenseVector::from([1, 4, 4, 4].map(R::from));
-    assert_ok!(r1cs.is_satisfied(&z));
+    assert_matches!(r1cs.is_satisfied(&z), Ok(()));
 }
 
 #[test]
@@ -169,7 +169,7 @@ fn additivism() {
     assert_eq!(circuit.r1cs(), r1cs);
 
     let z = DenseVector::from([1, 8, 2, 4].map(R::from));
-    assert_ok!(r1cs.is_satisfied(&z));
+    assert_matches!(r1cs.is_satisfied(&z), Ok(()));
 }
 
 #[test]
@@ -222,7 +222,7 @@ fn multiplism() {
     assert_eq!(circuit.r1cs(), r1cs);
 
     let z = DenseVector::from([1, 16, 2, 4].map(R::from));
-    assert_ok!(r1cs.is_satisfied(&z));
+    assert_matches!(r1cs.is_satisfied(&z), Ok(()));
 }
 
 #[test]
@@ -291,7 +291,7 @@ fn expressionism() {
     assert_eq!(circuit.r1cs(), r1cs);
 
     let z = DenseVector::from([1, 4, 4, 4, 16].map(R::from));
-    assert_ok!(r1cs.is_satisfied(&z));
+    assert_matches!(r1cs.is_satisfied(&z), Ok(()));
 }
 
 #[test]
@@ -338,5 +338,5 @@ fn cubism() {
     assert_eq!(circuit.ccs(), ccs);
 
     let z = DenseVector::from([1, 2, 3, 5, 8].map(R::from));
-    assert_ok!(ccs.is_satisfied(&z));
+    assert_matches!(ccs.is_satisfied(&z), Ok(()));
 }

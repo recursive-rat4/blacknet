@@ -15,7 +15,6 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_compat::{assert_err, assert_ok};
 use blacknet_crypto::assigner::polynomial::UnivariatePolynomial as UnivariatePolynomialAssigner;
 use blacknet_crypto::assigner::sumcheck::{Proof as ProofAssigner, SumCheck as SumCheckAssigner};
 use blacknet_crypto::assigner::symmetric::DuplexPoseidon2Pervushin as DuplexPoseidon2PervushinAssigner;
@@ -29,10 +28,11 @@ use blacknet_crypto::polynomial::{
     UnivariatePolynomial,
 };
 use blacknet_crypto::random::{Distribution, UniformDistribution};
-use blacknet_crypto::sumcheck::{Proof as ProofPlain, SumCheck as SumCheckPlain};
+use blacknet_crypto::sumcheck::{Error, Proof as ProofPlain, SumCheck as SumCheckPlain};
 use blacknet_crypto::symmetric::{
     DuplexPoseidon2Pervushin as DuplexPoseidon2PervushinPlain, Duplexer,
 };
+use core::assert_matches;
 
 type Z = PervushinField;
 type D = DuplexPoseidon2PervushinPlain;
@@ -53,57 +53,42 @@ fn mle() {
     duplex.reset();
     exceptional_set.reset();
 
-    assert_ok!(SC::verify(
-        &p1,
-        s1,
-        &proof,
-        &mut duplex,
-        &mut exceptional_set
-    ));
+    assert_matches!(
+        SC::verify(&p1, s1, &proof, &mut duplex, &mut exceptional_set),
+        Ok(())
+    );
     duplex.reset();
     exceptional_set.reset();
 
-    assert_err!(SC::verify(
-        &p1,
-        s2,
-        &proof,
-        &mut duplex,
-        &mut exceptional_set
-    ));
+    assert_matches!(
+        SC::verify(&p1, s2, &proof, &mut duplex, &mut exceptional_set),
+        Err(Error::Sum(_, _, _))
+    );
     duplex.reset();
     exceptional_set.reset();
 
-    assert_err!(SC::verify(
-        &p2,
-        s1,
-        &proof,
-        &mut duplex,
-        &mut exceptional_set
-    ));
+    assert_matches!(
+        SC::verify(&p2, s1, &proof, &mut duplex, &mut exceptional_set),
+        Err(Error::PolynomialIdentity(_, _))
+    );
     duplex.reset();
     exceptional_set.reset();
 
     let proof3 = ProofPlain::default();
 
-    assert_err!(SC::verify(
-        &p1,
-        s1,
-        &proof3,
-        &mut duplex,
-        &mut exceptional_set
-    ));
+    assert_matches!(
+        SC::verify(&p1, s1, &proof3, &mut duplex, &mut exceptional_set),
+        Err(Error::Variables(0, 2))
+    );
     duplex.reset();
     exceptional_set.reset();
 
     let proof4 = ProofPlain::new(vec![UnivariatePolynomial::default(); 2]);
 
-    assert_err!(SC::verify(
-        &p1,
-        s1,
-        &proof4,
-        &mut duplex,
-        &mut exceptional_set
-    ));
+    assert_matches!(
+        SC::verify(&p1, s1, &proof4, &mut duplex, &mut exceptional_set),
+        Err(Error::Degree(0, 0, 2))
+    );
     duplex.reset();
     exceptional_set.reset();
 }
@@ -122,23 +107,17 @@ fn eq() {
     duplex.reset();
     exceptional_set.reset();
 
-    assert_ok!(SC::verify(
-        &p1,
-        s1,
-        &proof,
-        &mut duplex,
-        &mut exceptional_set
-    ));
+    assert_matches!(
+        SC::verify(&p1, s1, &proof, &mut duplex, &mut exceptional_set),
+        Ok(())
+    );
     duplex.reset();
     exceptional_set.reset();
 
-    assert_err!(SC::verify(
-        &p1,
-        s2,
-        &proof,
-        &mut duplex,
-        &mut exceptional_set
-    ));
+    assert_matches!(
+        SC::verify(&p1, s2, &proof, &mut duplex, &mut exceptional_set),
+        Err(Error::Sum(_, _, _))
+    );
     duplex.reset();
     exceptional_set.reset();
 }
@@ -157,23 +136,17 @@ fn mask() {
     duplex.reset();
     exceptional_set.reset();
 
-    assert_ok!(SC::verify(
-        &p1,
-        s1,
-        &proof,
-        &mut duplex,
-        &mut exceptional_set
-    ));
+    assert_matches!(
+        SC::verify(&p1, s1, &proof, &mut duplex, &mut exceptional_set),
+        Ok(())
+    );
     duplex.reset();
     exceptional_set.reset();
 
-    assert_err!(SC::verify(
-        &p1,
-        s2,
-        &proof,
-        &mut duplex,
-        &mut exceptional_set
-    ));
+    assert_matches!(
+        SC::verify(&p1, s2, &proof, &mut duplex, &mut exceptional_set),
+        Err(Error::Sum(_, _, _))
+    );
     duplex.reset();
     exceptional_set.reset();
 }
@@ -267,5 +240,5 @@ fn circuit() {
     );
     assert_eq!(point_assigned, point_plain);
     assert_eq!(state_assigned, state_plain);
-    assert_ok!(r1cs.is_satisfied(&z.finish()));
+    assert_matches!(r1cs.is_satisfied(&z.finish()), Ok(()));
 }

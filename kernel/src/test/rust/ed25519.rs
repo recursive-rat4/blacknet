@@ -15,9 +15,9 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_compat::{assert_err, assert_ok};
 use blacknet_kernel::blake2b::{Blake2b256, Digest};
 use blacknet_kernel::ed25519::*;
+use core::assert_matches;
 
 #[test]
 fn public_key() {
@@ -52,9 +52,9 @@ fn verifying() {
 
     let message = "Blacknet Signed Message:\nBlacknet test message 1";
     let hash = Blake2b256::digest(message).into();
-    assert_err!(verify(signature, hash, public_key));
+    assert_matches!(verify(signature, hash, public_key), Err(_));
 
     let message = "Blacknet Signed Message:\nBlacknet test message 2";
     let hash = Blake2b256::digest(message).into();
-    assert_ok!(verify(signature, hash, public_key));
+    assert_matches!(verify(signature, hash, public_key), Ok(()));
 }

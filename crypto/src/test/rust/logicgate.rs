@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,11 +15,11 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_compat::assert_ok;
 use blacknet_crypto::assigner::logicgate::LogicGate as Assigner;
 use blacknet_crypto::circuit::builder::CircuitBuilder;
 use blacknet_crypto::circuit::logicgate::LogicGate as Circuit;
 use blacknet_crypto::constraintsystem::ConstraintSystem;
+use core::assert_matches;
 
 type R = blacknet_crypto::pervushin::PervushinField;
 
@@ -56,7 +56,7 @@ fn xor() {
         assigner.xor(a, b);
     }
 
-    assert_ok!(r1cs.is_satisfied(&z.finish()));
+    assert_matches!(r1cs.is_satisfied(&z.finish()), Ok(()));
 }
 
 #[test]
@@ -92,7 +92,7 @@ fn and() {
         assigner.and(a, b);
     }
 
-    assert_ok!(r1cs.is_satisfied(&z.finish()));
+    assert_matches!(r1cs.is_satisfied(&z.finish()), Ok(()));
 }
 
 #[test]
@@ -128,7 +128,7 @@ fn or() {
         assigner.or(a, b);
     }
 
-    assert_ok!(r1cs.is_satisfied(&z.finish()));
+    assert_matches!(r1cs.is_satisfied(&z.finish()), Ok(()));
 }
 
 #[test]
@@ -161,7 +161,7 @@ fn not() {
         assigner.not(a);
     }
 
-    assert_ok!(r1cs.is_satisfied(&z.finish()));
+    assert_matches!(r1cs.is_satisfied(&z.finish()), Ok(()));
 }
 
 #[test]
@@ -186,5 +186,5 @@ fn check_less_or_equal() {
     let assigner = Assigner::new(&z);
     assigner.check_less_or_equal(&a, &b);
 
-    assert_ok!(r1cs.is_satisfied(&z.finish()));
+    assert_matches!(r1cs.is_satisfied(&z.finish()), Ok(()));
 }

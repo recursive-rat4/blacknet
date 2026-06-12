@@ -15,7 +15,6 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_compat::assert_ok;
 use blacknet_crypto::algebra::IntegerRing;
 use blacknet_crypto::assigner::random::{
     BinaryUniformDistribution as Assigner, Distribution as DistributionAssigner,
@@ -26,7 +25,7 @@ use blacknet_crypto::circuit::random::{
 };
 use blacknet_crypto::constraintsystem::ConstraintSystem;
 use blacknet_crypto::random::{BinaryUniformDistribution, Distribution, UniformGenerator};
-use core::array;
+use core::{array, assert_matches};
 
 type Z = blacknet_crypto::lm::LMField;
 
@@ -99,5 +98,5 @@ fn circuit_reproducible() {
     let a_assigned: [Z; 16] = array::from_fn(|_| bud_assigner.sample(&mut g_assigner));
 
     assert_eq!(a_assigned, a_plain);
-    assert_ok!(r1cs.is_satisfied(&z.finish()));
+    assert_matches!(r1cs.is_satisfied(&z.finish()), Ok(()));
 }

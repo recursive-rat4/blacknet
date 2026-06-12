@@ -15,7 +15,6 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_compat::assert_ok;
 use blacknet_crypto::algebra::One;
 use blacknet_crypto::assigner::assigment::Assigment;
 use blacknet_crypto::assigner::symmetric::{
@@ -29,7 +28,7 @@ use blacknet_crypto::circuit::symmetric::{
 };
 use blacknet_crypto::constraintsystem::ConstraintSystem;
 use blacknet_crypto::symmetric::{CompressionFunction, Jive, Permutation as PermutationPlain};
-use core::array;
+use core::{array, assert_matches};
 
 type Z = blacknet_crypto::pervushin::PervushinField;
 
@@ -105,5 +104,5 @@ fn circuit() {
     let c_assigned: [Z; 2] = jive_assigner.compress(a_plain, b_plain);
 
     assert_eq!(c_assigned, c_plain);
-    assert_ok!(r1cs.is_satisfied(&z.finish()));
+    assert_matches!(r1cs.is_satisfied(&z.finish()), Ok(()));
 }

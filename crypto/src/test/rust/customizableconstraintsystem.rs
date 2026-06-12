@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Pavel Vasin
+ * Copyright (c) 2024-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,10 +15,10 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_compat::assert_ok;
 use blacknet_crypto::constraintsystem::ConstraintSystem;
 use blacknet_crypto::customizableconstraintsystem::CustomizableConstraintSystem;
 use blacknet_crypto::matrix::{DenseMatrix, DenseVector, SparseMatrix};
+use core::assert_matches;
 
 type R = blacknet_crypto::pervushin::PervushinField;
 
@@ -38,5 +38,5 @@ fn satisfaction() {
     assert_eq!(ccs.constraints(), 1);
     assert_eq!(ccs.variables(), 3);
 
-    assert_ok!(ccs.is_satisfied(&z));
+    assert_matches!(ccs.is_satisfied(&z), Ok(()));
 }

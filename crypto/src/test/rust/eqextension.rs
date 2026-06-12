@@ -15,7 +15,6 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_compat::assert_ok;
 use blacknet_crypto::algebra::{One, Zero};
 use blacknet_crypto::assigner::polynomial::EqExtension as Assigner;
 use blacknet_crypto::circuit::builder::{CircuitBuilder, VariableKind};
@@ -24,6 +23,7 @@ use blacknet_crypto::constraintsystem::ConstraintSystem;
 use blacknet_crypto::polynomial::{
     EqExtension, Hypercube, MultivariatePolynomial, Point, Polynomial,
 };
+use core::assert_matches;
 
 type R = blacknet_crypto::pervushin::PervushinField;
 
@@ -145,7 +145,7 @@ fn circuit_point() {
     let y_assigned = eq_assigner.point(&x_plain);
 
     assert_eq!(y_assigned, y_plain);
-    assert_ok!(r1cs.is_satisfied(&z.finish()));
+    assert_matches!(r1cs.is_satisfied(&z.finish()), Ok(()));
 }
 
 #[test]
@@ -168,5 +168,5 @@ fn circuit_hypercube() {
     let y_assigned = eq_assigner.hypercube();
 
     assert_eq!(y_assigned, y_plain);
-    assert_ok!(r1cs.is_satisfied(&z.finish()));
+    assert_matches!(r1cs.is_satisfied(&z.finish()), Ok(()));
 }

@@ -43,7 +43,6 @@ sha2.workspace = true
 sha3.workspace = true
 
 [dev-dependencies]
-blacknet-compat.workspace = true
 criterion.workspace = true
 
 [lints]

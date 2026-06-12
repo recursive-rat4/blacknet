@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2025 Pavel Vasin
+ * Copyright (c) 2020-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,12 +15,13 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_compat::{assert_err, assert_ok};
+use blacknet_kernel::error::Error;
 use blacknet_kernel::hashlock::*;
+use core::assert_matches;
 
 #[test]
 fn blake2b_256() {
-    assert_ok!(
+    assert_matches!(
         HashLock::with_slice(
             BLAKE2B_256,
             &[
@@ -29,13 +30,14 @@ fn blake2b_256() {
                 0xF1, 0x2F, 0xE3, 0xA8
             ]
         )
-        .verify(&[])
+        .verify(&[]),
+        Ok(())
     );
 }
 
 #[test]
 fn sha2_256() {
-    assert_ok!(
+    assert_matches!(
         HashLock::with_slice(
             SHA2_256,
             &[
@@ -44,13 +46,14 @@ fn sha2_256() {
                 0x78, 0x52, 0xB8, 0x55
             ]
         )
-        .verify(&[])
+        .verify(&[]),
+        Ok(())
     );
 }
 
 #[test]
 fn keccak_256() {
-    assert_ok!(
+    assert_matches!(
         HashLock::with_slice(
             KECCAK_256,
             &[
@@ -59,9 +62,10 @@ fn keccak_256() {
                 0x5D, 0x85, 0xA4, 0x70
             ]
         )
-        .verify(&[])
+        .verify(&[]),
+        Ok(())
     );
-    assert_err!(
+    assert_matches!(
         HashLock::with_slice(
             KECCAK_256,
             &[
@@ -70,13 +74,14 @@ fn keccak_256() {
                 0x80, 0xF8, 0x43, 0x4A
             ]
         )
-        .verify(&[])
+        .verify(&[]),
+        Err(Error::Invalid(_))
     );
 }
 
 #[test]
 fn ripemd_160() {
-    assert_ok!(
+    assert_matches!(
         HashLock::with_slice(
             RIPEMD_160,
             &[
@@ -84,6 +89,7 @@ fn ripemd_160() {
                 0xF5, 0x48, 0xB2, 0x25, 0x8D, 0x31
             ]
         )
-        .verify(&[])
+        .verify(&[]),
+        Ok(())
     );
 }

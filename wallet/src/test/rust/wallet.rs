@@ -15,13 +15,15 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_compat::{Mode, assert_err, assert_ok};
+use blacknet_compat::Mode;
 use blacknet_kernel::account::Lease;
 use blacknet_kernel::amount::Amount;
 use blacknet_kernel::blake2b::Hash;
 use blacknet_kernel::ed25519::PublicKey;
 use blacknet_kernel::transaction::{HashTimeLockContractId, MultiSignatureLockContractId};
 use blacknet_wallet::wallet::Wallet;
+use blacknet_wallet::walletdb::Error;
+use core::assert_matches;
 use rusqlite::Connection;
 
 #[test]
@@ -37,7 +39,7 @@ fn ephemeral() {
 fn magic() {
     let mode = Mode::regtest();
     let connection = Connection::open_in_memory().unwrap();
-    assert_err!(Wallet::attach(connection, &mode));
+    assert_matches!(Wallet::attach(connection, &mode), Err(Error::WrongMagic(_)));
 }
 
 #[test]
@@ -45,9 +47,9 @@ fn htlc() {
     let mode = Mode::regtest();
     let wallet = Wallet::ephemeral(PublicKey::default(), &mode).unwrap();
     let htlc_id = HashTimeLockContractId::default();
-    assert_ok!(wallet.put_htlc(htlc_id));
+    assert_matches!(wallet.put_htlc(htlc_id), Ok(()));
     assert!(wallet.has_htlc(htlc_id).unwrap());
-    assert_ok!(wallet.remove_htlc(htlc_id));
+    assert_matches!(wallet.remove_htlc(htlc_id), Ok(()));
     assert!(!wallet.has_htlc(htlc_id).unwrap());
 }
 
@@ -56,9 +58,9 @@ fn multisig() {
     let mode = Mode::regtest();
     let wallet = Wallet::ephemeral(PublicKey::default(), &mode).unwrap();
     let multisig_id = MultiSignatureLockContractId::default();
-    assert_ok!(wallet.put_multisig(multisig_id));
+    assert_matches!(wallet.put_multisig(multisig_id), Ok(()));
     assert!(wallet.has_multisig(multisig_id).unwrap());
-    assert_ok!(wallet.remove_multisig(multisig_id));
+    assert_matches!(wallet.remove_multisig(multisig_id), Ok(()));
     assert!(!wallet.has_multisig(multisig_id).unwrap());
 }
 
@@ -69,10 +71,13 @@ fn out_lease() {
     let lease1 = Lease::new(PublicKey::default(), 1, Amount::new(123));
     let lease2 = Lease::new(PublicKey::default(), 2, Amount::new(123));
     let lease3 = Lease::new(PublicKey::default(), 2, Amount::new(100));
-    assert_ok!(wallet.put_out_lease(lease1));
-    assert_ok!(wallet.set_out_lease_height(lease1, lease2.height()));
-    assert_ok!(wallet.withdraw_from_out_lease(lease2, Amount::new(23)));
-    assert_ok!(wallet.remove_out_lease(lease3));
+    assert_matches!(wallet.put_out_lease(lease1), Ok(()));
+    assert_matches!(wallet.set_out_lease_height(lease1, lease2.height()), Ok(()));
+    assert_matches!(
+        wallet.withdraw_from_out_lease(lease2, Amount::new(23)),
+        Ok(())
+    );
+    assert_matches!(wallet.remove_out_lease(lease3), Ok(()));
 }
 
 #[test]
@@ -81,7 +86,7 @@ fn transaction() {
     let wallet = Wallet::ephemeral(PublicKey::default(), &mode).unwrap();
     let tx_id = Hash::ZERO;
     let tx_bytes = [10, 11, 12, 13];
-    assert_ok!(wallet.put_transaction(tx_id, &tx_bytes));
+    assert_matches!(wallet.put_transaction(tx_id, &tx_bytes), Ok(()));
     let bytes = wallet.get_transaction(tx_id).unwrap();
     assert_eq!(bytes, tx_bytes.into());
 }

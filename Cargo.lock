@@ -231,7 +231,6 @@ dependencies = [
 name = "blacknet-kernel"
 version = "0.3.0"
 dependencies = [
- "blacknet-compat",
  "blacknet-crypto",
  "blacknet-serialization",
  "blacknet-time",
