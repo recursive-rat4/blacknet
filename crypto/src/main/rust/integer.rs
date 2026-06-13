@@ -59,6 +59,8 @@ pub trait Integer
     const ZERO: Self;
     const ONE: Self;
 
+    fn is_odd(self) -> bool;
+
     const LIMB_ONE: Self::Limb;
     const LIMB_TWO: Self::Limb;
     const LIMB_THREE: Self::Limb;
@@ -112,6 +114,11 @@ macro_rules! impl_integer {
                 const ZERO: Self = 0;
                 const ONE: Self = 1;
 
+                #[inline]
+                fn is_odd(self) -> bool {
+                    self & 1 == 1
+                }
+
                 const LIMB_ONE: Self::Limb = 1;
                 const LIMB_TWO: Self::Limb = 2;
                 const LIMB_THREE: Self::Limb = 3;
@@ -160,6 +167,11 @@ macro_rules! impl_integer {
 
                 const ZERO: Self = 0;
                 const ONE: Self = 1;
+
+                #[inline]
+                fn is_odd(self) -> bool {
+                    self & 1 == 1
+                }
 
                 const LIMB_ONE: Self::Limb = 1;
                 const LIMB_TWO: Self::Limb = 2;
@@ -214,6 +226,11 @@ impl Integer for UInt256 {
 
     const ZERO: Self = Self::ZERO;
     const ONE: Self = Self::ONE;
+
+    #[inline]
+    fn is_odd(self) -> bool {
+        self.is_odd()
+    }
 
     const LIMB_ONE: Self::Limb = 1;
     const LIMB_TWO: Self::Limb = 2;

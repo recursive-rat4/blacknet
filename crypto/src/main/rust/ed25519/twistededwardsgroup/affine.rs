@@ -19,9 +19,8 @@ use crate::algebra::{
     AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, Double, IntegerRing, LeftZero,
     One, RightZero, Set, Sqrt, Square, Zero, add_sub_chain,
 };
-use crate::bigint::UInt256;
-use crate::ed25519::field25519::Field25519;
 use crate::ed25519::{TwistedEdwardsGroupParams, is_on_curve};
+use crate::integer::Integer;
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::Sum;
 use core::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
@@ -54,7 +53,7 @@ impl<P: TwistedEdwardsGroupParams> TwistedEdwardsGroupAffine<P> {
 
     pub fn try_from_y(x_is_odd: bool, y: P::F) -> Option<Self>
     where
-        P: TwistedEdwardsGroupParams<F = Field25519>,
+        P::F: IntegerRing + Sqrt<Output = Option<P::F>>,
     {
         let yy = y.square();
         let xx = ((yy - P::F::ONE) / (P::D * yy + P::F::ONE)).expect("−d is not a square");
@@ -67,25 +66,14 @@ impl<P: TwistedEdwardsGroupParams> TwistedEdwardsGroupAffine<P> {
         }
     }
 
-    pub fn encode(&self) -> [u8; 32]
-    where
-        P: TwistedEdwardsGroupParams<F = Field25519>,
-    {
-        let mut bytes: [u8; 32] = self.y.canonical().to_le_bytes();
-        let x_is_odd = self.x.canonical().is_odd();
-        bytes[31] |= (x_is_odd as u8) << 7;
-        bytes
+    /// The x-coordinate.
+    pub const fn x(&self) -> &P::F {
+        &self.x
     }
 
-    pub fn decode(mut bytes: [u8; 32]) -> Option<Self>
-    where
-        P: TwistedEdwardsGroupParams<F = Field25519>,
-    {
-        let x_is_odd = (bytes[31] & 0x80) != 0;
-        bytes[31] &= 0x7F;
-        let n = UInt256::from_le_bytes(bytes);
-        let y = Field25519::new(n);
-        Self::try_from_y(x_is_odd, y)
+    /// The y-coordinate.
+    pub const fn y(&self) -> &P::F {
+        &self.y
     }
 }
 

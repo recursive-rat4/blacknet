@@ -15,6 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::algebra::IntegerRing;
 use crate::bigint::UInt256;
 use crate::ed25519::field25519::Field25519;
 use crate::ed25519::{
@@ -48,6 +49,23 @@ impl TwistedEdwardsGroupParams for Edwards25519GroupParams {
 }
 
 pub type Edwards25519GroupAffine = TwistedEdwardsGroupAffine<Edwards25519GroupParams>;
+
+impl Edwards25519GroupAffine {
+    pub fn encode(&self) -> [u8; 32] {
+        let mut bytes: [u8; 32] = self.y().canonical().to_le_bytes();
+        let x_is_odd = self.x().canonical().is_odd();
+        bytes[31] |= (x_is_odd as u8) << 7;
+        bytes
+    }
+
+    pub fn decode(mut bytes: [u8; 32]) -> Option<Self> {
+        let x_is_odd = (bytes[31] & 0x80) != 0;
+        bytes[31] &= 0x7F;
+        let n = UInt256::from_le_bytes(bytes);
+        let y = Field25519::new(n);
+        Self::try_from_y(x_is_odd, y)
+    }
+}
 
 impl Serialize for Edwards25519GroupAffine {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
