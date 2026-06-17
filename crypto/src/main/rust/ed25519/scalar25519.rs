@@ -113,20 +113,17 @@ impl Scalar25519 {
         let mut b = Scalar25519::MODULUS;
         let mut c = rps;
         let mut d = Scalar25519::ZERO;
-        while a != UInt256::ZERO {
-            if a.is_even() {
-                a >>= 1;
-                c = c.halve();
-            } else {
+        for _ in 0..504 {
+            if a.is_odd() {
                 if a < b {
                     (a, b) = (b, a);
                     (c, d) = (d, c);
                 }
                 a -= b;
-                a >>= 1;
                 c -= d;
-                c = c.halve();
             }
+            a >>= 1;
+            c = c.halve();
         }
         if b != UInt256::ONE {
             return None;
