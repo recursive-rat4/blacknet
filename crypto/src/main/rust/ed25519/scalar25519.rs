@@ -21,6 +21,7 @@ use crate::algebra::{
     RightOne, RightZero, Semifield, Set, Sqrt, Square, Zero,
 };
 use crate::bigint::{UInt256, UInt512};
+use crate::branchless::{BlAbs, BlAssign, BlEq, BlOrd, BlSelect, BlSwap};
 use crate::integer::Integer;
 use core::fmt;
 use core::iter::{Product, Sum};
@@ -71,11 +72,9 @@ impl Scalar25519 {
         ]))
     }
 
-    fn reduce_add(mut x: UInt256) -> UInt256 {
-        if x >= Self::MODULUS {
-            x -= Self::MODULUS
-        }
-        x
+    fn reduce_add(n: UInt256) -> UInt256 {
+        let (x, o) = n.overflowing_sub(Self::MODULUS);
+        x.bl_select(n, o)
     }
 
     fn reduce_mul(x: UInt512) -> UInt256 {
@@ -98,12 +97,11 @@ impl Scalar25519 {
         Self::reduce_add(n)
     }
 
-    fn halve(mut self) -> Self {
-        if self.n.is_odd() {
-            self.n += Self::MODULUS;
-        }
-        self.n >>= 1;
-        self
+    fn halve(self) -> Self {
+        let mut n = self.n;
+        n.bl_assign(n + Self::MODULUS, n.is_odd());
+        n >>= 1;
+        Self { n }
     }
 
     fn egcd(self, rps: Self) -> Option<Self> {
@@ -114,18 +112,16 @@ impl Scalar25519 {
         let mut c = rps;
         let mut d = Scalar25519::ZERO;
         for _ in 0..504 {
-            if a.is_odd() {
-                if a < b {
-                    (a, b) = (b, a);
-                    (c, d) = (d, c);
-                }
-                a -= b;
-                c -= d;
-            }
+            let a_is_odd = a.is_odd();
+            let a_is_less = a.bl_lt(&b);
+            a.bl_swap(&mut b, a_is_odd & a_is_less);
+            c.bl_swap(&mut d, a_is_odd & a_is_less);
+            a -= UInt256::ZERO.bl_select(b, a_is_odd);
+            c -= Self::ZERO.bl_select(d, a_is_odd);
             a >>= 1;
             c = c.halve();
         }
-        if b != UInt256::ONE {
+        if b.bl_ne(&UInt256::ONE) {
             return None;
         }
         Some(d)
@@ -198,11 +194,11 @@ impl From<i32> for Scalar25519 {
 
 impl From<i64> for Scalar25519 {
     fn from(n: i64) -> Self {
-        if n >= 0 {
-            Self::new((n as u64).into())
-        } else {
-            Self::new(Self::MODULUS - n.unsigned_abs().into())
-        }
+        let s = n < 0;
+        let mut n = UInt256::from(n.bl_unsigned_abs());
+        let x = Self::MODULUS - n;
+        n.bl_assign(x, s);
+        Self::new(n)
     }
 }
 
@@ -314,13 +310,10 @@ impl Neg for Scalar25519 {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
-        if self.n != UInt256::ZERO {
-            Self {
-                n: Self::MODULUS - self.n,
-            }
-        } else {
-            Self::ZERO
-        }
+        let z = self.n.bl_eq(&UInt256::ZERO);
+        let x = Self::MODULUS - self.n;
+        let n = x.bl_select(UInt256::ZERO, z);
+        Self { n }
     }
 }
 
@@ -328,13 +321,10 @@ impl Neg for &Scalar25519 {
     type Output = Scalar25519;
 
     fn neg(self) -> Self::Output {
-        if self.n != UInt256::ZERO {
-            Self::Output {
-                n: Self::Output::MODULUS - self.n,
-            }
-        } else {
-            Self::Output::ZERO
-        }
+        let z = self.n.bl_eq(&UInt256::ZERO);
+        let x = Self::Output::MODULUS - self.n;
+        let n = x.bl_select(UInt256::ZERO, z);
+        Self::Output { n }
     }
 }
 
@@ -344,9 +334,7 @@ impl Sub for Scalar25519 {
     fn sub(self, rps: Self) -> Self::Output {
         let (mut n, o) = self.n.overflowing_sub(rps.n);
         #[allow(clippy::suspicious_arithmetic_impl)]
-        if o {
-            n += Self::MODULUS
-        }
+        n.bl_assign(n + Self::MODULUS, o);
         Self { n }
     }
 }
@@ -357,9 +345,7 @@ impl Sub<&Self> for Scalar25519 {
     fn sub(self, rps: &Self) -> Self::Output {
         let (mut n, o) = self.n.overflowing_sub(rps.n);
         #[allow(clippy::suspicious_arithmetic_impl)]
-        if o {
-            n += Self::MODULUS
-        }
+        n.bl_assign(n + Self::MODULUS, o);
         Self { n }
     }
 }
@@ -370,9 +356,7 @@ impl Sub<Scalar25519> for &Scalar25519 {
     fn sub(self, rps: Scalar25519) -> Self::Output {
         let (mut n, o) = self.n.overflowing_sub(rps.n);
         #[allow(clippy::suspicious_arithmetic_impl)]
-        if o {
-            n += Self::Output::MODULUS
-        }
+        n.bl_assign(n + Self::Output::MODULUS, o);
         Self::Output { n }
     }
 }
@@ -383,9 +367,7 @@ impl<'a> Sub<&'a Scalar25519> for &Scalar25519 {
     fn sub(self, rps: &'a Scalar25519) -> Self::Output {
         let (mut n, o) = self.n.overflowing_sub(rps.n);
         #[allow(clippy::suspicious_arithmetic_impl)]
-        if o {
-            n += Self::Output::MODULUS
-        }
+        n.bl_assign(n + Self::Output::MODULUS, o);
         Self::Output { n }
     }
 }
@@ -630,16 +612,56 @@ impl IntegerRing for Scalar25519 {
     }
     fn absolute(&self) -> UInt256 {
         let n = self.canonical();
-        if n <= Self::P_MINUS_1_HALF {
-            n
-        } else {
-            Self::MODULUS - n
-        }
+        let x = Self::MODULUS - n;
+        let g = n.bl_gt(&Self::P_MINUS_1_HALF);
+        n.bl_select(x, g)
     }
 
     const BITS: u32 = 253;
     const MODULUS: UInt256 =
         UInt256::from_hex("1000000000000000000000000000000014DEF9DEA2F79CD65812631A5CF5D3ED");
+}
+
+impl BlSelect for Scalar25519 {
+    type Output = Self;
+
+    fn bl_select(self, rps: Self, condition: bool) -> Self {
+        let n = self.n.bl_select(rps.n, condition);
+        Self { n }
+    }
+}
+
+impl BlSelect<&Self> for Scalar25519 {
+    type Output = Self;
+
+    fn bl_select(self, rps: &Self, condition: bool) -> Self {
+        let n = self.n.bl_select(&rps.n, condition);
+        Self { n }
+    }
+}
+
+impl BlSelect<Scalar25519> for &Scalar25519 {
+    type Output = Scalar25519;
+
+    fn bl_select(self, rps: Scalar25519, condition: bool) -> Self::Output {
+        let n = (&self.n).bl_select(rps.n, condition);
+        Self::Output { n }
+    }
+}
+
+impl BlSelect for &Scalar25519 {
+    type Output = Scalar25519;
+
+    fn bl_select(self, rps: Self, condition: bool) -> Self::Output {
+        let n = (&self.n).bl_select(&rps.n, condition);
+        Self::Output { n }
+    }
+}
+
+impl BlSwap for Scalar25519 {
+    fn bl_swap(&mut self, rps: &mut Self, condition: bool) {
+        self.n.bl_swap(&mut rps.n, condition)
+    }
 }
 
 impl Serialize for Scalar25519 {

@@ -23,6 +23,7 @@ use crate::algebra::{
     IntegerRing, Inv, LeftOne, LeftZero, MultiplicativeCommutativeMagma, MultiplicativeMonoid,
     MultiplicativeSemigroup, One, RightOne, RightZero, Semifield, Set, Sqrt, Square, Zero,
 };
+use crate::branchless::{BlAssign, BlEq, BlSelect};
 use crate::integer::Integer;
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
@@ -398,6 +399,64 @@ impl BalancedRepresentative for GF2 {
 
     fn balanced(&self) -> Self::Output {
         self.n.into()
+    }
+}
+
+impl BlAssign for GF2 {
+    fn bl_assign(&mut self, rps: Self, condition: bool) {
+        self.n.bl_assign(rps.n, condition)
+    }
+}
+
+impl BlAssign<&Self> for GF2 {
+    fn bl_assign(&mut self, rps: &Self, condition: bool) {
+        self.n.bl_assign(&rps.n, condition)
+    }
+}
+
+impl BlSelect for GF2 {
+    type Output = Self;
+
+    fn bl_select(self, rps: Self, condition: bool) -> Self {
+        let n = self.n.bl_select(rps.n, condition);
+        Self { n }
+    }
+}
+
+impl BlSelect<&Self> for GF2 {
+    type Output = Self;
+
+    fn bl_select(self, rps: &Self, condition: bool) -> Self {
+        let n = self.n.bl_select(&rps.n, condition);
+        Self { n }
+    }
+}
+
+impl BlSelect<GF2> for &GF2 {
+    type Output = GF2;
+
+    fn bl_select(self, rps: GF2, condition: bool) -> Self::Output {
+        let n = (&self.n).bl_select(rps.n, condition);
+        Self::Output { n }
+    }
+}
+
+impl BlSelect for &GF2 {
+    type Output = GF2;
+
+    fn bl_select(self, rps: Self, condition: bool) -> Self::Output {
+        let n = (&self.n).bl_select(&rps.n, condition);
+        Self::Output { n }
+    }
+}
+
+impl BlEq for GF2 {
+    fn bl_eq(&self, rps: &Self) -> bool {
+        self.n.bl_eq(&rps.n)
+    }
+
+    fn bl_ne(&self, rps: &Self) -> bool {
+        self.n.bl_ne(&rps.n)
     }
 }
 

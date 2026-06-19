@@ -265,7 +265,7 @@ fn parse_secret_key(secret_key: SecretKey) -> (Scalar25519, [u8; 32]) {
 
 fn mul_base_encode(scalar: Scalar25519) -> [u8; 32] {
     let bits = scalar.canonical().bits::<{ Scalar25519::BITS as usize }>();
-    let extended = BASE * bits;
+    let extended = BASE.bl_mul(bits);
     let affine: Edwards25519GroupAffine = extended.into();
     affine.encode()
 }

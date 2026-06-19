@@ -74,6 +74,10 @@ name = "blacklemon"
 path = "src/test/rust/blacklemon.rs"
 
 [[test]]
+name = "branchless"
+path = "src/test/rust/branchless.rs"
+
+[[test]]
 name = "chacha20"
 path = "src/test/rust/chacha20.rs"
 

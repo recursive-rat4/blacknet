@@ -15,6 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::branchless::{BlAssign, BlEq, BlOrd, BlSelect, BlSwap};
 use alloc::string::String;
 use alloc::vec::Vec;
 use bytemuck::NoUninit;
@@ -602,6 +603,82 @@ impl<const N: usize> SubAssign for BigInt<N> {
     #[inline]
     fn sub_assign(&mut self, rps: Self) {
         *self = *self - rps
+    }
+}
+
+impl<const N: usize> BlAssign for BigInt<N> {
+    fn bl_assign(&mut self, rps: Self, condition: bool) {
+        self.limbs.bl_assign(rps.limbs, condition)
+    }
+}
+
+impl<const N: usize> BlAssign<&Self> for BigInt<N> {
+    fn bl_assign(&mut self, rps: &Self, condition: bool) {
+        self.limbs.bl_assign(&rps.limbs, condition)
+    }
+}
+
+impl<const N: usize> BlSelect for BigInt<N> {
+    type Output = Self;
+
+    fn bl_select(self, rps: Self, condition: bool) -> Self {
+        let limbs = self.limbs.bl_select(rps.limbs, condition);
+        Self { limbs }
+    }
+}
+
+impl<const N: usize> BlSelect<&Self> for BigInt<N> {
+    type Output = Self;
+
+    fn bl_select(self, rps: &Self, condition: bool) -> Self {
+        let limbs = self.limbs.bl_select(&rps.limbs, condition);
+        Self { limbs }
+    }
+}
+
+impl<const N: usize> BlSelect<BigInt<N>> for &BigInt<N> {
+    type Output = BigInt<N>;
+
+    fn bl_select(self, rps: BigInt<N>, condition: bool) -> Self::Output {
+        let limbs = (&self.limbs).bl_select(rps.limbs, condition);
+        Self::Output { limbs }
+    }
+}
+
+impl<const N: usize> BlSelect for &BigInt<N> {
+    type Output = BigInt<N>;
+
+    fn bl_select(self, rps: Self, condition: bool) -> Self::Output {
+        let limbs = (&self.limbs).bl_select(&rps.limbs, condition);
+        Self::Output { limbs }
+    }
+}
+
+impl<const N: usize> BlSwap for BigInt<N> {
+    fn bl_swap(&mut self, rps: &mut Self, condition: bool) {
+        self.limbs.bl_swap(&mut rps.limbs, condition)
+    }
+}
+
+impl<const N: usize> BlEq for BigInt<N> {
+    fn bl_eq(&self, rps: &Self) -> bool {
+        self.limbs.bl_eq(&rps.limbs)
+    }
+
+    fn bl_ne(&self, rps: &Self) -> bool {
+        self.limbs.bl_ne(&rps.limbs)
+    }
+}
+
+impl<const N: usize> BlOrd for BigInt<N> {
+    fn bl_gt(&self, rps: &Self) -> bool {
+        let (_, o) = rps.overflowing_sub(*self);
+        o
+    }
+
+    fn bl_lt(&self, rps: &Self) -> bool {
+        let (_, o) = self.overflowing_sub(*rps);
+        o
     }
 }
 

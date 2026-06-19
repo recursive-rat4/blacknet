@@ -17,8 +17,9 @@
 
 use crate::algebra::{
     AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, Double, IntegerRing, LeftZero,
-    One, RightZero, Set, Sqrt, Square, Zero, add_sub_chain,
+    One, RightZero, Set, Sqrt, Square, Zero, add_sub_chain, bl_double_and_add,
 };
+use crate::branchless::BlSelect;
 use crate::ed25519::{TwistedEdwardsGroupParams, is_on_curve};
 use crate::integer::Integer;
 use core::fmt::{Debug, Formatter, Result};
@@ -74,6 +75,13 @@ impl<P: TwistedEdwardsGroupParams> TwistedEdwardsGroupAffine<P> {
     /// The y-coordinate.
     pub const fn y(&self) -> &P::F {
         &self.y
+    }
+
+    pub fn bl_mul<Scalar: IntoIterator<Item = bool>>(self, rps: Scalar) -> Self
+    where
+        P::F: BlSelect<Output = P::F>,
+    {
+        bl_double_and_add::<Self, Scalar>(self, rps)
     }
 }
 
@@ -354,3 +362,58 @@ impl<P: TwistedEdwardsGroupParams> AdditiveCommutativeMagma for TwistedEdwardsGr
 impl<P: TwistedEdwardsGroupParams> AdditiveSemigroup for TwistedEdwardsGroupAffine<P> {}
 
 impl<P: TwistedEdwardsGroupParams> AdditiveMonoid for TwistedEdwardsGroupAffine<P> {}
+
+impl<P: TwistedEdwardsGroupParams<F: BlSelect<Output = P::F>>> BlSelect
+    for TwistedEdwardsGroupAffine<P>
+{
+    type Output = Self;
+
+    fn bl_select(self, rps: Self, condition: bool) -> Self {
+        Self {
+            x: self.x.bl_select(rps.x, condition),
+            y: self.y.bl_select(rps.y, condition),
+        }
+    }
+}
+
+impl<P: TwistedEdwardsGroupParams<F: for<'a> BlSelect<&'a P::F, Output = P::F>>> BlSelect<&Self>
+    for TwistedEdwardsGroupAffine<P>
+{
+    type Output = Self;
+
+    fn bl_select(self, rps: &Self, condition: bool) -> Self {
+        Self {
+            x: self.x.bl_select(&rps.x, condition),
+            y: self.y.bl_select(&rps.y, condition),
+        }
+    }
+}
+
+impl<P: TwistedEdwardsGroupParams> BlSelect<TwistedEdwardsGroupAffine<P>>
+    for &TwistedEdwardsGroupAffine<P>
+where
+    for<'a> &'a P::F: BlSelect<P::F, Output = P::F>,
+{
+    type Output = TwistedEdwardsGroupAffine<P>;
+
+    fn bl_select(self, rps: TwistedEdwardsGroupAffine<P>, condition: bool) -> Self::Output {
+        Self::Output {
+            x: (&self.x).bl_select(rps.x, condition),
+            y: (&self.y).bl_select(rps.y, condition),
+        }
+    }
+}
+
+impl<P: TwistedEdwardsGroupParams> BlSelect for &TwistedEdwardsGroupAffine<P>
+where
+    for<'a> &'a P::F: BlSelect<Output = P::F>,
+{
+    type Output = TwistedEdwardsGroupAffine<P>;
+
+    fn bl_select(self, rps: Self, condition: bool) -> Self::Output {
+        Self::Output {
+            x: (&self.x).bl_select(&rps.x, condition),
+            y: (&self.y).bl_select(&rps.y, condition),
+        }
+    }
+}

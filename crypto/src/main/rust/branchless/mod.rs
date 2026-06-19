@@ -15,23 +15,16 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::branchless::{BlSelect, BlSwap};
+//! Utils for branchless algorithms.
 
-// https://eprint.iacr.org/2020/972
-pub fn gcd_inner<const ITERATIONS: usize>(a: &mut u64, b: &mut u64) -> (i64, i64, i64, i64) {
-    let (mut f0, mut g0, mut f1, mut g1) = (1, 0, 0, 1);
-    for _ in 0..ITERATIONS {
-        let a_is_odd = *a & 1 == 1;
-        let a_is_less = a < b;
-        a.bl_swap(b, a_is_odd & a_is_less);
-        f0.bl_swap(&mut f1, a_is_odd & a_is_less);
-        g0.bl_swap(&mut g1, a_is_odd & a_is_less);
-        *a -= 0u64.bl_select(&*b, a_is_odd);
-        f0 -= 0i64.bl_select(f1, a_is_odd);
-        g0 -= 0i64.bl_select(g1, a_is_odd);
-        *a >>= 1;
-        f1 <<= 1;
-        g1 <<= 1;
-    }
-    (f0, g0, f1, g1)
-}
+mod absolute;
+mod assign;
+mod order;
+mod select;
+mod swap;
+
+pub use absolute::BlAbs;
+pub use assign::BlAssign;
+pub use order::{BlEq, BlOrd};
+pub use select::BlSelect;
+pub use swap::BlSwap;

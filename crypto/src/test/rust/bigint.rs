@@ -16,6 +16,7 @@
  */
 
 use blacknet_crypto::bigint::{UInt256, UInt512};
+use blacknet_crypto::branchless::BlOrd;
 use core::cmp::Ordering;
 
 #[test]
@@ -79,6 +80,18 @@ fn cmp() {
     assert_eq!(a.cmp(&a), Ordering::Equal);
     assert_eq!(a.cmp(&b), Ordering::Greater);
     assert_eq!(b.cmp(&a), Ordering::Less);
+}
+
+#[test]
+fn bl_ord() {
+    let a = UInt256::from_hex("C022ACCCD2A8701667BE02D3D240A92ADB463CC5A1804DEE6719F97EB1870985");
+    let b = UInt256::from_hex("8DC10CA58FAB02B7640643AAEEE96BCA50980538C74BC5299F1E62EBD5C1D5CC");
+    assert_eq!(a.bl_gt(&b), true);
+    assert_eq!(a.bl_gt(&a), false);
+    assert_eq!(b.bl_gt(&a), false);
+    assert_eq!(b.bl_lt(&a), true);
+    assert_eq!(b.bl_lt(&b), false);
+    assert_eq!(a.bl_lt(&b), false);
 }
 
 #[test]

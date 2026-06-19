@@ -17,8 +17,9 @@
 
 use crate::algebra::{
     AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, Double, Inv, LeftZero, One,
-    RightZero, Set, Square, Zero, add_sub_chain,
+    RightZero, Set, Square, Zero, add_sub_chain, bl_double_and_add,
 };
+use crate::branchless::BlSelect;
 use crate::ed25519::{TwistedEdwardsGroupAffine, TwistedEdwardsGroupParams, is_on_curve};
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::Sum;
@@ -76,6 +77,13 @@ impl<P: TwistedEdwardsGroupParams> TwistedEdwardsGroupExtended<P> {
             z: P::F::ONE,
             t: self.t * a,
         }
+    }
+
+    pub fn bl_mul<Scalar: IntoIterator<Item = bool>>(self, rps: Scalar) -> Self
+    where
+        P::F: BlSelect<Output = P::F>,
+    {
+        bl_double_and_add::<Self, Scalar>(self, rps)
     }
 }
 
@@ -398,3 +406,66 @@ impl<P: TwistedEdwardsGroupParams> AdditiveCommutativeMagma for TwistedEdwardsGr
 impl<P: TwistedEdwardsGroupParams> AdditiveSemigroup for TwistedEdwardsGroupExtended<P> {}
 
 impl<P: TwistedEdwardsGroupParams> AdditiveMonoid for TwistedEdwardsGroupExtended<P> {}
+
+impl<P: TwistedEdwardsGroupParams<F: BlSelect<Output = P::F>>> BlSelect
+    for TwistedEdwardsGroupExtended<P>
+{
+    type Output = Self;
+
+    fn bl_select(self, rps: Self, condition: bool) -> Self {
+        Self {
+            x: self.x.bl_select(rps.x, condition),
+            y: self.y.bl_select(rps.y, condition),
+            z: self.z.bl_select(rps.z, condition),
+            t: self.t.bl_select(rps.t, condition),
+        }
+    }
+}
+
+impl<P: TwistedEdwardsGroupParams<F: for<'a> BlSelect<&'a P::F, Output = P::F>>> BlSelect<&Self>
+    for TwistedEdwardsGroupExtended<P>
+{
+    type Output = Self;
+
+    fn bl_select(self, rps: &Self, condition: bool) -> Self {
+        Self {
+            x: self.x.bl_select(&rps.x, condition),
+            y: self.y.bl_select(&rps.y, condition),
+            z: self.z.bl_select(&rps.z, condition),
+            t: self.t.bl_select(&rps.t, condition),
+        }
+    }
+}
+
+impl<P: TwistedEdwardsGroupParams> BlSelect<TwistedEdwardsGroupExtended<P>>
+    for &TwistedEdwardsGroupExtended<P>
+where
+    for<'a> &'a P::F: BlSelect<P::F, Output = P::F>,
+{
+    type Output = TwistedEdwardsGroupExtended<P>;
+
+    fn bl_select(self, rps: TwistedEdwardsGroupExtended<P>, condition: bool) -> Self::Output {
+        Self::Output {
+            x: (&self.x).bl_select(rps.x, condition),
+            y: (&self.y).bl_select(rps.y, condition),
+            z: (&self.z).bl_select(rps.z, condition),
+            t: (&self.t).bl_select(rps.t, condition),
+        }
+    }
+}
+
+impl<P: TwistedEdwardsGroupParams> BlSelect for &TwistedEdwardsGroupExtended<P>
+where
+    for<'a> &'a P::F: BlSelect<Output = P::F>,
+{
+    type Output = TwistedEdwardsGroupExtended<P>;
+
+    fn bl_select(self, rps: Self, condition: bool) -> Self::Output {
+        Self::Output {
+            x: (&self.x).bl_select(&rps.x, condition),
+            y: (&self.y).bl_select(&rps.y, condition),
+            z: (&self.z).bl_select(&rps.z, condition),
+            t: (&self.t).bl_select(&rps.t, condition),
+        }
+    }
+}

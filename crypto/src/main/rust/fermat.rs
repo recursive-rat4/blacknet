@@ -21,6 +21,7 @@ use crate::algebra::{
     MultiplicativeSemigroup, NTTRing, One, RightOne, RightZero, Semifield, Set, Square,
     UnivariateRing, Zero,
 };
+use crate::branchless::{BlAbs, BlAssign, BlSelect, BlSwap};
 use crate::convolution::Negacyclic;
 use crate::integer::Integer;
 use core::fmt::{Debug, Formatter, Result};
@@ -58,14 +59,12 @@ impl FermatField {
         let mut c: i64 = rps.canonical().into();
         let mut d: i64 = 0;
         for _ in 0..32 {
-            if a & 1 == 1 {
-                if a < b {
-                    (a, b) = (b, a);
-                    (c, d) = (d, c);
-                }
-                a -= b;
-                c -= d;
-            }
+            let a_is_odd = a & 1 == 1;
+            let a_is_less = a < b;
+            a.bl_swap(&mut b, a_is_odd & a_is_less);
+            c.bl_swap(&mut d, a_is_odd & a_is_less);
+            a -= 0i32.bl_select(b, a_is_odd);
+            c -= 0i64.bl_select(d, a_is_odd);
             a >>= 1;
             d <<= 1;
         }
@@ -445,17 +444,13 @@ impl IntegerRing for FermatField {
     }
 
     fn canonical(&self) -> Self::Int {
-        let x = self.n;
-        if x == Self::MODULUS {
-            0
-        } else if x < 0 {
-            x + Self::MODULUS
-        } else {
-            x
-        }
+        let mut x = self.n;
+        x.bl_assign(0, x == Self::MODULUS);
+        x.bl_assign(x + Self::MODULUS, x < 0);
+        x
     }
     fn absolute(&self) -> Self::Int {
-        self.balanced().abs()
+        self.balanced().bl_abs()
     }
 
     const BITS: u32 = 17;
@@ -466,14 +461,46 @@ impl BalancedRepresentative for FermatField {
     type Output = i32;
 
     fn balanced(&self) -> Self::Output {
-        let x = self.n;
-        if x > Self::MODULUS / 2 {
-            x - Self::MODULUS
-        } else if x < -Self::MODULUS / 2 {
-            x + Self::MODULUS
-        } else {
-            x
-        }
+        let mut x = self.n;
+        x.bl_assign(x - Self::MODULUS, x > Self::MODULUS / 2);
+        x.bl_assign(x + Self::MODULUS, x < -Self::MODULUS / 2);
+        x
+    }
+}
+
+impl BlSelect for FermatField {
+    type Output = Self;
+
+    fn bl_select(self, rps: Self, condition: bool) -> Self {
+        let n = self.n.bl_select(rps.n, condition);
+        Self { n }
+    }
+}
+
+impl BlSelect<&Self> for FermatField {
+    type Output = Self;
+
+    fn bl_select(self, rps: &Self, condition: bool) -> Self {
+        let n = self.n.bl_select(&rps.n, condition);
+        Self { n }
+    }
+}
+
+impl BlSelect<FermatField> for &FermatField {
+    type Output = FermatField;
+
+    fn bl_select(self, rps: FermatField, condition: bool) -> Self::Output {
+        let n = (&self.n).bl_select(rps.n, condition);
+        Self::Output { n }
+    }
+}
+
+impl BlSelect for &FermatField {
+    type Output = FermatField;
+
+    fn bl_select(self, rps: Self, condition: bool) -> Self::Output {
+        let n = (&self.n).bl_select(&rps.n, condition);
+        Self::Output { n }
     }
 }
 

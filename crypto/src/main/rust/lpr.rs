@@ -16,6 +16,7 @@
  */
 
 use crate::algebra::{IntegerRing, One, UnivariateRing, Zero};
+use crate::branchless::{BlAssign, BlEq, BlOrd, BlSelect};
 use crate::convolution::Negacyclic;
 use crate::fermat::{FermatField, FermatNTT1024, FermatRing1024};
 use crate::gf2::GF2;
@@ -62,14 +63,7 @@ pub struct PlainText {
 
 pub(crate) fn upscale(rt: &Rt) -> RqNTT {
     let coefficients = rt;
-    array::from_fn(|i| {
-        if coefficients[i] == Zt::ZERO {
-            Zq::ZERO
-        } else {
-            ZQ_DELTA
-        }
-    })
-    .into()
+    array::from_fn(|i| ZQ_DELTA.bl_select(Zq::ZERO, coefficients[i].bl_eq(&Zt::ZERO))).into()
 }
 
 pub(crate) fn generate_uniform<RNG: UniformGenerator<Output = u8>>(rng: &mut RNG) -> RqNTT {
@@ -126,11 +120,7 @@ pub fn decrypt(sk: &SecretKey, ct: &CipherText) -> PlainText {
     let d = ct.a + ct.b * sk.s;
     let coefficients: Rq = d.into();
     let m: Rt = array::from_fn(|i| {
-        if coefficients[i].absolute() <= HALF_DELTA {
-            Zt::ZERO
-        } else {
-            Zt::ONE
-        }
+        Zt::ONE.bl_select(Zt::ZERO, HALF_DELTA.bl_gt(&coefficients[i].absolute()))
     })
     .into();
     PlainText { m }
@@ -141,9 +131,7 @@ pub fn encode(bytes: &[u8; D / 8]) -> PlainText {
     for (i, &byte) in bytes.iter().enumerate() {
         let bits = bits_u8::<8>(byte);
         for (j, bit) in bits.into_iter().enumerate() {
-            if bit {
-                m[i * 8 + j] = Zt::ONE;
-            }
+            m[i * 8 + j].bl_assign(Zt::ONE, bit);
         }
     }
     PlainText { m }
@@ -155,7 +143,7 @@ pub fn decode(pt: &PlainText) -> [u8; D / 8] {
         let byte = chunk
             .iter()
             .rev()
-            .map(|bit| if *bit == Zt::ZERO { 0 } else { 1 })
+            .map(|bit| 1u8.bl_select(0, bit.bl_eq(&Zt::ZERO)))
             .fold(0, |a, i| (a << 1) | i);
         bytes[i] = byte;
     }

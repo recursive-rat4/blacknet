@@ -16,9 +16,10 @@
  */
 
 use crate::algebra::{
-    AdditiveCommutativeMagma, AdditiveMagma, LeftOne, LeftZero, MultiplicativeCommutativeMagma,
-    MultiplicativeMagma,
+    AdditiveCommutativeMagma, AdditiveMagma, AdditiveMagmaOps, LeftOne, LeftZero,
+    MultiplicativeCommutativeMagma, MultiplicativeMagma,
 };
+use crate::branchless::BlSelect;
 
 /// A magma with associative addition.
 #[rustfmt::skip]
@@ -27,7 +28,7 @@ pub trait AdditiveSemigroup
 {
 }
 
-/// Multiply `g` by a `scalar`.
+/// Multiply by a nonnegative integer.
 #[rustfmt::skip]
 pub fn double_and_add<
     G: AdditiveSemigroup + LeftZero,
@@ -42,6 +43,27 @@ pub fn double_and_add<
         if bit {
             r += &t
         }
+        t = t.double()
+    }
+    r
+}
+
+#[rustfmt::skip]
+pub fn bl_double_and_add<
+    G: AdditiveSemigroup + LeftZero + BlSelect<Output = G>,
+    Scalar: IntoIterator<Item = bool>,
+>(
+    g: G,
+    scalar: Scalar,
+) -> G
+where
+    for<'a> &'a G: AdditiveMagmaOps<G>,
+{
+    let mut r = G::LEFT_ZERO;
+    let mut t = g;
+    for bit in scalar {
+        let s = &r + &t;
+        r = r.bl_select(s, bit);
         t = t.double()
     }
     r
@@ -64,7 +86,7 @@ pub trait MultiplicativeSemigroup
 {
 }
 
-/// Raise `g` to a `scalar` power.
+/// Raise to a nonnegative integer power.
 #[rustfmt::skip]
 pub fn square_and_multiply<
     G: MultiplicativeSemigroup + LeftOne,

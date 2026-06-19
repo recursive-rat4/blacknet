@@ -21,6 +21,7 @@ use crate::algebra::{
     MultiplicativeMonoid, MultiplicativeSemigroup, One, RightOne, RightZero, Semifield, Set, Sqrt,
     Square, UnivariateRing, Zero,
 };
+use crate::branchless::{BlAbs, BlAssign};
 use crate::convolution::Negacyclic;
 use crate::gcd::gcd_inner;
 use crate::integer::Integer;
@@ -484,17 +485,13 @@ impl IntegerRing for PervushinField {
     }
 
     fn canonical(&self) -> Self::Int {
-        let x = self.n;
-        if x == Self::MODULUS {
-            0
-        } else if x < 0 {
-            x + Self::MODULUS
-        } else {
-            x
-        }
+        let mut x = self.n;
+        x.bl_assign(0, x == Self::MODULUS);
+        x.bl_assign(x + Self::MODULUS, x < 0);
+        x
     }
     fn absolute(&self) -> Self::Int {
-        self.balanced().abs()
+        self.balanced().bl_abs()
     }
 
     const BITS: u32 = 61;
@@ -550,14 +547,10 @@ impl BalancedRepresentative for PervushinField {
     type Output = i64;
 
     fn balanced(&self) -> Self::Output {
-        let x = self.n;
-        if x > Self::MODULUS / 2 {
-            x - Self::MODULUS
-        } else if x < -Self::MODULUS / 2 {
-            x + Self::MODULUS
-        } else {
-            x
-        }
+        let mut x = self.n;
+        x.bl_assign(x - Self::MODULUS, x > Self::MODULUS / 2);
+        x.bl_assign(x + Self::MODULUS, x < -Self::MODULUS / 2);
+        x
     }
 }
 
