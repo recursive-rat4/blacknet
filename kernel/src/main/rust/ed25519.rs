@@ -29,6 +29,7 @@ use core::fmt::{Debug, Formatter, Result as FmtResult};
 use core::mem::transmute;
 use data_encoding::{DecodeError, DecodeKind, HEXUPPER};
 use serde::{Deserialize, Serialize};
+use zeroize::Zeroize;
 
 // For compatibility, implementation follows eddsa-java 0.3.0
 // https://eprint.iacr.org/2020/1244
@@ -163,7 +164,7 @@ pub fn to_public_key(secret_key: SecretKey) -> PublicKey {
     PublicKey(bytes)
 }
 
-#[derive(Clone, Copy, Default)]
+#[derive(Clone, Copy, Default, Zeroize)]
 pub struct SecretKey([u8; 32]);
 
 impl AsRef<[u8]> for SecretKey {
