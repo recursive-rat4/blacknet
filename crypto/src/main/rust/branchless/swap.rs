@@ -26,10 +26,20 @@ macro_rules! impl_swap {
         $(
             impl BlSwap for $x {
                 fn bl_swap(&mut self, rps: &mut $x, condition: bool) {
-                    let mask = (condition as $x).wrapping_neg();
-                    let t = mask & (&*self ^ &*rps);
-                    *self ^= t;
-                    *rps ^= t;
+                    cfg_select! {
+                        feature = "cmov" => {
+                            use cmov::Cmov;
+                            let t = *self;
+                            self.cmovnz(&*rps, condition as u8);
+                            rps.cmovnz(&t, condition as u8);
+                        }
+                        _ => {
+                            let mask = (condition as $x).wrapping_neg();
+                            let t = mask & (&*self ^ &*rps);
+                            *self ^= t;
+                            *rps ^= t;
+                        }
+                    }
                 }
             }
         )+
@@ -40,9 +50,21 @@ impl_swap!(i8, i16, i32, i64, u8, u16, u32, u64);
 
 impl BlSwap for bool {
     fn bl_swap(&mut self, rps: &mut bool, condition: bool) {
-        let t = condition & (*self ^ *rps);
-        *self ^= t;
-        *rps ^= t;
+        cfg_select! {
+            feature = "cmov" => {
+                use cmov::Cmov;
+                let (mut l, mut r) = (*self as u8, *rps as u8);
+                let t = l;
+                l.cmovnz(&r, condition as u8);
+                r.cmovnz(&t, condition as u8);
+                (*self, *rps) = (l != 0, r != 0);
+            }
+            _ => {
+                let t = condition & (*self ^ *rps);
+                *self ^= t;
+                *rps ^= t;
+            }
+        }
     }
 }
 

@@ -51,6 +51,7 @@ bech32 = { version = "0.12.0", default-features = false, features = ["alloc"] }
 blake2 = { version = "0.10.6", default-features = false }
 bytemuck = { version = "1.25.0", features = ["derive"] }
 chrono = { version = "0.4.44", default-features = false }
+cmov = { version = "0.5.4" }
 criterion = { version = "0.8.2", default-features = false, features = ["cargo_bench_support"] }
 data-encoding = { version = "2.10.0", default-features = false, features = ["alloc"] }
 data-encoding-macro = { version = "0.1.19" }

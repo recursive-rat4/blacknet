@@ -33,6 +33,7 @@ categories.workspace = true
 [dependencies]
 blacknet-compat = { workspace = true, optional = true }
 bytemuck.workspace = true
+cmov = { workspace = true, optional = true }
 libm.workspace = true
 rayon = { workspace = true, optional = true }
 serde.workspace = true
@@ -42,9 +43,10 @@ zeroize.workspace = true
 criterion.workspace = true
 
 [features]
-default = ["std", "rayon"]
+default = ["std", "rayon", "cmov"]
 std = ["dep:blacknet-compat"]
 rayon = ["dep:rayon"]
+cmov = ["dep:cmov"]
 
 [lints]
 workspace = true

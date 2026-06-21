@@ -32,8 +32,18 @@ macro_rules! impl_select {
                 type Output = $x;
 
                 fn bl_select(self, rps: $x, condition: bool) -> $x {
-                    let mask = (condition as $x).wrapping_neg();
-                    self ^ mask & (self ^ rps)
+                    cfg_select! {
+                        feature = "cmov" => {
+                            use cmov::Cmov;
+                            let mut lps = self;
+                            lps.cmovnz(&rps, condition as u8);
+                            lps
+                        }
+                        _ => {
+                            let mask = (condition as $x).wrapping_neg();
+                            self ^ mask & (self ^ rps)
+                        }
+                    }
                 }
             }
 
@@ -41,8 +51,18 @@ macro_rules! impl_select {
                 type Output = $x;
 
                 fn bl_select(self, rps: &$x, condition: bool) -> $x {
-                    let mask = (condition as $x).wrapping_neg();
-                    self ^ mask & (self ^ rps)
+                    cfg_select! {
+                        feature = "cmov" => {
+                            use cmov::Cmov;
+                            let mut lps = self;
+                            lps.cmovnz(rps, condition as u8);
+                            lps
+                        }
+                        _ => {
+                            let mask = (condition as $x).wrapping_neg();
+                            self ^ mask & (self ^ rps)
+                        }
+                    }
                 }
             }
 
@@ -50,8 +70,18 @@ macro_rules! impl_select {
                 type Output = $x;
 
                 fn bl_select(self, rps: $x, condition: bool) -> $x {
-                    let mask = (condition as $x).wrapping_neg();
-                    self ^ mask & (self ^ rps)
+                    cfg_select! {
+                        feature = "cmov" => {
+                            use cmov::Cmov;
+                            let mut lps = *self;
+                            lps.cmovnz(&rps, condition as u8);
+                            lps
+                        }
+                        _ => {
+                            let mask = (condition as $x).wrapping_neg();
+                            self ^ mask & (self ^ rps)
+                        }
+                    }
                 }
             }
 
@@ -59,8 +89,18 @@ macro_rules! impl_select {
                 type Output = $x;
 
                 fn bl_select(self, rps: &$x, condition: bool) -> $x {
-                    let mask = (condition as $x).wrapping_neg();
-                    self ^ mask & (self ^ rps)
+                    cfg_select! {
+                        feature = "cmov" => {
+                            use cmov::Cmov;
+                            let mut lps = *self;
+                            lps.cmovnz(rps, condition as u8);
+                            lps
+                        }
+                        _ => {
+                            let mask = (condition as $x).wrapping_neg();
+                            self ^ mask & (self ^ rps)
+                        }
+                    }
                 }
             }
         )+
@@ -73,7 +113,17 @@ impl BlSelect for bool {
     type Output = bool;
 
     fn bl_select(self, rps: bool, condition: bool) -> bool {
-        self ^ condition & (self ^ rps)
+        cfg_select! {
+            feature = "cmov" => {
+                use cmov::Cmov;
+                let mut lps = self as u8;
+                lps.cmovnz(&(rps as u8), condition as u8);
+                lps != 0
+            }
+            _ => {
+                self ^ condition & (self ^ rps)
+            }
+        }
     }
 }
 
@@ -81,7 +131,17 @@ impl BlSelect<&bool> for bool {
     type Output = bool;
 
     fn bl_select(self, rps: &bool, condition: bool) -> bool {
-        self ^ condition & (self ^ rps)
+        cfg_select! {
+            feature = "cmov" => {
+                use cmov::Cmov;
+                let mut lps = self as u8;
+                lps.cmovnz(&(*rps as u8), condition as u8);
+                lps != 0
+            }
+            _ => {
+                self ^ condition & (self ^ rps)
+            }
+        }
     }
 }
 
@@ -89,7 +149,17 @@ impl BlSelect<bool> for &bool {
     type Output = bool;
 
     fn bl_select(self, rps: bool, condition: bool) -> bool {
-        self ^ condition & (self ^ rps)
+        cfg_select! {
+            feature = "cmov" => {
+                use cmov::Cmov;
+                let mut lps = *self as u8;
+                lps.cmovnz(&(rps as u8), condition as u8);
+                lps != 0
+            }
+            _ => {
+                self ^ condition & (self ^ rps)
+            }
+        }
     }
 }
 
@@ -97,7 +167,17 @@ impl BlSelect for &bool {
     type Output = bool;
 
     fn bl_select(self, rps: &bool, condition: bool) -> bool {
-        self ^ condition & (self ^ rps)
+        cfg_select! {
+            feature = "cmov" => {
+                use cmov::Cmov;
+                let mut lps = *self as u8;
+                lps.cmovnz(&(*rps as u8), condition as u8);
+                lps != 0
+            }
+            _ => {
+                self ^ condition & (self ^ rps)
+            }
+        }
     }
 }
 

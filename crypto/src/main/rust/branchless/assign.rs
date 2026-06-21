@@ -26,15 +26,31 @@ macro_rules! impl_assign {
         $(
             impl BlAssign for $x {
                 fn bl_assign(&mut self, rps: $x, condition: bool) {
-                    let mask = (condition as $x).wrapping_neg();
-                    *self ^= mask & (&*self ^ rps);
+                    cfg_select! {
+                        feature = "cmov" => {
+                            use cmov::Cmov;
+                            self.cmovnz(&rps, condition as u8);
+                        }
+                        _ => {
+                            let mask = (condition as $x).wrapping_neg();
+                            *self ^= mask & (&*self ^ rps);
+                        }
+                    }
                 }
             }
 
             impl BlAssign<&$x> for $x {
                 fn bl_assign(&mut self, rps: &$x, condition: bool) {
-                    let mask = (condition as $x).wrapping_neg();
-                    *self ^= mask & (&*self ^ rps);
+                    cfg_select! {
+                        feature = "cmov" => {
+                            use cmov::Cmov;
+                            self.cmovnz(rps, condition as u8);
+                        }
+                        _ => {
+                            let mask = (condition as $x).wrapping_neg();
+                            *self ^= mask & (&*self ^ rps);
+                        }
+                    }
                 }
             }
         )+
@@ -45,13 +61,33 @@ impl_assign!(i8, i16, i32, i64, u8, u16, u32, u64);
 
 impl BlAssign for bool {
     fn bl_assign(&mut self, rps: bool, condition: bool) {
-        *self ^= condition & (*self ^ rps);
+        cfg_select! {
+            feature = "cmov" => {
+                use cmov::Cmov;
+                let mut lps = *self as u8;
+                lps.cmovnz(&(rps as u8), condition as u8);
+                *self = lps != 0;
+            }
+            _ => {
+                *self ^= condition & (*self ^ rps);
+            }
+        }
     }
 }
 
 impl BlAssign<&bool> for bool {
     fn bl_assign(&mut self, rps: &bool, condition: bool) {
-        *self ^= condition & (*self ^ rps);
+        cfg_select! {
+            feature = "cmov" => {
+                use cmov::Cmov;
+                let mut lps = *self as u8;
+                lps.cmovnz(&(*rps as u8), condition as u8);
+                *self = lps != 0;
+            }
+            _ => {
+                *self ^= condition & (*self ^ rps);
+            }
+        }
     }
 }
 

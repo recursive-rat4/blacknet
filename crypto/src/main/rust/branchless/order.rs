@@ -43,19 +43,43 @@ impl_eq!(bool, i8, i16, i32, i64, u8, u16, u32, u64);
 
 impl<T: BlEq, const N: usize> BlEq for [T; N] {
     fn bl_eq(&self, rps: &Self) -> bool {
-        let mut eq = true;
-        for (l, r) in zip(self, rps) {
-            eq &= l.bl_eq(r)
+        cfg_select! {
+            feature = "cmov" => {
+                use cmov::Cmov;
+                let mut eq: u8 = 1;
+                for (l, r) in zip(self, rps) {
+                    eq.cmovnz(&(l.bl_eq(r) as u8), eq)
+                }
+                eq != 0
+            }
+            _ => {
+                let mut eq = true;
+                for (l, r) in zip(self, rps) {
+                    eq &= l.bl_eq(r)
+                }
+                eq
+            }
         }
-        eq
     }
 
     fn bl_ne(&self, rps: &Self) -> bool {
-        let mut ne = false;
-        for (l, r) in zip(self, rps) {
-            ne |= l.bl_ne(r)
+        cfg_select! {
+            feature = "cmov" => {
+                use cmov::Cmov;
+                let mut ne: u8 = 0;
+                for (l, r) in zip(self, rps) {
+                    ne.cmovnz(&1, l.bl_ne(r) as u8)
+                }
+                ne != 0
+            }
+            _ => {
+                let mut ne = false;
+                for (l, r) in zip(self, rps) {
+                    ne |= l.bl_ne(r)
+                }
+                ne
+            }
         }
-        ne
     }
 }
 
