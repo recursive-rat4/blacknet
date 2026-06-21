@@ -16,7 +16,7 @@
  */
 
 use crate::lm::LMField;
-use crate::symmetric::{Duplex, Jive, Permutation, Poseidon2Params, Poseidon2Plain};
+use crate::symmetric::{Duplex, Permutation, Poseidon2Params, Poseidon2Plain, Trunc};
 
 pub struct Poseidon2LM12 {}
 
@@ -314,4 +314,4 @@ impl Permutation for Poseidon2LM8 {
     }
 }
 
-pub type JivePoseidon2LM = Jive<LMField, 4, 8, Poseidon2LM8>;
+pub type TruncPoseidon2LM = Trunc<LMField, 4, 8, Poseidon2LM8>;

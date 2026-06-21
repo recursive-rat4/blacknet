@@ -15,17 +15,16 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::AdditiveCyclicGroup;
-use crate::algebra::Semiring;
+use crate::algebra::{AdditiveGroup, Semiring};
 use crate::circuit::builder::{CircuitBuilder, LinearCombination};
 use crate::circuit::symmetric::{CompressionFunction, Permutation};
 use core::array;
 use core::marker::PhantomData;
 
-pub struct Jive<
+pub struct Trunc<
     'a,
     'b,
-    G: Semiring + AdditiveCyclicGroup,
+    G: Semiring + AdditiveGroup,
     const RANK: usize,
     const WIDTH: usize,
     P: Permutation<G, Domain = [LinearCombination<G>; WIDTH]>,
@@ -37,11 +36,11 @@ pub struct Jive<
 impl<
     'a,
     'b,
-    G: Semiring + AdditiveCyclicGroup,
+    G: Semiring + AdditiveGroup,
     const RANK: usize,
     const WIDTH: usize,
     P: Permutation<G, Domain = [LinearCombination<G>; WIDTH]>,
-> Jive<'a, 'b, G, RANK, WIDTH, P>
+> Trunc<'a, 'b, G, RANK, WIDTH, P>
 {
     pub const fn new(circuit: &'a CircuitBuilder<'b, G>) -> Self {
         const {
@@ -57,11 +56,11 @@ impl<
 impl<
     'a,
     'b,
-    G: Semiring + AdditiveCyclicGroup + Clone,
+    G: Semiring + AdditiveGroup + Clone,
     const RANK: usize,
     const WIDTH: usize,
     P: Permutation<G, Domain = [LinearCombination<G>; WIDTH]>,
-> CompressionFunction for Jive<'a, 'b, G, RANK, WIDTH, P>
+> CompressionFunction for Trunc<'a, 'b, G, RANK, WIDTH, P>
 {
     type Hash = [LinearCombination<G>; RANK];
 
@@ -72,7 +71,7 @@ impl<
         P::permute(self.circuit, &mut state);
         let mut hash: [LinearCombination<G>; RANK] = array::from_fn(|_| LinearCombination::new());
         for i in 0..RANK {
-            hash[i] = &a[i] + &b[i] + &state[i] + &state[i + RANK];
+            hash[i] = &a[i] + &state[i];
         }
         hash
     }

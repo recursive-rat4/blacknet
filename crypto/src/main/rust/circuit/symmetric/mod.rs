@@ -17,16 +17,16 @@
 
 mod compressionfunction;
 mod duplex;
-mod jive;
 mod permutation;
 mod poseidon2;
 mod poseidon2lm;
 mod poseidon2pervushin;
+mod trunc;
 
 pub use compressionfunction::CompressionFunction;
 pub use duplex::Duplex;
-pub use jive::Jive;
 pub use permutation::Permutation;
 pub use poseidon2::Poseidon2Circuit;
-pub use poseidon2lm::{DuplexPoseidon2LM, JivePoseidon2LM};
-pub use poseidon2pervushin::{DuplexPoseidon2Pervushin, JivePoseidon2Pervushin};
+pub use poseidon2lm::{DuplexPoseidon2LM, TruncPoseidon2LM};
+pub use poseidon2pervushin::{DuplexPoseidon2Pervushin, TruncPoseidon2Pervushin};
+pub use trunc::Trunc;

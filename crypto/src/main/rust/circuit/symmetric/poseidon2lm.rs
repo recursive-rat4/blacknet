@@ -16,7 +16,7 @@
  */
 
 use crate::circuit::builder::{CircuitBuilder, LinearCombination};
-use crate::circuit::symmetric::{Duplex, Jive, Permutation, Poseidon2Circuit};
+use crate::circuit::symmetric::{Duplex, Permutation, Poseidon2Circuit, Trunc};
 use crate::lm::LMField;
 use crate::symmetric::{Poseidon2LM8, Poseidon2LM12};
 
@@ -40,4 +40,4 @@ impl Permutation<LMField> for Poseidon2LM8 {
     }
 }
 
-pub type JivePoseidon2LM<'a, 'b> = Jive<'a, 'b, LMField, 4, 8, Poseidon2LM8>;
+pub type TruncPoseidon2LM<'a, 'b> = Trunc<'a, 'b, LMField, 4, 8, Poseidon2LM8>;

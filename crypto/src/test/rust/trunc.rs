@@ -15,19 +15,18 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_crypto::algebra::One;
 use blacknet_crypto::assigner::assigment::Assigment;
 use blacknet_crypto::assigner::symmetric::{
-    CompressionFunction as CompressionFunctionAssigner, Jive as Assigner,
-    Permutation as PermutationAssigner,
+    CompressionFunction as CompressionFunctionAssigner, Permutation as PermutationAssigner,
+    Trunc as Assigner,
 };
 use blacknet_crypto::circuit::builder::{CircuitBuilder, Constant, LinearCombination};
 use blacknet_crypto::circuit::symmetric::{
-    CompressionFunction as CompressionFunctionCircuit, Jive as Circuit,
-    Permutation as PermutationCircuit,
+    CompressionFunction as CompressionFunctionCircuit, Permutation as PermutationCircuit,
+    Trunc as Circuit,
 };
 use blacknet_crypto::constraintsystem::ConstraintSystem;
-use blacknet_crypto::symmetric::{CompressionFunction, Jive, Permutation as PermutationPlain};
+use blacknet_crypto::symmetric::{CompressionFunction, Permutation as PermutationPlain, Trunc};
 use core::{array, assert_matches};
 
 type Z = blacknet_crypto::pervushin::PervushinField;
@@ -39,19 +38,20 @@ impl PermutationPlain for TestPermutation {
     type Domain = [Z; 4];
 
     fn permute(x: &mut Self::Domain) {
+        let s = x.iter().sum::<Z>();
         x.iter_mut()
             .enumerate()
-            .for_each(|(i, e)| *e += Z::from(i as i8) + Z::ONE);
+            .for_each(|(i, e)| *e += Z::from(i as i8) + s);
     }
 }
 
-type JivePlain = Jive<Z, 2, 4, TestPermutation>;
+type TruncPlain = Trunc<Z, 2, 4, TestPermutation>;
 
 #[test]
 fn plain() {
     assert_eq!(
-        JivePlain::compress([11, 12].map(Z::from), [13, 14].map(Z::from)),
-        [52, 58].map(Z::from)
+        TruncPlain::compress([11, 12].map(Z::from), [13, 14].map(Z::from)),
+        [72, 75].map(Z::from)
     );
 }
 
@@ -59,38 +59,40 @@ impl PermutationCircuit<Z> for TestPermutation {
     type Domain = [LinearCombination<Z>; 4];
 
     fn permute(_: &CircuitBuilder<Z>, x: &mut Self::Domain) {
+        let s = x.iter().sum::<LinearCombination<Z>>();
         x.iter_mut()
             .enumerate()
-            .for_each(|(i, e)| *e += Constant::new(Z::from(i as i8 + 1)));
+            .for_each(|(i, e)| *e += Constant::new(Z::from(i as i8)) + &s);
     }
 }
 
-type JiveCircuit<'a, 'b> = Circuit<'a, 'b, Z, 2, 4, TestPermutation>;
+type TruncCircuit<'a, 'b> = Circuit<'a, 'b, Z, 2, 4, TestPermutation>;
 
 impl PermutationAssigner<Z> for TestPermutation {
     type Domain = [Z; 4];
 
     fn permute(_: &Assigment<Z>, x: &mut Self::Domain) {
+        let s = x.iter().sum::<Z>();
         x.iter_mut()
             .enumerate()
-            .for_each(|(i, e)| *e += Z::from(i as i8) + Z::ONE);
+            .for_each(|(i, e)| *e += Z::from(i as i8) + s);
     }
 }
 
-type JiveAssigner<'a> = Assigner<'a, Z, 2, 4, TestPermutation>;
+type TruncAssigner<'a> = Assigner<'a, Z, 2, 4, TestPermutation>;
 
 #[test]
 fn circuit() {
     let a_plain: [Z; 2] = [11, 12].map(Z::from);
     let b_plain: [Z; 2] = [13, 14].map(Z::from);
-    let c_plain: [Z; 2] = [52, 58].map(Z::from);
+    let c_plain: [Z; 2] = [72, 75].map(Z::from);
 
     let circuit = CircuitBuilder::<Z>::new(2);
     let scope = circuit.scope("test");
-    let jive_circuit = JiveCircuit::new(&circuit);
+    let trunc_circuit = TruncCircuit::new(&circuit);
     let a_circuit: [LinearCombination<Z>; 2] = array::from_fn(|_| scope.public_input().into());
     let b_circuit: [LinearCombination<Z>; 2] = array::from_fn(|_| scope.public_input().into());
-    let c_circuit = jive_circuit.compress(&a_circuit, &b_circuit);
+    let c_circuit = trunc_circuit.compress(&a_circuit, &b_circuit);
     scope.constrain(c_circuit[0].clone(), Constant::new(c_plain[0]));
     scope.constrain(c_circuit[1].clone(), Constant::new(c_plain[1]));
     drop(scope);
@@ -100,8 +102,8 @@ fn circuit() {
     z.extend(a_plain);
     z.extend(b_plain);
 
-    let jive_assigner = JiveAssigner::new(&z);
-    let c_assigned: [Z; 2] = jive_assigner.compress(a_plain, b_plain);
+    let trunc_assigner = TruncAssigner::new(&z);
+    let c_assigned: [Z; 2] = trunc_assigner.compress(a_plain, b_plain);
 
     assert_eq!(c_assigned, c_plain);
     assert_matches!(r1cs.is_satisfied(&z.finish()), Ok(()));

@@ -156,10 +156,6 @@ name = "johnsonlindenstrauss"
 path = "src/test/rust/johnsonlindenstrauss.rs"
 
 [[test]]
-name = "jive"
-path = "src/test/rust/jive.rs"
-
-[[test]]
 name = "latticegadget"
 path = "src/test/rust/latticegadget.rs"
 
@@ -230,6 +226,10 @@ path = "src/test/rust/symmetricmatrix.rs"
 [[test]]
 name = "symmetrictridiagonalmatrix"
 path = "src/test/rust/symmetrictridiagonalmatrix.rs"
+
+[[test]]
+name = "trunc"
+path = "src/test/rust/trunc.rs"
 
 [[test]]
 name = "uniformintdistribution"

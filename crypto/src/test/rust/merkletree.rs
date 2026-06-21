@@ -18,9 +18,9 @@
 use blacknet_crypto::symmetric::CompressionFunction;
 
 type Z = blacknet_crypto::pervushin::PervushinField;
-type Jive = blacknet_crypto::symmetric::JivePoseidon2Pervushin;
-type Hash = <Jive as CompressionFunction>::Hash;
-type MerkleTree = blacknet_crypto::symmetric::MerkleTree<Jive>;
+type Trunc = blacknet_crypto::symmetric::TruncPoseidon2Pervushin;
+type Hash = <Trunc as CompressionFunction>::Hash;
+type MerkleTree = blacknet_crypto::symmetric::MerkleTree<Trunc>;
 
 #[test]
 fn empty() {
@@ -43,7 +43,7 @@ fn even() {
     let b1 = vec![h2];
     let b2 = vec![h1];
 
-    assert_eq!(tree.root(), &Jive::compress(h1, h2));
+    assert_eq!(tree.root(), &Trunc::compress(h1, h2));
     assert_eq!(tree.branch(1), b2);
 
     assert_ne!(&MerkleTree::compute_root(1, h1, &b1), tree.root());

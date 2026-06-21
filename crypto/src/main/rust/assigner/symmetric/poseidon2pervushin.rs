@@ -16,7 +16,7 @@
  */
 
 use crate::assigner::assigment::Assigment;
-use crate::assigner::symmetric::{Duplex, Jive, Permutation, Poseidon2Assigner};
+use crate::assigner::symmetric::{Duplex, Permutation, Poseidon2Assigner, Trunc};
 use crate::pervushin::PervushinField;
 use crate::symmetric::{Poseidon2Pervushin8, Poseidon2Pervushin12};
 
@@ -40,4 +40,4 @@ impl Permutation<PervushinField> for Poseidon2Pervushin8 {
     }
 }
 
-pub type JivePoseidon2Pervushin<'a> = Jive<'a, PervushinField, 4, 8, Poseidon2Pervushin8>;
+pub type TruncPoseidon2Pervushin<'a> = Trunc<'a, PervushinField, 4, 8, Poseidon2Pervushin8>;

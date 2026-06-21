@@ -16,7 +16,7 @@
  */
 
 use crate::pervushin::PervushinField;
-use crate::symmetric::{Duplex, Jive, Permutation, Poseidon2Params, Poseidon2Plain};
+use crate::symmetric::{Duplex, Permutation, Poseidon2Params, Poseidon2Plain, Trunc};
 
 pub struct Poseidon2Pervushin12 {}
 
@@ -286,4 +286,4 @@ impl Permutation for Poseidon2Pervushin8 {
     }
 }
 
-pub type JivePoseidon2Pervushin = Jive<PervushinField, 4, 8, Poseidon2Pervushin8>;
+pub type TruncPoseidon2Pervushin = Trunc<PervushinField, 4, 8, Poseidon2Pervushin8>;

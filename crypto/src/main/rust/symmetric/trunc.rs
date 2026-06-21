@@ -15,61 +15,61 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::AdditiveCyclicGroup;
-use crate::assigner::assigment::Assigment;
-use crate::assigner::symmetric::{CompressionFunction, Permutation};
+use crate::algebra::AdditiveGroup;
+use crate::symmetric::{CompressionFunction, Permutation};
+use core::iter::zip;
 use core::marker::PhantomData;
 
-pub struct Jive<
-    'a,
-    G: AdditiveCyclicGroup,
+/// Trunc mode
+///
+/// <https://eprint.iacr.org/2026/1271>
+pub struct Trunc<
+    G: AdditiveGroup,
     const RANK: usize,
     const WIDTH: usize,
-    P: Permutation<G, Domain = [G; WIDTH]>,
+    P: Permutation<Domain = [G; WIDTH]>,
 > {
     phantom: PhantomData<P>,
-    assigment: &'a Assigment<G>,
 }
 
-impl<
-    'a,
-    G: AdditiveCyclicGroup,
-    const RANK: usize,
-    const WIDTH: usize,
-    P: Permutation<G, Domain = [G; WIDTH]>,
-> Jive<'a, G, RANK, WIDTH, P>
+impl<G: AdditiveGroup, const RANK: usize, const WIDTH: usize, P: Permutation<Domain = [G; WIDTH]>>
+    Trunc<G, RANK, WIDTH, P>
 {
-    pub const fn new(assigment: &'a Assigment<G>) -> Self {
+    pub const fn new() -> Self {
         const {
             assert!(RANK * 2 == WIDTH);
         }
         Self {
             phantom: PhantomData,
-            assigment,
         }
     }
 }
 
+impl<G: AdditiveGroup, const RANK: usize, const WIDTH: usize, P: Permutation<Domain = [G; WIDTH]>>
+    Default for Trunc<G, RANK, WIDTH, P>
+{
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<
-    'a,
-    G: AdditiveCyclicGroup + Clone,
+    G: AdditiveGroup + Clone,
     const RANK: usize,
     const WIDTH: usize,
-    P: Permutation<G, Domain = [G; WIDTH]>,
-> CompressionFunction for Jive<'a, G, RANK, WIDTH, P>
+    P: Permutation<Domain = [G; WIDTH]>,
+> CompressionFunction for Trunc<G, RANK, WIDTH, P>
 {
     type Hash = [G; RANK];
 
-    fn compress(&self, a: Self::Hash, b: Self::Hash) -> Self::Hash {
+    fn compress(a: Self::Hash, b: Self::Hash) -> Self::Hash {
         let mut state = [G::ZERO; WIDTH];
         state[..WIDTH / 2].clone_from_slice(&a);
         state[WIDTH / 2..].clone_from_slice(&b);
-        P::permute(self.assigment, &mut state);
+        P::permute(&mut state);
         let mut hash = a;
-        for i in 0..RANK {
-            hash[i] += &b[i];
-            hash[i] += &state[i];
-            hash[i] += &state[i + RANK];
+        for (h, s) in zip(&mut hash, state) {
+            *h += s
         }
         hash
     }

@@ -16,7 +16,7 @@
  */
 
 use crate::assigner::assigment::Assigment;
-use crate::assigner::symmetric::{Duplex, Jive, Permutation, Poseidon2Assigner};
+use crate::assigner::symmetric::{Duplex, Permutation, Poseidon2Assigner, Trunc};
 use crate::lm::LMField;
 use crate::symmetric::{Poseidon2LM8, Poseidon2LM12};
 
@@ -40,4 +40,4 @@ impl Permutation<LMField> for Poseidon2LM8 {
     }
 }
 
-pub type JivePoseidon2LM<'a> = Jive<'a, LMField, 4, 8, Poseidon2LM8>;
+pub type TruncPoseidon2LM<'a> = Trunc<'a, LMField, 4, 8, Poseidon2LM8>;

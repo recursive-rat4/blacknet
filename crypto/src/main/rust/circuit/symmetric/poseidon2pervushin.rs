@@ -16,7 +16,7 @@
  */
 
 use crate::circuit::builder::{CircuitBuilder, LinearCombination};
-use crate::circuit::symmetric::{Duplex, Jive, Permutation, Poseidon2Circuit};
+use crate::circuit::symmetric::{Duplex, Permutation, Poseidon2Circuit, Trunc};
 use crate::pervushin::PervushinField;
 use crate::symmetric::{Poseidon2Pervushin8, Poseidon2Pervushin12};
 
@@ -41,4 +41,4 @@ impl Permutation<PervushinField> for Poseidon2Pervushin8 {
     }
 }
 
-pub type JivePoseidon2Pervushin<'a, 'b> = Jive<'a, 'b, PervushinField, 4, 8, Poseidon2Pervushin8>;
+pub type TruncPoseidon2Pervushin<'a, 'b> = Trunc<'a, 'b, PervushinField, 4, 8, Poseidon2Pervushin8>;
