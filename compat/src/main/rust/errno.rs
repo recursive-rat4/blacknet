@@ -32,8 +32,9 @@ pub fn errno() -> libc::c_int {
 }
 
 #[cfg(target_family = "unix")]
-pub fn strerror<'a>(errno: libc::c_int) -> &'a CStr {
-    unsafe { CStr::from_ptr(libc::strerror(errno)) }
+pub fn strerror<T, F: FnOnce(&CStr) -> T>(errno: libc::c_int, f: F) -> T {
+    let s = unsafe { CStr::from_ptr(libc::strerror(errno)) };
+    f(s)
 }
 
 #[derive(Debug)]
@@ -50,7 +51,7 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             #[cfg(target_family = "unix")]
-            Error::Errno(errno) => f.write_str(&strerror(*errno).to_string_lossy()),
+            Error::Errno(errno) => strerror(*errno, |s| f.write_str(&s.to_string_lossy())),
             #[cfg(target_family = "windows")]
             Error::NtStatus(status) => write!(f, "{status}"),
             #[cfg(target_family = "windows")]
