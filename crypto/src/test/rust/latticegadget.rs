@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_crypto::algebra::IntegerRing;
+use blacknet_crypto::algebra::IntegerModRing;
 use blacknet_crypto::latticegadget;
 use blacknet_crypto::matrix::{DenseMatrix, DenseVector};
 

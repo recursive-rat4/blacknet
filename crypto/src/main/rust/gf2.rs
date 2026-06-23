@@ -20,7 +20,7 @@
 
 use crate::algebra::{
     AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, BalancedRepresentative, Double,
-    IntegerRing, Inv, LeftOne, LeftZero, MultiplicativeCommutativeMagma, MultiplicativeMonoid,
+    IntegerModRing, Inv, LeftOne, LeftZero, MultiplicativeCommutativeMagma, MultiplicativeMonoid,
     MultiplicativeSemigroup, One, RightOne, RightZero, Semifield, Set, Sqrt, Square, Zero,
 };
 use crate::branchless::{BlAssign, BlEq, BlSelect};
@@ -373,8 +373,9 @@ impl MultiplicativeMonoid for GF2 {}
 
 impl Semifield for GF2 {}
 
-impl IntegerRing for GF2 {
+impl IntegerModRing for GF2 {
     type Int = i8;
+    type Modulus = i8;
 
     fn new(n: Self::Int) -> Self {
         Self { n: (n & 1) == 1 }
@@ -391,7 +392,7 @@ impl IntegerRing for GF2 {
     }
 
     const BITS: u32 = 1;
-    const MODULUS: Self::Int = 2;
+    const MODULUS: Self::Modulus = 2;
 }
 
 impl BalancedRepresentative for GF2 {

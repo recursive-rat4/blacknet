@@ -109,13 +109,15 @@ impl<R
     + Semifield
 > DivisionRing for R {}
 
+/// A ring `ℤ/q` where `q` is an integer number.
 #[rustfmt::skip]
-pub trait IntegerRing
+pub trait IntegerModRing
     : UnitalRing
     + CommutativeRing
     + AdditiveCyclicGroup
 {
     type Int: Integer;
+    type Modulus: Integer;
 
     fn new(n: Self::Int) -> Self;
     fn with_limb(n: <Self::Int as Integer>::Limb) -> Self;
@@ -126,7 +128,7 @@ pub trait IntegerRing
     fn absolute(&self) -> Self::Int;
 
     const BITS: u32;
-    const MODULUS: Self::Int;
+    const MODULUS: Self::Modulus;
 
     fn gadget(&self) -> Vec<Self> {
         let mut representative = self.canonical();
@@ -140,7 +142,7 @@ pub trait IntegerRing
     }
 }
 
-impl<Z: IntegerRing> AdditiveCyclicGroup for Z {}
+impl<Z: IntegerModRing> AdditiveCyclicGroup for Z {}
 
 pub trait BalancedRepresentative {
     type Output: SignedInteger;
@@ -163,7 +165,7 @@ pub trait PolynomialRing<R: UnitalRing>
 }
 
 #[rustfmt::skip]
-pub trait PowerOfTwoCyclotomicRing<Z: IntegerRing>
+pub trait PowerOfTwoCyclotomicRing<Z: IntegerModRing>
     : PolynomialRing<Z>
     + CommutativeAlgebra<Z>
     + Conjugate<Output = Self>

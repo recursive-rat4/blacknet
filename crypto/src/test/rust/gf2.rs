@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_crypto::algebra::{IntegerRing, Inv, Sqrt, Square};
+use blacknet_crypto::algebra::{IntegerModRing, Inv, Sqrt, Square};
 use blacknet_crypto::gf2::GF2;
 use blacknet_crypto::norm::InfinityNorm;
 

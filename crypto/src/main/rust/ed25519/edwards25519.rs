@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::IntegerRing;
+use crate::algebra::IntegerModRing;
 use crate::bigint::UInt256;
 use crate::ed25519::field25519::Field25519;
 use crate::ed25519::{

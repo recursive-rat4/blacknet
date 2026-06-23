@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{IntegerRing, One};
+use crate::algebra::{IntegerModRing, One};
 use crate::assigner::assigment::Assigment;
 use crate::assigner::logicgate::LogicGate;
 use crate::assigner::random::Distribution;
@@ -23,14 +23,14 @@ use crate::integer::Integer;
 use crate::random::UniformGenerator;
 use alloc::vec::Vec;
 
-pub struct BinaryUniformDistribution<'a, G: UniformGenerator<Output: IntegerRing>> {
+pub struct BinaryUniformDistribution<'a, G: UniformGenerator<Output: IntegerModRing>> {
     cache: Vec<G::Output>,
     have_bits: u32,
     logic_gate: LogicGate<'a, G::Output>,
     assigment: &'a Assigment<G::Output>,
 }
 
-impl<'a, G: UniformGenerator<Output: IntegerRing>> BinaryUniformDistribution<'a, G> {
+impl<'a, G: UniformGenerator<Output: IntegerModRing>> BinaryUniformDistribution<'a, G> {
     fn useful_bits() -> u32 {
         if G::Output::MODULUS.count_ones() == 1 {
             G::Output::BITS
@@ -40,7 +40,7 @@ impl<'a, G: UniformGenerator<Output: IntegerRing>> BinaryUniformDistribution<'a,
     }
 }
 
-impl<'a, G: UniformGenerator<Output: IntegerRing + Eq + Copy>> Distribution<'a, G::Output, G>
+impl<'a, G: UniformGenerator<Output: IntegerModRing + Eq + Copy>> Distribution<'a, G::Output, G>
     for BinaryUniformDistribution<'a, G>
 {
     type Output = G::Output;

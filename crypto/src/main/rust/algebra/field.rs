@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{CommutativeRing, DivisionRing, DivisionRingOps, IntegerRing, UnitalRing};
+use crate::algebra::{CommutativeRing, DivisionRing, DivisionRingOps, IntegerModRing, UnitalRing};
 use core::ops::Div;
 
 #[rustfmt::skip]
@@ -59,8 +59,8 @@ impl<R
 #[rustfmt::skip]
 pub trait PrimeField
     : Field
-    + IntegerRing
+    + IntegerModRing
 {
 }
 
-impl<F: Field + IntegerRing> PrimeField for F {}
+impl<F: Field + IntegerModRing> PrimeField for F {}

@@ -16,9 +16,9 @@
  */
 
 use crate::algebra::{
-    AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, Double, IntegerRing, Inv, LeftOne,
-    LeftZero, MultiplicativeCommutativeMagma, MultiplicativeMonoid, MultiplicativeSemigroup, One,
-    RightOne, RightZero, Semifield, Set, Sqrt, Square, Zero,
+    AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, Double, IntegerModRing, Inv,
+    LeftOne, LeftZero, MultiplicativeCommutativeMagma, MultiplicativeMonoid,
+    MultiplicativeSemigroup, One, RightOne, RightZero, Semifield, Set, Sqrt, Square, Zero,
 };
 use crate::bigint::{UInt256, UInt512};
 use crate::branchless::{BlAbs, BlAssign, BlEq, BlOrd, BlSelect, BlSwap};
@@ -550,8 +550,9 @@ impl MultiplicativeMonoid for Field25519 {}
 
 impl Semifield for Field25519 {}
 
-impl IntegerRing for Field25519 {
+impl IntegerModRing for Field25519 {
     type Int = UInt256;
+    type Modulus = UInt256;
 
     fn new(n: UInt256) -> Self {
         Self {
@@ -573,7 +574,7 @@ impl IntegerRing for Field25519 {
     }
 
     const BITS: u32 = 255;
-    const MODULUS: UInt256 =
+    const MODULUS: Self::Modulus =
         UInt256::from_hex("7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFED");
 }
 

@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{IntegerRing, One, UnivariateRing, Zero};
+use crate::algebra::{IntegerModRing, One, UnivariateRing, Zero};
 use crate::branchless::{BlAssign, BlEq, BlOrd, BlSelect};
 use crate::convolution::Negacyclic;
 use crate::fermat::{FermatField, FermatNTT1024, FermatRing1024};
@@ -38,9 +38,9 @@ pub(crate) const SIGMA: f64 = 0.5;
 pub(crate) type Rt = UnivariateRing<Zt, D, Negacyclic>;
 pub(crate) type Rq = FermatRing1024;
 pub(crate) type RqNTT = FermatNTT1024;
-pub(crate) const DELTA: <Zq as IntegerRing>::Int = Zq::MODULUS >> 1;
+pub(crate) const DELTA: <Zq as IntegerModRing>::Int = Zq::MODULUS >> 1;
 pub(crate) const ZQ_DELTA: Zq = unsafe { Zq::from_unchecked(DELTA) };
-pub(crate) const HALF_DELTA: <Zq as IntegerRing>::Int = Zq::MODULUS >> 2;
+pub(crate) const HALF_DELTA: <Zq as IntegerModRing>::Int = Zq::MODULUS >> 2;
 
 #[derive(Zeroize)]
 pub struct SecretKey {
@@ -67,8 +67,8 @@ pub(crate) fn upscale(rt: &Rt) -> RqNTT {
 }
 
 pub(crate) fn generate_uniform<RNG: UniformGenerator<Output = u8>>(rng: &mut RNG) -> RqNTT {
-    let mut uid = UniformIntDistribution::<<Zq as IntegerRing>::Int, RNG>::new(0..Zq::MODULUS);
-    let residues: [<Zq as IntegerRing>::Int; D] = array::from_fn(|_| uid.sample(rng));
+    let mut uid = UniformIntDistribution::<<Zq as IntegerModRing>::Int, RNG>::new(0..Zq::MODULUS);
+    let residues: [<Zq as IntegerModRing>::Int; D] = array::from_fn(|_| uid.sample(rng));
     let coefficients = residues.map(Zq::new);
     coefficients.into()
 }

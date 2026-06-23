@@ -15,14 +15,14 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{Double, IntegerRing};
+use crate::algebra::{Double, IntegerModRing};
 use crate::random::{BinaryUniformDistribution, Distribution, UniformGenerator};
 
-pub struct QuartaryUniformDistribution<G: UniformGenerator<Output: IntegerRing>> {
+pub struct QuartaryUniformDistribution<G: UniformGenerator<Output: IntegerModRing>> {
     bud: BinaryUniformDistribution<G>,
 }
 
-impl<G: UniformGenerator<Output: IntegerRing>> QuartaryUniformDistribution<G> {
+impl<G: UniformGenerator<Output: IntegerModRing>> QuartaryUniformDistribution<G> {
     pub const fn new() -> Self {
         Self {
             bud: BinaryUniformDistribution::new(),
@@ -30,13 +30,15 @@ impl<G: UniformGenerator<Output: IntegerRing>> QuartaryUniformDistribution<G> {
     }
 }
 
-impl<G: UniformGenerator<Output: IntegerRing>> Default for QuartaryUniformDistribution<G> {
+impl<G: UniformGenerator<Output: IntegerModRing>> Default for QuartaryUniformDistribution<G> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<G: UniformGenerator<Output: IntegerRing>> Distribution<G> for QuartaryUniformDistribution<G> {
+impl<G: UniformGenerator<Output: IntegerModRing>> Distribution<G>
+    for QuartaryUniformDistribution<G>
+{
     type Output = G::Output;
 
     fn sample(&mut self, generator: &mut G) -> Self::Output {

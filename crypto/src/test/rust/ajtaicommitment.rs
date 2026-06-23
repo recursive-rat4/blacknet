@@ -16,7 +16,7 @@
  */
 
 use blacknet_crypto::ajtaicommitment::AjtaiCommitment;
-use blacknet_crypto::algebra::IntegerRing;
+use blacknet_crypto::algebra::IntegerModRing;
 use blacknet_crypto::commitmentscheme::CommitmentScheme;
 use blacknet_crypto::matrix::{DenseMatrix, DenseVector};
 use blacknet_crypto::norm::{L2, LInf, NormBound};
@@ -38,7 +38,7 @@ fn test() {
         .into(),
     );
     let b_ecd = NormBound::<L2, f64>::new(7.22);
-    let b_inf = NormBound::<LInf, <Z as IntegerRing>::Int>::new(8);
+    let b_inf = NormBound::<LInf, <Z as IntegerModRing>::Int>::new(8);
     let cs_ecd = AjtaiCommitment::new(setup.clone(), b_ecd);
     let cs_inf = AjtaiCommitment::new(setup, b_inf);
     let z1 = Z::new(1);

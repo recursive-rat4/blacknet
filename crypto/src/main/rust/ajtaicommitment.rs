@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{IntegerRing, PolynomialRing, UnitalRing};
+use crate::algebra::{IntegerModRing, PolynomialRing, UnitalRing};
 use crate::commitmentscheme::CommitmentScheme;
 use crate::matrix::{DenseMatrix, DenseVector};
 use crate::norm::{EuclideanNorm, InfinityNorm, L2, LInf, NormBound};
@@ -48,7 +48,7 @@ impl<R: UnitalRing, Lp, Length> AjtaiCommitment<R, Lp, Length> {
         columns: usize,
     ) -> DenseMatrix<R>
     where
-        R: IntegerRing,
+        R: IntegerModRing,
     {
         DenseMatrix::<R>::new(
             rows,
@@ -58,7 +58,7 @@ impl<R: UnitalRing, Lp, Length> AjtaiCommitment<R, Lp, Length> {
     }
 
     /// Module Short Integer Solution
-    pub fn msis<Z: IntegerRing>(
+    pub fn msis<Z: IntegerModRing>(
         g: &mut impl UniformGenerator<Output = R>,
         rows: usize,
         columns: usize,

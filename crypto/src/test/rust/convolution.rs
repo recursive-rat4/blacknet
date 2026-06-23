@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_crypto::algebra::{IntegerRing, One};
+use blacknet_crypto::algebra::{IntegerModRing, One};
 use blacknet_crypto::convolution::*;
 
 type Z = blacknet_crypto::fermat::FermatField;

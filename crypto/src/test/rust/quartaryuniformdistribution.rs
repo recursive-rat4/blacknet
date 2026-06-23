@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_crypto::algebra::IntegerRing;
+use blacknet_crypto::algebra::IntegerModRing;
 use blacknet_crypto::assigner::random::{
     Distribution as DistributionAssigner, QuartaryUniformDistribution as Assigner,
 };

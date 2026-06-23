@@ -16,7 +16,7 @@
  */
 
 use crate::algebra::{
-    FreeModule, IntegerRing, MatrixRing, Ring, RingOps, UnitalRing, UnivariateRing,
+    FreeModule, IntegerModRing, MatrixRing, Ring, RingOps, UnitalRing, UnivariateRing,
 };
 use crate::convolution::Convolution;
 use crate::float::Cast;
@@ -61,7 +61,7 @@ pub trait EuclideanNorm {
     fn euclidean_norm(&self) -> f64;
 }
 
-impl<Z: IntegerRing<Int: Cast<f64>>> EuclideanNorm for Z {
+impl<Z: IntegerModRing<Int: Cast<f64>>> EuclideanNorm for Z {
     fn euclidean_norm(&self) -> f64 {
         self.absolute().cast()
     }
@@ -120,7 +120,7 @@ pub trait InfinityNorm<Length: Ord> {
         Length: Default;
 }
 
-impl<Z: IntegerRing> InfinityNorm<Z::Int> for Z {
+impl<Z: IntegerModRing> InfinityNorm<Z::Int> for Z {
     fn check_infinity_norm(&self, bound: &Z::Int) -> bool {
         self.absolute() < *bound
     }

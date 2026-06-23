@@ -15,18 +15,18 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{IntegerRing, One, RingOps};
+use crate::algebra::{IntegerModRing, One, RingOps};
 use crate::matrix::{DenseMatrix, DenseVector};
 use crate::random::{BinaryUniformDistribution, Distribution, UniformGenerator};
 
 /// A modular Johnson–Lindenstrauss variant.
 ///
 /// <https://eprint.iacr.org/2021/1397.pdf>
-pub struct JohnsonLindenstrauss<Z: IntegerRing> {
+pub struct JohnsonLindenstrauss<Z: IntegerModRing> {
     map: DenseMatrix<Z>,
 }
 
-impl<Z: IntegerRing> JohnsonLindenstrauss<Z> {
+impl<Z: IntegerModRing> JohnsonLindenstrauss<Z> {
     const K: usize = 256;
 
     pub fn random<G: UniformGenerator<Output = Z>>(generator: &mut G, n: usize) -> Self {
@@ -44,11 +44,11 @@ impl<Z: IntegerRing> JohnsonLindenstrauss<Z> {
     }
 }
 
-struct WeightedDistribution<G: UniformGenerator<Output: IntegerRing>> {
+struct WeightedDistribution<G: UniformGenerator<Output: IntegerModRing>> {
     bud: BinaryUniformDistribution<G>,
 }
 
-impl<G: UniformGenerator<Output: IntegerRing>> WeightedDistribution<G> {
+impl<G: UniformGenerator<Output: IntegerModRing>> WeightedDistribution<G> {
     pub const fn new() -> Self {
         Self {
             bud: BinaryUniformDistribution::new(),
@@ -56,13 +56,13 @@ impl<G: UniformGenerator<Output: IntegerRing>> WeightedDistribution<G> {
     }
 }
 
-impl<G: UniformGenerator<Output: IntegerRing>> Default for WeightedDistribution<G> {
+impl<G: UniformGenerator<Output: IntegerModRing>> Default for WeightedDistribution<G> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<G: UniformGenerator<Output: IntegerRing>> Distribution<G> for WeightedDistribution<G> {
+impl<G: UniformGenerator<Output: IntegerModRing>> Distribution<G> for WeightedDistribution<G> {
     type Output = G::Output;
 
     fn sample(&mut self, generator: &mut G) -> Self::Output {

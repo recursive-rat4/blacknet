@@ -17,9 +17,9 @@
 
 use crate::algebra::{
     AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, BalancedRepresentative,
-    DivisionAlgebra, Double, IntegerRing, Inv, LeftOne, LeftZero, MultiplicativeCommutativeMagma,
-    MultiplicativeMonoid, MultiplicativeSemigroup, One, RightOne, RightZero, Semifield, Set, Sqrt,
-    Square, UnivariateRing, Zero,
+    DivisionAlgebra, Double, IntegerModRing, Inv, LeftOne, LeftZero,
+    MultiplicativeCommutativeMagma, MultiplicativeMonoid, MultiplicativeSemigroup, One, RightOne,
+    RightZero, Semifield, Set, Sqrt, Square, UnivariateRing, Zero,
 };
 use crate::branchless::{BlAbs, BlAssign};
 use crate::convolution::Negacyclic;
@@ -472,8 +472,9 @@ impl MultiplicativeMonoid for PervushinField {}
 
 impl Semifield for PervushinField {}
 
-impl IntegerRing for PervushinField {
+impl IntegerModRing for PervushinField {
     type Int = i64;
+    type Modulus = i64;
 
     fn new(n: Self::Int) -> Self {
         Self {
@@ -495,7 +496,7 @@ impl IntegerRing for PervushinField {
     }
 
     const BITS: u32 = 61;
-    const MODULUS: Self::Int = 2305843009213693951;
+    const MODULUS: Self::Modulus = 2305843009213693951;
 }
 
 impl InterpolationConsts for PervushinField {

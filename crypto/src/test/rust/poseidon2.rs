@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_crypto::algebra::IntegerRing;
+use blacknet_crypto::algebra::IntegerModRing;
 use blacknet_crypto::assigner::symmetric::Poseidon2Assigner;
 use blacknet_crypto::circuit::builder::{CircuitBuilder, LinearCombination};
 use blacknet_crypto::circuit::symmetric::Poseidon2Circuit;

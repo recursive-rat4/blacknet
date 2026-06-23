@@ -15,19 +15,19 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::IntegerRing;
+use crate::algebra::IntegerModRing;
 use crate::integer::Integer;
 use crate::random::{Distribution, UniformGenerator};
 
-pub struct BinaryUniformDistribution<G: UniformGenerator<Output: IntegerRing>> {
-    cache: <G::Output as IntegerRing>::Int,
+pub struct BinaryUniformDistribution<G: UniformGenerator<Output: IntegerModRing>> {
+    cache: <G::Output as IntegerModRing>::Int,
     have_bits: u32,
 }
 
-impl<G: UniformGenerator<Output: IntegerRing>> BinaryUniformDistribution<G> {
+impl<G: UniformGenerator<Output: IntegerModRing>> BinaryUniformDistribution<G> {
     pub const fn new() -> Self {
         Self {
-            cache: <G::Output as IntegerRing>::Int::ZERO,
+            cache: <G::Output as IntegerModRing>::Int::ZERO,
             have_bits: 0,
         }
     }
@@ -41,13 +41,13 @@ impl<G: UniformGenerator<Output: IntegerRing>> BinaryUniformDistribution<G> {
     }
 }
 
-impl<G: UniformGenerator<Output: IntegerRing>> Default for BinaryUniformDistribution<G> {
+impl<G: UniformGenerator<Output: IntegerModRing>> Default for BinaryUniformDistribution<G> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<G: UniformGenerator<Output: IntegerRing>> Distribution<G> for BinaryUniformDistribution<G> {
+impl<G: UniformGenerator<Output: IntegerModRing>> Distribution<G> for BinaryUniformDistribution<G> {
     type Output = G::Output;
 
     fn sample(&mut self, generator: &mut G) -> Self::Output {
@@ -55,8 +55,8 @@ impl<G: UniformGenerator<Output: IntegerRing>> Distribution<G> for BinaryUniform
             self.cache = generator.generate().canonical();
             self.have_bits = Self::useful_bits();
         }
-        let result = self.cache & <G::Output as IntegerRing>::Int::LIMB_ONE;
-        self.cache >>= <G::Output as IntegerRing>::Int::LIMB_ONE;
+        let result = self.cache & <G::Output as IntegerModRing>::Int::LIMB_ONE;
+        self.cache >>= <G::Output as IntegerModRing>::Int::LIMB_ONE;
         self.have_bits -= 1;
         G::Output::with_limb(result)
     }

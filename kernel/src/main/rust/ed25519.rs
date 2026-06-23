@@ -20,7 +20,7 @@ use crate::error::Error;
 use alloc::borrow::ToOwned;
 use alloc::vec::Vec;
 use blacknet_crypto::{
-    algebra::{IntegerRing, One},
+    algebra::{IntegerModRing, One},
     bigint::UInt256,
     ed25519::{Edwards25519GroupAffine, Edwards25519GroupExtended, Field25519, Scalar25519},
 };

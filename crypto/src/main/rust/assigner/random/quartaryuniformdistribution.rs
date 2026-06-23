@@ -15,16 +15,16 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{Double, IntegerRing};
+use crate::algebra::{Double, IntegerModRing};
 use crate::assigner::assigment::Assigment;
 use crate::assigner::random::{BinaryUniformDistribution, Distribution};
 use crate::random::UniformGenerator;
 
-pub struct QuartaryUniformDistribution<'a, G: UniformGenerator<Output: IntegerRing>> {
+pub struct QuartaryUniformDistribution<'a, G: UniformGenerator<Output: IntegerModRing>> {
     bud: BinaryUniformDistribution<'a, G>,
 }
 
-impl<'a, G: UniformGenerator<Output: IntegerRing + Eq + Copy>> Distribution<'a, G::Output, G>
+impl<'a, G: UniformGenerator<Output: IntegerModRing + Eq + Copy>> Distribution<'a, G::Output, G>
     for QuartaryUniformDistribution<'a, G>
 {
     type Output = G::Output;

@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{AlgebraOps, IntegerRing, PolynomialRing, Tensor};
+use crate::algebra::{AlgebraOps, IntegerModRing, PolynomialRing, Tensor};
 use crate::integer::Integer;
 use crate::matrix::{DenseMatrix, DenseVector, IdentityMatrix};
 use alloc::vec;
@@ -24,7 +24,7 @@ use core::iter::zip;
 
 // https://eprint.iacr.org/2018/946
 
-fn decompose_impl<Z: IntegerRing, R: PolynomialRing<Z>>(
+fn decompose_impl<Z: IntegerModRing, R: PolynomialRing<Z>>(
     polynomial: &R,
     radix_mask: <Z::Int as Integer>::Limb,
     radix_shift: <Z::Int as Integer>::Limb,
@@ -39,7 +39,7 @@ fn decompose_impl<Z: IntegerRing, R: PolynomialRing<Z>>(
     }
 }
 
-fn decompose_slice<Z: IntegerRing, R: PolynomialRing<Z> + Clone>(
+fn decompose_slice<Z: IntegerModRing, R: PolynomialRing<Z> + Clone>(
     slice: &[R],
     radix_mask: <Z::Int as Integer>::Limb,
     radix_shift: <Z::Int as Integer>::Limb,
@@ -52,7 +52,7 @@ fn decompose_slice<Z: IntegerRing, R: PolynomialRing<Z> + Clone>(
     pieces
 }
 
-pub fn decompose_polynomial<Z: IntegerRing, R: PolynomialRing<Z> + Clone>(
+pub fn decompose_polynomial<Z: IntegerModRing, R: PolynomialRing<Z> + Clone>(
     polynomial: &R,
     radix_mask: <Z::Int as Integer>::Limb,
     radix_shift: <Z::Int as Integer>::Limb,
@@ -63,7 +63,7 @@ pub fn decompose_polynomial<Z: IntegerRing, R: PolynomialRing<Z> + Clone>(
     pieces.into()
 }
 
-pub fn decompose_vector<Z: IntegerRing, R: PolynomialRing<Z> + Clone>(
+pub fn decompose_vector<Z: IntegerModRing, R: PolynomialRing<Z> + Clone>(
     vector: &DenseVector<R>,
     radix_mask: <Z::Int as Integer>::Limb,
     radix_shift: <Z::Int as Integer>::Limb,
@@ -73,7 +73,7 @@ pub fn decompose_vector<Z: IntegerRing, R: PolynomialRing<Z> + Clone>(
     pieces.into()
 }
 
-pub fn decompose_matrix<Z: IntegerRing, R: PolynomialRing<Z> + Clone>(
+pub fn decompose_matrix<Z: IntegerModRing, R: PolynomialRing<Z> + Clone>(
     matrix: &DenseMatrix<R>,
     radix_mask: <Z::Int as Integer>::Limb,
     radix_shift: <Z::Int as Integer>::Limb,
@@ -83,7 +83,7 @@ pub fn decompose_matrix<Z: IntegerRing, R: PolynomialRing<Z> + Clone>(
     DenseMatrix::new(matrix.rows(), matrix.columns() * digits, pieces)
 }
 
-pub fn matrix<Z: IntegerRing + Clone, R: PolynomialRing<Z> + Clone>(
+pub fn matrix<Z: IntegerModRing + Clone, R: PolynomialRing<Z> + Clone>(
     radix: &Z,
     m: usize,
     n: usize,
@@ -103,7 +103,7 @@ pub fn matrix<Z: IntegerRing + Clone, R: PolynomialRing<Z> + Clone>(
     identity.tensor(powers)
 }
 
-pub fn vector<Z: IntegerRing + Clone, R: PolynomialRing<Z> + Clone>(
+pub fn vector<Z: IntegerModRing + Clone, R: PolynomialRing<Z> + Clone>(
     polynomial: R,
     radix: &Z,
     digits: usize,

@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{IntegerRing, One, Zero};
+use crate::algebra::{IntegerModRing, One, Zero};
 use crate::lpr;
 use crate::random::UniformGenerator;
 use zeroize::Zeroize;
@@ -25,7 +25,7 @@ use zeroize::Zeroize;
 const KAPPA: usize = 2;
 #[expect(dead_code)]
 const ELL: usize = lpr::D;
-const R: <lpr::Zq as IntegerRing>::Int = 40;
+const R: <lpr::Zq as IntegerModRing>::Int = 40;
 
 #[derive(Zeroize)]
 pub struct SecretKey {

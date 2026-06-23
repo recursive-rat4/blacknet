@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_crypto::algebra::{BalancedRepresentative, IntegerRing, Inv, One, Square, Zero};
+use blacknet_crypto::algebra::{BalancedRepresentative, IntegerModRing, Inv, One, Square, Zero};
 use blacknet_crypto::norm::InfinityNorm;
 
 type Z = blacknet_crypto::fermat::FermatField;

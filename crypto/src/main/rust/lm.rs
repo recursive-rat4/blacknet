@@ -17,9 +17,9 @@
 
 use crate::algebra::{
     AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, BalancedRepresentative,
-    DivisionAlgebra, Double, IntegerRing, Inv, LeftOne, LeftZero, MultiplicativeCommutativeMagma,
-    MultiplicativeMonoid, MultiplicativeSemigroup, NTTRing, One, PolynomialRing, RightOne,
-    RightZero, Semifield, Set, Square, UnivariateRing, Zero,
+    DivisionAlgebra, Double, IntegerModRing, Inv, LeftOne, LeftZero,
+    MultiplicativeCommutativeMagma, MultiplicativeMonoid, MultiplicativeSemigroup, NTTRing, One,
+    PolynomialRing, RightOne, RightZero, Semifield, Set, Square, UnivariateRing, Zero,
 };
 use crate::branchless::{BlAbs, BlAssign};
 use crate::convolution::{Binomial, Convolution, Negacyclic};
@@ -460,8 +460,9 @@ impl MultiplicativeMonoid for LMField {}
 
 impl Semifield for LMField {}
 
-impl IntegerRing for LMField {
+impl IntegerModRing for LMField {
     type Int = i64;
+    type Modulus = i64;
 
     fn new(n: Self::Int) -> Self {
         Self {
@@ -483,7 +484,7 @@ impl IntegerRing for LMField {
     }
 
     const BITS: u32 = 61;
-    const MODULUS: Self::Int = 1152921504606847009;
+    const MODULUS: Self::Modulus = 1152921504606847009;
 }
 
 impl InterpolationConsts for LMField {

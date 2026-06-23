@@ -17,7 +17,7 @@
 
 use crate::algebra::{
     AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, BalancedRepresentative, Double,
-    IntegerRing, Inv, LeftOne, LeftZero, MultiplicativeCommutativeMagma, MultiplicativeMonoid,
+    IntegerModRing, Inv, LeftOne, LeftZero, MultiplicativeCommutativeMagma, MultiplicativeMonoid,
     MultiplicativeSemigroup, NTTRing, One, RightOne, RightZero, Semifield, Set, Square,
     UnivariateRing, Zero,
 };
@@ -431,8 +431,9 @@ impl MultiplicativeMonoid for FermatField {}
 
 impl Semifield for FermatField {}
 
-impl IntegerRing for FermatField {
+impl IntegerModRing for FermatField {
     type Int = i32;
+    type Modulus = i32;
 
     fn new(n: Self::Int) -> Self {
         Self {
@@ -454,7 +455,7 @@ impl IntegerRing for FermatField {
     }
 
     const BITS: u32 = 17;
-    const MODULUS: Self::Int = 65537;
+    const MODULUS: Self::Modulus = 65537;
 }
 
 impl BalancedRepresentative for FermatField {

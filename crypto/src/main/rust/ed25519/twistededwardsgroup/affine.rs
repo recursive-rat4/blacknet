@@ -16,7 +16,7 @@
  */
 
 use crate::algebra::{
-    AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, Double, IntegerRing, LeftZero,
+    AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, Double, IntegerModRing, LeftZero,
     One, RightZero, Set, Sqrt, Square, Zero, add_sub_chain, bl_double_and_add,
 };
 use crate::branchless::BlSelect;
@@ -54,7 +54,7 @@ impl<P: TwistedEdwardsGroupParams> TwistedEdwardsGroupAffine<P> {
 
     pub fn try_from_y(x_is_odd: bool, y: P::F) -> Option<Self>
     where
-        P::F: IntegerRing + Sqrt<Output = Option<P::F>>,
+        P::F: IntegerModRing + Sqrt<Output = Option<P::F>>,
     {
         let yy = y.square();
         let xx = ((yy - P::F::ONE) / (P::D * yy + P::F::ONE)).expect("−d is not a square");

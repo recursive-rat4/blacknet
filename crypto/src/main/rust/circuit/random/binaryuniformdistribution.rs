@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::IntegerRing;
+use crate::algebra::IntegerModRing;
 use crate::circuit::builder::{CircuitBuilder, Constant, LinearCombination};
 use crate::circuit::logicgate::LogicGate;
 use crate::circuit::random::Distribution;
@@ -27,7 +27,7 @@ use alloc::vec::Vec;
 pub struct BinaryUniformDistribution<
     'a,
     'b,
-    Z: IntegerRing,
+    Z: IntegerModRing,
     G: UniformGenerator<Output = LinearCombination<Z>>,
 > {
     circuit: &'a CircuitBuilder<'b, Z>,
@@ -40,7 +40,7 @@ pub struct BinaryUniformDistribution<
 impl<
     'a,
     'b,
-    Z: IntegerRing,
+    Z: IntegerModRing,
     G: UniformGenerator<Output = LinearCombination<Z>>
 > BinaryUniformDistribution<'a, 'b, Z, G> {
     fn useful_bits() -> u32 {
@@ -56,7 +56,7 @@ impl<
 impl<
     'a,
     'b,
-    Z: IntegerRing + Clone + Eq,
+    Z: IntegerModRing + Clone + Eq,
     G: UniformGenerator<Output = LinearCombination<Z>>
 > Distribution<'a, 'b, Z, G> for BinaryUniformDistribution<'a, 'b, Z, G> {
     type Output = LinearCombination<Z>;

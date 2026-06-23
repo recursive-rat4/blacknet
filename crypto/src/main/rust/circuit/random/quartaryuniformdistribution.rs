@@ -15,8 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::Double;
-use crate::algebra::IntegerRing;
+use crate::algebra::{Double, IntegerModRing};
 use crate::circuit::builder::{CircuitBuilder, LinearCombination};
 use crate::circuit::random::{BinaryUniformDistribution, Distribution};
 use crate::random::UniformGenerator;
@@ -24,7 +23,7 @@ use crate::random::UniformGenerator;
 pub struct QuartaryUniformDistribution<
     'a,
     'b,
-    Z: IntegerRing,
+    Z: IntegerModRing,
     G: UniformGenerator<Output = LinearCombination<Z>>,
 > {
     bud: BinaryUniformDistribution<'a, 'b, Z, G>,
@@ -34,7 +33,7 @@ pub struct QuartaryUniformDistribution<
 impl<
     'a,
     'b,
-    Z: IntegerRing + Clone + Eq,
+    Z: IntegerModRing + Clone + Eq,
     G: UniformGenerator<Output = LinearCombination<Z>>
 > Distribution<'a, 'b, Z, G> for QuartaryUniformDistribution<'a, 'b, Z, G> {
     type Output = LinearCombination<Z>;

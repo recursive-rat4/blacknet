@@ -17,7 +17,7 @@
 
 use crate::algebra::{
     AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, Algebra, CommutativeRing,
-    Conjugate, Double, FreeModule, IntegerRing, Inv, LeftOne, LeftZero,
+    Conjugate, Double, FreeModule, IntegerModRing, Inv, LeftOne, LeftZero,
     MultiplicativeCommutativeMagma, MultiplicativeMonoid, MultiplicativeSemigroup, One,
     PolynomialRing, PowerOfTwoCyclotomicRing, RightOne, RightZero, RingOps, Semimodule, Set,
     Square, UnitalAlgebra, UnitalRing, Zero,
@@ -665,7 +665,7 @@ where
 }
 
 /// Galois conjugation.
-impl<R: IntegerRing, const N: usize> Conjugate for UnivariateRing<R, N, Negacyclic>
+impl<R: IntegerModRing, const N: usize> Conjugate for UnivariateRing<R, N, Negacyclic>
 where
     for<'a> &'a R: RingOps<R>,
 {
@@ -684,7 +684,7 @@ where
     }
 }
 
-impl<R: IntegerRing + Clone, const N: usize> PowerOfTwoCyclotomicRing<R>
+impl<R: IntegerModRing + Clone, const N: usize> PowerOfTwoCyclotomicRing<R>
     for UnivariateRing<R, N, Negacyclic>
 where
     for<'a> &'a R: RingOps<R>,
