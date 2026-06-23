@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_crypto::algebra::{IntegerRing, One, Zero};
+use blacknet_crypto::algebra::{IntegerModRing, One, Zero};
 use blacknet_crypto::lm::LMField;
 use blacknet_crypto::polynomial::{
     BinarityPolynomial, EqExtension, MaskingPolynomial, MultilinearExtension,

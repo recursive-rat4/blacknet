@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_crypto::algebra::IntegerRing;
+use blacknet_crypto::algebra::IntegerModRing;
 use blacknet_crypto::lm::LMField;
 use blacknet_crypto::pervushin::PervushinField;
 use blacknet_crypto::symmetric::{Poseidon2LM12, Poseidon2Pervushin12, Poseidon2Plain};
