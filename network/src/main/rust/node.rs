@@ -107,7 +107,7 @@ impl Node {
 
         let settings = Arc::new(Settings::default(&mode));
         let peer_table = PeerTable::new(&mode, dirs, log_manager, settings.clone())?;
-        let fjall = Fjall::new(dirs, &settings)?;
+        let fjall = Fjall::open(dirs, &settings)?;
         let block_db = BlockDB::new(dirs, &fjall)?;
         let coin_db = CoinDB::new(&mode, &fjall, block_db.clone())?;
         let tx_pool = Arc::new(RwLock::new(TxPool::new(

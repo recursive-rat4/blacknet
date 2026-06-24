@@ -38,8 +38,7 @@ impl Fjall {
         max_open_files as usize
     }
 
-    #[expect(clippy::new_ret_no_self)]
-    pub fn new(dirs: &XDGDirectories, settings: &Arc<Settings>) -> Result<Database> {
+    pub fn open(dirs: &XDGDirectories, settings: &Arc<Settings>) -> Result<Database> {
         let path = dirs.data().join("fjall");
         Database::builder(path)
             .max_cached_files(Some(Self::max_open_files(settings)))
