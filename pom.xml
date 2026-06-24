@@ -69,7 +69,7 @@
         <appassembler-maven-plugin.version>2.1.0</appassembler-maven-plugin.version>
         <maven-artifact-plugin.version>3.6.1</maven-artifact-plugin.version>
         <versions-maven-plugin.version>2.21.0</versions-maven-plugin.version>
-        <cyclonedx-maven-plugin.version>2.9.1</cyclonedx-maven-plugin.version>
+        <cyclonedx-maven-plugin.version>2.9.2</cyclonedx-maven-plugin.version>
 
         <kotlin.version>2.3.21</kotlin.version>
         <coroutines.version>1.10.2</coroutines.version>
