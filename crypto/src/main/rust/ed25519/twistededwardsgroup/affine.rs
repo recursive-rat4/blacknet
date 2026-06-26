@@ -16,8 +16,8 @@
  */
 
 use crate::algebra::{
-    AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, Double, IntegerModRing, LeftZero,
-    One, RightZero, Set, Sqrt, Square, Zero, add_sub_chain, bl_double_and_add,
+    AdditiveCommutativeMagma, AdditiveSemigroup, Double, IntegerModRing, LeftZero, One, RightZero,
+    Set, Sqrt, Square, Zero, add_sub_chain, bl_double_and_add,
 };
 use crate::branchless::BlSelect;
 use crate::ed25519::{TwistedEdwardsGroupParams, is_on_curve};
@@ -360,8 +360,6 @@ impl<P: TwistedEdwardsGroupParams> Set for TwistedEdwardsGroupAffine<P> {}
 impl<P: TwistedEdwardsGroupParams> AdditiveCommutativeMagma for TwistedEdwardsGroupAffine<P> {}
 
 impl<P: TwistedEdwardsGroupParams> AdditiveSemigroup for TwistedEdwardsGroupAffine<P> {}
-
-impl<P: TwistedEdwardsGroupParams> AdditiveMonoid for TwistedEdwardsGroupAffine<P> {}
 
 impl<P: TwistedEdwardsGroupParams<F: BlSelect<Output = P::F>>> BlSelect
     for TwistedEdwardsGroupAffine<P>

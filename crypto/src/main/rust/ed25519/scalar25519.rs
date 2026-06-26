@@ -16,9 +16,9 @@
  */
 
 use crate::algebra::{
-    AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, Double, IntegerModRing, Inv,
-    LeftOne, LeftZero, MultiplicativeCommutativeMagma, MultiplicativeMonoid,
-    MultiplicativeSemigroup, One, RightOne, RightZero, Semifield, Set, Sqrt, Square, Zero,
+    AdditiveCommutativeMagma, AdditiveSemigroup, Double, IntegerModRing, Inv, LeftOne, LeftZero,
+    MultiplicativeCommutativeMagma, MultiplicativeSemigroup, One, RightOne, RightZero, Semifield,
+    Set, Sqrt, Square, Zero,
 };
 use crate::bigint::{UInt256, UInt512};
 use crate::branchless::{BlAbs, BlAssign, BlEq, BlOrd, BlSelect, BlSwap};
@@ -583,13 +583,9 @@ impl AdditiveCommutativeMagma for Scalar25519 {}
 
 impl AdditiveSemigroup for Scalar25519 {}
 
-impl AdditiveMonoid for Scalar25519 {}
-
 impl MultiplicativeCommutativeMagma for Scalar25519 {}
 
 impl MultiplicativeSemigroup for Scalar25519 {}
-
-impl MultiplicativeMonoid for Scalar25519 {}
 
 impl Semifield for Scalar25519 {}
 

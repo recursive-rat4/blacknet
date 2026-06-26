@@ -16,8 +16,8 @@
  */
 
 use crate::algebra::{
-    AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, DivisionRingOps, Double, Inv,
-    LeftZero, RightZero, Ring, RingOps, Semimodule, Set, Zero,
+    AdditiveCommutativeMagma, AdditiveSemigroup, DivisionRingOps, Double, Inv, LeftZero, RightZero,
+    Ring, RingOps, Semimodule, Set, Zero,
 };
 use crate::symmetric::{Absorb, Duplexer, Squeeze};
 use core::array;
@@ -502,8 +502,6 @@ impl<R: Ring, const N: usize> Set for FreeModule<R, N> {}
 impl<R: Ring, const N: usize> AdditiveCommutativeMagma for FreeModule<R, N> {}
 
 impl<R: Ring, const N: usize> AdditiveSemigroup for FreeModule<R, N> {}
-
-impl<R: Ring + Clone, const N: usize> AdditiveMonoid for FreeModule<R, N> {}
 
 impl<R: Ring + Clone, const N: usize> Semimodule<R> for FreeModule<R, N> {}
 

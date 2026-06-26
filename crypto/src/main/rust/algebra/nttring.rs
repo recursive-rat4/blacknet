@@ -18,10 +18,10 @@
 #![allow(clippy::manual_is_multiple_of)]
 
 use crate::algebra::{
-    AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, Algebra, Conjugate,
-    DivisionRingOps, Double, FreeModule, Inv, LeftOne, LeftZero, MultiplicativeCommutativeMagma,
-    MultiplicativeMonoid, MultiplicativeSemigroup, One, RightOne, RightZero, RingOps, Semimodule,
-    Set, Square, UnitalAlgebra, UnivariateRing, Zero, batched_inv,
+    AdditiveCommutativeMagma, AdditiveSemigroup, Algebra, Conjugate, DivisionRingOps, Double,
+    FreeModule, Inv, LeftOne, LeftZero, MultiplicativeCommutativeMagma, MultiplicativeSemigroup,
+    One, RightOne, RightZero, RingOps, Semimodule, Set, Square, UnitalAlgebra, UnivariateRing,
+    Zero, batched_inv,
 };
 use crate::convolution::{Convolution, Negacyclic};
 use crate::numbertheoretictransform::{NTTConvolution, Twiddles, cooley_tukey, gentleman_sande};
@@ -664,8 +664,6 @@ impl<Z: Twiddles<M>, const M: usize, const N: usize> AdditiveCommutativeMagma fo
 
 impl<Z: Twiddles<M>, const M: usize, const N: usize> AdditiveSemigroup for NTTRing<Z, M, N> {}
 
-impl<Z: Twiddles<M> + Clone, const M: usize, const N: usize> AdditiveMonoid for NTTRing<Z, M, N> {}
-
 impl<Z: Twiddles<M>, const M: usize, const N: usize> MultiplicativeCommutativeMagma
     for NTTRing<Z, M, N>
 where
@@ -675,13 +673,6 @@ where
 
 impl<Z: Twiddles<M>, const M: usize, const N: usize> MultiplicativeSemigroup for NTTRing<Z, M, N> where
     for<'a> &'a Z: RingOps<Z>
-{
-}
-
-impl<Z: Twiddles<M> + Clone, const M: usize, const N: usize> MultiplicativeMonoid
-    for NTTRing<Z, M, N>
-where
-    for<'a> &'a Z: RingOps<Z>,
 {
 }
 

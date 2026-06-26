@@ -31,6 +31,14 @@ pub trait AdditiveMonoid
 {
 }
 
+#[rustfmt::skip]
+impl<G
+    : AdditiveSemigroup
+    + Zero
+    + Sum
+    + for<'a> Sum<&'a Self>
+> AdditiveMonoid for G {}
+
 /// A marker for monoids with commutative addition.
 #[rustfmt::skip]
 pub trait AdditiveCommutativeMonoid
@@ -50,6 +58,14 @@ pub trait MultiplicativeMonoid
     + for<'a> Product<&'a Self>
 {
 }
+
+#[rustfmt::skip]
+impl<G
+    : MultiplicativeSemigroup
+    + One
+    + Product
+    + for<'a> Product<&'a Self>
+> MultiplicativeMonoid for G {}
 
 /// A marker for monoids with commutative multiplication.
 #[rustfmt::skip]

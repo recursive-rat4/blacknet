@@ -19,9 +19,9 @@
 #![allow(clippy::suspicious_op_assign_impl)]
 
 use crate::algebra::{
-    AdditiveCommutativeMagma, AdditiveMonoid, AdditiveSemigroup, BalancedRepresentative, Double,
-    IntegerModRing, Inv, LeftOne, LeftZero, MultiplicativeCommutativeMagma, MultiplicativeMonoid,
-    MultiplicativeSemigroup, One, RightOne, RightZero, Semifield, Set, Sqrt, Square, Zero,
+    AdditiveCommutativeMagma, AdditiveSemigroup, BalancedRepresentative, Double, IntegerModRing,
+    Inv, LeftOne, LeftZero, MultiplicativeCommutativeMagma, MultiplicativeSemigroup, One, RightOne,
+    RightZero, Semifield, Set, Sqrt, Square, Zero,
 };
 use crate::branchless::{BlAssign, BlEq, BlSelect};
 use crate::integer::Integer;
@@ -363,13 +363,9 @@ impl AdditiveCommutativeMagma for GF2 {}
 
 impl AdditiveSemigroup for GF2 {}
 
-impl AdditiveMonoid for GF2 {}
-
 impl MultiplicativeCommutativeMagma for GF2 {}
 
 impl MultiplicativeSemigroup for GF2 {}
-
-impl MultiplicativeMonoid for GF2 {}
 
 impl Semifield for GF2 {}
 
