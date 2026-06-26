@@ -181,6 +181,8 @@ impl<T: Zero + Clone> From<&SparseMatrix<T>> for DenseMatrix<T> {
     }
 }
 
+/// Sparse matrix builder accepts entries in the row-major order.
+/// Known to be zero entries may be skipped.
 pub struct SparseMatrixBuilder<T: Zero> {
     columns: usize,
     r_index: Vec<usize>,
@@ -189,6 +191,7 @@ pub struct SparseMatrixBuilder<T: Zero> {
 }
 
 impl<T: Zero> SparseMatrixBuilder<T> {
+    /// Construct a new builder.
     pub fn new(rows: usize, columns: usize) -> Self {
         let mut r_index = Vec::<usize>::with_capacity(rows + 1);
         r_index.push(0);
@@ -200,6 +203,7 @@ impl<T: Zero> SparseMatrixBuilder<T> {
         }
     }
 
+    /// Push a next column of current row.
     /// # Safety
     /// `element` is not zero.
     pub unsafe fn column_unchecked(&mut self, column: usize, element: T) {
@@ -207,10 +211,12 @@ impl<T: Zero> SparseMatrixBuilder<T> {
         self.elements.push(element);
     }
 
+    /// Finish current row.
     pub fn row(&mut self) {
         self.r_index.push(self.elements.len());
     }
 
+    /// Build the matrix.
     pub fn build(self) -> SparseMatrix<T> {
         SparseMatrix {
             columns: self.columns,
@@ -222,12 +228,14 @@ impl<T: Zero> SparseMatrixBuilder<T> {
 }
 
 impl<T: Zero + Eq> SparseMatrixBuilder<T> {
+    /// Push a next column of current row.
     pub fn column(&mut self, column: usize, element: T) {
         if element != T::ZERO {
             unsafe { self.column_unchecked(column, element) };
         }
     }
 
+    /// Push a next column of current row.
     pub fn column_ref(&mut self, column: usize, element: &T)
     where
         T: Clone,
