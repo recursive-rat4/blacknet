@@ -16,7 +16,7 @@
  */
 
 use crate::algebra::{
-    FreeModule, IntegerModRing, MatrixRing, Ring, RingOps, UnitalRing, UnivariateRing,
+    FreeModule, IntegerModRing, MatrixRing, QuaternionAlgebra, Ring, UnitalRing, UnivariateRing,
 };
 use crate::convolution::Convolution;
 use crate::float::Cast;
@@ -101,10 +101,15 @@ impl<R: Ring + EuclideanNorm> EuclideanNorm for SparseVector<R> {
     }
 }
 
-impl<R: UnitalRing + EuclideanNorm + Clone, const N: usize, C: Convolution<R, N>> EuclideanNorm
+impl<R: UnitalRing + EuclideanNorm> EuclideanNorm for QuaternionAlgebra<R> {
+    #[inline]
+    fn euclidean_norm(&self) -> f64 {
+        self.as_ref().euclidean_norm()
+    }
+}
+
+impl<R: UnitalRing + EuclideanNorm, const N: usize, C: Convolution<R, N>> EuclideanNorm
     for UnivariateRing<R, N, C>
-where
-    for<'a> &'a R: RingOps<R>,
 {
     #[inline]
     fn euclidean_norm(&self) -> f64 {
@@ -234,14 +239,25 @@ impl<Length: Ord, R: Ring + InfinityNorm<Length>> InfinityNorm<Length> for Spars
     }
 }
 
-impl<
-    Length: Ord,
-    R: UnitalRing + InfinityNorm<Length> + Clone,
-    const N: usize,
-    C: Convolution<R, N>,
-> InfinityNorm<Length> for UnivariateRing<R, N, C>
-where
-    for<'a> &'a R: RingOps<R>,
+impl<Length: Ord, R: UnitalRing + InfinityNorm<Length>> InfinityNorm<Length>
+    for QuaternionAlgebra<R>
+{
+    #[inline]
+    fn check_infinity_norm(&self, bound: &Length) -> bool {
+        self.as_ref().check_infinity_norm(bound)
+    }
+
+    #[inline]
+    fn infinity_norm(&self) -> Length
+    where
+        Length: Default,
+    {
+        self.as_ref().infinity_norm()
+    }
+}
+
+impl<Length: Ord, R: UnitalRing + InfinityNorm<Length>, const N: usize, C: Convolution<R, N>>
+    InfinityNorm<Length> for UnivariateRing<R, N, C>
 {
     #[inline]
     fn check_infinity_norm(&self, bound: &Length) -> bool {

@@ -200,6 +200,10 @@ name = "quartaryuniformdistribution"
 path = "src/test/rust/quartaryuniformdistribution.rs"
 
 [[test]]
+name = "quaternionalgebra"
+path = "src/test/rust/quaternionalgebra.rs"
+
+[[test]]
 name = "r1cs"
 path = "src/test/rust/r1cs.rs"
 

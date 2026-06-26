@@ -544,7 +544,7 @@ impl<R: Ring + Copy, const N: usize, const NN: usize> Mul<MatrixRing<R, N, NN>>
     }
 }
 
-impl<R: Ring, const N: usize, const NN: usize> Commutator<Self> for MatrixRing<R, N, NN>
+impl<R: Ring, const N: usize, const NN: usize> Commutator for MatrixRing<R, N, NN>
 where
     for<'a> &'a R: RingOps<R>,
 {
