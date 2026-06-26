@@ -70,9 +70,13 @@ impl<
     A: Algebra<R> + CommutativeRing
 > CommutativeAlgebra<R> for A {}
 
+/// An algebra in which nonzero elements are existent and invertible.
 #[rustfmt::skip]
 pub trait DivisionAlgebra<R: DivisionRing>
     : Algebra<R>
     + DivisionRing
 {
 }
+
+/// Any division ring is a division algebra over itself.
+impl<R: DivisionRing> DivisionAlgebra<R> for R {}
