@@ -232,6 +232,10 @@ name = "symmetrictridiagonalmatrix"
 path = "src/test/rust/symmetrictridiagonalmatrix.rs"
 
 [[test]]
+name = "tracelessquaternion"
+path = "src/test/rust/tracelessquaternion.rs"
+
+[[test]]
 name = "trunc"
 path = "src/test/rust/trunc.rs"
 

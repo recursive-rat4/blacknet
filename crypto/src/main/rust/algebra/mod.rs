@@ -35,6 +35,7 @@ mod semigroup;
 mod semimodule;
 mod semiring;
 mod set;
+mod tracelessquaternion;
 mod univariatering;
 
 pub use abeliangroup::*;
@@ -55,4 +56,5 @@ pub use semigroup::*;
 pub use semimodule::*;
 pub use semiring::*;
 pub use set::*;
+pub use tracelessquaternion::*;
 pub use univariatering::*;
