@@ -41,6 +41,7 @@ pub struct QuaternionAlgebra<R: UnitalRing> {
 }
 
 impl<R: UnitalRing> QuaternionAlgebra<R> {
+    /// Construct a new element.
     pub const fn new(coefficients: FreeModule<R, 4>) -> Self {
         Self { coefficients }
     }
@@ -55,6 +56,13 @@ impl<R: UnitalRing> QuaternionAlgebra<R> {
         }
         let t: [R; 4] = unsafe { transmute_copy(&t) };
         Self::new(FreeModule::<R, 4>::new(t))
+    }
+
+    fn reduced_norm(&self) -> R
+    where
+        for<'a> &'a R: RingOps<R>,
+    {
+        self.coefficients.iter().map(Square::square).sum::<R>()
     }
 }
 
@@ -494,12 +502,7 @@ where
     type Output = Option<Self>;
 
     fn inv(self) -> Self::Output {
-        let v = self
-            .coefficients
-            .iter()
-            .map(Square::square)
-            .sum::<R>()
-            .inv()?;
+        let v = self.reduced_norm().inv()?;
         let mut coefficients = self.coefficients;
         coefficients[0] = &v * &coefficients[0];
         coefficients[1] = &v * -&coefficients[1];
@@ -516,12 +519,7 @@ where
     type Output = Option<QuaternionAlgebra<R>>;
 
     fn inv(self) -> Self::Output {
-        let v = self
-            .coefficients
-            .iter()
-            .map(Square::square)
-            .sum::<R>()
-            .inv()?;
+        let v = self.reduced_norm().inv()?;
         let mut coefficients = FreeModule::<R, 4>::ZERO;
         coefficients[0] = &v * &self.coefficients[0];
         coefficients[1] = &v * -&self.coefficients[1];
