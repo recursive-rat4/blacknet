@@ -20,7 +20,7 @@ use blacknet_serialization::format::from_bytes;
 use core::fmt::Debug;
 use core::marker::PhantomData;
 use core::ops::Deref;
-use fjall::{Database, Keyspace, Result};
+use fjall::{Keyspace, Result};
 use serde::Deserialize;
 
 pub struct DBView<K: AsRef<[u8]>, V: for<'de> Deserialize<'de>> {
@@ -30,17 +30,17 @@ pub struct DBView<K: AsRef<[u8]>, V: for<'de> Deserialize<'de>> {
 }
 
 impl<K: AsRef<[u8]>, V: for<'de> Deserialize<'de>> DBView<K, V> {
-    pub fn new(fjall: &Database, name: &str) -> Result<Self> {
+    pub fn new(fjall: &Fjall, name: &str) -> Result<Self> {
         Ok(Self {
-            keyspace: fjall.keyspace(name, Fjall::kv_options)?,
+            keyspace: fjall.database().keyspace(name, Fjall::kv_options)?,
             phantom_k: PhantomData,
             phantom_v: PhantomData,
         })
     }
 
-    pub fn with_blob(fjall: &Database, name: &str) -> Result<Self> {
+    pub fn with_blob(fjall: &Fjall, name: &str) -> Result<Self> {
         Ok(Self {
-            keyspace: fjall.keyspace(name, Fjall::blob_options)?,
+            keyspace: fjall.database().keyspace(name, Fjall::blob_options)?,
             phantom_k: PhantomData,
             phantom_v: PhantomData,
         })

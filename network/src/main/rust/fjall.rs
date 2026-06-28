@@ -17,14 +17,16 @@
 
 use crate::settings::Settings;
 use blacknet_compat::{XDGDirectories, ulimit};
+use core::cmp::max;
 use fjall::{
     CompressionType, Database, KeyspaceCreateOptions, KvSeparationOptions, Result,
     config::CompressionPolicy,
 };
-use std::cmp::max;
 use std::sync::Arc;
 
-pub struct Fjall;
+pub struct Fjall {
+    database: Database,
+}
 
 impl Fjall {
     fn max_open_files(settings: &Arc<Settings>) -> usize {
@@ -38,13 +40,14 @@ impl Fjall {
         max_open_files as usize
     }
 
-    pub fn open(dirs: &XDGDirectories, settings: &Arc<Settings>) -> Result<Database> {
+    pub fn open(dirs: &XDGDirectories, settings: &Arc<Settings>) -> Result<Fjall> {
         let path = dirs.data().join("fjall");
-        Database::builder(path)
+        let database = Database::builder(path)
             .max_cached_files(Some(Self::max_open_files(settings)))
             .cache_size(settings.db_cache)
             .journal_compression(CompressionType::None)
-            .open()
+            .open()?;
+        Ok(Fjall { database })
     }
 
     pub fn kv_options() -> KeyspaceCreateOptions {
@@ -57,5 +60,9 @@ impl Fjall {
         Self::kv_options().with_kv_separation(Some(
             KvSeparationOptions::default().compression(CompressionType::None),
         ))
+    }
+
+    pub const fn database(&self) -> &Database {
+        &self.database
     }
 }

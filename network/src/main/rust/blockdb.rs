@@ -17,6 +17,7 @@
 
 use crate::coindb::State;
 use crate::dbview::DBView;
+use crate::fjall::Fjall;
 use crate::genesis;
 use crate::rollinghashset::RollingHashSet;
 use arc_swap::ArcSwapOption;
@@ -25,7 +26,7 @@ use blacknet_kernel::amount::Amount;
 use blacknet_kernel::blake2b::Hash;
 use blacknet_kernel::block::Block;
 use blacknet_kernel::proofofstake::{MAX_BLOCK_SIZE, ROLLBACK_LIMIT};
-use fjall::{Database, Result};
+use fjall::Result;
 use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::{BufWriter, Write};
@@ -75,7 +76,7 @@ pub struct BlockDB {
 }
 
 impl BlockDB {
-    pub fn new(dirs: &XDGDirectories, fjall: &Database) -> Result<Arc<Self>> {
+    pub fn new(dirs: &XDGDirectories, fjall: &Fjall) -> Result<Arc<Self>> {
         Ok(Arc::new(Self {
             cached_block: ArcSwapOption::empty(),
             cached_index: ArcSwapOption::empty(),

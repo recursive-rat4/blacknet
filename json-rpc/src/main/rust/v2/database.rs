@@ -42,7 +42,7 @@ async fn peer_table_stat(State(node): State<Arc<Node>>) -> Json<PeerTableInfo> {
 }
 
 async fn kv_store_stat(State(node): State<Arc<Node>>) -> Response<String> {
-    let db = node.fjall();
+    let db = node.fjall().database();
     respond_text(format!(
         "disk_space: {}\njournal_count: {}\nkeyspace_count: {}",
         match db.disk_space() {

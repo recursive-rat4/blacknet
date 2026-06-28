@@ -17,6 +17,7 @@
 
 use crate::blockdb::{BlockDB, BlockIndex};
 use crate::dbview::DBView;
+use crate::fjall::Fjall;
 use crate::genesis;
 use crate::undoblock::UndoBlock;
 use blacknet_compat::Mode;
@@ -35,7 +36,7 @@ use blacknet_kernel::proofofstake::{
 use blacknet_kernel::transaction::{CoinTx, HashTimeLockContractId, MultiSignatureLockContractId};
 use blacknet_serialization::format::{from_bytes, to_bytes};
 use blacknet_time::Seconds;
-use fjall::{Database, Error as FjallError, OwnedWriteBatch as WriteBatch};
+use fjall::{Error as FjallError, OwnedWriteBatch as WriteBatch};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, VecDeque, hash_map};
 use std::sync::Arc;
@@ -51,7 +52,7 @@ pub struct CoinDB {
 impl CoinDB {
     pub fn new(
         mode: &Mode,
-        fjall: &Database,
+        fjall: &Fjall,
         block_db: Arc<BlockDB>,
     ) -> core::result::Result<Arc<Self>, FjallError> {
         Ok(Arc::new(Self {

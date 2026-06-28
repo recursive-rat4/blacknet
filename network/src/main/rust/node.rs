@@ -42,7 +42,6 @@ use blacknet_serialization::format::to_write;
 use blacknet_time::{Milliseconds, Seconds, SystemClock};
 use blacknet_wallet::walletdb::WalletDB;
 use core::error::Error as StdError;
-use fjall::Database;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::path::PathBuf;
@@ -64,7 +63,7 @@ pub struct Node {
     connections: RwLock<Vec<Connection>>,
     peer_table: Arc<PeerTable>,
     router: Arc<Router>,
-    fjall: Database,
+    fjall: Fjall,
     block_db: Arc<BlockDB>,
     coin_db: Arc<CoinDB>,
     block_fetcher: BlockFetcher,
@@ -236,7 +235,7 @@ impl Node {
             )
     }
 
-    pub const fn fjall(&self) -> &Database {
+    pub const fn fjall(&self) -> &Fjall {
         &self.fjall
     }
 
