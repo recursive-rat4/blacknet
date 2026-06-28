@@ -16,9 +16,9 @@
  */
 
 use crate::algebra::{
-    AdditiveCommutativeMagma, AdditiveSemigroup, Algebra, Commutator, Conjugate, Double,
-    FreeModule, Inv, LeftOne, LeftZero, MultiplicativeSemigroup, One, RightOne, RightZero, RingOps,
-    Semimodule, Set, Square, UnitalAlgebra, UnitalRing, Zero,
+    AdditiveCommutativeMagma, AdditiveSemigroup, Algebra, CommutativeRing, Commutator, Conjugate,
+    Double, FreeModule, Inv, LeftOne, LeftZero, MultiplicativeSemigroup, One, RightOne, RightZero,
+    RingOps, Semimodule, Set, Square, TracelessQuaternion, UnitalAlgebra, UnitalRing, Zero,
 };
 use crate::symmetric::{Absorb, Duplexer, Squeeze};
 use core::borrow::{Borrow, BorrowMut};
@@ -529,47 +529,55 @@ where
     }
 }
 
-impl<R: UnitalRing> Commutator for QuaternionAlgebra<R>
+impl<R: UnitalRing + CommutativeRing> Commutator for QuaternionAlgebra<R>
 where
     for<'a> &'a R: RingOps<R>,
 {
-    type Output = Self;
+    type Output = TracelessQuaternion<R>;
 
+    #[inline]
     fn commutator(self, rps: Self) -> Self::Output {
-        &self * &rps - rps * self
+        (&self).commutator(&rps)
     }
 }
 
-impl<R: UnitalRing> Commutator<&Self> for QuaternionAlgebra<R>
+impl<R: UnitalRing + CommutativeRing> Commutator<&Self> for QuaternionAlgebra<R>
 where
     for<'a> &'a R: RingOps<R>,
 {
-    type Output = Self;
+    type Output = TracelessQuaternion<R>;
 
+    #[inline]
     fn commutator(self, rps: &Self) -> Self::Output {
-        &self * rps - rps * self
+        (&self).commutator(rps)
     }
 }
 
-impl<R: UnitalRing> Commutator<QuaternionAlgebra<R>> for &QuaternionAlgebra<R>
+impl<R: UnitalRing + CommutativeRing> Commutator<QuaternionAlgebra<R>> for &QuaternionAlgebra<R>
 where
     for<'a> &'a R: RingOps<R>,
 {
-    type Output = QuaternionAlgebra<R>;
+    type Output = TracelessQuaternion<R>;
 
+    #[inline]
     fn commutator(self, rps: QuaternionAlgebra<R>) -> Self::Output {
-        self * &rps - rps * self
+        self.commutator(&rps)
     }
 }
 
-impl<'a, R: UnitalRing> Commutator<&'a QuaternionAlgebra<R>> for &QuaternionAlgebra<R>
+impl<'a, R: UnitalRing + CommutativeRing> Commutator<&'a QuaternionAlgebra<R>>
+    for &QuaternionAlgebra<R>
 where
     for<'b> &'b R: RingOps<R>,
 {
-    type Output = QuaternionAlgebra<R>;
+    type Output = TracelessQuaternion<R>;
 
     fn commutator(self, rps: &'a QuaternionAlgebra<R>) -> Self::Output {
-        self * rps - rps * self
+        let mut im = FreeModule::<R, 3>::ZERO;
+        im[0] = (&self[2] * &rps[3] - &self[3] * &rps[2]).double();
+        im[1] = (&self[3] * &rps[1] - &self[1] * &rps[3]).double();
+        im[2] = (&self[1] * &rps[2] - &self[2] * &rps[1]).double();
+        Self::Output::new(im)
     }
 }
 

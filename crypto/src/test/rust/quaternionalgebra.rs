@@ -16,12 +16,14 @@
  */
 
 use blacknet_crypto::algebra::{
-    Commutator, Conjugate, Double, IntegerModRing, Inv, One, QuaternionAlgebra, Square, Zero,
+    Commutator, Conjugate, Double, IntegerModRing, Inv, One, QuaternionAlgebra, Square,
+    TracelessQuaternion, Zero,
 };
 use blacknet_crypto::norm::InfinityNorm;
 
 type Z = blacknet_crypto::pervushin::PervushinField;
 type A = QuaternionAlgebra<Z>;
+type M = TracelessQuaternion<Z>;
 
 #[test]
 fn add() {
@@ -119,7 +121,7 @@ fn conjugate() {
 fn commutator() {
     let a = A::from([2, 3, 5, 7].map(Z::from));
     let b = A::from([11, 13, 17, 19].map(Z::from));
-    let c = A::from([0, -48, 68, -28].map(Z::from));
+    let c = M::from([-48, 68, -28].map(Z::from));
     assert_eq!(a.commutator(b), c);
 }
 
