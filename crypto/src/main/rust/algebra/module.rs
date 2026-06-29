@@ -17,6 +17,7 @@
 
 use crate::algebra::{AdditiveAbelianGroup, Ring, Semimodule};
 
+/// An additive Abelian group with scalar multiplication by ring elements.
 #[rustfmt::skip]
 pub trait Module<R: Ring>
     : Semimodule<R>
