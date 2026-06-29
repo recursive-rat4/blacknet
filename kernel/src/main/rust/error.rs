@@ -46,4 +46,4 @@ impl fmt::Display for Error {
 
 impl core::error::Error for Error {}
 
-pub type Result<T> = core::result::Result<T, Error>;
+pub type Result<T, E = Error> = core::result::Result<T, E>;

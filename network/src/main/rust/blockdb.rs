@@ -25,8 +25,8 @@ use blacknet_compat::{XDGDirectories, statvfs};
 use blacknet_kernel::amount::Amount;
 use blacknet_kernel::blake2b::Hash;
 use blacknet_kernel::block::Block;
+use blacknet_kernel::error::{Error, Result};
 use blacknet_kernel::proofofstake::{MAX_BLOCK_SIZE, ROLLBACK_LIMIT};
-use fjall::Result;
 use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::{BufWriter, Write};
@@ -76,7 +76,7 @@ pub struct BlockDB {
 }
 
 impl BlockDB {
-    pub fn new(dirs: &XDGDirectories, fjall: &Fjall) -> Result<Arc<Self>> {
+    pub fn new(dirs: &XDGDirectories, fjall: &Fjall) -> Result<Arc<Self>, fjall::Error> {
         Ok(Arc::new(Self {
             cached_block: ArcSwapOption::empty(),
             cached_index: ArcSwapOption::empty(),
@@ -234,6 +234,25 @@ impl BlockDB {
             check.result = true;
         }
         check
+    }
+
+    pub fn process(&mut self, hash: Hash, bytes: &[u8]) -> Result<()> {
+        if self.is_rejected(hash) {
+            return Err(Error::Invalid("Already rejected block".to_owned()));
+        }
+        if self.contains(hash) {
+            return Err(Error::AlreadyHave(hash.to_string()));
+        }
+        let result = self.process_block(hash, bytes);
+        if matches!(result, Err(Error::Invalid(_))) {
+            self.rejects.insert(hash);
+        }
+        result
+    }
+
+    #[expect(unused_variables)]
+    fn process_block(&self, hash: Hash, bytes: &[u8]) -> Result<()> {
+        todo!();
     }
 }
 
