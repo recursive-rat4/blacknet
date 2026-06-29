@@ -155,19 +155,16 @@ where
     type Point = R;
 
     fn point(&self, point: &R) -> R {
+        // Horner method
         if self.coefficients.is_empty() {
             return R::ZERO;
         }
-        let mut sigma = self.coefficients[0].clone();
-        let mut power = point.clone();
-        for i in 1..self.coefficients.len() - 1 {
-            sigma += &self.coefficients[i] * &power;
-            power *= point;
+        let mut accum = self.coefficients[self.coefficients.len() - 1].clone();
+        for i in (0..self.coefficients.len() - 1).rev() {
+            accum *= point;
+            accum += &self.coefficients[i];
         }
-        if self.coefficients.len() > 1 {
-            sigma += &self.coefficients[self.coefficients.len() - 1] * power;
-        }
-        sigma
+        accum
     }
 }
 
