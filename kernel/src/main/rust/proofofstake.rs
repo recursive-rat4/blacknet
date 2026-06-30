@@ -25,6 +25,10 @@ pub enum Version {
     V4_1,
 }
 
+pub fn is_too_far_in_future(version: Version, external: Seconds, internal: Seconds) -> bool {
+    internal >= external + time_slot(version)
+}
+
 pub fn guess_initial_synchronization(
     version: Version,
     external: Seconds,

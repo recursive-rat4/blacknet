@@ -107,7 +107,7 @@ impl Node {
         let settings = Arc::new(Settings::default(&mode));
         let peer_table = PeerTable::new(&mode, dirs, log_manager, settings.clone())?;
         let fjall = Fjall::open(dirs, &settings)?;
-        let block_db = BlockDB::new(dirs, &fjall)?;
+        let block_db = BlockDB::new(&mode, dirs, &fjall, log_manager)?;
         let coin_db = CoinDB::new(&mode, &fjall, block_db.clone())?;
         let tx_pool = Arc::new(RwLock::new(TxPool::new(
             log_manager,
@@ -207,7 +207,10 @@ impl Node {
 
     pub fn warnings(&self, warnings: &mut Vec<String>) {
         let time_offset = self.time_offset();
-        let pos_version = self.coin_db.state().pos_version(&self.mode);
+        let pos_version = self
+            .coin_db
+            .state()
+            .pos_version(self.mode.requires_network());
         let time_slot = time_slot(pos_version);
 
         if time_offset <= -time_slot || time_offset >= time_slot {
@@ -226,7 +229,10 @@ impl Node {
     }
 
     pub fn is_initial_synchronization(&self) -> bool {
-        let pos_version = self.coin_db.state().pos_version(&self.mode);
+        let pos_version = self
+            .coin_db
+            .state()
+            .pos_version(self.mode.requires_network());
         self.block_fetcher.is_synchronizing()
             && guess_initial_synchronization(
                 pos_version,

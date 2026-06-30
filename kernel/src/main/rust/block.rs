@@ -16,12 +16,14 @@
  */
 
 use crate::blake2b::{Blake2b256, Digest, Hash};
-use crate::ed25519::{PublicKey, Signature};
+use crate::ed25519::{PublicKey, Signature, verify};
+use crate::error::{Error, Result};
+use alloc::borrow::ToOwned;
 use alloc::boxed::Box;
 use blacknet_time::Seconds;
 use serde::{Deserialize, Serialize};
 
-const VERSION: u32 = 2;
+pub const BLOCK_VERSION: u32 = 2;
 const CONTENT_HASH_POS: usize =
     size_of::<u32>() + size_of::<Hash>() + size_of::<Seconds>() + size_of::<PublicKey>();
 const SIGNATURE_POS: usize = CONTENT_HASH_POS + size_of::<Hash>();
@@ -41,7 +43,7 @@ pub struct Block {
 impl Block {
     pub fn new(previous: Hash, time: Seconds, generator: PublicKey) -> Self {
         Self {
-            version: VERSION,
+            version: BLOCK_VERSION,
             previous,
             time,
             generator,
@@ -113,5 +115,16 @@ impl Block {
 
     pub fn raw_transactions(&self) -> &[Box<[u8]>] {
         &self.transactions
+    }
+
+    pub fn verify_content_hash(&self, bytes: &[u8]) -> Result<()> {
+        match Self::compute_content_hash(bytes) {
+            Some(content_hash) if self.content_hash == content_hash => Ok(()),
+            _ => Err(Error::Invalid("Invalid content hash".to_owned())),
+        }
+    }
+
+    pub fn verify_signature(&self, hash: Hash) -> Result<()> {
+        verify(self.signature, hash, self.generator)
     }
 }

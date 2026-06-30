@@ -21,12 +21,18 @@ use crate::fjall::Fjall;
 use crate::genesis;
 use crate::rollinghashset::RollingHashSet;
 use arc_swap::ArcSwapOption;
-use blacknet_compat::{XDGDirectories, statvfs};
+use blacknet_compat::{Mode, XDGDirectories, statvfs};
 use blacknet_kernel::amount::Amount;
 use blacknet_kernel::blake2b::Hash;
-use blacknet_kernel::block::Block;
+use blacknet_kernel::block::{BLOCK_VERSION, Block};
 use blacknet_kernel::error::{Error, Result};
-use blacknet_kernel::proofofstake::{MAX_BLOCK_SIZE, ROLLBACK_LIMIT};
+use blacknet_kernel::proofofstake::{
+    MAX_BLOCK_SIZE, ROLLBACK_LIMIT, UPGRADE_THRESHOLD, Version as PoSVersion, is_too_far_in_future,
+};
+use blacknet_log::{LogManager, Logger, info};
+use blacknet_serialization::format::from_bytes;
+use blacknet_time::SystemClock;
+use core::error::Error as StdError;
 use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::{BufWriter, Write};
@@ -67,23 +73,32 @@ impl BlockIndex {
 }
 
 pub struct BlockDB {
+    logger: Logger,
     cached_block: ArcSwapOption<(Hash, Box<[u8]>)>,
     cached_index: ArcSwapOption<(Hash, BlockIndex)>,
     rejects: RollingHashSet<Hash>,
     blocks: DBView<Hash, Block>,
     pub(super) indexes: DBView<Hash, BlockIndex>,
     data_dir: PathBuf,
+    requires_network: bool,
 }
 
 impl BlockDB {
-    pub fn new(dirs: &XDGDirectories, fjall: &Fjall) -> Result<Arc<Self>, fjall::Error> {
+    pub fn new(
+        mode: &Mode,
+        dirs: &XDGDirectories,
+        fjall: &Fjall,
+        log_manager: &LogManager,
+    ) -> Result<Arc<Self>, Box<dyn StdError>> {
         Ok(Arc::new(Self {
+            logger: log_manager.logger("BlockDB")?,
             cached_block: ArcSwapOption::empty(),
             cached_index: ArcSwapOption::empty(),
             rejects: RollingHashSet::new(ROLLBACK_LIMIT),
             blocks: DBView::with_blob(fjall, "blocks")?,
             indexes: DBView::new(fjall, "indexes")?,
             data_dir: dirs.data().to_owned(),
+            requires_network: mode.requires_network(),
         }))
     }
 
@@ -236,22 +251,50 @@ impl BlockDB {
         check
     }
 
-    pub fn process(&mut self, hash: Hash, bytes: &[u8]) -> Result<()> {
+    pub fn process(&mut self, hash: Hash, bytes: &[u8], state: &State) -> Result<()> {
         if self.is_rejected(hash) {
             return Err(Error::Invalid("Already rejected block".to_owned()));
         }
         if self.contains(hash) {
             return Err(Error::AlreadyHave(hash.to_string()));
         }
-        let result = self.process_block(hash, bytes);
+        let result = self.process_block(hash, bytes, state);
         if matches!(result, Err(Error::Invalid(_))) {
             self.rejects.insert(hash);
         }
         result
     }
 
-    #[expect(unused_variables)]
-    fn process_block(&self, hash: Hash, bytes: &[u8]) -> Result<()> {
+    fn process_block(&self, hash: Hash, bytes: &[u8], state: &State) -> Result<()> {
+        let block = from_bytes::<Block>(bytes, false)?;
+        if block.version() > BLOCK_VERSION {
+            let percent = 100 * state.upgraded() / UPGRADE_THRESHOLD;
+            if percent > 9 {
+                info!(self.logger, "{percent}% upgraded to unknown version");
+            } else {
+                info!(self.logger, "Unknown version {}", block.version());
+            }
+        }
+        let pos_version = state.pos_version(self.requires_network);
+        match pos_version {
+            PoSVersion::V4_1 => {
+                if block.version() < 2 {
+                    return Err(Error::Invalid(format!(
+                        "Block version {} is no longer accepted",
+                        block.version()
+                    )));
+                }
+            }
+            PoSVersion::V4 => {}
+        };
+        if is_too_far_in_future(pos_version, SystemClock::secs(), block.time()) {
+            return Err(Error::InFuture(block.time().to_string()));
+        }
+        block.verify_content_hash(bytes)?;
+        block.verify_signature(hash)?;
+        if block.previous() != state.block_hash() {
+            return Err(Error::NotReachableVertex(block.previous().to_string()));
+        }
         todo!();
     }
 }

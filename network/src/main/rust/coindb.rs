@@ -189,15 +189,15 @@ impl State {
         }
     }
 
-    pub const fn pos_version(&self, mode: &Mode) -> PoSVersion {
-        if mode.requires_network() {
+    pub const fn pos_version(&self, requires_network: bool) -> PoSVersion {
+        if requires_network {
             if self.fork_v2 == UPGRADE_THRESHOLD + 1 {
                 PoSVersion::V4_1
             } else {
                 PoSVersion::V4
             }
         } else {
-            PoSVersion::V4
+            PoSVersion::V4_1
         }
     }
 
