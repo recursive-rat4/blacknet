@@ -62,13 +62,13 @@ where
     }
 
     fn eval(univariate: &[R], point: &R) -> R {
-        let mut power = point.clone();
-        let mut sigma = &univariate[0] * &power;
-        for coefficient in univariate.iter().skip(1) {
-            power *= point;
-            sigma += coefficient * &power;
+        // Horner method
+        let mut accum = univariate[univariate.len() - 1].clone();
+        for i in (0..univariate.len() - 1).rev() {
+            accum *= point;
+            accum += &univariate[i];
         }
-        sigma
+        accum * point
     }
 }
 
