@@ -18,7 +18,6 @@
 use crate::blake2b::Hash;
 use crate::error::{Error, Result};
 use crate::transaction::{CoinTx, HashTimeLockContractId, Transaction, TxData};
-use alloc::borrow::ToOwned;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]
@@ -46,7 +45,7 @@ impl TxData for RefundHTLC {
     ) -> Result<()> {
         let htlc = coin_tx.get_htlc(self.id)?;
         if tx.from() != htlc.from {
-            return Err(Error::Invalid("Invalid sender".to_owned()));
+            return Err(Error::invalid("Invalid sender"));
         }
         htlc.time_lock.verify(
             htlc.height,

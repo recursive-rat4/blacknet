@@ -253,10 +253,10 @@ impl BlockDB {
 
     pub fn process(&mut self, hash: Hash, bytes: &[u8], state: &State) -> Result<()> {
         if self.is_rejected(hash) {
-            return Err(Error::Invalid("Already rejected block".to_owned()));
+            return Err(Error::invalid("Already rejected block"));
         }
         if self.contains(hash) {
-            return Err(Error::AlreadyHave(hash.to_string()));
+            return Err(Error::already_have(hash.to_string()));
         }
         let result = self.process_block(hash, bytes, state);
         if matches!(result, Err(Error::Invalid(_))) {
@@ -279,7 +279,7 @@ impl BlockDB {
         match pos_version {
             PoSVersion::V4_1 => {
                 if block.version() < 2 {
-                    return Err(Error::Invalid(format!(
+                    return Err(Error::invalid(format!(
                         "Block version {} is no longer accepted",
                         block.version()
                     )));
@@ -288,12 +288,12 @@ impl BlockDB {
             PoSVersion::V4 => {}
         };
         if is_too_far_in_future(pos_version, SystemClock::secs(), block.time()) {
-            return Err(Error::InFuture(block.time().to_string()));
+            return Err(Error::in_future(block.time().to_string()));
         }
         block.verify_content_hash(bytes)?;
         block.verify_signature(hash)?;
         if block.previous() != state.block_hash() {
-            return Err(Error::NotReachableVertex(block.previous().to_string()));
+            return Err(Error::not_reachable_vertex(block.previous().to_string()));
         }
         todo!();
     }

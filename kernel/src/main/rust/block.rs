@@ -18,7 +18,6 @@
 use crate::blake2b::{Blake2b256, Digest, Hash};
 use crate::ed25519::{PublicKey, Signature, verify};
 use crate::error::{Error, Result};
-use alloc::borrow::ToOwned;
 use alloc::boxed::Box;
 use blacknet_time::Seconds;
 use serde::{Deserialize, Serialize};
@@ -120,7 +119,7 @@ impl Block {
     pub fn verify_content_hash(&self, bytes: &[u8]) -> Result<()> {
         match Self::compute_content_hash(bytes) {
             Some(content_hash) if self.content_hash == content_hash => Ok(()),
-            _ => Err(Error::Invalid("Invalid content hash".to_owned())),
+            _ => Err(Error::invalid("Invalid content hash")),
         }
     }
 

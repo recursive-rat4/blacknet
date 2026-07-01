@@ -15,21 +15,52 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use alloc::string::{String, ToString};
+use alloc::borrow::Cow;
+use alloc::string::ToString;
 use blacknet_serialization::error::Error as SerializationError;
 use core::fmt;
 
 #[derive(Debug)]
 pub enum Error {
-    AlreadyHave(String),
-    InFuture(String),
-    Invalid(String),
-    NotReachableVertex(String),
+    AlreadyHave(Cow<'static, str>),
+    InFuture(Cow<'static, str>),
+    Invalid(Cow<'static, str>),
+    NotReachableVertex(Cow<'static, str>),
+}
+
+impl Error {
+    pub fn already_have<T>(msg: T) -> Self
+    where
+        Cow<'static, str>: From<T>,
+    {
+        Error::AlreadyHave(msg.into())
+    }
+
+    pub fn in_future<T>(msg: T) -> Self
+    where
+        Cow<'static, str>: From<T>,
+    {
+        Error::InFuture(msg.into())
+    }
+
+    pub fn invalid<T>(msg: T) -> Self
+    where
+        Cow<'static, str>: From<T>,
+    {
+        Error::Invalid(msg.into())
+    }
+
+    pub fn not_reachable_vertex<T>(msg: T) -> Self
+    where
+        Cow<'static, str>: From<T>,
+    {
+        Error::NotReachableVertex(msg.into())
+    }
 }
 
 impl From<SerializationError> for Error {
     fn from(error: SerializationError) -> Self {
-        Error::Invalid(error.to_string())
+        Error::invalid(error.to_string())
     }
 }
 

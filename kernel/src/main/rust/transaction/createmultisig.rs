@@ -21,7 +21,6 @@ use crate::ed25519::{PublicKey, Signature, verify};
 use crate::error::{Error, Result};
 use crate::multisig::{Deposit, Multisig};
 use crate::transaction::{CoinTx, Transaction, TxData};
-use alloc::borrow::ToOwned;
 use alloc::boxed::Box;
 use blacknet_serialization::format::to_bytes;
 use serde::{Deserialize, Serialize};
@@ -120,21 +119,21 @@ impl TxData for CreateMultisig {
         coin_tx: &mut impl CoinTx,
     ) -> Result<()> {
         if self.n as usize > self.deposits.len() {
-            return Err(Error::Invalid("Invalid n".to_owned()));
+            return Err(Error::invalid("Invalid n"));
         }
         if self.deposits.len() > 20 {
-            return Err(Error::Invalid("Too many deposits".to_owned()));
+            return Err(Error::invalid("Too many deposits"));
         }
         if self.signatures.len() > self.deposits.len() {
-            return Err(Error::Invalid("Too many signatures".to_owned()));
+            return Err(Error::invalid("Too many signatures"));
         }
         match Amount::checked_sum(self.deposits.iter().copied().map(Dep::amount)) {
             Some(sum) => {
                 if sum == Amount::ZERO {
-                    return Err(Error::Invalid("Invalid total amount".to_owned()));
+                    return Err(Error::invalid("Invalid total amount"));
                 }
             }
-            None => return Err(Error::Invalid("Invalid total amount".to_owned())),
+            None => return Err(Error::invalid("Invalid total amount")),
         };
 
         let multisig_hash = self.hash(tx.from(), tx.seq(), data_index)?;
@@ -144,7 +143,7 @@ impl TxData for CreateMultisig {
                     .signatures
                     .iter()
                     .find(|sig| sig.index == index as u8)
-                    .ok_or(Error::Invalid("Unsigned deposit".to_owned()))?;
+                    .ok_or(Error::invalid("Unsigned deposit"))?;
                 verify(sig.signature(), multisig_hash, deposit.from())?;
                 let mut deposit_account = coin_tx.get_account(deposit.from())?;
                 deposit_account.credit(deposit.amount())?;

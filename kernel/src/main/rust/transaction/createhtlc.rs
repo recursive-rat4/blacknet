@@ -23,7 +23,6 @@ use crate::hashlock::HashLock;
 use crate::htlc::HTLC;
 use crate::timelock::TimeLock;
 use crate::transaction::{CoinTx, Transaction, TxData};
-use alloc::borrow::ToOwned;
 use serde::{Deserialize, Serialize};
 
 pub type HashTimeLockContractId = [u8; 32];
@@ -87,7 +86,7 @@ impl TxData for CreateHTLC {
         self.hash_lock.validate()?;
 
         if self.amount == Amount::ZERO {
-            return Err(Error::Invalid("Invalid amount".to_owned()));
+            return Err(Error::invalid("Invalid amount"));
         }
 
         let mut account = coin_tx.get_account(tx.from())?;

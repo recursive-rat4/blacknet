@@ -108,14 +108,14 @@ impl TxPool {
         remote: bool,
     ) -> Result<Amount> {
         if self.rejects.contains(&hash) {
-            return Err(Error::Invalid("Already rejected tx".to_owned()));
+            return Err(Error::invalid("Already rejected tx"));
         }
         if self.map.contains_key(&hash) {
-            return Err(Error::AlreadyHave(hash.to_string()));
+            return Err(Error::already_have(hash.to_string()));
         }
         if self.data_len + bytes.len() > self.settings.tx_pool_size {
             if remote {
-                return Err(Error::InFuture("TxPool is full".to_owned()));
+                return Err(Error::in_future("TxPool is full"));
             } else {
                 warn!(self.logger, "TxPool is full");
             }
@@ -151,7 +151,7 @@ impl TxPool {
         if amount >= self.settings.min_relay_fee_rate * (1 + size / 1000).into() {
             Ok(())
         } else {
-            Err(Error::Invalid(format!("Too low fee {}", amount)))
+            Err(Error::invalid(format!("Too low fee {}", amount)))
         }
     }
 
@@ -220,7 +220,7 @@ impl CoinTx for TxPool {
             None => {
                 let db_account = self.coin_db.account(key);
                 self.undo_accounts.insert(key, None);
-                db_account.ok_or(Error::Invalid("Account not found".to_owned()))
+                db_account.ok_or(Error::invalid("Account not found"))
             }
         }
     }
@@ -249,13 +249,13 @@ impl CoinTx for TxPool {
             self.undo_htlcs.insert(id, (false, None));
             self.coin_db
                 .htlc(id)
-                .ok_or(Error::Invalid("HTLC not found".to_owned()))
+                .ok_or(Error::invalid("HTLC not found"))
         } else {
             let htlc = self.htlcs.get(&id).cloned().flatten();
             self.undo_htlcs
                 .entry(id)
                 .or_insert_with(|| (true, htlc.clone()));
-            htlc.ok_or(Error::Invalid("HTLC not found".to_owned()))
+            htlc.ok_or(Error::invalid("HTLC not found"))
         }
     }
 
@@ -273,13 +273,13 @@ impl CoinTx for TxPool {
             self.undo_multisigs.insert(id, (false, None));
             self.coin_db
                 .multisig(id)
-                .ok_or(Error::Invalid("Multisig not found".to_owned()))
+                .ok_or(Error::invalid("Multisig not found"))
         } else {
             let multisig = self.multisigs.get(&id).cloned().flatten();
             self.undo_multisigs
                 .entry(id)
                 .or_insert_with(|| (true, multisig.clone()));
-            multisig.ok_or(Error::Invalid("Multisig not found".to_owned()))
+            multisig.ok_or(Error::invalid("Multisig not found"))
         }
     }
 

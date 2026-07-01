@@ -18,7 +18,6 @@
 use crate::blake2b::Hash;
 use crate::error::{Error, Result};
 use crate::transaction::*;
-use alloc::borrow::ToOwned;
 use alloc::boxed::Box;
 use alloc::format;
 use blacknet_serialization::format::from_bytes;
@@ -75,13 +74,11 @@ impl TxData for Batch {
         coin_tx: &mut impl CoinTx,
     ) -> Result<()> {
         if data_index != 0 {
-            return Err(Error::Invalid(
-                "Batch is not permitted to contain Batch".to_owned(),
-            ));
+            return Err(Error::invalid("Batch is not permitted to contain Batch"));
         }
         let len = self.multi_data.len();
         if !(MIN_SIZE..=MAX_SIZE).contains(&len) {
-            return Err(Error::Invalid(format!("Invalid Batch size {len}")));
+            return Err(Error::invalid(format!("Invalid Batch size {len}")));
         }
 
         for index in 0..len {
@@ -137,7 +134,7 @@ impl TxData for Batch {
                     data.process_impl(tx, hash, (index + 1) as u32, coin_tx)?;
                 }
                 TxKind::Generated => {
-                    return Err(Error::Invalid("Generated as individual tx".to_owned()));
+                    return Err(Error::invalid("Generated as individual tx"));
                 }
             }
         }

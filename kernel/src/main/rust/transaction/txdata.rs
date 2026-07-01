@@ -34,9 +34,9 @@ pub trait TxData {
         if tx.seq() != account.seq() {
             let msg = format!("sequence {} expected {}", tx.seq(), account.seq());
             if tx.seq() < account.seq() {
-                return Err(Error::AlreadyHave(msg));
+                return Err(Error::already_have(msg));
             } else {
-                return Err(Error::InFuture(msg));
+                return Err(Error::in_future(msg));
             }
         }
         account.credit(tx.fee())?;

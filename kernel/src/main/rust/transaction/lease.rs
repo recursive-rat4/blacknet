@@ -53,7 +53,7 @@ impl TxData for Lease {
         coin_tx: &mut impl CoinTx,
     ) -> Result<()> {
         if self.amount < MIN_LEASE {
-            return Err(Error::Invalid(format!(
+            return Err(Error::invalid(format!(
                 "{0} less than minimal {MIN_LEASE}",
                 self.amount
             )));

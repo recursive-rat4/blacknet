@@ -19,7 +19,6 @@ use crate::amount::Amount;
 use crate::ed25519::PublicKey;
 use crate::error::{Error, Result};
 use crate::proofofstake::{MATURITY, MIN_LEASE};
-use alloc::borrow::ToOwned;
 use alloc::format;
 use alloc::vec::Vec;
 use serde::{Deserialize, Serialize};
@@ -97,7 +96,7 @@ impl Account {
         }
 
         if self.balance() < amount {
-            return Err(Error::Invalid("Insufficient funds".to_owned()));
+            return Err(Error::invalid("Insufficient funds"));
         }
 
         let mut r = amount - self.stake;
@@ -145,7 +144,7 @@ impl Account {
             .iter()
             .copied()
             .position(|i| i == lease)
-            .ok_or(Error::Invalid("Lease not found".to_owned()))?;
+            .ok_or(Error::invalid("Lease not found"))?;
         self.leases.remove(position);
         Ok(())
     }
@@ -167,7 +166,7 @@ impl Account {
             .iter()
             .copied()
             .position(|i| i == lease)
-            .ok_or(Error::Invalid("Lease not found".to_owned()))?;
+            .ok_or(Error::invalid("Lease not found"))?;
         self.leases[position].withdraw(withdraw)?;
         Ok(())
     }
@@ -262,7 +261,7 @@ impl Lease {
     }
     fn withdraw(&mut self, withdraw: Amount) -> Result<()> {
         if withdraw > self.amount - MIN_LEASE {
-            return Err(Error::Invalid(format!(
+            return Err(Error::invalid(format!(
                 "Can not withdraw more than {0}",
                 self.amount - MIN_LEASE
             )));

@@ -18,7 +18,6 @@
 use crate::blake2b::Hash;
 use crate::error::{Error, Result};
 use crate::transaction::{CoinTx, HashTimeLockContractId, Transaction, TxData};
-use alloc::borrow::ToOwned;
 use alloc::boxed::Box;
 use serde::{Deserialize, Serialize};
 
@@ -52,7 +51,7 @@ impl TxData for ClaimHTLC {
     ) -> Result<()> {
         let htlc = coin_tx.get_htlc(self.id)?;
         if tx.from() != htlc.to {
-            return Err(Error::Invalid("Invalid sender".to_owned()));
+            return Err(Error::invalid("Invalid sender"));
         }
         htlc.hash_lock.verify(&self.preimage)?;
 

@@ -117,7 +117,7 @@ impl CoinDB {
         if hash == genesis::hash() || self.block_db.indexes.contains(hash) {
             Ok(())
         } else {
-            Err(Error::NotReachableVertex(hash.to_string()))
+            Err(Error::not_reachable_vertex(hash.to_string()))
         }
     }
 
@@ -356,7 +356,7 @@ impl CoinTx for Update {
                     }
                     Ok(db_account)
                 }
-                None => Err(Error::Invalid("Account not found".to_owned())),
+                None => Err(Error::invalid("Account not found")),
             },
         }
     }
@@ -385,13 +385,13 @@ impl CoinTx for Update {
             hash_map::Entry::Occupied(entry) => entry
                 .get()
                 .clone()
-                .ok_or_else(|| Error::Invalid("HTLC not found".to_owned())),
+                .ok_or_else(|| Error::invalid("HTLC not found")),
             hash_map::Entry::Vacant(_) => {
                 let maybe_bytes = self.coin_db.htlcs.get_bytes(id);
                 self.undo.add_htlc(id, maybe_bytes.clone());
                 match maybe_bytes {
                     Some(bytes) => Ok(from_bytes::<HTLC>(&bytes, false)?),
-                    None => Err(Error::Invalid("HTLC not found".to_owned())),
+                    None => Err(Error::invalid("HTLC not found")),
                 }
             }
         }
@@ -411,13 +411,13 @@ impl CoinTx for Update {
             hash_map::Entry::Occupied(entry) => entry
                 .get()
                 .clone()
-                .ok_or_else(|| Error::Invalid("Multisig not found".to_owned())),
+                .ok_or_else(|| Error::invalid("Multisig not found")),
             hash_map::Entry::Vacant(_) => {
                 let maybe_bytes = self.coin_db.multisigs.get_bytes(id);
                 self.undo.add_multisig(id, maybe_bytes.clone());
                 match maybe_bytes {
                     Some(bytes) => Ok(from_bytes::<Multisig>(&bytes, false)?),
-                    None => Err(Error::Invalid("Multisig not found".to_owned())),
+                    None => Err(Error::invalid("Multisig not found")),
                 }
             }
         }

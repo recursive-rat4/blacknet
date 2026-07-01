@@ -19,7 +19,6 @@ use crate::amount::Amount;
 use crate::blake2b::Hash;
 use crate::error::{Error, Result};
 use crate::transaction::{CoinTx, Transaction, TxData};
-use alloc::borrow::ToOwned;
 use alloc::boxed::Box;
 use serde::{Deserialize, Serialize};
 
@@ -52,7 +51,7 @@ impl TxData for Burn {
         coin_tx: &mut impl CoinTx,
     ) -> Result<()> {
         if self.amount == Amount::ZERO {
-            return Err(Error::Invalid("Invalid amount".to_owned()));
+            return Err(Error::invalid("Invalid amount"));
         }
         let mut account = coin_tx.get_account(tx.from())?;
         account.credit(self.amount)?;

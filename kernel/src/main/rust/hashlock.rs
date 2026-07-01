@@ -17,7 +17,6 @@
 
 use crate::blake2b::Blake2b256;
 use crate::error::{Error, Result};
-use alloc::borrow::ToOwned;
 use alloc::boxed::Box;
 use alloc::format;
 use ripemd::Ripemd160;
@@ -53,7 +52,7 @@ impl HashLock {
         if lengthe == self.image.len() {
             Ok(())
         } else {
-            Err(Error::Invalid(format!(
+            Err(Error::invalid(format!(
                 "Expected hash lock lengthe {0} actual {1}",
                 lengthe,
                 self.image.len(),
@@ -76,7 +75,7 @@ impl HashLock {
                 <Ripemd160 as ripemd::Digest>::digest(preimage),
             )),
             _ => {
-                return Err(Error::Invalid(format!(
+                return Err(Error::invalid(format!(
                     "Unknown hash type {0}",
                     self.algorithm
                 )));
@@ -85,7 +84,7 @@ impl HashLock {
         if hash == self.image {
             Ok(())
         } else {
-            Err(Error::Invalid("Invalid hash lock preimage".to_owned()))
+            Err(Error::invalid("Invalid hash lock preimage"))
         }
     }
 
@@ -96,7 +95,7 @@ impl HashLock {
             KECCAK_256 => 32,
             RIPEMD_160 => 20,
             _ => {
-                return Err(Error::Invalid(format!(
+                return Err(Error::invalid(format!(
                     "Unknown hash type {0}",
                     self.algorithm
                 )));

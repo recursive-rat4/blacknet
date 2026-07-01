@@ -21,7 +21,6 @@ use crate::ed25519::{PublicKey, verify};
 use crate::error::{Error, Result};
 use crate::multisig::Multisig;
 use crate::transaction::{CoinTx, MultiSignatureLockContractId, Sig, Transaction, TxData};
-use alloc::borrow::ToOwned;
 use alloc::boxed::Box;
 use alloc::collections::BTreeMap;
 use blacknet_serialization::format::to_bytes;
@@ -67,16 +66,16 @@ impl SpendMultisig {
         }
 
         for sig in self.signatures.iter() {
-            let public_key = unsigned.remove(&sig.index()).ok_or(Error::Invalid(
-                "Invalid or twice signed multisig".to_owned(),
-            ))?;
+            let public_key = unsigned
+                .remove(&sig.index())
+                .ok_or(Error::invalid("Invalid or twice signed multisig"))?;
             verify(sig.signature(), multisig_hash, public_key)?;
         }
 
         if unsigned.values().any(|&i| i == sender) {
             Ok(())
         } else {
-            Err(Error::Invalid("Invalid sender".to_owned()))
+            Err(Error::invalid("Invalid sender"))
         }
     }
 
@@ -101,18 +100,18 @@ impl TxData for SpendMultisig {
     ) -> Result<()> {
         let multisig = coin_tx.get_multisig(self.id)?;
         if self.amounts.len() != multisig.deposits().len() {
-            return Err(Error::Invalid("Invalid number of amounts".to_owned()));
+            return Err(Error::invalid("Invalid number of amounts"));
         }
         match Amount::checked_sum(self.amounts.iter().copied()) {
             Some(sum) => {
                 if sum != multisig.amount() {
-                    return Err(Error::Invalid("Invalid total amount".to_owned()));
+                    return Err(Error::invalid("Invalid total amount"));
                 }
             }
-            None => return Err(Error::Invalid("Invalid total amount".to_owned())),
+            None => return Err(Error::invalid("Invalid total amount")),
         };
         if self.signatures.len() + 1 < multisig.n().into() {
-            return Err(Error::Invalid("Invalid number of signatures".to_owned()));
+            return Err(Error::invalid("Invalid number of signatures"));
         }
         self.verify_signatures(&multisig, tx.from())?;
 

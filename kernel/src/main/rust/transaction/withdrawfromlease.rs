@@ -20,7 +20,6 @@ use crate::blake2b::Hash;
 use crate::ed25519::PublicKey;
 use crate::error::{Error, Result};
 use crate::transaction::{CoinTx, Transaction, TxData};
-use alloc::borrow::ToOwned;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]
@@ -67,7 +66,7 @@ impl TxData for WithdrawFromLease {
         coin_tx: &mut impl CoinTx,
     ) -> Result<()> {
         if self.withdraw == Amount::ZERO || self.withdraw > self.amount {
-            return Err(Error::Invalid("Invalid withdraw amount".to_owned()));
+            return Err(Error::invalid("Invalid withdraw amount"));
         }
         let mut to_account = coin_tx.get_account(self.to)?;
         to_account.withdraw_from_lease(self.withdraw, self.amount, self.to, self.height)?;

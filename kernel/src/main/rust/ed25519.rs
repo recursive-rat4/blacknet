@@ -17,7 +17,6 @@
 
 use crate::blake2b::{Blake2b256, Blake2b512, Digest, Hash};
 use crate::error::Error;
-use alloc::borrow::ToOwned;
 use alloc::vec::Vec;
 use blacknet_crypto::{
     algebra::{IntegerModRing, One},
@@ -230,7 +229,7 @@ pub fn sign(hash: Hash, secret_key: SecretKey) -> Signature {
 
 pub fn verify(signature: Signature, hash: Hash, public_key: PublicKey) -> Result<(), Error> {
     let a = Edwards25519GroupAffine::decode(public_key.0)
-        .ok_or_else(|| Error::Invalid("Invalid public key".to_owned()))?;
+        .ok_or_else(|| Error::invalid("Invalid public key"))?;
     let mut hasher = Blake2b512::new();
     hasher.update(signature.r);
     hasher.update(a.encode());
@@ -249,7 +248,7 @@ pub fn verify(signature: Signature, hash: Hash, public_key: PublicKey) -> Result
     if r.encode() == signature.r {
         Ok(())
     } else {
-        Err(Error::Invalid("Invalid signature".to_owned()))
+        Err(Error::invalid("Invalid signature"))
     }
 }
 

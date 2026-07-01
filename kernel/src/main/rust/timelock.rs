@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2025 Pavel Vasin
+ * Copyright (c) 2018-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -16,7 +16,6 @@
  */
 
 use crate::error::{Error, Result};
-use alloc::borrow::ToOwned;
 use alloc::format;
 use blacknet_time::Seconds;
 use serde::{Deserialize, Serialize};
@@ -43,7 +42,7 @@ impl TimeLock {
             HEIGHT => Ok(()),
             RELATIVE_TIME => Ok(()),
             RELATIVE_HEIGHT => Ok(()),
-            _ => Err(Error::Invalid(format!(
+            _ => Err(Error::invalid(format!(
                 "Unknown time lock type {0}",
                 self.algorithm
             ))),
@@ -63,7 +62,7 @@ impl TimeLock {
             RELATIVE_TIME => compiler_time + self.data.into() < time,
             RELATIVE_HEIGHT => compiler_height as i64 + self.data < height as i64,
             _ => {
-                return Err(Error::Invalid(format!(
+                return Err(Error::invalid(format!(
                     "Unknown time lock type {0}",
                     self.algorithm
                 )));
@@ -72,7 +71,7 @@ impl TimeLock {
         if result {
             Ok(())
         } else {
-            Err(Error::Invalid("Invalid time lock".to_owned()))
+            Err(Error::invalid("Invalid time lock"))
         }
     }
 

@@ -23,7 +23,6 @@ use crate::error::{Error, Result};
 use crate::htlc::HTLC;
 use crate::multisig::Multisig;
 use crate::transaction::*;
-use alloc::borrow::ToOwned;
 use blacknet_serialization::format::from_bytes;
 use blacknet_time::Seconds;
 
@@ -96,7 +95,7 @@ pub trait CoinTx: Sized {
                 let data = from_bytes::<Batch>(tx.data_bytes(), false)?;
                 data.process(tx, hash, self)
             }
-            TxKind::Generated => Err(Error::Invalid("Generated as individual tx".to_owned())),
+            TxKind::Generated => Err(Error::invalid("Generated as individual tx")),
         }
     }
 }

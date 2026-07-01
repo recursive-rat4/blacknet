@@ -19,7 +19,6 @@ use crate::amount::Amount;
 use crate::blake2b::Hash;
 use crate::error::{Error, Result};
 use crate::transaction::{CoinTx, Transaction, TxData};
-use alloc::borrow::ToOwned;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]
@@ -43,7 +42,7 @@ impl TxData for Dispel {
         if tx.fee() > Amount::ZERO {
             Ok(())
         } else {
-            Err(Error::Invalid("Invalid transaction fee".to_owned()))
+            Err(Error::invalid("Invalid transaction fee"))
         }
     }
 }
