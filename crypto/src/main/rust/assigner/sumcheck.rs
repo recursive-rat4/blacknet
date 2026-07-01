@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::UnitalRing;
+use crate::algebra::{Double, RingOps, UnitalRing};
 use crate::assigner::assigment::Assigment;
 use crate::assigner::polynomial::UnivariatePolynomial;
 use crate::assigner::random::Distribution;
@@ -25,12 +25,29 @@ use alloc::vec::Vec;
 use core::marker::PhantomData;
 
 pub struct Proof<'a, R: UnitalRing> {
-    claims: Vec<UnivariatePolynomial<'a, R>>,
+    claims: Vec<R>,
+    assigment: &'a Assigment<R>,
 }
 
-impl<'a, R: UnitalRing> From<Vec<UnivariatePolynomial<'a, R>>> for Proof<'a, R> {
-    fn from(claims: Vec<UnivariatePolynomial<'a, R>>) -> Self {
-        Self { claims }
+impl<'a, R: UnitalRing> Proof<'a, R> {
+    pub const fn new(claims: Vec<R>, assigment: &'a Assigment<R>) -> Self {
+        Self { claims, assigment }
+    }
+
+    pub fn recover(&self, index: usize, degree: usize, sum: &R) -> UnivariatePolynomial<'a, R>
+    where
+        R: Clone,
+        for<'b> &'b R: RingOps<R>,
+    {
+        let claim = &self.claims[index * degree..(index + 1) * degree];
+        let mut coefficients = Vec::<R>::with_capacity(degree + 1);
+        coefficients.push(claim[0].clone());
+        coefficients.push(sum - (&claim[0]).double());
+        for coefficient in claim.iter().skip(1) {
+            coefficients[1] -= coefficient;
+            coefficients.push(coefficient.clone());
+        }
+        UnivariatePolynomial::new(coefficients, self.assigment)
     }
 }
 
@@ -71,11 +88,14 @@ impl<
         proof: &Proof<'a, R>,
         duplex: &mut D,
         exceptional_set: &mut E,
-    ) -> (P::Point, R) {
+    ) -> (P::Point, R)
+    where
+        for<'b> &'b R: RingOps<R>,
+    {
         let mut coordinates = Vec::<R>::with_capacity(polynomial.variables());
         for i in 0..polynomial.variables() {
-            let claim = &proof.claims[i];
-            duplex.absorb(claim);
+            let claim = proof.recover(i, polynomial.degree(), &sum);
+            duplex.absorb(&claim);
             let challenge = exceptional_set.sample(duplex);
             sum = claim.point(&challenge);
             coordinates.push(challenge);

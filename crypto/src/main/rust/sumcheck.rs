@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{AlgebraOps, UnitalAlgebra, UnitalRing};
+use crate::algebra::{AlgebraOps, Double, RingOps, UnitalAlgebra, UnitalRing};
 use crate::polynomial::{
     MultivariatePolynomial, Polynomial, UnivariatePolynomial, interpolation::*,
 };
@@ -30,26 +30,55 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Deserialize, Serialize)]
 pub struct Proof<R: UnitalRing> {
-    claims: Vec<UnivariatePolynomial<R>>,
+    claims: Vec<R>,
 }
 
 impl<R: UnitalRing> Proof<R> {
-    pub const fn new(claims: Vec<UnivariatePolynomial<R>>) -> Self {
+    pub fn new(degree: usize, variables: usize) -> Self {
+        let n = degree * variables;
+        Self {
+            claims: Vec::with_capacity(n),
+        }
+    }
+
+    pub const fn with_claims(claims: Vec<R>) -> Self {
         Self { claims }
     }
 
-    pub fn claim(&self, index: usize) -> &UnivariatePolynomial<R> {
-        &self.claims[index]
+    pub fn push(&mut self, claim: UnivariatePolynomial<R>) {
+        let mut claim = claim.into_iter();
+        match claim.next() {
+            Some(c) => self.claims.push(c),
+            None => return,
+        };
+        let claim = claim.skip(1);
+        self.claims.extend(claim)
     }
 
-    pub const fn variables(&self) -> usize {
+    pub fn recover(&self, index: usize, degree: usize, sum: &R) -> UnivariatePolynomial<R>
+    where
+        R: Clone,
+        for<'a> &'a R: RingOps<R>,
+    {
+        let claim = &self.claims[index * degree..(index + 1) * degree];
+        let mut coefficients = Vec::<R>::with_capacity(degree + 1);
+        coefficients.push(claim[0].clone());
+        coefficients.push(sum - (&claim[0]).double());
+        for coefficient in claim.iter().skip(1) {
+            coefficients[1] -= coefficient;
+            coefficients.push(coefficient.clone());
+        }
+        coefficients.into()
+    }
+
+    pub const fn length(&self) -> usize {
         self.claims.len()
     }
 }
 
 impl<'a, R: UnitalRing> IntoIterator for &'a Proof<R> {
-    type Item = &'a UnivariatePolynomial<R>;
-    type IntoIter = core::slice::Iter<'a, UnivariatePolynomial<R>>;
+    type Item = &'a R;
+    type IntoIter = core::slice::Iter<'a, R>;
 
     #[inline]
     fn into_iter(self) -> Self::IntoIter {
@@ -87,17 +116,17 @@ where
         duplex: &mut D,
         exceptional_set: &mut E,
     ) -> Proof<A> {
-        let mut claims = Vec::<UnivariatePolynomial<A>>::with_capacity(polynomial.variables());
+        let mut proof = Proof::<A>::new(polynomial.degree(), polynomial.variables());
         for _ in 0..polynomial.variables() {
             let claim = Self::prove_round(&polynomial, sum);
             duplex.absorb(&claim);
             let challenge = exceptional_set.sample(duplex);
             polynomial.bind(&challenge);
             sum = claim.point(&challenge);
-            claims.push(claim);
+            proof.push(claim);
             exceptional_set.reset();
         }
-        Proof::new(claims)
+        proof
     }
 
     pub fn verify(
@@ -122,19 +151,15 @@ where
         duplex: &mut D,
         exceptional_set: &mut E,
     ) -> Result<(P::Point, A), Error<A>> {
-        if proof.variables() != polynomial.variables() {
-            return Err(Error::Variables(proof.variables(), polynomial.variables()));
+        let expected_length = polynomial.degree() * polynomial.variables();
+        if proof.length() != expected_length {
+            return Err(Error::Length(proof.length(), expected_length));
         }
         let mut coordinates = Vec::<A>::with_capacity(polynomial.variables());
         for i in 0..polynomial.variables() {
-            let claim = proof.claim(i);
-            if claim.len() != polynomial.degree() + 1 {
-                return Err(Error::Degree(i, claim.len(), polynomial.degree() + 1));
-            }
-            if claim.at_0_plus_1() != sum {
-                return Err(Error::Sum(i, claim.at_0_plus_1(), sum));
-            }
-            duplex.absorb(claim);
+            let claim = proof.recover(i, polynomial.degree(), &sum);
+            debug_assert!(claim.at_0_plus_1() == sum);
+            duplex.absorb(&claim);
             let challenge = exceptional_set.sample(duplex);
             sum = claim.point(&challenge);
             coordinates.push(challenge);
@@ -178,23 +203,16 @@ where
 
 #[derive(Debug)]
 pub enum Error<R: UnitalRing> {
-    Variables(usize, usize),
-    Degree(usize, usize, usize),
-    Sum(usize, R, R),
+    Length(usize, usize),
     PolynomialIdentity(R, R),
 }
 
 impl<R: UnitalRing> fmt::Display for Error<R> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Error::Variables(actual, expected) => {
-                write!(f, "Expected {expected} claims got {actual}")
+            Error::Length(actual, expected) => {
+                write!(f, "Expected length {expected} got {actual}")
             }
-            Error::Degree(round, actual, expected) => write!(
-                f,
-                "At round {round} expected {expected} degree claim got {actual}"
-            ),
-            Error::Sum(round, _, _) => write!(f, "Partial sum at round {round} doesn't match"),
             Error::PolynomialIdentity(_, _) => write!(f, "Polynomial identity check failed"),
         }
     }

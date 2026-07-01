@@ -37,6 +37,16 @@ impl<'a, 'b, R: Semiring + Clone> UnivariatePolynomial<'a, 'b, R> {
         }
     }
 
+    pub const fn new(
+        circuit: &'a CircuitBuilder<'b, R>,
+        coefficients: Vec<LinearCombination<R>>,
+    ) -> Self {
+        Self {
+            circuit,
+            coefficients,
+        }
+    }
+
     pub fn at_0_plus_1(&self) -> LinearCombination<R>
     where
         for<'c> &'c R: SemiringOps<R>,

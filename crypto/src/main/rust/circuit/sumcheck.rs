@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{RingOps, UnitalRing};
+use crate::algebra::{Double, RingOps, UnitalRing};
 use crate::circuit::builder::{CircuitBuilder, LinearCombination, VariableKind};
 use crate::circuit::polynomial::{Point, UnivariatePolynomial};
 use crate::circuit::random::Distribution;
@@ -25,7 +25,8 @@ use alloc::vec::Vec;
 use core::marker::PhantomData;
 
 pub struct Proof<'a, 'b, R: UnitalRing> {
-    claims: Vec<UnivariatePolynomial<'a, 'b, R>>,
+    circuit: &'a CircuitBuilder<'b, R>,
+    claims: Vec<LinearCombination<R>>,
 }
 
 impl<'a, 'b, R: UnitalRing + Clone + Eq> Proof<'a, 'b, R> {
@@ -35,17 +36,40 @@ impl<'a, 'b, R: UnitalRing + Clone + Eq> Proof<'a, 'b, R> {
         variables: usize,
         degree: usize,
     ) -> Self {
+        let scope = circuit.scope("Proof::allocate");
         Self {
-            claims: (0..variables)
-                .map(|_| UnivariatePolynomial::allocate(circuit, kind, degree + 1))
+            circuit,
+            claims: (0..degree * variables)
+                .map(|_| scope.variable(kind).into())
                 .collect(),
         }
     }
-}
 
-impl<'a, 'b, R: UnitalRing> From<Vec<UnivariatePolynomial<'a, 'b, R>>> for Proof<'a, 'b, R> {
-    fn from(claims: Vec<UnivariatePolynomial<'a, 'b, R>>) -> Self {
-        Self { claims }
+    pub const fn new(
+        circuit: &'a CircuitBuilder<'b, R>,
+        claims: Vec<LinearCombination<R>>,
+    ) -> Self {
+        Self { circuit, claims }
+    }
+
+    pub fn recover(
+        &self,
+        index: usize,
+        degree: usize,
+        sum: &LinearCombination<R>,
+    ) -> UnivariatePolynomial<'a, 'b, R>
+    where
+        for<'c> &'c R: RingOps<R>,
+    {
+        let claim = &self.claims[index * degree..(index + 1) * degree];
+        let mut coefficients = Vec::<LinearCombination<R>>::with_capacity(degree + 1);
+        coefficients.push(claim[0].clone());
+        coefficients.push(sum - (&claim[0]).double());
+        for coefficient in claim.iter().skip(1) {
+            coefficients[1] -= coefficient;
+            coefficients.push(coefficient.clone());
+        }
+        UnivariatePolynomial::new(self.circuit, coefficients)
     }
 }
 
@@ -57,7 +81,7 @@ pub struct SumCheck<
     D: Duplexer<Msg = LinearCombination<R>>,
     E: Distribution<'a, 'b, R, D, Output = LinearCombination<R>>,
 > {
-    circuit: &'a CircuitBuilder<'b, R>,
+    _circuit: &'a CircuitBuilder<'b, R>,
     phantom_p: PhantomData<P>,
     phantom_d: PhantomData<D>,
     phantom_e: PhantomData<E>,
@@ -76,7 +100,7 @@ where
 {
     pub const fn new(circuit: &'a CircuitBuilder<'b, R>) -> Self {
         Self {
-            circuit,
+            _circuit: circuit,
             phantom_p: PhantomData,
             phantom_d: PhantomData,
             phantom_e: PhantomData,
@@ -91,12 +115,10 @@ where
         duplex: &mut D,
         exceptional_set: &mut E,
     ) -> (Point<R>, LinearCombination<R>) {
-        let scope = self.circuit.scope("SumCheck::verify_early_stopping");
         let mut coordinates = Vec::<LinearCombination<R>>::with_capacity(polynomial.variables());
         for i in 0..polynomial.variables() {
-            let claim = &proof.claims[i];
-            scope.constrain(claim.at_0_plus_1(), sum.clone());
-            duplex.absorb(claim);
+            let claim = proof.recover(i, polynomial.degree(), &sum);
+            duplex.absorb(&claim);
             let challenge = exceptional_set.sample(duplex);
             sum = claim.point(&challenge);
             coordinates.push(challenge);

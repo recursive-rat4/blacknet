@@ -15,7 +15,6 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_crypto::assigner::polynomial::UnivariatePolynomial as UnivariatePolynomialAssigner;
 use blacknet_crypto::assigner::sumcheck::{Proof as ProofAssigner, SumCheck as SumCheckAssigner};
 use blacknet_crypto::assigner::symmetric::DuplexPoseidon2Pervushin as DuplexPoseidon2PervushinAssigner;
 use blacknet_crypto::circuit::builder::{CircuitBuilder, VariableKind};
@@ -25,7 +24,6 @@ use blacknet_crypto::constraintsystem::ConstraintSystem;
 use blacknet_crypto::pervushin::PervushinField;
 use blacknet_crypto::polynomial::{
     EqExtension, MaskingPolynomial, MultilinearExtension, MultivariatePolynomial,
-    UnivariatePolynomial,
 };
 use blacknet_crypto::random::{Distribution, UniformDistribution};
 use blacknet_crypto::sumcheck::{Error, Proof as ProofPlain, SumCheck as SumCheckPlain};
@@ -62,7 +60,7 @@ fn mle() {
 
     assert_matches!(
         SC::verify(&p1, s2, &proof, &mut duplex, &mut exceptional_set),
-        Err(Error::Sum(_, _, _))
+        Err(Error::PolynomialIdentity(_, _))
     );
     duplex.reset();
     exceptional_set.reset();
@@ -78,16 +76,7 @@ fn mle() {
 
     assert_matches!(
         SC::verify(&p1, s1, &proof3, &mut duplex, &mut exceptional_set),
-        Err(Error::Variables(0, 2))
-    );
-    duplex.reset();
-    exceptional_set.reset();
-
-    let proof4 = ProofPlain::new(vec![UnivariatePolynomial::default(); 2]);
-
-    assert_matches!(
-        SC::verify(&p1, s1, &proof4, &mut duplex, &mut exceptional_set),
-        Err(Error::Degree(0, 0, 2))
+        Err(Error::Length(0, 2))
     );
     duplex.reset();
     exceptional_set.reset();
@@ -116,7 +105,7 @@ fn eq() {
 
     assert_matches!(
         SC::verify(&p1, s2, &proof, &mut duplex, &mut exceptional_set),
-        Err(Error::Sum(_, _, _))
+        Err(Error::PolynomialIdentity(_, _))
     );
     duplex.reset();
     exceptional_set.reset();
@@ -145,7 +134,7 @@ fn mask() {
 
     assert_matches!(
         SC::verify(&p1, s2, &proof, &mut duplex, &mut exceptional_set),
-        Err(Error::Sum(_, _, _))
+        Err(Error::PolynomialIdentity(_, _))
     );
     duplex.reset();
     exceptional_set.reset();
@@ -210,14 +199,10 @@ fn circuit() {
     let r1cs = circuit.r1cs();
     let z = r1cs.assigment();
     z.push(sum_plain);
-    z.extend((&proof_plain).into_iter().flatten().copied());
+    z.extend((&proof_plain).into_iter().copied());
 
-    let proof_assigner = ProofAssigner::from(
-        (&proof_plain)
-            .into_iter()
-            .map(|i| UnivariatePolynomialAssigner::new(i.as_ref().to_owned(), &z))
-            .collect::<Vec<_>>(),
-    );
+    let proof_assigner =
+        ProofAssigner::new((&proof_plain).into_iter().copied().collect::<Vec<_>>(), &z);
     type DuplexAssigner<'a> = DuplexPoseidon2PervushinAssigner<'a>;
     let mut duplex_assigner = DuplexAssigner::new(&z);
     type UniformDistributionAssigner<'a> = UniformDistribution<DuplexAssigner<'a>>;
