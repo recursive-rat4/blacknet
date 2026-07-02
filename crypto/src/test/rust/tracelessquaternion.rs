@@ -76,7 +76,7 @@ fn inv() {
     let b = M::from([0x1BC2503159721ED7, 0x0E43DAFCEA68DE12, 0x00C565C87B5F9D4D].map(Z::new));
     assert_eq!(b.inv().unwrap(), a);
     assert_eq!(a.inv().unwrap(), b);
-    assert_eq!(M::ZERO.inv(), None);
+    assert!(M::ZERO.inv().is_none());
 }
 
 #[test]

@@ -748,7 +748,7 @@ where
                 a.swap_row(i, pivot);
             }
 
-            let f = (&self[(i, i)]).inv()?;
+            let f = (&self[(i, i)]).inv().expect("pivot");
             let row = &mut self.elements[i * self.columns..(i + 1) * self.columns];
             for element in row {
                 *element *= &f

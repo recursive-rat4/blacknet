@@ -16,21 +16,22 @@
  */
 
 use crate::algebra::{CommutativeRing, DivisionRing, DivisionRingOps, IntegerModRing, UnitalRing};
+use crate::branchless::BlOption;
 use core::ops::Div;
 
 #[rustfmt::skip]
 pub trait FieldOps<F>
     : DivisionRingOps<F>
-    + Div<F, Output = Option<F>>
-    + for<'a> Div<&'a F, Output = Option<F>>
+    + Div<F, Output = BlOption<F>>
+    + for<'a> Div<&'a F, Output = BlOption<F>>
 {
 }
 
 #[rustfmt::skip]
 impl<F, T
     : DivisionRingOps<F>
-    + Div<F, Output = Option<F>>
-    + for<'a> Div<&'a F, Output = Option<F>>
+    + Div<F, Output = BlOption<F>>
+    + for<'a> Div<&'a F, Output = BlOption<F>>
 > FieldOps<F> for T {}
 
 /// A unital commutative division ring.
@@ -39,8 +40,8 @@ pub trait Field
     : UnitalRing
     + CommutativeRing
     + DivisionRing
-    + Div<Output = Option<Self>>
-    + for<'a> Div<&'a Self, Output = Option<Self>>
+    + Div<Output = BlOption<Self>>
+    + for<'a> Div<&'a Self, Output = BlOption<Self>>
 {
 }
 
@@ -49,8 +50,8 @@ impl<R
     : UnitalRing
     + CommutativeRing
     + DivisionRing
-    + Div<Output = Option<Self>>
-    + for<'a> Div<&'a Self, Output = Option<Self>>
+    + Div<Output = BlOption<Self>>
+    + for<'a> Div<&'a Self, Output = BlOption<Self>>
 > Field for R
 {
 }

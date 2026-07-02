@@ -21,7 +21,7 @@ use crate::algebra::{
     MultiplicativeSemigroup, NTTRing, One, PolynomialRing, RightOne, RightZero, Semifield, Set,
     Square, UnivariateRing, Zero,
 };
-use crate::branchless::{BlAbs, BlAssign};
+use crate::branchless::{BlAbs, BlAssign, BlOption};
 use crate::convolution::{Binomial, Convolution, Negacyclic};
 use crate::gcd::gcd_inner;
 use crate::integer::Integer;
@@ -55,22 +55,19 @@ impl LMField {
         ((t & 0xFFFFFFFFFFFFFFF) - 33 * (t >> 60)) as i64
     }
 
-    fn egcd(self) -> Option<Self> {
+    fn egcd(self) -> BlOption<Self> {
         // Extended Binary GCD
         let mut a = self.canonical() as u64;
         let mut b = Self::MODULUS as u64;
         let (f00, _, f10, _) = gcd_inner::<60>(&mut a, &mut b);
         let (_, _, f11, g11) = gcd_inner::<60>(&mut a, &mut b);
-        if b != 1 {
-            return None;
-        }
         let f00 = Self { n: f00 };
         let f10 = Self { n: f10 };
         let f11 = Self { n: f11 };
         let g11 = Self { n: g11 };
         let mut f = f00 * f11 + f10 * g11;
         f *= Self::HALF_IN_120;
-        Some(f)
+        BlOption::new(f, b == 1)
     }
 
     const HALF_IN_120: Self = Self {
@@ -343,7 +340,7 @@ impl Square for &LMField {
 }
 
 impl Inv for LMField {
-    type Output = Option<Self>;
+    type Output = BlOption<Self>;
 
     fn inv(self) -> Self::Output {
         LMField::egcd(self)
@@ -351,7 +348,7 @@ impl Inv for LMField {
 }
 
 impl Inv for &LMField {
-    type Output = Option<LMField>;
+    type Output = BlOption<LMField>;
 
     fn inv(self) -> Self::Output {
         LMField::egcd(*self)
@@ -359,7 +356,7 @@ impl Inv for &LMField {
 }
 
 impl Div for LMField {
-    type Output = Option<Self>;
+    type Output = BlOption<Self>;
 
     fn div(self, rps: Self) -> Self::Output {
         LMField::egcd(rps).map(|v| self * v)
@@ -367,7 +364,7 @@ impl Div for LMField {
 }
 
 impl Div<&Self> for LMField {
-    type Output = Option<Self>;
+    type Output = BlOption<Self>;
 
     fn div(self, rps: &Self) -> Self::Output {
         LMField::egcd(*rps).map(|v| self * v)
@@ -375,7 +372,7 @@ impl Div<&Self> for LMField {
 }
 
 impl Div<LMField> for &LMField {
-    type Output = Option<LMField>;
+    type Output = BlOption<LMField>;
 
     fn div(self, rps: LMField) -> Self::Output {
         LMField::egcd(rps).map(|v| self * v)
@@ -383,7 +380,7 @@ impl Div<LMField> for &LMField {
 }
 
 impl<'a> Div<&'a LMField> for &LMField {
-    type Output = Option<LMField>;
+    type Output = BlOption<LMField>;
 
     fn div(self, rps: &'a LMField) -> Self::Output {
         LMField::egcd(*rps).map(|v| self * v)
@@ -578,19 +575,19 @@ impl LMField2 {
 }
 
 impl Inv for LMField2 {
-    type Output = Option<Self>;
+    type Output = BlOption<Self>;
 
     fn inv(self) -> Self::Output {
-        let f = self.field_norm().inv()?;
+        let (f, is_inv) = self.field_norm().inv().into();
         let mut r = self;
         r[0] *= f;
         r[1] *= -f;
-        Some(r)
+        BlOption::new(r, is_inv)
     }
 }
 
 impl Div for LMField2 {
-    type Output = Option<Self>;
+    type Output = BlOption<Self>;
 
     fn div(self, rps: Self) -> Self::Output {
         rps.inv().map(|v| self * v)
@@ -598,7 +595,7 @@ impl Div for LMField2 {
 }
 
 impl Div<&Self> for LMField2 {
-    type Output = Option<Self>;
+    type Output = BlOption<Self>;
 
     #[inline]
     fn div(self, rps: &Self) -> Self::Output {
@@ -645,26 +642,22 @@ impl LMField4 {
 }
 
 impl Inv for LMField4 {
-    type Output = Option<Self>;
+    type Output = BlOption<Self>;
 
     fn inv(self) -> Self::Output {
-        if self != Self::ZERO {
-            // Feng and Itoh-Tsujii algorithm
-            let mut r1 = self.frobenius();
-            for _ in 0..2 {
-                r1 *= self;
-                r1 = r1.frobenius();
-            }
-            let r0 = (r1 * self).constant_term();
-            Some((r1 / r0).expect("multiplicative group of subfield"))
-        } else {
-            None
+        // Feng and Itoh-Tsujii algorithm
+        let mut r1 = self.frobenius();
+        for _ in 0..2 {
+            r1 *= self;
+            r1 = r1.frobenius();
         }
+        let r0 = (r1 * self).constant_term();
+        r1 / r0
     }
 }
 
 impl Div for LMField4 {
-    type Output = Option<Self>;
+    type Output = BlOption<Self>;
 
     fn div(self, rps: Self) -> Self::Output {
         rps.inv().map(|v| self * v)
@@ -672,7 +665,7 @@ impl Div for LMField4 {
 }
 
 impl Div<&Self> for LMField4 {
-    type Output = Option<Self>;
+    type Output = BlOption<Self>;
 
     #[inline]
     fn div(self, rps: &Self) -> Self::Output {

@@ -69,9 +69,9 @@ fn inv() {
 
 #[test]
 fn div() {
-    assert_eq!(GF2::new(0) / GF2::new(0), None);
+    assert!((GF2::new(0) / GF2::new(0)).is_none());
     assert_eq!((GF2::new(0) / GF2::new(1)).unwrap(), GF2::new(0));
-    assert_eq!(GF2::new(1) / GF2::new(0), None);
+    assert!((GF2::new(1) / GF2::new(0)).is_none());
     assert_eq!((GF2::new(1) / GF2::new(1)).unwrap(), GF2::new(1));
 }
 

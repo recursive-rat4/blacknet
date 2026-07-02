@@ -21,6 +21,7 @@ use crate::algebra::{
     MultiplicativeSemigroup, One, PolynomialRing, PowerOfTwoCyclotomicRing, RightOne, RightZero,
     RingOps, Semimodule, Set, Square, UnitalAlgebra, UnitalRing, Zero,
 };
+use crate::branchless::BlOption;
 use crate::convolution::{Convolution, Negacyclic};
 use crate::symmetric::{Absorb, Duplexer, Squeeze};
 use core::borrow::{Borrow, BorrowMut};
@@ -512,22 +513,22 @@ impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> MulAssign<&R>
     }
 }
 
-impl<R: UnitalRing + Inv<Output = Option<R>>, const N: usize, C: Convolution<R, N>> Div<R>
+impl<R: UnitalRing + Inv<Output = BlOption<R>>, const N: usize, C: Convolution<R, N>> Div<R>
     for UnivariateRing<R, N, C>
 {
-    type Output = Option<Self>;
+    type Output = BlOption<Self>;
 
     fn div(self, rps: R) -> Self::Output {
         (self.coefficients / rps).map(Self::new)
     }
 }
 
-impl<R: UnitalRing + Inv<Output = Option<R>>, const N: usize, C: Convolution<R, N>> Div<&R>
+impl<R: UnitalRing + Inv<Output = BlOption<R>>, const N: usize, C: Convolution<R, N>> Div<&R>
     for UnivariateRing<R, N, C>
 where
-    for<'a> &'a R: Inv<Output = Option<R>>,
+    for<'a> &'a R: Inv<Output = BlOption<R>>,
 {
-    type Output = Option<Self>;
+    type Output = BlOption<Self>;
 
     fn div(self, rps: &R) -> Self::Output {
         (self.coefficients / rps).map(Self::new)

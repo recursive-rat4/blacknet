@@ -23,6 +23,7 @@ use crate::algebra::{
     One, RightOne, RightZero, RingOps, Semimodule, Set, Square, UnitalAlgebra, UnivariateRing,
     Zero, batched_inv,
 };
+use crate::branchless::BlOption;
 use crate::convolution::{Convolution, Negacyclic};
 use crate::numbertheoretictransform::{NTTConvolution, Twiddles, cooley_tukey, gentleman_sande};
 use crate::symmetric::{Absorb, Duplexer, Squeeze};
@@ -530,7 +531,7 @@ impl<Z: Twiddles<M> + Clone, const M: usize, const N: usize> Inv for NTTRing<Z, 
 where
     for<'a> &'a Z: DivisionRingOps<Z>,
 {
-    type Output = Option<NTTRing<Z, M, N>>;
+    type Output = BlOption<NTTRing<Z, M, N>>;
 
     #[inline]
     fn inv(self) -> Self::Output {
@@ -542,13 +543,13 @@ impl<Z: Twiddles<M> + Clone, const M: usize, const N: usize> Inv for &NTTRing<Z,
 where
     for<'a> &'a Z: DivisionRingOps<Z>,
 {
-    type Output = Option<NTTRing<Z, M, N>>;
+    type Output = BlOption<NTTRing<Z, M, N>>;
 
     fn inv(self) -> Self::Output {
         if NTTRing::<Z, M, N>::INERTIA == 1 {
-            let mut spectrum = FreeModule::<Z, N>::ZERO;
-            batched_inv::<Z, N>(&self.spectrum, &mut spectrum).ok()?;
-            Some(NTTRing { spectrum })
+            let mut r = NTTRing::<Z, M, N>::ZERO;
+            let (_, is_inv) = batched_inv::<Z, N>(&self.spectrum, &mut r.spectrum).into();
+            BlOption::new(r, is_inv)
         } else {
             unimplemented!("Inv with inertia = {}", NTTRing::<Z, M, N>::INERTIA);
         }
@@ -556,7 +557,7 @@ where
 }
 
 impl<Z: Twiddles<M>, const M: usize, const N: usize> Div<Z> for NTTRing<Z, M, N> {
-    type Output = Option<Self>;
+    type Output = BlOption<Self>;
 
     fn div(self, rps: Z) -> Self::Output {
         (self.spectrum / rps).map(|spectrum| Self { spectrum })
@@ -567,7 +568,7 @@ impl<Z: Twiddles<M>, const M: usize, const N: usize> Div<&Z> for NTTRing<Z, M, N
 where
     for<'a> &'a Z: DivisionRingOps<Z>,
 {
-    type Output = Option<Self>;
+    type Output = BlOption<Self>;
 
     fn div(self, rps: &Z) -> Self::Output {
         (self.spectrum / rps).map(|spectrum| Self { spectrum })

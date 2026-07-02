@@ -106,7 +106,7 @@ fn inv() {
     );
     assert_eq!(b.inv().unwrap(), a);
     assert_eq!(a.inv().unwrap(), b);
-    assert_eq!(A::ZERO.inv(), None);
+    assert!(A::ZERO.inv().is_none());
 }
 
 #[test]

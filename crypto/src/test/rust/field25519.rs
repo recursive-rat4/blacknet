@@ -109,7 +109,7 @@ fn div() {
     assert_eq!((F::ZERO / c).unwrap(), F::ZERO);
     assert_eq!((c / F::ONE).unwrap(), c);
     assert_eq!((-F::ONE / -F::ONE).unwrap(), F::ONE);
-    assert_eq!(F::ONE / F::ZERO, None);
+    assert!((F::ONE / F::ZERO).is_none());
 }
 
 #[test]

@@ -118,7 +118,7 @@ fn z_div() {
     assert_eq!((a / b).unwrap(), c);
     assert_eq!((b / a).unwrap(), d);
     assert_eq!((-Z::ONE / -Z::ONE).unwrap(), Z::ONE);
-    assert_eq!(Z::ONE / Z::ZERO, None);
+    assert!((Z::ONE / Z::ZERO).is_none());
 }
 
 #[test]
@@ -181,7 +181,7 @@ fn f2_inv() {
     let b = F2::from([0x051326C4E39F112B, 0x04787FAC4F00ADC5].map(Z::new));
     assert_eq!(b.inv().unwrap(), a);
     assert_eq!(a.inv().unwrap(), b);
-    assert_eq!(F2::ZERO.inv(), None);
+    assert!(F2::ZERO.inv().is_none());
 }
 
 #[test]
@@ -306,7 +306,7 @@ fn f4_inv() {
     );
     assert_eq!(b.inv().unwrap(), a);
     assert_eq!(a.inv().unwrap(), b);
-    assert_eq!(F4::ZERO.inv(), None);
+    assert!(F4::ZERO.inv().is_none());
 }
 
 #[test]

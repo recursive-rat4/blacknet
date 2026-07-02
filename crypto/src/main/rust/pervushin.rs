@@ -21,7 +21,7 @@ use crate::algebra::{
     MultiplicativeSemigroup, One, RightOne, RightZero, Semifield, Set, Sqrt, Square,
     UnivariateRing, Zero,
 };
-use crate::branchless::{BlAbs, BlAssign};
+use crate::branchless::{BlAbs, BlAssign, BlOption};
 use crate::convolution::Negacyclic;
 use crate::gcd::gcd_inner;
 use crate::integer::Integer;
@@ -54,22 +54,19 @@ impl PervushinField {
         Self::reduce_64(((x & 0x1FFFFFFFFFFFFFFF) + (x >> 61)) as i64)
     }
 
-    fn egcd(self) -> Option<Self> {
+    fn egcd(self) -> BlOption<Self> {
         // Extended Binary GCD
         let mut a = self.canonical() as u64;
         let mut b = Self::MODULUS as u64;
         let (f00, _, f10, _) = gcd_inner::<60>(&mut a, &mut b);
         let (_, _, f11, g11) = gcd_inner::<60>(&mut a, &mut b);
-        if b != 1 {
-            return None;
-        }
         let f00 = Self { n: f00 };
         let f10 = Self { n: f10 };
         let f11 = Self { n: f11 };
         let g11 = Self { n: g11 };
         let mut f = f00 * f11 + f10 * g11;
         f.n = Self::reduce_64(f.n << 2);
-        Some(f)
+        BlOption::new(f, b == 1)
     }
 
     fn pow_p_plus_1_quarter(mut self) -> Self {
@@ -345,7 +342,7 @@ impl Square for &PervushinField {
 }
 
 impl Inv for PervushinField {
-    type Output = Option<Self>;
+    type Output = BlOption<Self>;
 
     fn inv(self) -> Self::Output {
         PervushinField::egcd(self)
@@ -353,7 +350,7 @@ impl Inv for PervushinField {
 }
 
 impl Inv for &PervushinField {
-    type Output = Option<PervushinField>;
+    type Output = BlOption<PervushinField>;
 
     fn inv(self) -> Self::Output {
         PervushinField::egcd(*self)
@@ -361,7 +358,7 @@ impl Inv for &PervushinField {
 }
 
 impl Div for PervushinField {
-    type Output = Option<Self>;
+    type Output = BlOption<Self>;
 
     fn div(self, rps: Self) -> Self::Output {
         PervushinField::egcd(rps).map(|v| self * v)
@@ -369,7 +366,7 @@ impl Div for PervushinField {
 }
 
 impl Div<&Self> for PervushinField {
-    type Output = Option<Self>;
+    type Output = BlOption<Self>;
 
     fn div(self, rps: &Self) -> Self::Output {
         PervushinField::egcd(*rps).map(|v| self * v)
@@ -377,7 +374,7 @@ impl Div<&Self> for PervushinField {
 }
 
 impl Div<PervushinField> for &PervushinField {
-    type Output = Option<PervushinField>;
+    type Output = BlOption<PervushinField>;
 
     fn div(self, rps: PervushinField) -> Self::Output {
         PervushinField::egcd(rps).map(|v| self * v)
@@ -385,7 +382,7 @@ impl Div<PervushinField> for &PervushinField {
 }
 
 impl<'a> Div<&'a PervushinField> for &PervushinField {
-    type Output = Option<PervushinField>;
+    type Output = BlOption<PervushinField>;
 
     fn div(self, rps: &'a PervushinField) -> Self::Output {
         PervushinField::egcd(*rps).map(|v| self * v)
@@ -576,19 +573,19 @@ impl PervushinField2 {
 }
 
 impl Inv for PervushinField2 {
-    type Output = Option<Self>;
+    type Output = BlOption<Self>;
 
     fn inv(self) -> Self::Output {
-        let f = self.field_norm().inv()?;
+        let (f, is_inv) = self.field_norm().inv().into();
         let mut r = self;
         r[0] *= f;
         r[1] *= -f;
-        Some(r)
+        BlOption::new(r, is_inv)
     }
 }
 
 impl Div for PervushinField2 {
-    type Output = Option<Self>;
+    type Output = BlOption<Self>;
 
     fn div(self, rps: Self) -> Self::Output {
         rps.inv().map(|v| self * v)
@@ -596,7 +593,7 @@ impl Div for PervushinField2 {
 }
 
 impl Div<&Self> for PervushinField2 {
-    type Output = Option<Self>;
+    type Output = BlOption<Self>;
 
     fn div(self, rps: &Self) -> Self::Output {
         rps.inv().map(|v| self * v)

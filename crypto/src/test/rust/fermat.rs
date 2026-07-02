@@ -99,7 +99,7 @@ fn inv() {
     assert_eq!(a.inv().unwrap(), b);
     assert_eq!(c.inv().unwrap(), d);
     assert_eq!(d.inv().unwrap(), c);
-    assert_eq!(Z::ZERO.inv(), None);
+    assert!(Z::ZERO.inv().is_none());
 }
 
 #[test]
@@ -111,7 +111,7 @@ fn div() {
     assert_eq!((a / b).unwrap(), c);
     assert_eq!((b / a).unwrap(), d);
     assert_eq!((-Z::ONE / -Z::ONE).unwrap(), Z::ONE);
-    assert_eq!(Z::ONE / Z::ZERO, None);
+    assert!((Z::ONE / Z::ZERO).is_none());
 }
 
 #[test]

@@ -20,7 +20,7 @@ use crate::algebra::{
     Inv, LeftOne, LeftZero, MultiplicativeCommutativeMagma, MultiplicativeSemigroup, NTTRing, One,
     RightOne, RightZero, Semifield, Set, Square, UnivariateRing, Zero,
 };
-use crate::branchless::{BlAbs, BlAssign, BlSelect, BlSwap};
+use crate::branchless::{BlAbs, BlAssign, BlOption, BlSelect, BlSwap};
 use crate::convolution::Negacyclic;
 use crate::integer::Integer;
 use core::fmt::{Debug, Formatter, Result};
@@ -50,7 +50,7 @@ impl FermatField {
         ((x & 0xFFFF) - (x >> 16)) as i32
     }
 
-    fn egcd(self, rps: Self) -> Option<Self> {
+    fn egcd(self, rps: Self) -> BlOption<Self> {
         // Extended Binary GCD
         // https://eprint.iacr.org/2020/972
         let mut a = self.canonical();
@@ -67,12 +67,9 @@ impl FermatField {
             a >>= 1;
             d <<= 1;
         }
-        if b != 1 {
-            return None;
-        }
         let d = Self::reduce_64(d);
         let d = Self::new(d);
-        Some(d)
+        BlOption::new(d, b == 1)
     }
 }
 
@@ -313,7 +310,7 @@ impl Square for &FermatField {
 }
 
 impl Inv for FermatField {
-    type Output = Option<Self>;
+    type Output = BlOption<Self>;
 
     fn inv(self) -> Self::Output {
         FermatField::egcd(self, FermatField::ONE)
@@ -321,7 +318,7 @@ impl Inv for FermatField {
 }
 
 impl Inv for &FermatField {
-    type Output = Option<FermatField>;
+    type Output = BlOption<FermatField>;
 
     fn inv(self) -> Self::Output {
         FermatField::egcd(*self, FermatField::ONE)
@@ -329,7 +326,7 @@ impl Inv for &FermatField {
 }
 
 impl Div for FermatField {
-    type Output = Option<Self>;
+    type Output = BlOption<Self>;
 
     fn div(self, rps: Self) -> Self::Output {
         FermatField::egcd(rps, self)
@@ -337,7 +334,7 @@ impl Div for FermatField {
 }
 
 impl Div<&Self> for FermatField {
-    type Output = Option<Self>;
+    type Output = BlOption<Self>;
 
     fn div(self, rps: &Self) -> Self::Output {
         FermatField::egcd(*rps, self)
@@ -345,7 +342,7 @@ impl Div<&Self> for FermatField {
 }
 
 impl Div<FermatField> for &FermatField {
-    type Output = Option<FermatField>;
+    type Output = BlOption<FermatField>;
 
     fn div(self, rps: FermatField) -> Self::Output {
         FermatField::egcd(rps, *self)
@@ -353,7 +350,7 @@ impl Div<FermatField> for &FermatField {
 }
 
 impl<'a> Div<&'a FermatField> for &FermatField {
-    type Output = Option<FermatField>;
+    type Output = BlOption<FermatField>;
 
     fn div(self, rps: &'a FermatField) -> Self::Output {
         FermatField::egcd(*rps, *self)

@@ -16,6 +16,7 @@
  */
 
 use crate::algebra::{Double, Inv, RingOps, Semiring, SemiringOps, Square, UnitalRing};
+use crate::branchless::BlOption;
 use crate::matrix::DenseVector;
 use crate::polynomial::{InBasis, Polynomial, TensorBasis};
 use crate::symmetric::{Absorb, Duplexer, Squeeze, SqueezeWithSize};
@@ -378,11 +379,11 @@ where
     }
 }
 
-impl<R: Semiring + Inv<Output = Option<R>>> Div<R> for UnivariatePolynomial<R>
+impl<R: Semiring + Inv<Output = BlOption<R>>> Div<R> for UnivariatePolynomial<R>
 where
     for<'a> &'a R: SemiringOps<R>,
 {
-    type Output = Option<Self>;
+    type Output = BlOption<Self>;
 
     fn div(self, rps: R) -> Self::Output {
         rps.inv().map(|v| self * v)

@@ -23,7 +23,7 @@ use crate::algebra::{
     Inv, LeftOne, LeftZero, MultiplicativeCommutativeMagma, MultiplicativeSemigroup, One, RightOne,
     RightZero, Semifield, Set, Sqrt, Square, Zero,
 };
-use crate::branchless::{BlAssign, BlEq, BlSelect};
+use crate::branchless::{BlAssign, BlEq, BlOption, BlSelect};
 use crate::integer::Integer;
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
@@ -236,56 +236,50 @@ impl Square for &GF2 {
 }
 
 impl Inv for GF2 {
-    type Output = Option<Self>;
+    type Output = BlOption<Self>;
 
     fn inv(self) -> Self::Output {
-        match self.n {
-            true => Some(Self::ONE),
-            false => None,
-        }
+        BlOption::new(Self::ONE, self.n)
     }
 }
 
 impl Inv for &GF2 {
-    type Output = Option<GF2>;
+    type Output = BlOption<GF2>;
 
     fn inv(self) -> Self::Output {
-        match self.n {
-            true => Some(GF2::ONE),
-            false => None,
-        }
+        BlOption::new(GF2::ONE, self.n)
     }
 }
 
 impl Div for GF2 {
-    type Output = Option<Self>;
+    type Output = BlOption<Self>;
 
     fn div(self, rps: Self) -> Self::Output {
-        if rps.n { Some(self) } else { None }
+        BlOption::new(self, rps.n)
     }
 }
 
 impl Div<&Self> for GF2 {
-    type Output = Option<Self>;
+    type Output = BlOption<Self>;
 
     fn div(self, rps: &Self) -> Self::Output {
-        if rps.n { Some(self) } else { None }
+        BlOption::new(self, rps.n)
     }
 }
 
 impl Div<GF2> for &GF2 {
-    type Output = Option<GF2>;
+    type Output = BlOption<GF2>;
 
     fn div(self, rps: GF2) -> Self::Output {
-        if rps.n { Some(*self) } else { None }
+        BlOption::new(*self, rps.n)
     }
 }
 
 impl<'a> Div<&'a GF2> for &GF2 {
-    type Output = Option<GF2>;
+    type Output = BlOption<GF2>;
 
     fn div(self, rps: &'a GF2) -> Self::Output {
-        if rps.n { Some(*self) } else { None }
+        BlOption::new(*self, rps.n)
     }
 }
 

@@ -21,7 +21,7 @@ use crate::algebra::{
     Set, Sqrt, Square, Zero,
 };
 use crate::bigint::{UInt256, UInt512};
-use crate::branchless::{BlAbs, BlAssign, BlEq, BlOrd, BlSelect, BlSwap};
+use crate::branchless::{BlAbs, BlAssign, BlEq, BlOption, BlOrd, BlSelect, BlSwap};
 use crate::integer::Integer;
 use core::array;
 use core::fmt;
@@ -83,7 +83,7 @@ impl Field25519 {
         Self { n }
     }
 
-    fn egcd(self, rps: Self) -> Option<Self> {
+    fn egcd(self, rps: Self) -> BlOption<Self> {
         // Extended Binary GCD (classic algorithm)
         // https://eprint.iacr.org/2020/972
         let mut a = self.canonical();
@@ -100,10 +100,7 @@ impl Field25519 {
             a >>= 1;
             c = c.halve();
         }
-        if b.bl_ne(&UInt256::ONE) {
-            return None;
-        }
-        Some(d)
+        BlOption::new(d, b.bl_eq(&UInt256::ONE))
     }
 
     fn square_n<const N: usize>(mut self) -> Self {
@@ -424,7 +421,7 @@ impl Square for &Field25519 {
 }
 
 impl Inv for Field25519 {
-    type Output = Option<Self>;
+    type Output = BlOption<Self>;
 
     fn inv(self) -> Self::Output {
         Field25519::egcd(self, Field25519::ONE)
@@ -432,7 +429,7 @@ impl Inv for Field25519 {
 }
 
 impl Inv for &Field25519 {
-    type Output = Option<Field25519>;
+    type Output = BlOption<Field25519>;
 
     fn inv(self) -> Self::Output {
         Field25519::egcd(*self, Field25519::ONE)
@@ -440,7 +437,7 @@ impl Inv for &Field25519 {
 }
 
 impl Div for Field25519 {
-    type Output = Option<Self>;
+    type Output = BlOption<Self>;
 
     fn div(self, rps: Self) -> Self::Output {
         Field25519::egcd(rps, self)
@@ -448,7 +445,7 @@ impl Div for Field25519 {
 }
 
 impl Div<&Self> for Field25519 {
-    type Output = Option<Self>;
+    type Output = BlOption<Self>;
 
     fn div(self, rps: &Self) -> Self::Output {
         Field25519::egcd(*rps, self)
@@ -456,7 +453,7 @@ impl Div<&Self> for Field25519 {
 }
 
 impl Div<Field25519> for &Field25519 {
-    type Output = Option<Field25519>;
+    type Output = BlOption<Field25519>;
 
     fn div(self, rps: Field25519) -> Self::Output {
         Field25519::egcd(rps, *self)
@@ -464,7 +461,7 @@ impl Div<Field25519> for &Field25519 {
 }
 
 impl<'a> Div<&'a Field25519> for &Field25519 {
-    type Output = Option<Field25519>;
+    type Output = BlOption<Field25519>;
 
     fn div(self, rps: &'a Field25519) -> Self::Output {
         Field25519::egcd(*rps, *self)

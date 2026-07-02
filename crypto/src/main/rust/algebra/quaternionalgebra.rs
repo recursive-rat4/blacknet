@@ -20,6 +20,7 @@ use crate::algebra::{
     Double, FreeModule, Inv, LeftOne, LeftZero, MultiplicativeSemigroup, One, RightOne, RightZero,
     RingOps, Semimodule, Set, Square, TracelessQuaternion, UnitalAlgebra, UnitalRing, Zero,
 };
+use crate::branchless::BlOption;
 use crate::symmetric::{Absorb, Duplexer, Squeeze};
 use core::borrow::{Borrow, BorrowMut};
 use core::fmt::{Debug, Formatter, Result};
@@ -476,8 +477,8 @@ impl<R: UnitalRing> MulAssign<&R> for QuaternionAlgebra<R> {
     }
 }
 
-impl<R: UnitalRing + Inv<Output = Option<R>>> Div<R> for QuaternionAlgebra<R> {
-    type Output = Option<Self>;
+impl<R: UnitalRing + Inv<Output = BlOption<R>>> Div<R> for QuaternionAlgebra<R> {
+    type Output = BlOption<Self>;
 
     fn div(self, rps: R) -> Self::Output {
         (self.coefficients / rps).map(Self::new)
@@ -486,46 +487,46 @@ impl<R: UnitalRing + Inv<Output = Option<R>>> Div<R> for QuaternionAlgebra<R> {
 
 impl<R: UnitalRing> Div<&R> for QuaternionAlgebra<R>
 where
-    for<'a> &'a R: Inv<Output = Option<R>>,
+    for<'a> &'a R: Inv<Output = BlOption<R>>,
 {
-    type Output = Option<Self>;
+    type Output = BlOption<Self>;
 
     fn div(self, rps: &R) -> Self::Output {
         (self.coefficients / rps).map(Self::new)
     }
 }
 
-impl<R: UnitalRing + Inv<Output = Option<R>>> Inv for QuaternionAlgebra<R>
+impl<R: UnitalRing + Inv<Output = BlOption<R>>> Inv for QuaternionAlgebra<R>
 where
     for<'a> &'a R: RingOps<R>,
 {
-    type Output = Option<Self>;
+    type Output = BlOption<Self>;
 
     fn inv(self) -> Self::Output {
-        let v = self.reduced_norm().inv()?;
-        let mut coefficients = self.coefficients;
-        coefficients[0] = &v * &coefficients[0];
-        coefficients[1] = &v * -&coefficients[1];
-        coefficients[2] = &v * -&coefficients[2];
-        coefficients[3] = &v * -&coefficients[3];
-        Some(Self::new(coefficients))
+        let (f, is_inv) = self.reduced_norm().inv().into();
+        let mut r = self;
+        r[0] = &f * &r[0];
+        r[1] = &f * -&r[1];
+        r[2] = &f * -&r[2];
+        r[3] = f * -&r[3];
+        BlOption::new(r, is_inv)
     }
 }
 
-impl<R: UnitalRing + Inv<Output = Option<R>>> Inv for &QuaternionAlgebra<R>
+impl<R: UnitalRing + Inv<Output = BlOption<R>>> Inv for &QuaternionAlgebra<R>
 where
     for<'a> &'a R: RingOps<R>,
 {
-    type Output = Option<QuaternionAlgebra<R>>;
+    type Output = BlOption<QuaternionAlgebra<R>>;
 
     fn inv(self) -> Self::Output {
-        let v = self.reduced_norm().inv()?;
-        let mut coefficients = FreeModule::<R, 4>::ZERO;
-        coefficients[0] = &v * &self.coefficients[0];
-        coefficients[1] = &v * -&self.coefficients[1];
-        coefficients[2] = &v * -&self.coefficients[2];
-        coefficients[3] = &v * -&self.coefficients[3];
-        Some(QuaternionAlgebra::new(coefficients))
+        let (f, is_inv) = self.reduced_norm().inv().into();
+        let mut r = QuaternionAlgebra::<R>::ZERO;
+        r[0] = &f * &self.coefficients[0];
+        r[1] = &f * -&self.coefficients[1];
+        r[2] = &f * -&self.coefficients[2];
+        r[3] = f * -&self.coefficients[3];
+        BlOption::new(r, is_inv)
     }
 }
 

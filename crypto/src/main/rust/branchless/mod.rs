@@ -19,12 +19,14 @@
 
 mod absolute;
 mod assign;
+mod option;
 mod order;
 mod select;
 mod swap;
 
 pub use absolute::BlAbs;
 pub use assign::BlAssign;
+pub use option::BlOption;
 pub use order::{BlEq, BlOrd};
 pub use select::BlSelect;
 pub use swap::BlSwap;

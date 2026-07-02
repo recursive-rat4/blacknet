@@ -19,6 +19,7 @@ use crate::algebra::{
     AdditiveCommutativeMagma, AdditiveSemigroup, DivisionRingOps, Double, Inv, LeftZero, RightZero,
     Ring, RingOps, Semimodule, Set, Zero,
 };
+use crate::branchless::BlOption;
 use crate::symmetric::{Absorb, Duplexer, Squeeze};
 use core::array;
 use core::borrow::{Borrow, BorrowMut};
@@ -422,8 +423,8 @@ impl<R: Ring, const N: usize> MulAssign<&R> for FreeModule<R, N> {
     }
 }
 
-impl<R: Ring + Inv<Output = Option<R>>, const N: usize> Div<R> for FreeModule<R, N> {
-    type Output = Option<Self>;
+impl<R: Ring + Inv<Output = BlOption<R>>, const N: usize> Div<R> for FreeModule<R, N> {
+    type Output = BlOption<Self>;
 
     fn div(self, rps: R) -> Self::Output {
         rps.inv().map(|v| self * v)
@@ -432,20 +433,20 @@ impl<R: Ring + Inv<Output = Option<R>>, const N: usize> Div<R> for FreeModule<R,
 
 impl<R: Ring, const N: usize> Div<&R> for FreeModule<R, N>
 where
-    for<'a> &'a R: Inv<Output = Option<R>>,
+    for<'a> &'a R: Inv<Output = BlOption<R>>,
 {
-    type Output = Option<Self>;
+    type Output = BlOption<Self>;
 
     fn div(self, rps: &R) -> Self::Output {
         rps.inv().map(|v| self * v)
     }
 }
 
-impl<R: Ring + Inv<Output = Option<R>>, const N: usize> Div<R> for &FreeModule<R, N>
+impl<R: Ring + Inv<Output = BlOption<R>>, const N: usize> Div<R> for &FreeModule<R, N>
 where
     for<'a> &'a R: RingOps<R>,
 {
-    type Output = Option<FreeModule<R, N>>;
+    type Output = BlOption<FreeModule<R, N>>;
 
     fn div(self, rps: R) -> Self::Output {
         rps.inv().map(|v| self * v)
@@ -456,7 +457,7 @@ impl<R: Ring, const N: usize> Div<&R> for &FreeModule<R, N>
 where
     for<'a> &'a R: DivisionRingOps<R>,
 {
-    type Output = Option<FreeModule<R, N>>;
+    type Output = BlOption<FreeModule<R, N>>;
 
     fn div(self, rps: &R) -> Self::Output {
         rps.inv().map(|v| self * v)
