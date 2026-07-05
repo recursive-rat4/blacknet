@@ -46,6 +46,14 @@ impl Seconds {
         Self { n: n * 86400 }
     }
 
+    pub const fn to_be_bytes(self) -> [u8; 8] {
+        self.n.to_be_bytes()
+    }
+
+    pub const fn to_le_bytes(self) -> [u8; 8] {
+        self.n.to_le_bytes()
+    }
+
     /// The maximum value that can be represented by this type.
     pub const MAX: Self = Self { n: i64::MAX };
     /// The minimum value that can be represented by this type.
