@@ -207,6 +207,19 @@ impl<const N: usize> BigInt<N> {
         Self { limbs }
     };
 
+    pub fn from_be_bytes<const M: usize>(bytes: [u8; M]) -> Self {
+        const {
+            assert!(M == N * size_of::<u64>());
+        };
+        let (chunks, []) = bytes.as_chunks::<{ size_of::<u64>() }>() else {
+            unreachable!()
+        };
+        let mut limbs = [0_u64; N];
+        for (limb, chunk) in zip(&mut limbs, chunks.iter().rev()) {
+            *limb = u64::from_be_bytes(*chunk);
+        }
+        Self { limbs }
+    }
     pub fn from_le_bytes<const M: usize>(bytes: [u8; M]) -> Self {
         const {
             assert!(M == N * size_of::<u64>());
