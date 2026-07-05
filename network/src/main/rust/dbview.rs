@@ -20,7 +20,7 @@ use blacknet_serialization::format::from_bytes;
 use core::fmt::Debug;
 use core::marker::PhantomData;
 use core::ops::Deref;
-use fjall::{Keyspace, Result};
+use fjall::{Keyspace, OwnedWriteBatch as WriteBatch, Result};
 use serde::Deserialize;
 
 pub struct DBView<K: AsRef<[u8]>, V: for<'de> Deserialize<'de>> {
@@ -87,5 +87,9 @@ impl<K: AsRef<[u8]>, V: for<'de> Deserialize<'de>> DBView<K, V> {
 
     pub fn count(&self) -> usize {
         self.keyspace.len().unwrap()
+    }
+
+    pub fn batch_bytes(&self, batch: &mut WriteBatch, key: K, bytes: &[u8]) {
+        batch.insert(&self.keyspace, key.as_ref(), bytes)
     }
 }

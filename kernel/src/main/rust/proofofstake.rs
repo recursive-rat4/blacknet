@@ -16,6 +16,9 @@
  */
 
 use crate::amount::Amount;
+use crate::blake2b::Hash;
+use crate::ed25519::PublicKey;
+use crate::error::{Error, Result};
 use blacknet_crypto::bigint::UInt256;
 use blacknet_time::Seconds;
 
@@ -23,6 +26,29 @@ use blacknet_time::Seconds;
 pub enum Version {
     V4,
     V4_1,
+}
+
+pub fn mint(version: Version, supply: Amount) -> Amount {
+    supply / 100u64 / blocks_in_year(version)
+}
+
+#[expect(unused_variables)]
+pub fn verify(
+    version: Version,
+    time: Seconds,
+    generator: PublicKey,
+    nxtrng: Hash,
+    difficulty: UInt256,
+    prev_time: Seconds,
+    stake: Amount,
+) -> Result<()> {
+    if stake <= Amount::ZERO {
+        return Err(Error::invalid("Invalid stake amount"));
+    }
+    if time % time_slot(version) != Seconds::ZERO {
+        return Err(Error::invalid("Invalid time slot"));
+    }
+    todo!();
 }
 
 pub fn is_too_far_in_future(version: Version, external: Seconds, internal: Seconds) -> bool {
@@ -52,6 +78,14 @@ pub fn time_slot(version: Version) -> Seconds {
  */
 pub fn target_block_time(version: Version) -> Seconds {
     4 * time_slot(version)
+}
+
+/**
+ * Expected number of blocks in year
+ */
+pub fn blocks_in_year(version: Version) -> u64 {
+    let year = Seconds::new(365 * 24 * 60 * 60);
+    (year / target_block_time(version)) as u64
 }
 
 /**

@@ -19,8 +19,8 @@ use crate::settings::Settings;
 use blacknet_compat::{XDGDirectories, ulimit};
 use core::cmp::max;
 use fjall::{
-    CompressionType, Database, KeyspaceCreateOptions, KvSeparationOptions, Result,
-    config::CompressionPolicy,
+    CompressionType, Database, KeyspaceCreateOptions, KvSeparationOptions,
+    OwnedWriteBatch as WriteBatch, Result, config::CompressionPolicy,
 };
 use std::sync::Arc;
 
@@ -40,14 +40,14 @@ impl Fjall {
         max_open_files as usize
     }
 
-    pub fn open(dirs: &XDGDirectories, settings: &Arc<Settings>) -> Result<Fjall> {
+    pub fn open(dirs: &XDGDirectories, settings: &Arc<Settings>) -> Result<Arc<Fjall>> {
         let path = dirs.data().join("fjall");
         let database = Database::builder(path)
             .max_cached_files(Some(Self::max_open_files(settings)))
             .cache_size(settings.db_cache)
             .journal_compression(CompressionType::None)
             .open()?;
-        Ok(Fjall { database })
+        Ok(Arc::new(Fjall { database }))
     }
 
     pub fn kv_options() -> KeyspaceCreateOptions {
@@ -64,5 +64,9 @@ impl Fjall {
 
     pub const fn database(&self) -> &Database {
         &self.database
+    }
+
+    pub fn create_write_batch(&self) -> WriteBatch {
+        self.database.batch()
     }
 }

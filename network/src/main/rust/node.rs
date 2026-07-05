@@ -63,7 +63,7 @@ pub struct Node {
     connections: RwLock<Vec<Connection>>,
     peer_table: Arc<PeerTable>,
     router: Arc<Router>,
-    fjall: Fjall,
+    fjall: Arc<Fjall>,
     block_db: Arc<BlockDB>,
     coin_db: Arc<CoinDB>,
     block_fetcher: BlockFetcher,
@@ -107,8 +107,8 @@ impl Node {
         let settings = Arc::new(Settings::default(&mode));
         let peer_table = PeerTable::new(&mode, dirs, log_manager, settings.clone())?;
         let fjall = Fjall::open(dirs, &settings)?;
-        let block_db = BlockDB::new(&mode, dirs, &fjall, log_manager)?;
-        let coin_db = CoinDB::new(&mode, &fjall, block_db.clone())?;
+        let block_db = BlockDB::new(&mode, dirs, fjall.clone(), log_manager)?;
+        let coin_db = CoinDB::new(&mode, &fjall, block_db.clone(), log_manager)?;
         let tx_pool = Arc::new(RwLock::new(TxPool::new(
             log_manager,
             settings.clone(),
@@ -241,7 +241,7 @@ impl Node {
             )
     }
 
-    pub const fn fjall(&self) -> &Fjall {
+    pub const fn fjall(&self) -> &Arc<Fjall> {
         &self.fjall
     }
 

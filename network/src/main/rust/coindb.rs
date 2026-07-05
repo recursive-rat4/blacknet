@@ -25,23 +25,29 @@ use blacknet_crypto::bigint::UInt256;
 use blacknet_kernel::account::Account;
 use blacknet_kernel::amount::Amount;
 use blacknet_kernel::blake2b::Hash;
+use blacknet_kernel::block::Block;
 use blacknet_kernel::ed25519::PublicKey;
 use blacknet_kernel::error::{Error, Result};
 use blacknet_kernel::htlc::HTLC;
 use blacknet_kernel::multisig::Multisig;
 use blacknet_kernel::proofofstake::{
     BLOCK_SIZE_SPAN, DEFAULT_MAX_BLOCK_SIZE, INITIAL_DIFFICULTY, ROLLBACK_LIMIT, UPGRADE_THRESHOLD,
-    Version as PoSVersion,
+    Version as PoSVersion, mint, verify as verify_pos,
 };
-use blacknet_kernel::transaction::{CoinTx, HashTimeLockContractId, MultiSignatureLockContractId};
+use blacknet_kernel::transaction::{
+    CoinTx, HashTimeLockContractId, MultiSignatureLockContractId, Transaction,
+};
+use blacknet_log::{LogManager, Logger, error};
 use blacknet_serialization::format::{from_bytes, to_bytes};
 use blacknet_time::Seconds;
-use fjall::{Error as FjallError, OwnedWriteBatch as WriteBatch};
+use core::error::Error as StdError;
+use fjall::OwnedWriteBatch as WriteBatch;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, VecDeque, hash_map};
 use std::sync::Arc;
 
 pub struct CoinDB {
+    logger: Logger,
     state: State,
     accounts: DBView<PublicKey, Account>,
     htlcs: DBView<HashTimeLockContractId, HTLC>,
@@ -54,8 +60,10 @@ impl CoinDB {
         mode: &Mode,
         fjall: &Fjall,
         block_db: Arc<BlockDB>,
-    ) -> core::result::Result<Arc<Self>, FjallError> {
+        log_manager: &LogManager,
+    ) -> core::result::Result<Arc<Self>, Box<dyn StdError>> {
         Ok(Arc::new(Self {
+            logger: log_manager.logger("CoinDB")?,
             state: State::genesis(mode), //TODO
             accounts: DBView::new(fjall, "accounts")?,
             htlcs: DBView::new(fjall, "htlcs")?,
@@ -148,6 +156,90 @@ impl CoinDB {
             }
             block_index.previous()
         }
+    }
+
+    #[expect(unused)]
+    pub fn process_block_impl(
+        &self,
+        coin_tx: &mut Update,
+        hash: Hash,
+        block: &Block,
+        size: u32,
+    ) -> Result<Vec<Hash>> {
+        if block.previous() != self.state.block_hash {
+            error!(
+                self.logger,
+                "{hash} not adjacent to {} edge {}",
+                self.state.block_hash,
+                block.previous()
+            );
+            return Err(Error::not_reachable_vertex(block.previous().to_string()));
+        }
+        if size > self.state.max_block_size {
+            return Err(Error::invalid(format!(
+                "Too large block {size} bytes, maximum {}",
+                self.state.max_block_size
+            )));
+        }
+        if block.time() <= self.state.block_time {
+            return Err(Error::invalid("Timestamp is too early"));
+        }
+        let mut generator = coin_tx.get_account(block.generator())?;
+        let height = coin_tx.height();
+        let tx_hashes = Vec::<Hash>::with_capacity(block.raw_transactions().len());
+        let pos_version = self.state.pos_version(todo!());
+
+        verify_pos(
+            pos_version,
+            block.time(),
+            block.generator(),
+            self.state.nxtrng(),
+            self.state.difficulty(),
+            self.state.block_time(),
+            generator.staking_balance(height),
+        )?;
+
+        coin_tx.set_account(block.generator(), generator);
+
+        let mut fees = Amount::ZERO;
+        for tx_bytes in block.raw_transactions() {
+            let tx = from_bytes::<Transaction>(tx_bytes, false)?;
+            let tx_hash = Transaction::compute_hash(tx_bytes).expect("Hashable tx");
+            coin_tx.process_transaction_impl(&tx, tx_hash)?;
+            tx_hashes.push(tx_hash);
+            fees += tx.fee();
+
+            //TODO WalletDB
+        }
+
+        generator = coin_tx.get_account(block.generator())?;
+
+        let mint = mint(pos_version, self.state.supply);
+        let generated = mint + fees;
+
+        let mut prev_index = self
+            .block_db
+            .indexes
+            .get(block.previous())
+            .expect("Previous block index");
+        prev_index.set_next(hash);
+        prev_index.set_next_size(size);
+        coin_tx.prev_index = Some(prev_index);
+        coin_tx.block_index = Some(BlockIndex::new(
+            block.previous(),
+            Hash::ZERO,
+            0,
+            height,
+            generated,
+        ));
+
+        coin_tx.add_supply(mint);
+        generator.debit(height, generated);
+        coin_tx.set_account(block.generator(), generator);
+
+        //TODO WalletDB
+
+        Ok(tx_hashes)
     }
 }
 
@@ -247,7 +339,7 @@ impl State {
 }
 
 #[expect(unused)]
-struct Update {
+pub struct Update {
     coin_db: Arc<CoinDB>,
     write_batch: WriteBatch,
     block_version: u32,
@@ -269,8 +361,7 @@ struct Update {
 }
 
 impl Update {
-    #[expect(unused)]
-    fn new(
+    pub fn new(
         coin_db: Arc<CoinDB>,
         write_batch: WriteBatch,
         block_version: u32,
@@ -315,6 +406,10 @@ impl Update {
             block_index: None,
             prev_index: None,
         }
+    }
+
+    pub fn commit_impl(self) {
+        todo!();
     }
 }
 

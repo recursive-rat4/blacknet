@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::coindb::State;
+use crate::coindb::{CoinDB, State, Update};
 use crate::dbview::DBView;
 use crate::fjall::Fjall;
 use crate::genesis;
@@ -51,24 +51,48 @@ pub struct BlockIndex {
 }
 
 impl BlockIndex {
-    pub const fn previous(self) -> Hash {
+    pub const fn new(
+        previous: Hash,
+        next: Hash,
+        next_size: u32,
+        height: u32,
+        generated: Amount,
+    ) -> Self {
+        Self {
+            previous,
+            next,
+            next_size,
+            height,
+            generated,
+        }
+    }
+
+    pub const fn previous(&self) -> Hash {
         self.previous
     }
 
-    pub const fn next(self) -> Hash {
+    pub const fn next(&self) -> Hash {
         self.next
     }
 
-    pub const fn next_size(self) -> u32 {
+    pub const fn next_size(&self) -> u32 {
         self.next_size
     }
 
-    pub const fn height(self) -> u32 {
+    pub const fn height(&self) -> u32 {
         self.height
     }
 
-    pub const fn generated(self) -> Amount {
+    pub const fn generated(&self) -> Amount {
         self.generated
+    }
+
+    pub const fn set_next(&mut self, next: Hash) {
+        self.next = next
+    }
+
+    pub const fn set_next_size(&mut self, next_size: u32) {
+        self.next_size = next_size
     }
 }
 
@@ -79,6 +103,7 @@ pub struct BlockDB {
     rejects: RollingHashSet<Hash>,
     blocks: DBView<Hash, Block>,
     pub(super) indexes: DBView<Hash, BlockIndex>,
+    fjall: Arc<Fjall>,
     data_dir: PathBuf,
     requires_network: bool,
 }
@@ -87,7 +112,7 @@ impl BlockDB {
     pub fn new(
         mode: &Mode,
         dirs: &XDGDirectories,
-        fjall: &Fjall,
+        fjall: Arc<Fjall>,
         log_manager: &LogManager,
     ) -> Result<Arc<Self>, Box<dyn StdError>> {
         Ok(Arc::new(Self {
@@ -95,8 +120,9 @@ impl BlockDB {
             cached_block: ArcSwapOption::empty(),
             cached_index: ArcSwapOption::empty(),
             rejects: RollingHashSet::new(ROLLBACK_LIMIT),
-            blocks: DBView::with_blob(fjall, "blocks")?,
-            indexes: DBView::new(fjall, "indexes")?,
+            blocks: DBView::with_blob(&fjall, "blocks")?,
+            indexes: DBView::new(&fjall, "indexes")?,
+            fjall,
             data_dir: dirs.data().to_owned(),
             requires_network: mode.requires_network(),
         }))
@@ -251,7 +277,7 @@ impl BlockDB {
         check
     }
 
-    pub fn process(&mut self, hash: Hash, bytes: &[u8], state: &State) -> Result<()> {
+    pub fn process(&mut self, hash: Hash, bytes: Box<[u8]>, state: &State) -> Result<()> {
         if self.is_rejected(hash) {
             return Err(Error::invalid("Already rejected block"));
         }
@@ -265,8 +291,9 @@ impl BlockDB {
         result
     }
 
-    fn process_block(&self, hash: Hash, bytes: &[u8], state: &State) -> Result<()> {
-        let block = from_bytes::<Block>(bytes, false)?;
+    #[expect(unreachable_code, unused_variables)]
+    fn process_block(&self, hash: Hash, bytes: Box<[u8]>, state: &State) -> Result<()> {
+        let block = from_bytes::<Block>(&bytes, false)?;
         if block.version() > BLOCK_VERSION {
             let percent = 100 * state.upgraded() / UPGRADE_THRESHOLD;
             if percent > 9 {
@@ -290,12 +317,31 @@ impl BlockDB {
         if is_too_far_in_future(pos_version, SystemClock::secs(), block.time()) {
             return Err(Error::in_future(block.time().to_string()));
         }
-        block.verify_content_hash(bytes)?;
+        block.verify_content_hash(&bytes)?;
         block.verify_signature(hash)?;
         if block.previous() != state.block_hash() {
             return Err(Error::not_reachable_vertex(block.previous().to_string()));
         }
-        todo!();
+        let batch = self.fjall.create_write_batch();
+        let coin_tx = Update::new(
+            todo!(),
+            batch,
+            block.version(),
+            hash,
+            block.previous(),
+            block.time(),
+            bytes.len() as u32,
+            block.generator(),
+        );
+        let coin_db: CoinDB = todo!();
+        let tx_hashes =
+            coin_db.process_block_impl(&mut coin_tx, hash, &block, bytes.len() as u32)?;
+        self.blocks.batch_bytes(&mut batch, hash, &bytes);
+        coin_tx.commit_impl();
+        //TODO RPC
+        self.cached_block
+            .store(Some(Arc::new((block.previous(), bytes))));
+        Ok(())
     }
 }
 
