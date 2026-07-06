@@ -17,7 +17,9 @@
 
 use core::iter::zip;
 
+/// Conditional swap.
 pub trait BlSwap {
+    /// Swap if condition is true.
     fn bl_swap(&mut self, rps: &mut Self, condition: bool);
 }
 

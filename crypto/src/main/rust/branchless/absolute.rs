@@ -17,13 +17,20 @@
 
 use crate::branchless::BlSelect;
 
+/// Absolute value of signed int.
 pub trait BlAbs {
+    /// Result type as unsigned int.
     type UnsignedAbs;
 
+    /// The absolute value.
+    /// # Panics
+    /// In debug mode, on overflow.
     fn bl_abs(self) -> Self;
 
+    /// The absolute value as unsigned int.
     fn bl_unsigned_abs(self) -> Self::UnsignedAbs;
 
+    /// The absolute value wrapping on overflow.
     fn bl_wrapping_abs(self) -> Self;
 }
 

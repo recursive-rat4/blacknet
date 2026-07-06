@@ -16,6 +16,9 @@
  */
 
 //! Utils for branchless algorithms.
+//!
+//! When the `cmov` feature is enabled the implementations delegate to the same named crate.
+//! Otherwise implementations are in plain Rust.
 
 mod absolute;
 mod assign;

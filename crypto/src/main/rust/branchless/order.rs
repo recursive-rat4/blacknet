@@ -17,9 +17,12 @@
 
 use core::iter::zip;
 
+/// Equivalence relation.
 pub trait BlEq<Rps = Self> {
+    /// Whether equivalent.
     fn bl_eq(&self, rps: &Rps) -> bool;
 
+    /// Whether inequivalent.
     fn bl_ne(&self, rps: &Rps) -> bool;
 }
 
@@ -83,9 +86,12 @@ impl<T: BlEq, const N: usize> BlEq for [T; N] {
     }
 }
 
+/// Total order.
 pub trait BlOrd<Rps = Self>: BlEq<Rps> {
+    /// Whether greater than.
     fn bl_gt(&self, rps: &Rps) -> bool;
 
+    /// Whether lesser than.
     fn bl_lt(&self, rps: &Rps) -> bool;
 }
 

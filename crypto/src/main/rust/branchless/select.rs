@@ -19,9 +19,12 @@ use core::array;
 use core::iter::zip;
 use core::mem::MaybeUninit;
 
+/// Conditional selection.
 pub trait BlSelect<Rps = Self> {
+    /// Result type.
     type Output;
 
+    /// Select right if condition is true.
     fn bl_select(self, rps: Rps, condition: bool) -> Self::Output;
 }
 

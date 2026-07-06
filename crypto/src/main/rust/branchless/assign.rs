@@ -17,7 +17,9 @@
 
 use core::iter::zip;
 
+/// Conditional assigment.
 pub trait BlAssign<Rps = Self> {
+    /// Assign if condition is true.
     fn bl_assign(&mut self, rps: Rps, condition: bool);
 }
 

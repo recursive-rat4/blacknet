@@ -15,6 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+/// Optional value.
 #[derive(Clone, Copy)]
 pub struct BlOption<T> {
     value: T,
@@ -22,10 +23,12 @@ pub struct BlOption<T> {
 }
 
 impl<T> BlOption<T> {
+    /// Construct a new optional value.
     pub const fn new(value: T, is_some: bool) -> Self {
         Self { value, is_some }
     }
 
+    /// Map applicatively.
     #[inline]
     pub fn map<U, F: FnOnce(T) -> U>(self, f: F) -> BlOption<U> {
         BlOption {
@@ -34,14 +37,17 @@ impl<T> BlOption<T> {
         }
     }
 
+    /// Whether a none value.
     pub const fn is_none(&self) -> bool {
         !self.is_some
     }
 
+    /// Whether some value.
     pub const fn is_some(&self) -> bool {
         self.is_some
     }
 
+    /// Return some value or panic with custom message.
     /// # Panics
     /// On a none value.
     #[track_caller]
@@ -50,6 +56,7 @@ impl<T> BlOption<T> {
         self.value
     }
 
+    /// Return some value or panic.
     /// # Panics
     /// On a none value.
     #[track_caller]
