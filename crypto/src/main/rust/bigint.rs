@@ -31,6 +31,7 @@ use serde::{Deserialize, Serialize};
 use zeroize::DefaultIsZeroes;
 
 pub type UInt256 = BigInt<4>;
+pub type UInt320 = BigInt<5>;
 pub type UInt512 = BigInt<8>;
 
 #[derive(Clone, Copy, Deserialize, Eq, PartialEq, Serialize)]
@@ -79,6 +80,19 @@ impl<const N: usize> BigInt<N> {
             c = 0;
             i += 1;
         }
+        n
+    }
+
+    pub fn widening_mul_limb<const NM: usize>(self, rps: u64) -> BigInt<NM> {
+        const {
+            assert!(N + 1 == NM);
+        };
+        let mut c: u64 = 0;
+        let mut n = BigInt::<NM>::ZERO;
+        for i in 0..N {
+            (n.limbs[i], c) = self.limbs[i].carrying_mul(rps, c);
+        }
+        n.limbs[N] = c;
         n
     }
 

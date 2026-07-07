@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_crypto::bigint::{UInt256, UInt512};
+use blacknet_crypto::bigint::*;
 use blacknet_crypto::branchless::BlOrd;
 use core::cmp::Ordering;
 
@@ -186,6 +186,16 @@ fn widening_mul() {
     );
     assert_eq!(a.widening_mul(b), c);
     assert_eq!(b.widening_mul(a), c);
+}
+
+#[test]
+fn widening_mul_limb() {
+    let a = UInt256::from_hex("C224C5DB644D848311AE0C77F8F066E82265003FBBC253571709D3D5A6737A4E");
+    let b: u64 = 0x420E2C2550FD32A9;
+    let c = UInt320::from_hex(
+        "32183A80009948F14DCA56285B26F4B040B0809D4F7F2F74247FB4892B42143CF3003E2BAF34F97E",
+    );
+    assert_eq!(a.widening_mul_limb(b), c);
 }
 
 #[test]
