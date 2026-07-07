@@ -18,7 +18,7 @@
 use blacknet_crypto::algebra::Tensor;
 use blacknet_crypto::matrix::{DenseMatrix, IdentityMatrix};
 
-type R = blacknet_crypto::pervushin::PervushinField;
+type R = blacknet_crypto::uring::U32Ring;
 
 #[test]
 #[rustfmt::skip]

@@ -183,7 +183,9 @@ macro_rules! impl_integer {
     };
 }
 
-impl_integer!(u8, i8, u16, i16, u32, i32, u64, i64, usize, isize);
+impl_integer!(
+    u8, i8, u16, i16, u32, i32, u64, i64, u128, i128, usize, isize
+);
 
 impl Integer for UInt256 {
     type Limb = u64;

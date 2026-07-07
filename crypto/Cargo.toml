@@ -247,6 +247,10 @@ path = "src/test/rust/uniformintdistribution.rs"
 name = "univariatepolynomial"
 path = "src/test/rust/univariatepolynomial.rs"
 
+[[test]]
+name = "uring"
+path = "src/test/rust/uring.rs"
+
 [[bench]]
 name = "field25519"
 path = "src/benchmark/rust/field25519.rs"

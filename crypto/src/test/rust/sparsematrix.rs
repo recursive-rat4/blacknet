@@ -18,7 +18,7 @@
 use blacknet_crypto::matrix::{DenseMatrix, DenseVector, SparseMatrix};
 use blacknet_crypto::norm::InfinityNorm;
 
-type R = blacknet_crypto::pervushin::PervushinField;
+type R = blacknet_crypto::uring::U32Ring;
 
 #[test]
 fn conversion() {

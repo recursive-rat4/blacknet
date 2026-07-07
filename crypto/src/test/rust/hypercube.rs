@@ -18,7 +18,7 @@
 use blacknet_crypto::polynomial::{Hypercube, Point};
 use core::iter::zip;
 
-type R = blacknet_crypto::pervushin::PervushinField;
+type R = blacknet_crypto::uring::U32Ring;
 
 #[test]
 fn index() {

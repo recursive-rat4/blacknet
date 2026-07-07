@@ -21,7 +21,7 @@ use blacknet_crypto::circuit::logicgate::LogicGate as Circuit;
 use blacknet_crypto::constraintsystem::ConstraintSystem;
 use core::assert_matches;
 
-type R = blacknet_crypto::pervushin::PervushinField;
+type R = blacknet_crypto::uring::U32Ring;
 
 #[test]
 fn xor() {

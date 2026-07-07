@@ -15,12 +15,13 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use blacknet_crypto::algebra::One;
 use blacknet_crypto::constraintsystem::ConstraintSystem;
 use blacknet_crypto::customizableconstraintsystem::CustomizableConstraintSystem;
 use blacknet_crypto::matrix::{DenseMatrix, DenseVector, SparseMatrix};
 use core::assert_matches;
 
-type R = blacknet_crypto::pervushin::PervushinField;
+type R = blacknet_crypto::uring::U32Ring;
 
 #[test]
 fn satisfaction() {
@@ -31,7 +32,7 @@ fn satisfaction() {
     let ccs = CustomizableConstraintSystem::new(
         vec![SparseMatrix::from(&m1), SparseMatrix::from(&m2)],
         vec![vec![0, 0, 0, 0], vec![1]],
-        [1, -1].map(R::from).into(),
+        [R::ONE, -R::ONE].into(),
     );
 
     assert_eq!(ccs.degree(), 4);

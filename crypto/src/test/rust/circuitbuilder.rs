@@ -15,6 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use blacknet_crypto::algebra::One;
 use blacknet_crypto::circuit::builder::{CircuitBuilder, Constant};
 use blacknet_crypto::constraintsystem::ConstraintSystem;
 use blacknet_crypto::customizableconstraintsystem::CustomizableConstraintSystem;
@@ -22,7 +23,7 @@ use blacknet_crypto::matrix::{DenseMatrix, DenseVector, SparseMatrix};
 use blacknet_crypto::r1cs::R1CS;
 use core::assert_matches;
 
-type R = blacknet_crypto::pervushin::PervushinField;
+type R = blacknet_crypto::uring::U32Ring;
 
 #[test]
 fn scopelism() {
@@ -319,7 +320,7 @@ fn cubism() {
     let ccs = CustomizableConstraintSystem::new(
         [&am, &bm, &cm, &dm].map(SparseMatrix::from).into(),
         vec![vec![0, 1, 2], vec![3]],
-        [1, -1].map(R::from).into(),
+        [R::ONE, -R::ONE].into(),
     );
 
     let circuit = CircuitBuilder::<R>::new(3);

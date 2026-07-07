@@ -53,3 +53,4 @@ pub mod random;
 pub mod sumcheck;
 pub mod symmetric;
 pub mod twiddles;
+pub mod uring;

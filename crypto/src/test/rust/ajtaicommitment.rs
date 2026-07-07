@@ -21,7 +21,7 @@ use blacknet_crypto::commitmentscheme::CommitmentScheme;
 use blacknet_crypto::matrix::{DenseMatrix, DenseVector};
 use blacknet_crypto::norm::{L2, LInf, NormBound};
 
-type Z = blacknet_crypto::pervushin::PervushinField;
+type Z = blacknet_crypto::uring::U64Ring;
 
 #[test]
 fn test() {
@@ -29,22 +29,22 @@ fn test() {
         2,
         2,
         [
-            0x27266DA3020839D0u64 as i64,
-            0x82C5945C2F27D053u64 as i64,
-            0xCBC815FE12387BF6u64 as i64,
-            0xC006EACA4C2362E9u64 as i64,
+            0x27266DA3020839D0u64,
+            0x82C5945C2F27D053u64,
+            0xCBC815FE12387BF6u64,
+            0xC006EACA4C2362E9u64,
         ]
-        .map(Z::new)
+        .map(Z::from)
         .into(),
     );
     let b_ecd = NormBound::<L2, f64>::new(7.22);
     let b_inf = NormBound::<LInf, <Z as IntegerModRing>::Int>::new(8);
     let cs_ecd = AjtaiCommitment::new(setup.clone(), b_ecd);
     let cs_inf = AjtaiCommitment::new(setup, b_inf);
-    let z1 = Z::new(1);
-    let z2 = Z::new(2);
-    let z3 = Z::new(3);
-    let z4 = Z::new(4);
+    let z1 = Z::from(1);
+    let z2 = Z::from(2);
+    let z3 = Z::from(3);
+    let z4 = Z::from(4);
     let m12 = DenseVector::from([z1, z2]);
     let m21 = DenseVector::from([z2, z1]);
     let m34 = DenseVector::from([z3, z4]);
