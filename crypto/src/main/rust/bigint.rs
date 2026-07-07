@@ -30,6 +30,7 @@ use core::ops::{
 use serde::{Deserialize, Serialize};
 use zeroize::DefaultIsZeroes;
 
+pub type UInt128 = BigInt<2>;
 pub type UInt256 = BigInt<4>;
 pub type UInt320 = BigInt<5>;
 pub type UInt512 = BigInt<8>;
@@ -358,6 +359,17 @@ impl<const N: usize> BigInt<N> {
                 return decimal.into_iter().rev().collect();
             }
         }
+    }
+
+    pub fn extend<const M: usize>(self) -> BigInt<M> {
+        const {
+            assert!(N < M);
+        };
+        let mut limbs = [0; M];
+        for (l, r) in zip(&mut limbs, self.limbs) {
+            *l = r
+        }
+        BigInt::<M> { limbs }
     }
 }
 
