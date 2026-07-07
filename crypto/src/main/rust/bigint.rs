@@ -24,7 +24,7 @@ use core::cmp::Ordering;
 use core::fmt;
 use core::iter::zip;
 use core::ops::{
-    Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, Div, DivAssign, Neg, Rem, Shl,
+    Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, Div, DivAssign, Mul, Neg, Rem, Shl,
     ShlAssign, Shr, ShrAssign, Sub, SubAssign,
 };
 use serde::{Deserialize, Serialize};
@@ -642,6 +642,21 @@ impl<const N: usize> SubAssign for BigInt<N> {
     #[inline]
     fn sub_assign(&mut self, rps: Self) {
         *self = *self - rps
+    }
+}
+
+impl<const N: usize> Mul<u64> for BigInt<N> {
+    type Output = Self;
+
+    fn mul(self, rps: u64) -> Self::Output {
+        let mut c: u64 = 0;
+        let mut l: u64 = 0;
+        Self {
+            limbs: array::from_fn(|i| {
+                (l, c) = self.limbs[i].carrying_mul(rps, c);
+                l
+            }),
+        }
     }
 }
 
