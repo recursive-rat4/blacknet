@@ -24,8 +24,8 @@ use core::cmp::Ordering;
 use core::fmt;
 use core::iter::zip;
 use core::ops::{
-    Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, Div, DivAssign, Mul, Neg, Rem, Shl,
-    ShlAssign, Shr, ShrAssign, Sub, SubAssign,
+    Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, Div, DivAssign, Mul, Neg, Rem,
+    RemAssign, Shl, ShlAssign, Shr, ShrAssign, Sub, SubAssign,
 };
 use serde::{Deserialize, Serialize};
 use zeroize::DefaultIsZeroes;
@@ -334,7 +334,29 @@ impl<const N: usize> BigInt<N> {
         (Self { limbs }, c)
     }
 
-    pub const fn quo_rem(self, rps: u64) -> (Self, u64) {
+    pub fn quo_rem(self, rps: Self) -> (Self, Self) {
+        assert!(rps != Self::ZERO, "Division by zero");
+        let mut d = rps;
+        let mut q = Self::ZERO;
+        let mut r = self;
+        let (nw, dw) = (r.bit_width(), d.bit_width());
+        if dw > nw {
+            return (q, r);
+        }
+        let mut s = nw - dw;
+        d <<= s;
+        while s != u32::MAX {
+            if r >= d {
+                r -= d;
+                q.limbs[(s / u64::BITS) as usize] |= 1 << (s & (u64::BITS - 1));
+            }
+            d >>= 1;
+            s = s.wrapping_sub(1);
+        }
+        (q, r)
+    }
+
+    pub const fn quo_rem_limb(self, rps: u64) -> (Self, u64) {
         let mut n = self;
         let mut c: u64 = 0;
         let mut i = N;
@@ -353,7 +375,7 @@ impl<const N: usize> BigInt<N> {
         let mut n = self;
         let mut digit;
         loop {
-            (n, digit) = n.quo_rem(10);
+            (n, digit) = n.quo_rem_limb(10);
             decimal.push(ALPHABET[digit as usize]);
             if n == Self::ZERO {
                 return decimal.into_iter().rev().collect();
@@ -495,11 +517,43 @@ impl<const N: usize> AddAssign for BigInt<N> {
     }
 }
 
+impl<const N: usize> Div for BigInt<N> {
+    type Output = Self;
+
+    fn div(self, rps: Self) -> Self::Output {
+        let (n, _) = self.quo_rem(rps);
+        n
+    }
+}
+
+impl<const N: usize> DivAssign for BigInt<N> {
+    #[inline]
+    fn div_assign(&mut self, rps: Self) {
+        *self = *self / rps
+    }
+}
+
+impl<const N: usize> Rem for BigInt<N> {
+    type Output = Self;
+
+    fn rem(self, rps: Self) -> Self::Output {
+        let (_, n) = self.quo_rem(rps);
+        n
+    }
+}
+
+impl<const N: usize> RemAssign for BigInt<N> {
+    #[inline]
+    fn rem_assign(&mut self, rps: Self) {
+        *self = *self % rps
+    }
+}
+
 impl<const N: usize> Div<u64> for BigInt<N> {
     type Output = Self;
 
     fn div(self, rps: u64) -> Self::Output {
-        let (n, _) = self.quo_rem(rps);
+        let (n, _) = self.quo_rem_limb(rps);
         n
     }
 }
