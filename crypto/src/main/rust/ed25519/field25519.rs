@@ -251,7 +251,7 @@ impl Double for Field25519 {
 
     fn double(self) -> Self {
         Self {
-            n: Self::reduce_256(self.n << 1),
+            n: Self::reduce_256(self.n + self.n),
         }
     }
 }
@@ -261,7 +261,7 @@ impl Double for &Field25519 {
 
     fn double(self) -> Self::Output {
         Self::Output {
-            n: Self::Output::reduce_256(self.n << 1),
+            n: Self::Output::reduce_256(self.n + self.n),
         }
     }
 }

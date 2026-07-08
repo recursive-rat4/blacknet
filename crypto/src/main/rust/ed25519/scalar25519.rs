@@ -288,7 +288,7 @@ impl Double for Scalar25519 {
 
     fn double(self) -> Self {
         Self {
-            n: Self::reduce_add(self.n << 1),
+            n: Self::reduce_add(self.n + self.n),
         }
     }
 }
@@ -298,7 +298,7 @@ impl Double for &Scalar25519 {
 
     fn double(self) -> Self::Output {
         Self::Output {
-            n: Self::Output::reduce_add(self.n << 1),
+            n: Self::Output::reduce_add(self.n + self.n),
         }
     }
 }

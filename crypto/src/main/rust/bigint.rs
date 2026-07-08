@@ -547,14 +547,17 @@ impl<const N: usize> Shl<u64> for BigInt<N> {
     type Output = Self;
 
     fn shl(self, rps: u64) -> Self::Output {
+        let (j, k) = (rps / u64::BITS as u64, rps % u64::BITS as u64);
+        let mut limbs = [0; N];
         let mut c = 0;
-        Self {
-            limbs: array::from_fn(|i| {
-                let n = (self.limbs[i] << rps) | c;
-                c = self.limbs[i] >> (u64::BITS as u64 - rps);
-                n
-            }),
+        for i in 0..N {
+            let ij = i + j as usize;
+            if ij < N {
+                limbs[ij] = (self.limbs[i] << k) | c;
+                c = self.limbs[i].unbounded_shr(u64::BITS - k as u32);
+            }
         }
+        Self { limbs }
     }
 }
 
@@ -576,13 +579,17 @@ impl<const N: usize> Shr<u64> for BigInt<N> {
     type Output = Self;
 
     fn shr(self, rps: u64) -> Self::Output {
-        let mut n = Self::ZERO;
-        let mut c = 0;
+        let (j, k) = (rps / u64::BITS as u64, rps % u64::BITS as u64);
+        let mut limbs = [0; N];
+        let mut c: u64 = 0;
         for i in (0..N).rev() {
-            n.limbs[i] = (self.limbs[i] >> rps) | (c << (u64::BITS as u64 - rps));
-            c = self.limbs[i] & ((1 << rps) - 1);
+            let j = j as usize;
+            if i >= j {
+                limbs[i - j] = (self.limbs[i] >> k) | c.unbounded_shl(u64::BITS - k as u32);
+                c = self.limbs[i] & ((1 << k) - 1);
+            }
         }
-        n
+        Self { limbs }
     }
 }
 
