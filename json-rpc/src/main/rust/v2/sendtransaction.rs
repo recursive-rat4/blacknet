@@ -35,6 +35,7 @@ use blacknet_wallet::address::AddressKind;
 use data_encoding::HEXUPPER_PERMISSIVE as HEX;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
+use zeroize::Zeroize;
 
 #[derive(Deserialize, Serialize)]
 pub struct BundleRequest {
@@ -43,6 +44,12 @@ pub struct BundleRequest {
     pub id: String,
     pub data: String,
     pub referenceChain: Option<Hash>,
+}
+
+impl Drop for BundleRequest {
+    fn drop(&mut self) {
+        self.mnemonic.zeroize()
+    }
 }
 
 async fn bundle(
@@ -110,6 +117,12 @@ pub struct BurnRequest {
     pub referenceChain: Option<Hash>,
 }
 
+impl Drop for BurnRequest {
+    fn drop(&mut self) {
+        self.mnemonic.zeroize()
+    }
+}
+
 async fn burn(State(node): State<Arc<Node>>, Form(request): Form<BurnRequest>) -> Response<String> {
     let message = match HEX.decode(request.message.as_bytes()) {
         Ok(message) => message,
@@ -157,6 +170,12 @@ pub struct CancelLeaseRequest {
     pub to: String,
     pub height: u32,
     pub referenceChain: Option<Hash>,
+}
+
+impl Drop for CancelLeaseRequest {
+    fn drop(&mut self) {
+        self.mnemonic.zeroize()
+    }
 }
 
 async fn cancel_lease(
@@ -215,6 +234,12 @@ pub struct ClaimSwapRequest {
     pub id: String,
     pub preimage: String,
     pub referenceChain: Option<Hash>,
+}
+
+impl Drop for ClaimSwapRequest {
+    fn drop(&mut self) {
+        self.mnemonic.zeroize()
+    }
 }
 
 async fn claim_swap(
@@ -293,6 +318,12 @@ pub struct CreateSwapRequest {
     pub referenceChain: Option<Hash>,
 }
 
+impl Drop for CreateSwapRequest {
+    fn drop(&mut self) {
+        self.mnemonic.zeroize()
+    }
+}
+
 async fn create_swap(
     State(node): State<Arc<Node>>,
     Form(request): Form<CreateSwapRequest>,
@@ -359,6 +390,12 @@ pub struct LeaseRequest {
     pub referenceChain: Option<Hash>,
 }
 
+impl Drop for LeaseRequest {
+    fn drop(&mut self) {
+        self.mnemonic.zeroize()
+    }
+}
+
 async fn lease(
     State(node): State<Arc<Node>>,
     Form(request): Form<LeaseRequest>,
@@ -407,6 +444,12 @@ pub struct RefundSwapRequest {
     pub fee: Amount,
     pub id: String,
     pub referenceChain: Option<Hash>,
+}
+
+impl Drop for RefundSwapRequest {
+    fn drop(&mut self) {
+        self.mnemonic.zeroize()
+    }
 }
 
 async fn refund_swap(
@@ -477,9 +520,15 @@ pub struct TransferRequest {
     pub referenceChain: Option<Hash>,
 }
 
+impl Drop for TransferRequest {
+    fn drop(&mut self) {
+        self.mnemonic.zeroize()
+    }
+}
+
 async fn transfer(
     State(node): State<Arc<Node>>,
-    Form(request): Form<TransferRequest>,
+    Form(mut request): Form<TransferRequest>,
 ) -> Response<String> {
     let secret_key = if let Some(secret_key) = to_secret_key(&request.mnemonic) {
         secret_key
@@ -506,7 +555,7 @@ async fn transfer(
     };
     let payment_id = {
         if request.encrypted.is_none() || request.encrypted == Some(0) {
-            PaymentId::plain(&request.message.unwrap_or("".to_owned()))
+            PaymentId::plain(&request.message.take().unwrap_or("".to_owned()))
         } else {
             return respond_error("Unknown encrypted".to_owned());
         }
@@ -542,6 +591,12 @@ pub struct WithdrawFromLeaseRequest {
     pub to: String,
     pub height: u32,
     pub referenceChain: Option<Hash>,
+}
+
+impl Drop for WithdrawFromLeaseRequest {
+    fn drop(&mut self) {
+        self.mnemonic.zeroize()
+    }
 }
 
 async fn withdraw_from_lease(
