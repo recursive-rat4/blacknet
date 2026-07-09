@@ -24,10 +24,8 @@ use crate::ed25519::{TwistedEdwardsGroupAffine, TwistedEdwardsGroupParams, is_on
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::Sum;
 use core::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
-use zeroize::Zeroize;
+use zeroize::DefaultIsZeroes as ZeroizeIsDefault;
 
-#[derive(Zeroize)]
-#[zeroize(bound = "P::F: Zeroize")]
 pub struct TwistedEdwardsGroupProjective<P: TwistedEdwardsGroupParams> {
     x: P::F,
     y: P::F,
@@ -428,3 +426,5 @@ where
         }
     }
 }
+
+impl<P: TwistedEdwardsGroupParams> ZeroizeIsDefault for TwistedEdwardsGroupProjective<P> {}
