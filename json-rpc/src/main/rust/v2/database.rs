@@ -72,7 +72,7 @@ async fn block(
             Err(err) => respond_error(format!("Internal error: {err}")),
         }
     } else {
-        respond_error("Block not found".to_owned())
+        respond_error("Block not found")
     }
 }
 
@@ -88,7 +88,7 @@ async fn block_hash(Path(height): Path<u32>, State(node): State<Arc<Node>>) -> R
     if let Some(hash) = block_db.hash(height, coin_db.state()) {
         respond_text(hash.to_string())
     } else {
-        respond_error("Block not found".to_owned())
+        respond_error("Block not found")
     }
 }
 
@@ -97,7 +97,7 @@ async fn block_index(Path(hash): Path<Hash>, State(node): State<Arc<Node>>) -> R
     if let Some(index) = block_db.index(hash) {
         respond_json(&BlockIndexInfo::new(index))
     } else {
-        respond_error("Block not found".to_owned())
+        respond_error("Block not found")
     }
 }
 
@@ -109,7 +109,7 @@ async fn make_bootstrap(State(node): State<Arc<Node>>) -> Response<String> {
             Ok(path) => respond_text(path.display().to_string()),
             Err(_) => respond_text(path.display().to_string()),
         },
-        None => respond_error("Not synchronized".to_owned()),
+        None => respond_error("Not synchronized"),
     }
 }
 
@@ -146,7 +146,7 @@ async fn account(
             Err(err) => respond_error(format!("Internal error: {err}")),
         }
     } else {
-        respond_error("Account not found".to_owned())
+        respond_error("Account not found")
     }
 }
 

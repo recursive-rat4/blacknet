@@ -65,7 +65,7 @@ async fn bundle(
     let secret_key = if let Some(secret_key) = to_secret_key(&request.mnemonic) {
         secret_key
     } else {
-        return respond_error("Invalid mnemonic".to_owned());
+        return respond_error("Invalid mnemonic");
     };
     let anchor = if let Some(anchor) = request.referenceChain {
         anchor
@@ -133,7 +133,7 @@ async fn burn(State(node): State<Arc<Node>>, Form(request): Form<BurnRequest>) -
     let secret_key = if let Some(secret_key) = to_secret_key(&request.mnemonic) {
         secret_key
     } else {
-        return respond_error("Invalid mnemonic".to_owned());
+        return respond_error("Invalid mnemonic");
     };
     let anchor = if let Some(anchor) = request.referenceChain {
         anchor
@@ -185,7 +185,7 @@ async fn cancel_lease(
     let secret_key = if let Some(secret_key) = to_secret_key(&request.mnemonic) {
         secret_key
     } else {
-        return respond_error("Invalid mnemonic".to_owned());
+        return respond_error("Invalid mnemonic");
     };
     let anchor = if let Some(anchor) = request.referenceChain {
         anchor
@@ -255,7 +255,7 @@ async fn claim_swap(
     let secret_key = if let Some(secret_key) = to_secret_key(&request.mnemonic) {
         secret_key
     } else {
-        return respond_error("Invalid mnemonic".to_owned());
+        return respond_error("Invalid mnemonic");
     };
     let anchor = if let Some(anchor) = request.referenceChain {
         anchor
@@ -337,7 +337,7 @@ async fn create_swap(
     let secret_key = if let Some(secret_key) = to_secret_key(&request.mnemonic) {
         secret_key
     } else {
-        return respond_error("Invalid mnemonic".to_owned());
+        return respond_error("Invalid mnemonic");
     };
     let anchor = if let Some(anchor) = request.referenceChain {
         anchor
@@ -403,7 +403,7 @@ async fn lease(
     let secret_key = if let Some(secret_key) = to_secret_key(&request.mnemonic) {
         secret_key
     } else {
-        return respond_error("Invalid mnemonic".to_owned());
+        return respond_error("Invalid mnemonic");
     };
     let anchor = if let Some(anchor) = request.referenceChain {
         anchor
@@ -459,7 +459,7 @@ async fn refund_swap(
     let secret_key = if let Some(secret_key) = to_secret_key(&request.mnemonic) {
         secret_key
     } else {
-        return respond_error("Invalid mnemonic".to_owned());
+        return respond_error("Invalid mnemonic");
     };
     let anchor = if let Some(anchor) = request.referenceChain {
         anchor
@@ -533,7 +533,7 @@ async fn transfer(
     let secret_key = if let Some(secret_key) = to_secret_key(&request.mnemonic) {
         secret_key
     } else {
-        return respond_error("Invalid mnemonic".to_owned());
+        return respond_error("Invalid mnemonic");
     };
     let anchor = if let Some(anchor) = request.referenceChain {
         anchor
@@ -557,7 +557,7 @@ async fn transfer(
         if request.encrypted.is_none() || request.encrypted == Some(0) {
             PaymentId::plain(&request.message.take().unwrap_or("".to_owned()))
         } else {
-            return respond_error("Unknown encrypted".to_owned());
+            return respond_error("Unknown encrypted");
         }
     };
     let data = match to_bytes(&Transfer::new(request.amount, to, payment_id)) {
@@ -606,7 +606,7 @@ async fn withdraw_from_lease(
     let secret_key = if let Some(secret_key) = to_secret_key(&request.mnemonic) {
         secret_key
     } else {
-        return respond_error("Invalid mnemonic".to_owned());
+        return respond_error("Invalid mnemonic");
     };
     let anchor = if let Some(anchor) = request.referenceChain {
         anchor
@@ -666,7 +666,7 @@ async fn send_raw_transaction(
     let hash = if let Some(hash) = Transaction::compute_hash(&bytes) {
         hash
     } else {
-        return respond_error("Invalid transaction bytes".to_owned());
+        return respond_error("Invalid transaction bytes");
     };
 
     match node.broadcast_tx(hash, &bytes) {

@@ -36,11 +36,14 @@ pub fn respond_hex(message: &[u8]) -> Response<String> {
         .unwrap()
 }
 
-pub fn respond_text(message: String) -> Response<String> {
+pub fn respond_text<T>(message: T) -> Response<String>
+where
+    String: From<T>,
+{
     Response::builder()
         .status(200)
         .header("Content-Type", "text/plain")
-        .body(message)
+        .body(message.into())
         .unwrap()
 }
 
@@ -52,10 +55,13 @@ pub fn respond_json<T: Serialize>(message: &T) -> Response<String> {
         .unwrap()
 }
 
-pub fn respond_error(message: String) -> Response<String> {
+pub fn respond_error<T>(message: T) -> Response<String>
+where
+    String: From<T>,
+{
     Response::builder()
         .status(400)
         .header("Content-Type", "text/plain")
-        .body(message)
+        .body(message.into())
         .unwrap()
 }

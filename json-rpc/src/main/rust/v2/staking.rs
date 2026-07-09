@@ -42,7 +42,7 @@ async fn start_staking(
     let secret_key = if let Some(secret_key) = to_secret_key(&request.mnemonic) {
         secret_key
     } else {
-        return respond_error("Invalid mnemonic".to_owned());
+        return respond_error("Invalid mnemonic");
     };
     respond_bool(node.staker().start_staking(&secret_key))
 }
@@ -59,7 +59,7 @@ async fn stop_staking(
     let secret_key = if let Some(secret_key) = to_secret_key(&request.mnemonic) {
         secret_key
     } else {
-        return respond_error("Invalid mnemonic".to_owned());
+        return respond_error("Invalid mnemonic");
     };
     respond_bool(node.staker().stop_staking(&secret_key))
 }
@@ -76,7 +76,7 @@ async fn is_staking(
     let secret_key = if let Some(secret_key) = to_secret_key(&request.mnemonic) {
         secret_key
     } else {
-        return respond_error("Invalid mnemonic".to_owned());
+        return respond_error("Invalid mnemonic");
     };
     respond_bool(node.staker().is_staking(&secret_key))
 }
