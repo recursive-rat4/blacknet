@@ -408,7 +408,12 @@ impl Update {
         }
     }
 
-    pub fn commit_impl(self) {
+    pub fn commit_impl(mut self) {
+        if self.state.block_sizes.len() == BLOCK_SIZE_SPAN {
+            self.state.block_sizes.pop_front();
+        }
+        self.state.block_sizes.push_back(self.block_size);
+
         todo!();
     }
 }
