@@ -393,6 +393,16 @@ impl<const N: usize> BigInt<N> {
         }
         BigInt::<M> { limbs }
     }
+    pub fn truncate<const M: usize>(self) -> BigInt<M> {
+        const {
+            assert!(N > M);
+        };
+        let mut limbs = [0; M];
+        for (l, r) in zip(&mut limbs, self.limbs) {
+            *l = r
+        }
+        BigInt::<M> { limbs }
+    }
 }
 
 impl<const N: usize> fmt::Debug for BigInt<N> {
