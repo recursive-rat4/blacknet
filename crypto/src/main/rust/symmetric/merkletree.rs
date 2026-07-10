@@ -66,7 +66,7 @@ impl<F: CompressionFunction<Hash: Clone + Default>> MerkleTree<F> {
     }
 
     pub fn branch(&self, mut i: usize) -> Vec<F::Hash> {
-        let mut branch = Vec::<F::Hash>::with_capacity(bit_width(self.size) as usize);
+        let mut branch = Vec::<F::Hash>::with_capacity(self.size.bit_width() as usize);
         let mut j = 0;
         let mut l = self.size;
         while l > 1 {
@@ -120,8 +120,3 @@ impl<F: CompressionFunction<Hash: PartialEq>> PartialEq for MerkleTree<F> {
 }
 
 impl<F: CompressionFunction<Hash: Eq>> Eq for MerkleTree<F> {}
-
-//RUST https://github.com/rust-lang/rust/issues/142326
-const fn bit_width(n: usize) -> u32 {
-    usize::BITS - n.leading_zeros()
-}
