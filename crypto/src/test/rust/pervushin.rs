@@ -16,7 +16,7 @@
  */
 
 use blacknet_crypto::algebra::{
-    BalancedRepresentative, Conjugate, IntegerModRing, Inv, One, Sqrt, Square, Zero,
+    BalancedRepresentative, Conjugate, IntegerModRing, Inv, One, PolynomialRing, Sqrt, Square, Zero,
 };
 use blacknet_crypto::norm::InfinityNorm;
 
@@ -185,4 +185,12 @@ fn f_cnj() {
     let c = F::from([654336260586812980, 209289517407125934].map(Z::new));
     assert_eq!(a.conjugate(), a);
     assert_eq!(b.conjugate(), c);
+}
+
+#[test]
+fn f_evl() {
+    let a = F::from([3, 19].map(Z::from));
+    let b = Z::from(2);
+    let c = Z::from(41);
+    assert_eq!(a.evaluate(&b), c);
 }
