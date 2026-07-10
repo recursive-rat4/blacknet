@@ -54,6 +54,10 @@ doctest = false
 path = "src/main/rust/lib.rs"
 
 [[test]]
+name = "amount"
+path = "src/test/rust/amount.rs"
+
+[[test]]
 name = "block"
 path = "src/test/rust/block.rs"
 

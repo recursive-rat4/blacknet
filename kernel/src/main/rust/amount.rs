@@ -58,11 +58,7 @@ impl Amount {
     pub fn checked_sum(iter: impl Iterator<Item = Amount>) -> Option<Amount> {
         let mut sum = Amount::ZERO;
         for item in iter {
-            if let Some(amount) = sum.checked_add(item) {
-                sum = amount;
-            } else {
-                return None;
-            }
+            sum = sum.checked_add(item)?;
         }
         Some(sum)
     }

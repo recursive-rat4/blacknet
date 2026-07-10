@@ -279,7 +279,7 @@ impl PeerTable {
     pub fn random(&self, n: usize) -> Vec<Endpoint> {
         let peers = self.peers.read().unwrap();
         let mut candidates = Vec::<Endpoint>::with_capacity(peers.len());
-        for (&endpoint, _) in peers.iter() {
+        for &endpoint in peers.keys() {
             candidates.push(endpoint);
         }
         Self::shuffle(&mut candidates);
