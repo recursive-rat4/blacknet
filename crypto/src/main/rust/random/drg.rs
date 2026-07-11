@@ -21,15 +21,15 @@ use core::mem::transmute;
 
 pub const SEED_SIZE: usize = KEY_SIZE;
 
-pub struct FastDRG {
-    chacha: ChaCha<8>,
+pub struct ChaChaDRG<const ROUNDS: usize> {
+    chacha: ChaCha<ROUNDS>,
     buffer: [u8; BLOCK_SIZE],
     position: usize,
 }
 
-impl FastDRG {
+impl<const ROUNDS: usize> ChaChaDRG<ROUNDS> {
     pub fn new(seed: &[u8; SEED_SIZE]) -> Self {
-        let mut chacha = ChaCha::<8>::new(seed, &Default::default());
+        let mut chacha = ChaCha::<ROUNDS>::new(seed, &Default::default());
         let mut buffer = [0_u8; BLOCK_SIZE];
         Self::keystream(&mut chacha, &mut buffer);
         Self {
@@ -61,7 +61,7 @@ impl FastDRG {
         Self::keystream(&mut self.chacha, &mut self.buffer);
     }
 
-    fn keystream(chacha: &mut ChaCha<8>, buffer: &mut [u8; BLOCK_SIZE]) {
+    fn keystream(chacha: &mut ChaCha<ROUNDS>, buffer: &mut [u8; BLOCK_SIZE]) {
         let mut scratch = [0 as Word; L];
         chacha.keystream(&mut scratch);
         let scratch: [u8; BLOCK_SIZE] = unsafe { transmute(scratch) };
@@ -69,13 +69,13 @@ impl FastDRG {
     }
 }
 
-impl Default for FastDRG {
+impl<const ROUNDS: usize> Default for ChaChaDRG<ROUNDS> {
     fn default() -> Self {
         Self::new(&Default::default())
     }
 }
 
-impl UniformGenerator for FastDRG {
+impl<const ROUNDS: usize> UniformGenerator for ChaChaDRG<ROUNDS> {
     type Output = u8;
 
     fn generate(&mut self) -> Self::Output {
@@ -90,3 +90,6 @@ impl UniformGenerator for FastDRG {
         }
     }
 }
+
+pub type FastDRG = ChaChaDRG<8>;
+pub type StrongDRG = ChaChaDRG<20>;

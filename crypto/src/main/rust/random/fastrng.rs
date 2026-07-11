@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::random::{FastDRG, UniformGenerator, fastdrg::SEED_SIZE};
+use crate::random::{FastDRG, StrongDRG, UniformGenerator, drg::SEED_SIZE};
 use blacknet_compat::getentropy;
 use core::cell::RefCell;
 use core::ops::DerefMut;
@@ -23,11 +23,11 @@ use std::sync::{LazyLock, Mutex};
 use std::thread_local;
 use zeroize::Zeroizing;
 
-pub struct FastSeeder {
-    drg: FastDRG,
+pub struct StrongSeeder {
+    drg: StrongDRG,
 }
 
-impl FastSeeder {
+impl StrongSeeder {
     /// # Panics
     ///
     /// If initial entropy can't be obtained.
@@ -35,7 +35,7 @@ impl FastSeeder {
         let mut seed: Zeroizing<[u8; SEED_SIZE]> = Default::default();
         getentropy(seed.deref_mut()).expect("source of entropy");
         Self {
-            drg: FastDRG::new(&seed),
+            drg: StrongDRG::new(&seed),
         }
     }
 
@@ -44,8 +44,8 @@ impl FastSeeder {
     }
 }
 
-pub static FAST_SEEDER: LazyLock<Mutex<FastSeeder>> =
-    LazyLock::new(|| Mutex::new(FastSeeder::new()));
+pub static STRONG_SEEDER: LazyLock<Mutex<StrongSeeder>> =
+    LazyLock::new(|| Mutex::new(StrongSeeder::new()));
 
 pub struct FastRNG {
     drg: FastDRG,
@@ -54,7 +54,7 @@ pub struct FastRNG {
 impl FastRNG {
     fn new() -> Self {
         let mut seed: Zeroizing<[u8; SEED_SIZE]> = Default::default();
-        FAST_SEEDER.lock().unwrap().generate(seed.deref_mut());
+        STRONG_SEEDER.lock().unwrap().generate(seed.deref_mut());
         Self {
             drg: FastDRG::new(&seed),
         }
