@@ -17,10 +17,13 @@
 
 use blacknet_kernel::blake2b::Hash;
 use blacknet_kernel::ed25519::*;
-use criterion::{Criterion, criterion_group, criterion_main};
+use criterion::{Criterion, Throughput, criterion_group, criterion_main};
 use std::hint::black_box;
 
 fn criterion_benchmark(crit: &mut Criterion) {
+    let mut grp = crit.benchmark_group("Ed25519");
+    grp.throughput(Throughput::Elements(1));
+
     let secret_key = black_box(
         SecretKey::try_from("1EB1997993844282E4B33463E55B77A6EE8C3ED5AD175CC1F0DB746242EB2DE7")
             .unwrap(),
@@ -34,10 +37,12 @@ fn criterion_benchmark(crit: &mut Criterion) {
     );
     let signature = black_box(Signature::try_from("6D5D4F6A81C601B1834701BDE84785470F92DFA517975BED9AAEA035FBDB0072327EFD207195B7202B5A72BB9CC37443A011C35137E1DF1C11BB5E9C60125B04").unwrap());
 
-    crit.bench_function("sign", |bench| bench.iter(|| sign(hash, secret_key)));
-    crit.bench_function("verify", |bench| {
+    grp.bench_function("sign", |bench| bench.iter(|| sign(hash, secret_key)));
+    grp.bench_function("verify", |bench| {
         bench.iter(|| verify(signature, hash, public_key))
     });
+
+    grp.finish();
 }
 
 criterion_group!(benches, criterion_benchmark);

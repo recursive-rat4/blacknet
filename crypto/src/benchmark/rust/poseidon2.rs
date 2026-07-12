@@ -19,18 +19,23 @@ use blacknet_crypto::algebra::IntegerModRing;
 use blacknet_crypto::lm::LMField;
 use blacknet_crypto::pervushin::PervushinField;
 use blacknet_crypto::symmetric::{Poseidon2LM12, Poseidon2Pervushin12, Poseidon2Plain};
-use criterion::{Criterion, criterion_group, criterion_main};
+use criterion::{Criterion, Throughput, criterion_group, criterion_main};
 use std::hint::black_box;
 
 fn criterion_benchmark(crit: &mut Criterion) {
+    let mut grp = crit.benchmark_group("Poseidon2");
+    grp.throughput(Throughput::Elements(12));
+
     let mut a = black_box([LMField::new(1234567); 12]);
-    crit.bench_function("Poseidon2 LMField", |bench| {
+    grp.bench_function("LMField", |bench| {
         bench.iter(|| Poseidon2LM12::permute(&mut a))
     });
     let mut b = black_box([PervushinField::new(1234567); 12]);
-    crit.bench_function("Poseidon2 PervushinField", |bench| {
+    grp.bench_function("PervushinField", |bench| {
         bench.iter(|| Poseidon2Pervushin12::permute(&mut b))
     });
+
+    grp.finish();
 }
 
 criterion_group!(benches, criterion_benchmark);

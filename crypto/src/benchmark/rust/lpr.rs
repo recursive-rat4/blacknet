@@ -16,29 +16,34 @@
  */
 
 use blacknet_crypto::lpr::*;
-use blacknet_crypto::random::FastDRG;
+use blacknet_crypto::random::StrongDRG;
 use core::array;
-use criterion::{Criterion, criterion_group, criterion_main};
+use criterion::{Criterion, Throughput, criterion_group, criterion_main};
 use std::hint::black_box;
 
 fn criterion_benchmark(crit: &mut Criterion) {
-    let mut drg = black_box(FastDRG::default());
+    let mut grp = crit.benchmark_group("LPR");
+    grp.throughput(Throughput::Elements(1));
+
+    let mut drg = black_box(StrongDRG::default());
     let bytes: [u8; 128] = black_box(array::from_fn(|i| i as u8));
     let pt = black_box(encode(&bytes));
     let sk = black_box(generate_secret_key(&mut drg));
     let pk = black_box(generate_public_key(&mut drg, &sk));
     let ct = black_box(encrypt(&mut drg, &pk, &pt));
 
-    crit.bench_function("LPR generate_secret_key", |bench| {
+    grp.bench_function("generate_secret_key", |bench| {
         bench.iter(|| generate_secret_key(&mut drg))
     });
-    crit.bench_function("LPR generate_public_key", |bench| {
+    grp.bench_function("generate_public_key", |bench| {
         bench.iter(|| generate_public_key(&mut drg, &sk))
     });
-    crit.bench_function("LPR encrypt", |bench| {
+    grp.bench_function("encrypt", |bench| {
         bench.iter(|| encrypt(&mut drg, &pk, &pt))
     });
-    crit.bench_function("LPR decrypt", |bench| bench.iter(|| decrypt(&sk, &ct)));
+    grp.bench_function("decrypt", |bench| bench.iter(|| decrypt(&sk, &ct)));
+
+    grp.finish();
 }
 
 criterion_group!(benches, criterion_benchmark);

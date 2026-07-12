@@ -17,7 +17,7 @@
 
 use blacknet_crypto::johnsonlindenstrauss::JohnsonLindenstrauss;
 use blacknet_crypto::matrix::DenseVector;
-use criterion::{Criterion, criterion_group, criterion_main};
+use criterion::{Criterion, Throughput, criterion_group, criterion_main};
 use std::hint::black_box;
 
 type Z = blacknet_crypto::lm::LMField;
@@ -26,16 +26,19 @@ type DRG = blacknet_crypto::symmetric::DuplexPoseidon2LM;
 const N: usize = 1024;
 
 fn criterion_benchmark(crit: &mut Criterion) {
+    let mut grp = crit.benchmark_group("JohnsonLindenstrauss");
+    grp.throughput(Throughput::Elements(N as u64));
+
     let mut drg = black_box(DRG::default());
     let jl = black_box(JohnsonLindenstrauss::<Z>::random(&mut drg, N));
     let v: DenseVector<Z> = black_box((0..N).map(|i| Z::from(i as i32)).collect());
 
-    crit.bench_function("JohnsonLindenstrauss sample", |bench| {
+    grp.bench_function("sample", |bench| {
         bench.iter(|| JohnsonLindenstrauss::<Z>::random(&mut drg, N))
     });
-    crit.bench_function("JohnsonLindenstrauss project", |bench| {
-        bench.iter(|| jl.project(&v))
-    });
+    grp.bench_function("project", |bench| bench.iter(|| jl.project(&v)));
+
+    grp.finish();
 }
 
 criterion_group!(benches, criterion_benchmark);
