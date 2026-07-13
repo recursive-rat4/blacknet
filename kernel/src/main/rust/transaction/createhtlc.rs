@@ -16,13 +16,14 @@
  */
 
 use crate::amount::Amount;
-use crate::blake2b::{Blake2b256, Digest, Hash};
+use crate::blake2b::Hash;
 use crate::ed25519::PublicKey;
 use crate::error::{Error, Result};
 use crate::hashlock::HashLock;
 use crate::htlc::HTLC;
 use crate::timelock::TimeLock;
 use crate::transaction::{CoinTx, Transaction, TxData};
+use blacknet_crypto::symmetric::Blake2b256;
 use serde::{Deserialize, Serialize};
 
 pub type HashTimeLockContractId = [u8; 32];
@@ -31,7 +32,7 @@ fn id(hash: Hash, data_index: u32) -> HashTimeLockContractId {
     let mut hasher = Blake2b256::new();
     hasher.update(hash);
     hasher.update(data_index.to_be_bytes());
-    hasher.finalize().into()
+    hasher.finalize()
 }
 
 #[derive(Deserialize, Serialize)]

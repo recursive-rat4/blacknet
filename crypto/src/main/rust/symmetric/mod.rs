@@ -17,6 +17,7 @@
 
 //! Symmetric cryptography.
 
+pub mod blake2b;
 pub mod chacha;
 mod compressionfunction;
 mod duplex;
@@ -27,6 +28,7 @@ mod poseidon2lm;
 mod poseidon2pervushin;
 mod trunc;
 
+pub use blake2b::{Blake2b256, Blake2b512};
 pub use chacha::ChaCha20;
 pub use compressionfunction::CompressionFunction;
 pub use duplex::{Absorb, Duplex, Duplexer, Phase, Squeeze, SqueezeWithSize};

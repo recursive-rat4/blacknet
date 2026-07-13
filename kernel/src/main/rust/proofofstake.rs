@@ -16,11 +16,14 @@
  */
 
 use crate::amount::Amount;
-use crate::blake2b::{Blake2b256, Digest, Hash};
+use crate::blake2b::Hash;
 use crate::ed25519::PublicKey;
 use crate::error::{Error, Result};
 use alloc::boxed::Box;
-use blacknet_crypto::bigint::{UInt256, UInt320};
+use blacknet_crypto::{
+    bigint::{UInt256, UInt320},
+    symmetric::Blake2b256,
+};
 use blacknet_time::Seconds;
 use core::cmp::min;
 
@@ -61,7 +64,7 @@ pub fn verify(
     hasher.update(prev_time.to_be_bytes());
     hasher.update(generator);
     hasher.update(time.to_be_bytes());
-    let hash: [u8; 32] = hasher.finalize().into();
+    let hash: [u8; 32] = hasher.finalize();
     let hash: UInt320 = UInt256::from_be_bytes(hash).extend();
     let target: UInt320 = difficulty.widening_mul_limb(stake.value());
     if hash < target {

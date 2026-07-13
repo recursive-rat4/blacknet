@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_kernel::blake2b::{Blake2b256, Digest};
+use blacknet_crypto::symmetric::Blake2b256;
 use blacknet_kernel::ed25519::*;
 use core::assert_matches;
 

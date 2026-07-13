@@ -15,10 +15,11 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::blake2b::{Blake2b256, Digest, Hash};
+use crate::blake2b::Hash;
 use crate::ed25519::{PublicKey, Signature, verify};
 use crate::error::{Error, Result};
 use alloc::boxed::Box;
+use blacknet_crypto::symmetric::Blake2b256;
 use blacknet_time::Seconds;
 use serde::{Deserialize, Serialize};
 

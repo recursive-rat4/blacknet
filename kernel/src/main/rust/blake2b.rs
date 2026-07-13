@@ -19,10 +19,6 @@ use core::fmt::{Debug, Display, Formatter, Result as FmtResult};
 use data_encoding::{DecodeError, DecodeKind, HEXUPPER};
 use serde::{Deserialize, Serialize};
 
-pub use blake2::digest::Digest;
-
-pub type Blake2b256 = blake2::Blake2b<blake2::digest::consts::U32>;
-
 #[derive(Clone, Copy, Default, Deserialize, Eq, Hash, PartialEq, Serialize)]
 pub struct Hash([u8; 32]);
 
@@ -54,14 +50,6 @@ impl From<[u8; 32]> for Hash {
     }
 }
 
-impl From<blake2::digest::generic_array::GenericArray<u8, blake2::digest::consts::U32>> for Hash {
-    fn from(
-        array: blake2::digest::generic_array::GenericArray<u8, blake2::digest::consts::U32>,
-    ) -> Self {
-        Self(array.into())
-    }
-}
-
 impl From<Hash> for [u8; 32] {
     fn from(hash: Hash) -> Self {
         hash.0
@@ -86,5 +74,3 @@ impl TryFrom<&str> for Hash {
         }
     }
 }
-
-pub type Blake2b512 = blake2::Blake2b512;

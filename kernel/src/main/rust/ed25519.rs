@@ -15,13 +15,14 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::blake2b::{Blake2b256, Blake2b512, Digest, Hash};
+use crate::blake2b::Hash;
 use crate::error::Error;
 use alloc::vec::Vec;
 use blacknet_crypto::{
     algebra::{IntegerModRing, One},
     bigint::UInt256,
     ed25519::{Edwards25519GroupAffine, Edwards25519GroupExtended, Field25519, Scalar25519},
+    symmetric::{Blake2b256, Blake2b512},
 };
 use core::array::TryFromSliceError;
 use core::fmt::{Debug, Formatter, Result as FmtResult};
@@ -196,7 +197,7 @@ const fn check_version(bytes: [u8; 32]) -> bool {
 }
 
 pub fn to_secret_key(mnemonic: &str) -> Option<SecretKey> {
-    let bytes: [u8; 32] = Blake2b256::digest(mnemonic).into();
+    let bytes: [u8; 32] = Blake2b256::digest(mnemonic);
     if check_version(bytes) {
         Some(SecretKey(bytes))
     } else {
@@ -210,7 +211,7 @@ pub fn sign(hash: Hash, secret_key: SecretKey) -> Signature {
     let mut hasher = Blake2b512::new();
     hasher.update(h);
     hasher.update(hash);
-    let r: [u8; 64] = hasher.finalize().into();
+    let r: [u8; 64] = hasher.finalize();
     let r_scalar = Scalar25519::with_512(r);
     let r = mul_base_encode(r_scalar);
 
@@ -219,7 +220,7 @@ pub fn sign(hash: Hash, secret_key: SecretKey) -> Signature {
     hasher.update(r);
     hasher.update(a);
     hasher.update(hash);
-    let s: [u8; 64] = hasher.finalize().into();
+    let s: [u8; 64] = hasher.finalize();
     let s = Scalar25519::with_512(s);
     let s = r_scalar + s * scalar;
     let s = s.canonical().to_le_bytes();
@@ -234,7 +235,7 @@ pub fn verify(signature: Signature, hash: Hash, public_key: PublicKey) -> Result
     hasher.update(signature.r);
     hasher.update(a.encode());
     hasher.update(hash);
-    let h: [u8; 64] = hasher.finalize().into();
+    let h: [u8; 64] = hasher.finalize();
     let h = Scalar25519::with_512(h);
     let h = h.canonical().bits::<{ Scalar25519::BITS as usize }>();
     let a: Edwards25519GroupExtended = a.into();
@@ -253,7 +254,7 @@ pub fn verify(signature: Signature, hash: Hash, public_key: PublicKey) -> Result
 }
 
 fn parse_secret_key(secret_key: SecretKey) -> (Scalar25519, [u8; 32]) {
-    let mut hash: [u8; 64] = Blake2b512::digest(secret_key).into();
+    let mut hash: [u8; 64] = Blake2b512::digest(secret_key);
     hash[0] &= 0xF8;
     hash[31] &= 0x7F;
     hash[31] |= 0x40;

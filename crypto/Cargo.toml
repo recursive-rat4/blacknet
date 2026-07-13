@@ -76,6 +76,10 @@ name = "blacklemon"
 path = "src/test/rust/blacklemon.rs"
 
 [[test]]
+name = "blake2b"
+path = "src/test/rust/blake2b.rs"
+
+[[test]]
 name = "branchless"
 path = "src/test/rust/branchless.rs"
 
@@ -250,6 +254,11 @@ path = "src/test/rust/univariatepolynomial.rs"
 [[test]]
 name = "uring"
 path = "src/test/rust/uring.rs"
+
+[[bench]]
+name = "blake2b"
+path = "src/benchmark/rust/blake2b.rs"
+harness = false
 
 [[bench]]
 name = "field25519"

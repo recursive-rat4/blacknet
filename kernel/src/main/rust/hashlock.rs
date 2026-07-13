@@ -15,10 +15,10 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::blake2b::Blake2b256;
 use crate::error::{Error, Result};
 use alloc::boxed::Box;
 use alloc::format;
+use blacknet_crypto::symmetric::Blake2b256;
 use ripemd::Ripemd160;
 use serde::{Deserialize, Serialize};
 use sha2::Sha256;
@@ -62,9 +62,7 @@ impl HashLock {
 
     pub fn verify(&self, preimage: &[u8]) -> Result<()> {
         let hash: Box<[u8]> = match self.algorithm {
-            BLAKE2B_256 => Box::new(Into::<[u8; 32]>::into(
-                <Blake2b256 as blake2::Digest>::digest(preimage),
-            )),
+            BLAKE2B_256 => Box::new(Into::<[u8; 32]>::into(Blake2b256::digest(preimage))),
             SHA2_256 => Box::new(Into::<[u8; 32]>::into(<Sha256 as sha2::Digest>::digest(
                 preimage,
             ))),

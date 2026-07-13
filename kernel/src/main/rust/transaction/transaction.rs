@@ -16,12 +16,13 @@
  */
 
 use crate::amount::Amount;
-use crate::blake2b::{Blake2b256, Digest, Hash};
+use crate::blake2b::Hash;
 use crate::ed25519::{PublicKey, SecretKey, Signature, sign, verify};
 use crate::error::Result;
 use crate::transaction::TxKind;
 use alloc::boxed::Box;
 use alloc::vec::Vec;
+use blacknet_crypto::symmetric::Blake2b256;
 use blacknet_serialization::format::to_bytes;
 use serde::{Deserialize, Serialize};
 

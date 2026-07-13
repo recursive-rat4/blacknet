@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2025 Pavel Vasin
+ * Copyright (c) 2018-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -18,8 +18,7 @@
 use crate::connection::Connection;
 use crate::node::NETWORK_TIMEOUT;
 use crate::packet::{Packet, PacketKind, Pong};
-use blacknet_kernel::blake2b::Blake2b256;
-use blake2::Digest;
+use blacknet_crypto::symmetric::Blake2b256;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
@@ -30,7 +29,7 @@ pub struct PingV1 {
 
 impl PingV1 {
     pub fn solve(magic: u32, challenge: u32) -> u32 {
-        let mut hasher = Blake2b256::default();
+        let mut hasher = Blake2b256::new();
         hasher.update(magic.to_be_bytes());
         hasher.update(challenge.to_be_bytes());
         let hash = hasher.finalize();
