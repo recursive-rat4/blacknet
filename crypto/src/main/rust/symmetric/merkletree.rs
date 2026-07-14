@@ -30,9 +30,9 @@ impl<F: CompressionFunction<Hash: Clone>> MerkleTree<F> {
         let mut hash = leaf;
         for node in branch {
             if (i & 1) == 1 {
-                hash = F::compress(node.clone(), hash);
+                hash = F::compress(node, &hash);
             } else {
-                hash = F::compress(hash, node.clone());
+                hash = F::compress(&hash, node);
             }
             i >>= 1;
         }
@@ -51,9 +51,9 @@ impl<F: CompressionFunction<Hash: Clone + Default>> MerkleTree<F> {
             while l > 1 {
                 for i in (0..l).step_by(2) {
                     if i + 1 < l {
-                        nodes.push(F::compress(nodes[i + j].clone(), nodes[i + j + 1].clone()));
+                        nodes.push(F::compress(&nodes[i + j], &nodes[i + j + 1]));
                     } else {
-                        nodes.push(F::compress(nodes[i + j].clone(), F::Hash::default()));
+                        nodes.push(F::compress(&nodes[i + j], &F::Hash::default()));
                     }
                 }
                 j += l;

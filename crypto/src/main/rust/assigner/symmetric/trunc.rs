@@ -61,14 +61,14 @@ impl<
 {
     type Hash = [G; RANK];
 
-    fn compress(&self, a: Self::Hash, b: Self::Hash) -> Self::Hash {
+    fn compress(&self, a: &Self::Hash, b: &Self::Hash) -> Self::Hash {
         let mut state = [G::ZERO; WIDTH];
-        state[..WIDTH / 2].clone_from_slice(&a);
-        state[WIDTH / 2..].clone_from_slice(&b);
+        state[..WIDTH / 2].clone_from_slice(a);
+        state[WIDTH / 2..].clone_from_slice(b);
         P::permute(self.assigment, &mut state);
-        let mut hash = a;
-        for (h, s) in zip(&mut hash, state) {
-            *h += s
+        let mut hash = [G::ZERO; RANK];
+        for (h, (s, a)) in zip(&mut hash, zip(state, a)) {
+            *h = s + a
         }
         hash
     }

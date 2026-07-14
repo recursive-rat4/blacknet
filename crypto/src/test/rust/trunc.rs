@@ -50,7 +50,7 @@ type TruncPlain = Trunc<Z, 2, 4, TestPermutation>;
 #[test]
 fn plain() {
     assert_eq!(
-        TruncPlain::compress([11, 12].map(Z::from), [13, 14].map(Z::from)),
+        TruncPlain::compress(&[11, 12].map(Z::from), &[13, 14].map(Z::from)),
         [72, 75].map(Z::from)
     );
 }
@@ -103,7 +103,7 @@ fn circuit() {
     z.extend(b_plain);
 
     let trunc_assigner = TruncAssigner::new(&z);
-    let c_assigned: [Z; 2] = trunc_assigner.compress(a_plain, b_plain);
+    let c_assigned: [Z; 2] = trunc_assigner.compress(&a_plain, &b_plain);
 
     assert_eq!(c_assigned, c_plain);
     assert_matches!(r1cs.is_satisfied(&z.finish()), Ok(()));

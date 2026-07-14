@@ -19,6 +19,7 @@
 //!
 //! <https://www.blake2.net/blake2.pdf>
 
+use crate::symmetric::CompressionFunction;
 use core::cmp::min;
 use core::mem::transmute;
 use zeroize::Zeroize;
@@ -245,6 +246,17 @@ impl<const BYTES: usize> Blake2b<BYTES> {
 impl<const BYTES: usize> Default for Blake2b<BYTES> {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+impl<const BYTES: usize> CompressionFunction for Blake2b<BYTES> {
+    type Hash = [u8; BYTES];
+
+    fn compress(a: &Self::Hash, b: &Self::Hash) -> Self::Hash {
+        let mut hasher = Self::with_personalization(*b"2to1 compression");
+        hasher.update(a);
+        hasher.update(b);
+        hasher.finalize()
     }
 }
 

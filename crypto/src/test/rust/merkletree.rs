@@ -17,14 +17,13 @@
 
 use blacknet_crypto::symmetric::CompressionFunction;
 
-type Z = blacknet_crypto::pervushin::PervushinField;
-type Trunc = blacknet_crypto::symmetric::TruncPoseidon2Pervushin;
-type Hash = <Trunc as CompressionFunction>::Hash;
-type MerkleTree = blacknet_crypto::symmetric::MerkleTree<Trunc>;
+type F = blacknet_crypto::symmetric::Blake2b256;
+type Hash = [u8; 32];
+type MerkleTree = blacknet_crypto::symmetric::MerkleTree<F>;
 
 #[test]
 fn empty() {
-    let null: Hash = [0, 0, 0, 0].map(Z::from);
+    let null: Hash = [0; 32];
 
     let tree1 = MerkleTree::default();
     let leaves = Vec::<Hash>::new();
@@ -36,14 +35,14 @@ fn empty() {
 
 #[test]
 fn even() {
-    let h1: Hash = [0, 0, 0, 1].map(Z::from);
-    let h2: Hash = [0, 0, 0, 2].map(Z::from);
+    let h1: Hash = [1; 32];
+    let h2: Hash = [2; 32];
     let leaves = vec![h1, h2];
     let tree = MerkleTree::new(&leaves);
     let b1 = vec![h2];
     let b2 = vec![h1];
 
-    assert_eq!(tree.root(), &Trunc::compress(h1, h2));
+    assert_eq!(tree.root(), &F::compress(&h1, &h2));
     assert_eq!(tree.branch(1), b2);
 
     assert_ne!(&MerkleTree::compute_root(1, h1, &b1), tree.root());
@@ -53,13 +52,7 @@ fn even() {
 
 #[test]
 fn odd() {
-    let leaves = [
-        [0, 0, 0, 1].map(Z::from),
-        [0, 0, 0, 2].map(Z::from),
-        [0, 0, 0, 3].map(Z::from),
-        [0, 0, 0, 4].map(Z::from),
-        [0, 0, 0, 5].map(Z::from),
-    ];
+    let leaves = [[1; 32], [2; 32], [3; 32], [4; 32], [5; 32]];
     let tree = MerkleTree::new(&leaves);
 
     for (i, leaf) in leaves.into_iter().enumerate() {
