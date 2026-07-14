@@ -48,20 +48,41 @@ pub struct Blake2b<const BYTES: usize> {
 impl<const BYTES: usize> Blake2b<BYTES> {
     /// Construct new hasher.
     pub const fn new() -> Self {
-        const {
-            assert!(BYTES > 0 && BYTES <= 64);
-        }
         Self {
-            state: Self::init(),
+            state: Self::state([0; 16]),
             counter: 0,
             buffer: [0; BLOCK_SIZE],
             position: 0,
         }
     }
 
-    const fn init() -> [Word; STATE_LEN] {
+    /// Construct new hasher with personalization.
+    ///
+    /// All zeroes is identical to the standard output.
+    pub const fn with_personalization(personalization: [u8; 16]) -> Self {
+        Self {
+            state: Self::state(personalization),
+            counter: 0,
+            buffer: [0; BLOCK_SIZE],
+            position: 0,
+        }
+    }
+
+    const fn state(personalization: [u8; 16]) -> [Word; STATE_LEN] {
+        const {
+            assert!(BYTES > 0 && BYTES <= 64);
+        }
+        let mut personalization: [Word; 2] = unsafe { transmute(personalization) };
+        let mut i = 0;
+        while i < 2 {
+            personalization[i] = personalization[i].to_le();
+            i += 1;
+        }
+
         let mut state = IV;
         state[0] ^= 0x01010000 ^ (BYTES as Word);
+        state[6] ^= personalization[0];
+        state[7] ^= personalization[1];
         state
     }
 

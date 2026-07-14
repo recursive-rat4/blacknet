@@ -36,3 +36,17 @@ fn hash() {
     assert_eq!(hash256, Blake2b256::digest(message));
     assert_eq!(hash512, Blake2b512::digest(message));
 }
+
+#[test]
+fn personalization() {
+    let personalization: [u8; 16] = array::from_fn(|i| (0x41 + i) as u8);
+    let message: [u8; 4] = array::from_fn(|i| (0x61 + i) as u8);
+    let hash256: [u8; 32] = [
+        0xA0, 0x6C, 0x85, 0xE0, 0x4C, 0x8D, 0x6C, 0x41, 0xEC, 0xDF, 0xDE, 0x5C, 0x3E, 0x10, 0x97,
+        0xBE, 0x1A, 0x5C, 0xFB, 0xD9, 0xAB, 0xC0, 0x8B, 0xE3, 0xCD, 0x43, 0xF8, 0x74, 0x40, 0x38,
+        0x09, 0x63,
+    ];
+    let mut hasher = Blake2b256::with_personalization(personalization);
+    hasher.update(message);
+    assert_eq!(hash256, hasher.finalize());
+}
