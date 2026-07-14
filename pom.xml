@@ -20,7 +20,6 @@
 
     <modules>
         <module>benchmarks</module>
-        <module>cli</module>
         <module>io</module>
         <module>daemon</module>
         <module>json-rpc</module>
