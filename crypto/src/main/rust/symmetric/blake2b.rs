@@ -18,7 +18,9 @@
 //! BLAKE2b cryptographic hash function.
 //!
 //! <https://www.blake2.net/blake2.pdf>
+//! <https://www.blake2.net/blake2x.pdf>
 
+use crate::random::UniformGenerator;
 use crate::symmetric::CompressionFunction;
 use core::cmp::min;
 use core::mem::transmute;
@@ -49,27 +51,25 @@ pub struct Blake2b<const BYTES: usize> {
 impl<const BYTES: usize> Blake2b<BYTES> {
     /// Construct new hasher.
     pub const fn new() -> Self {
-        Self {
-            state: Self::state([0; 16]),
-            counter: 0,
-            buffer: [0; BLOCK_SIZE],
-            position: 0,
-        }
+        Self::with_params(1, 1, 0, 0, 0, 0, [0; 16])
     }
 
     /// Construct new hasher with personalization.
     ///
     /// All zeroes is identical to the standard output.
     pub const fn with_personalization(personalization: [u8; 16]) -> Self {
-        Self {
-            state: Self::state(personalization),
-            counter: 0,
-            buffer: [0; BLOCK_SIZE],
-            position: 0,
-        }
+        Self::with_params(1, 1, 0, 0, 0, 0, personalization)
     }
 
-    const fn state(personalization: [u8; 16]) -> [Word; STATE_LEN] {
+    const fn with_params(
+        fanout: u8,
+        depth: u8,
+        leaf_length: u32,
+        node_offset: u32,
+        xof_length: u32,
+        inner_length: u8,
+        personalization: [u8; 16],
+    ) -> Self {
         const {
             assert!(BYTES > 0 && BYTES <= 64);
         }
@@ -81,10 +81,22 @@ impl<const BYTES: usize> Blake2b<BYTES> {
         }
 
         let mut state = IV;
-        state[0] ^= 0x01010000 ^ (BYTES as Word);
+        state[0] ^= BYTES as Word;
+        state[0] ^= (fanout as Word) << 16;
+        state[0] ^= (depth as Word) << 24;
+        state[0] ^= (leaf_length as Word) << 32;
+        state[1] ^= node_offset as Word;
+        state[1] ^= (xof_length as Word) << 32;
+        state[2] ^= (inner_length as Word) << 8;
         state[6] ^= personalization[0];
         state[7] ^= personalization[1];
-        state
+
+        Self {
+            state,
+            counter: 0,
+            buffer: [0; BLOCK_SIZE],
+            position: 0,
+        }
     }
 
     #[inline(always)]
@@ -264,3 +276,84 @@ impl<const BYTES: usize> CompressionFunction for Blake2b<BYTES> {
 pub type Blake2b256 = Blake2b<32>;
 /// BLAKE2b-512
 pub type Blake2b512 = Blake2b<64>;
+
+/// BLAKE2Xb extensible-output function.
+#[derive(Clone, Copy, Zeroize)]
+pub struct Blake2xb {
+    state: Blake2b<64>,
+    xof_length: u32,
+}
+
+impl Blake2xb {
+    /// Construct new hasher.
+    ///
+    /// The digest length is set to the maximum.
+    pub const fn new() -> Self {
+        Self::with_length(u32::MAX)
+    }
+
+    /// Construct new hasher with digest length.
+    pub const fn with_length(xof_length: u32) -> Self {
+        Self {
+            state: Blake2b::with_params(1, 1, 0, 0, xof_length, 0, [0; 16]),
+            xof_length,
+        }
+    }
+
+    /// Process input data.
+    #[inline]
+    pub fn update(&mut self, input: impl AsRef<[u8]>) {
+        self.state.update_impl(input.as_ref())
+    }
+
+    /// Produce XOF output.
+    pub fn finalize(self) -> XOFOutput {
+        XOFOutput {
+            buffer: [0; 64],
+            position: 64,
+            h0: self.state.finalize(),
+            node_offset: 0,
+            xof_length: self.xof_length,
+        }
+    }
+}
+
+impl Default for Blake2xb {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+#[derive(Clone, Copy, Zeroize)]
+pub struct XOFOutput {
+    buffer: [u8; 64],
+    position: usize,
+    h0: [u8; 64],
+    node_offset: u32,
+    xof_length: u32,
+}
+
+impl UniformGenerator for XOFOutput {
+    type Output = u8;
+
+    fn generate(&mut self) -> Self::Output {
+        if self.position == self.buffer.len() {
+            let mut hasher = Blake2b::<64>::with_params(
+                0,
+                0,
+                64,
+                self.node_offset,
+                self.xof_length,
+                64,
+                [0; 16],
+            );
+            hasher.update(self.h0);
+            self.buffer = hasher.finalize();
+            self.position = 0;
+            self.node_offset += 1;
+        }
+        let b = self.buffer[self.position];
+        self.position += 1;
+        b
+    }
+}
