@@ -50,6 +50,10 @@ impl Milliseconds {
         Self { n: n * 86400000 }
     }
 
+    pub const fn value(self) -> i64 {
+        self.n
+    }
+
     pub const fn to_be_bytes(self) -> [u8; 8] {
         self.n.to_be_bytes()
     }

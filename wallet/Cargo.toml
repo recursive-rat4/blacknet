@@ -34,6 +34,7 @@ categories.workspace = true
 blacknet-compat.workspace = true
 blacknet-kernel.workspace = true
 blacknet-log.workspace = true
+blacknet-time = { workspace = true, features = ["std"] }
 bech32.workspace = true
 spdlog-rs.workspace = true
 

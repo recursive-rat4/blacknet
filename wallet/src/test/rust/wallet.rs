@@ -31,8 +31,9 @@ fn ephemeral() {
     let mode = Mode::regtest();
     let public_key = PublicKey::default();
     let wallet = Wallet::ephemeral(public_key, &mode).unwrap();
+    assert_matches!(wallet.created_at(), Ok(_));
     assert_eq!(wallet.public_key().unwrap(), public_key);
-    assert_eq!(wallet.sequence().unwrap(), 0);
+    assert_matches!(wallet.sequence(), Ok(0));
 }
 
 #[test]
@@ -48,9 +49,9 @@ fn htlc() {
     let wallet = Wallet::ephemeral(PublicKey::default(), &mode).unwrap();
     let htlc_id = HashTimeLockContractId::default();
     assert_matches!(wallet.put_htlc(htlc_id), Ok(()));
-    assert!(wallet.has_htlc(htlc_id).unwrap());
+    assert_matches!(wallet.has_htlc(htlc_id), Ok(true));
     assert_matches!(wallet.remove_htlc(htlc_id), Ok(()));
-    assert!(!wallet.has_htlc(htlc_id).unwrap());
+    assert_matches!(wallet.has_htlc(htlc_id), Ok(false));
 }
 
 #[test]
@@ -59,9 +60,9 @@ fn multisig() {
     let wallet = Wallet::ephemeral(PublicKey::default(), &mode).unwrap();
     let multisig_id = MultiSignatureLockContractId::default();
     assert_matches!(wallet.put_multisig(multisig_id), Ok(()));
-    assert!(wallet.has_multisig(multisig_id).unwrap());
+    assert_matches!(wallet.has_multisig(multisig_id), Ok(true));
     assert_matches!(wallet.remove_multisig(multisig_id), Ok(()));
-    assert!(!wallet.has_multisig(multisig_id).unwrap());
+    assert_matches!(wallet.has_multisig(multisig_id), Ok(false));
 }
 
 #[test]
@@ -85,8 +86,8 @@ fn transaction() {
     let mode = Mode::regtest();
     let wallet = Wallet::ephemeral(PublicKey::default(), &mode).unwrap();
     let tx_id = Hash::ZERO;
-    let tx_bytes = [10, 11, 12, 13];
+    let tx_bytes: [u8; 4] = [10, 11, 12, 13];
     assert_matches!(wallet.put_transaction(tx_id, &tx_bytes), Ok(()));
     let bytes = wallet.get_transaction(tx_id).unwrap();
-    assert_eq!(bytes, tx_bytes.into());
+    assert_eq!(tx_bytes, *bytes);
 }

@@ -322,6 +322,7 @@ dependencies = [
  "blacknet-compat",
  "blacknet-kernel",
  "blacknet-log",
+ "blacknet-time",
  "data-encoding",
  "rusqlite",
  "spdlog-rs",

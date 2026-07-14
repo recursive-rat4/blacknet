@@ -22,6 +22,7 @@ use blacknet_kernel::amount::Amount;
 use blacknet_kernel::blake2b::Hash;
 use blacknet_kernel::ed25519::PublicKey;
 use blacknet_kernel::transaction::{HashTimeLockContractId, MultiSignatureLockContractId};
+use blacknet_time::{Seconds, SystemClock};
 use rusqlite::{Connection, OpenFlags};
 use std::path::Path;
 use std::sync::Mutex;
@@ -92,6 +93,7 @@ impl Wallet {
         connection.execute(
             "CREATE TABLE wallet(\
                 id INTEGER PRIMARY KEY CHECK (id = 0),\
+                created_at INTEGER NOT NULL,\
                 public_key BLOB NOT NULL,\
                 sequence INTEGER NOT NULL\
              ) STRICT;",
@@ -119,14 +121,23 @@ impl Wallet {
         Self::set_magic(&connection, mode)?;
         Self::create_schema(&connection)?;
 
+        let created_at = SystemClock::secs();
+
         connection.execute(
-            "INSERT INTO wallet VALUES(?, ?, ?);",
-            (0, public_key.as_ref(), 0),
+            "INSERT INTO wallet VALUES(?, ?, ?, ?);",
+            (0, created_at.value(), public_key.as_ref(), 0),
         )?;
 
         Ok(Self {
             connection: Mutex::new(connection),
         })
+    }
+
+    pub fn created_at(&self) -> Result<Seconds> {
+        let connection = self.connection.lock().unwrap();
+        let mut statement = connection.prepare_cached("SELECT created_at FROM wallet;")?;
+        let num: i64 = statement.query_one((), |row| row.get(0))?;
+        Ok(Seconds::new(num))
     }
 
     pub fn public_key(&self) -> Result<PublicKey> {
