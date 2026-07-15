@@ -33,6 +33,7 @@ categories.workspace = true
 [dependencies]
 blacknet-compat.workspace = true
 blacknet-json-rpc.workspace = true
+clap.workspace = true
 
 [lints]
 workspace = true

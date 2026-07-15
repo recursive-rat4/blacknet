@@ -51,6 +51,7 @@ axum = { version = "0.8.9", default-features = false, features = ["form", "http1
 bech32 = { version = "0.12.0", default-features = false, features = ["alloc"] }
 bytemuck = { version = "1.25.0", features = ["derive"] }
 chrono = { version = "0.4.44", default-features = false }
+clap = { version = "4.6.1", features = ["derive"] }
 cmov = { version = "0.5.4" }
 criterion = { version = "0.8.2", default-features = false, features = ["cargo_bench_support"] }
 data-encoding = { version = "2.10.0", default-features = false, features = ["alloc"] }

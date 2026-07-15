@@ -16,17 +16,24 @@
  */
 
 use blacknet_compat::{XDGDirectories, mode};
-use std::env::args;
+use clap::Parser;
 use std::error::Error;
 use std::process::ExitCode;
 
+#[derive(Parser)]
+#[command(version)]
+#[command(about = "Blacknet RPC client", long_about = None)]
+struct Cli {
+    /// RPC command.
+    command: String,
+    /// Arguments for the command.
+    args: Vec<String>,
+}
+
+#[expect(unused_variables)]
 fn cli() -> Result<(), Box<dyn Error>> {
-    if args().nth(1).is_some_and(|arg| arg == "--version") {
-        println!("Blacknet Daemon {}", env!("CARGO_PKG_VERSION"));
-        return Ok(());
-    }
+    let cli = Cli::parse();
     let mode = mode()?;
-    #[expect(unused_variables)]
     let dirs = XDGDirectories::new(mode.subdirectory())?;
     todo!();
 }
