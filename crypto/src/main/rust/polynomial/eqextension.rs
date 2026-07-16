@@ -264,7 +264,7 @@ impl<R: UnitalRing> MulAssign<&R> for EqExtension<R> {
 
 impl<Msg, R: UnitalRing + Absorb<Msg>> Absorb<Msg> for EqExtension<R> {
     fn absorb_into<D: Duplexer<Msg = Msg>>(self, duplex: &mut D) {
-        duplex.absorb_iter(self.coefficients.into_iter());
+        duplex.absorb_iter(self.coefficients);
         duplex.absorb(self.z);
     }
 }

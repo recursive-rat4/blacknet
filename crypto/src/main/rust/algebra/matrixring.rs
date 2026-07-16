@@ -20,6 +20,7 @@ use crate::algebra::{
     LeftZero, MultiplicativeSemigroup, One, RightOne, RightZero, Ring, RingOps, Semimodule, Set,
     Square, UnitalAlgebra, UnitalRing, Zero,
 };
+use crate::symmetric::{Absorb, Duplexer, Squeeze};
 use core::array;
 use core::iter::{Product, Sum, zip};
 use core::mem::{MaybeUninit, transmute_copy};
@@ -692,4 +693,22 @@ impl<R: UnitalRing + Copy, const N: usize, const NN: usize> UnitalAlgebra<R>
 where
     for<'a> &'a R: RingOps<R>,
 {
+}
+
+impl<Msg, R: Ring + Absorb<Msg>, const N: usize, const NN: usize> Absorb<Msg>
+    for MatrixRing<R, N, NN>
+{
+    fn absorb_into<D: Duplexer<Msg = Msg>>(self, duplex: &mut D) {
+        duplex.absorb_iter(self.elements)
+    }
+}
+
+impl<Msg, R: Ring + Squeeze<Msg>, const N: usize, const NN: usize> Squeeze<Msg>
+    for MatrixRing<R, N, NN>
+{
+    fn squeeze_from<D: Duplexer<Msg = Msg>>(duplex: &mut D) -> Self {
+        Self {
+            elements: array::from_fn(|_| duplex.squeeze()),
+        }
+    }
 }

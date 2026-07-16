@@ -109,7 +109,7 @@ impl<'a, 'b, R: Semiring> AddAssign for UnivariatePolynomial<'a, 'b, R> {
 
 impl<'a, 'b, R: Semiring> Absorb<LinearCombination<R>> for UnivariatePolynomial<'a, 'b, R> {
     fn absorb_into<D: Duplexer<Msg = LinearCombination<R>>>(self, duplex: &mut D) {
-        duplex.absorb_iter(self.coefficients.into_iter())
+        duplex.absorb_iter(self.coefficients)
     }
 }
 

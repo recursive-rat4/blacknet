@@ -471,14 +471,14 @@ where
     }
 }
 
-impl<R: UnitalRing + Absorb<R>> Absorb<R> for TracelessQuaternion<R> {
-    fn absorb_into<D: Duplexer<Msg = R>>(self, duplex: &mut D) {
+impl<Msg, R: UnitalRing + Absorb<Msg>> Absorb<Msg> for TracelessQuaternion<R> {
+    fn absorb_into<D: Duplexer<Msg = Msg>>(self, duplex: &mut D) {
         duplex.absorb(self.coefficients)
     }
 }
 
-impl<R: UnitalRing + Squeeze<R>> Squeeze<R> for TracelessQuaternion<R> {
-    fn squeeze_from<D: Duplexer<Msg = R>>(duplex: &mut D) -> Self {
+impl<Msg, R: UnitalRing + Squeeze<Msg>> Squeeze<Msg> for TracelessQuaternion<R> {
+    fn squeeze_from<D: Duplexer<Msg = Msg>>(duplex: &mut D) -> Self {
         duplex.squeeze::<FreeModule<R, 3>>().into()
     }
 }

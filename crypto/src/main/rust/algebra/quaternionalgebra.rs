@@ -672,14 +672,14 @@ where
     }
 }
 
-impl<R: UnitalRing + Absorb<R>> Absorb<R> for QuaternionAlgebra<R> {
-    fn absorb_into<D: Duplexer<Msg = R>>(self, duplex: &mut D) {
+impl<Msg, R: UnitalRing + Absorb<Msg>> Absorb<Msg> for QuaternionAlgebra<R> {
+    fn absorb_into<D: Duplexer<Msg = Msg>>(self, duplex: &mut D) {
         duplex.absorb(self.coefficients)
     }
 }
 
-impl<R: UnitalRing + Squeeze<R>> Squeeze<R> for QuaternionAlgebra<R> {
-    fn squeeze_from<D: Duplexer<Msg = R>>(duplex: &mut D) -> Self {
+impl<Msg, R: UnitalRing + Squeeze<Msg>> Squeeze<Msg> for QuaternionAlgebra<R> {
+    fn squeeze_from<D: Duplexer<Msg = Msg>>(duplex: &mut D) -> Self {
         duplex.squeeze::<FreeModule<R, 4>>().into()
     }
 }

@@ -120,7 +120,7 @@ impl<'a, R: Semiring> Double for UnivariatePolynomial<'a, R> {
 
 impl<'a, Msg, R: Semiring + Absorb<Msg>> Absorb<Msg> for UnivariatePolynomial<'a, R> {
     fn absorb_into<D: Duplexer<Msg = Msg>>(self, duplex: &mut D) {
-        duplex.absorb_iter(self.coefficients.into_iter())
+        duplex.absorb_iter(self.coefficients)
     }
 }
 

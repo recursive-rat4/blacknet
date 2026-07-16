@@ -625,7 +625,7 @@ where
 
 impl<Msg, T: Absorb<Msg>> Absorb<Msg> for DenseVector<T> {
     fn absorb_into<D: Duplexer<Msg = Msg>>(self, duplex: &mut D) {
-        duplex.absorb_iter(self.elements.into_iter())
+        duplex.absorb_iter(self.elements)
     }
 }
 

@@ -392,7 +392,7 @@ where
 
 impl<Msg, R: Semiring + Absorb<Msg>> Absorb<Msg> for UnivariatePolynomial<R> {
     fn absorb_into<D: Duplexer<Msg = Msg>>(self, duplex: &mut D) {
-        duplex.absorb_iter(self.coefficients.into_iter())
+        duplex.absorb_iter(self.coefficients)
     }
 }
 

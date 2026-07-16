@@ -506,14 +506,14 @@ impl<R: Ring, const N: usize> AdditiveSemigroup for FreeModule<R, N> {}
 
 impl<R: Ring + Clone, const N: usize> Semimodule<R> for FreeModule<R, N> {}
 
-impl<R: Ring + Absorb<R>, const N: usize> Absorb<R> for FreeModule<R, N> {
-    fn absorb_into<D: Duplexer<Msg = R>>(self, duplex: &mut D) {
-        duplex.absorb_iter(self.components.into_iter())
+impl<Msg, R: Ring + Absorb<Msg>, const N: usize> Absorb<Msg> for FreeModule<R, N> {
+    fn absorb_into<D: Duplexer<Msg = Msg>>(self, duplex: &mut D) {
+        duplex.absorb_iter(self.components)
     }
 }
 
-impl<R: Ring + Squeeze<R>, const N: usize> Squeeze<R> for FreeModule<R, N> {
-    fn squeeze_from<D: Duplexer<Msg = R>>(duplex: &mut D) -> Self {
+impl<Msg, R: Ring + Squeeze<Msg>, const N: usize> Squeeze<Msg> for FreeModule<R, N> {
+    fn squeeze_from<D: Duplexer<Msg = Msg>>(duplex: &mut D) -> Self {
         Self::from_fn(|_| duplex.squeeze())
     }
 }

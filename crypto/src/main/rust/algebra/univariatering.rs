@@ -681,18 +681,18 @@ where
 {
 }
 
-impl<R: UnitalRing + Absorb<R>, const N: usize, C: Convolution<R, N>> Absorb<R>
+impl<Msg, R: UnitalRing + Absorb<Msg>, const N: usize, C: Convolution<R, N>> Absorb<Msg>
     for UnivariateRing<R, N, C>
 {
-    fn absorb_into<D: Duplexer<Msg = R>>(self, duplex: &mut D) {
+    fn absorb_into<D: Duplexer<Msg = Msg>>(self, duplex: &mut D) {
         duplex.absorb(self.coefficients)
     }
 }
 
-impl<R: UnitalRing + Squeeze<R>, const N: usize, C: Convolution<R, N>> Squeeze<R>
+impl<Msg, R: UnitalRing + Squeeze<Msg>, const N: usize, C: Convolution<R, N>> Squeeze<Msg>
     for UnivariateRing<R, N, C>
 {
-    fn squeeze_from<D: Duplexer<Msg = R>>(duplex: &mut D) -> Self {
+    fn squeeze_from<D: Duplexer<Msg = Msg>>(duplex: &mut D) -> Self {
         duplex.squeeze::<FreeModule<R, N>>().into()
     }
 }

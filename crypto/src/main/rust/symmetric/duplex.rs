@@ -47,8 +47,10 @@ pub trait Duplexer: Sized + UniformGenerator {
     }
 
     #[inline]
-    fn absorb_iter<S: Absorb<Self::Msg>, I: Iterator<Item = S>>(&mut self, iter: I) {
-        iter.for_each(|i| i.absorb_into(self));
+    fn absorb_iter<S: Absorb<Self::Msg>, I: IntoIterator<Item = S>>(&mut self, iter: I) {
+        for item in iter {
+            item.absorb_into(self)
+        }
     }
 
     #[inline]
@@ -72,6 +74,18 @@ pub trait Squeeze<T> {
 
 pub trait SqueezeWithSize<T> {
     fn squeeze_from<D: Duplexer<Msg = T>>(duplex: &mut D, size: usize) -> Self;
+}
+
+impl Absorb<u8> for u8 {
+    fn absorb_into<D: Duplexer<Msg = u8>>(self, duplex: &mut D) {
+        duplex.absorb_msg(self)
+    }
+}
+
+impl Squeeze<u8> for u8 {
+    fn squeeze_from<D: Duplexer<Msg = u8>>(duplex: &mut D) -> Self {
+        duplex.squeeze_msg()
+    }
 }
 
 /// An implementation of the duplex construction.

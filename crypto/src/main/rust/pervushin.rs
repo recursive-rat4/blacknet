@@ -27,6 +27,7 @@ use crate::gcd::gcd_inner;
 use crate::integer::Integer;
 use crate::polynomial::interpolation::InterpolationConsts;
 use crate::symmetric::{Absorb, Duplexer, Squeeze};
+use core::array;
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
 use core::ops::{Add, AddAssign, Div, Mul, MulAssign, Neg, Sub, SubAssign};
@@ -557,6 +558,22 @@ impl Absorb<Self> for PervushinField {
 impl Squeeze<Self> for PervushinField {
     fn squeeze_from<D: Duplexer<Msg = Self>>(duplex: &mut D) -> Self {
         duplex.squeeze_msg()
+    }
+}
+
+impl Absorb<u8> for PervushinField {
+    fn absorb_into<D: Duplexer<Msg = u8>>(self, duplex: &mut D) {
+        duplex.absorb_iter(self.canonical().to_le_bytes())
+    }
+}
+
+impl Squeeze<u8> for PervushinField {
+    fn squeeze_from<D: Duplexer<Msg = u8>>(duplex: &mut D) -> Self {
+        // log₂(Δ) ≈ -61
+        let bytes: [u8; 8] = array::from_fn(|_| duplex.squeeze_msg());
+        let n = i64::from_le_bytes(bytes);
+        let n = Self::reduce_64(n);
+        Self { n }
     }
 }
 

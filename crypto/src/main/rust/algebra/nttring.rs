@@ -709,14 +709,18 @@ where
     }
 }
 
-impl<Z: Twiddles<M> + Absorb<Z>, const M: usize, const N: usize> Absorb<Z> for NTTRing<Z, M, N> {
-    fn absorb_into<D: Duplexer<Msg = Z>>(self, duplex: &mut D) {
+impl<Msg, Z: Twiddles<M> + Absorb<Msg>, const M: usize, const N: usize> Absorb<Msg>
+    for NTTRing<Z, M, N>
+{
+    fn absorb_into<D: Duplexer<Msg = Msg>>(self, duplex: &mut D) {
         duplex.absorb(self.spectrum)
     }
 }
 
-impl<Z: Twiddles<M> + Squeeze<Z>, const M: usize, const N: usize> Squeeze<Z> for NTTRing<Z, M, N> {
-    fn squeeze_from<D: Duplexer<Msg = Z>>(duplex: &mut D) -> Self {
+impl<Msg, Z: Twiddles<M> + Squeeze<Msg>, const M: usize, const N: usize> Squeeze<Msg>
+    for NTTRing<Z, M, N>
+{
+    fn squeeze_from<D: Duplexer<Msg = Msg>>(duplex: &mut D) -> Self {
         Self {
             spectrum: duplex.squeeze::<FreeModule<Z, N>>(),
         }
