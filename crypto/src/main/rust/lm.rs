@@ -557,10 +557,10 @@ impl Absorb<u8> for LMField {
 
 impl Squeeze<u8> for LMField {
     fn squeeze_from<D: Duplexer<Msg = u8>>(duplex: &mut D) -> Self {
-        // log₂(Δ) ≈ -55
-        let bytes: [u8; 8] = array::from_fn(|_| duplex.squeeze_msg());
-        let n = i64::from_le_bytes(bytes);
-        let n = Self::reduce_64(n);
+        // log₂(Δ) ≈ -110
+        let bytes: [u8; 16] = array::from_fn(|_| duplex.squeeze_msg());
+        let n = i128::from_le_bytes(bytes);
+        let n = Self::reduce_128(n);
         Self { n }
     }
 }

@@ -51,8 +51,13 @@ impl PervushinField {
         (x & 0x1FFFFFFFFFFFFFFF) + (x >> 61)
     }
 
-    const fn reduce_128(x: i128) -> i64 {
+    const fn reduce_124(x: i128) -> i64 {
         Self::reduce_64(((x & 0x1FFFFFFFFFFFFFFF) + (x >> 61)) as i64)
+    }
+
+    const fn reduce_128(x: i128) -> i64 {
+        let t = (x & 0x1FFFFFFFFFFFFFFF) + (x >> 61);
+        ((t & 0x1FFFFFFFFFFFFFFF) + (t >> 61)) as i64
     }
 
     fn egcd(self) -> BlOption<Self> {
@@ -275,7 +280,7 @@ impl Mul for PervushinField {
 
     fn mul(self, rps: Self) -> Self::Output {
         Self {
-            n: Self::reduce_128(self.n as i128 * rps.n as i128),
+            n: Self::reduce_124(self.n as i128 * rps.n as i128),
         }
     }
 }
@@ -285,7 +290,7 @@ impl Mul<&Self> for PervushinField {
 
     fn mul(self, rps: &Self) -> Self::Output {
         Self {
-            n: Self::reduce_128(self.n as i128 * rps.n as i128),
+            n: Self::reduce_124(self.n as i128 * rps.n as i128),
         }
     }
 }
@@ -295,7 +300,7 @@ impl Mul<PervushinField> for &PervushinField {
 
     fn mul(self, rps: PervushinField) -> Self::Output {
         Self::Output {
-            n: Self::Output::reduce_128(self.n as i128 * rps.n as i128),
+            n: Self::Output::reduce_124(self.n as i128 * rps.n as i128),
         }
     }
 }
@@ -305,7 +310,7 @@ impl<'a> Mul<&'a PervushinField> for &PervushinField {
 
     fn mul(self, rps: &'a PervushinField) -> Self::Output {
         Self::Output {
-            n: Self::Output::reduce_128(self.n as i128 * rps.n as i128),
+            n: Self::Output::reduce_124(self.n as i128 * rps.n as i128),
         }
     }
 }
@@ -405,7 +410,7 @@ impl Sqrt for PervushinField {
 impl Sum for PervushinField {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
         let n128 = iter.map(|i| i.n as i128).sum();
-        let n = Self::reduce_128(n128);
+        let n = Self::reduce_124(n128);
         Self { n }
     }
 }
@@ -569,10 +574,10 @@ impl Absorb<u8> for PervushinField {
 
 impl Squeeze<u8> for PervushinField {
     fn squeeze_from<D: Duplexer<Msg = u8>>(duplex: &mut D) -> Self {
-        // log₂(Δ) ≈ -61
-        let bytes: [u8; 8] = array::from_fn(|_| duplex.squeeze_msg());
-        let n = i64::from_le_bytes(bytes);
-        let n = Self::reduce_64(n);
+        // log₂(Δ) ≈ -122
+        let bytes: [u8; 16] = array::from_fn(|_| duplex.squeeze_msg());
+        let n = i128::from_le_bytes(bytes);
+        let n = Self::reduce_128(n);
         Self { n }
     }
 }
