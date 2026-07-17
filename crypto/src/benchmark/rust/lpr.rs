@@ -16,7 +16,7 @@
  */
 
 use blacknet_crypto::lpr::*;
-use blacknet_crypto::random::StrongDRG;
+use blacknet_crypto::symmetric::Blake2xb;
 use core::array;
 use criterion::{Criterion, Throughput, criterion_group, criterion_main};
 use std::hint::black_box;
@@ -25,7 +25,7 @@ fn criterion_benchmark(crit: &mut Criterion) {
     let mut grp = crit.benchmark_group("LPR");
     grp.throughput(Throughput::Elements(1));
 
-    let mut drg = black_box(StrongDRG::default());
+    let mut drg = black_box(Blake2xb::new().finalize());
     let bytes: [u8; 128] = black_box(array::from_fn(|i| i as u8));
     let pt = black_box(encode(&bytes));
     let sk = black_box(generate_secret_key(&mut drg));
