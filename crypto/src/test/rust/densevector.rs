@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_crypto::algebra::Tensor;
+use blacknet_crypto::algebra::{Dot, Tensor};
 use blacknet_crypto::matrix::{DenseMatrix, DenseVector};
 use blacknet_crypto::norm::InfinityNorm;
 
@@ -81,9 +81,9 @@ fn dot() {
     let b = DenseVector::<R>::from([4, -2, -1].map(R::from));
     let c = R::from(3);
     let d = R::from(35);
-    assert_eq!(a.dot(&b), c);
+    assert_eq!((&a).dot(&b), c);
     assert_eq!(b.dot(&a), c);
-    assert_eq!(a.dot(&a), d);
+    assert_eq!((&a).dot(&a), d);
 }
 
 #[test]

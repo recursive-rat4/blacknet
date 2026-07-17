@@ -16,8 +16,8 @@
  */
 
 use crate::algebra::{
-    AdditiveCommutativeMagma, AdditiveSemigroup, DivisionRingOps, Double, Inv, LeftZero, RightZero,
-    Ring, RingOps, Semimodule, Set, Zero,
+    AdditiveCommutativeMagma, AdditiveSemigroup, DivisionRingOps, Dot, Double, Inv, LeftZero,
+    RightZero, Ring, RingOps, Semimodule, Set, Zero,
 };
 use crate::branchless::BlOption;
 use crate::symmetric::{Absorb, Duplexer, Squeeze};
@@ -477,6 +477,44 @@ impl<'a, R: Ring + Clone, const N: usize> Sum<&'a Self> for FreeModule<R, N> {
             None => return Self::ZERO,
         };
         iter.fold(first, |lps, rps| lps + rps)
+    }
+}
+
+impl<R: Ring, const N: usize> Dot for FreeModule<R, N> {
+    type Output = R;
+
+    fn dot(self, rps: Self) -> Self::Output {
+        zip(self, rps).map(|(l, r)| l * r).sum()
+    }
+}
+
+impl<R: Ring, const N: usize> Dot<&Self> for FreeModule<R, N> {
+    type Output = R;
+
+    fn dot(self, rps: &Self) -> Self::Output {
+        zip(self, rps).map(|(l, r)| l * r).sum()
+    }
+}
+
+impl<R: Ring, const N: usize> Dot<FreeModule<R, N>> for &FreeModule<R, N>
+where
+    for<'a> &'a R: RingOps<R>,
+{
+    type Output = R;
+
+    fn dot(self, rps: FreeModule<R, N>) -> Self::Output {
+        zip(self, rps).map(|(l, r)| l * r).sum()
+    }
+}
+
+impl<R: Ring, const N: usize> Dot for &FreeModule<R, N>
+where
+    for<'a> &'a R: RingOps<R>,
+{
+    type Output = R;
+
+    fn dot(self, rps: Self) -> Self::Output {
+        zip(self, rps).map(|(l, r)| l * r).sum()
     }
 }
 

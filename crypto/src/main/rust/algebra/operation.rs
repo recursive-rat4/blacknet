@@ -65,6 +65,15 @@ pub trait Conjugate {
     fn conjugate(self) -> Self::Output;
 }
 
+/// The dot product operator `⋅`.
+pub trait Dot<Rps = Self> {
+    /// Result type.
+    type Output;
+
+    /// Perform the binary `⋅` operation.
+    fn dot(self, rps: Rps) -> Self::Output;
+}
+
 /// The binary product operator `⊗`.
 pub trait Tensor<Rps = Self> {
     /// Result type.

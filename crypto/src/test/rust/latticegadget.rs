@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_crypto::algebra::IntegerModRing;
+use blacknet_crypto::algebra::{Dot, IntegerModRing};
 use blacknet_crypto::latticegadget;
 use blacknet_crypto::matrix::{DenseMatrix, DenseVector};
 
@@ -59,5 +59,5 @@ fn polynomial() {
     let b = R::from([34010, -59023].map(Z::from));
     let d = latticegadget::decompose_polynomial(&a, 65535, 16, 4);
     let p = latticegadget::vector::<Z, R>(b, &Z::from(65536), 4);
-    assert_eq!(d.dot(&p), a * b);
+    assert_eq!(d.dot(p), a * b);
 }

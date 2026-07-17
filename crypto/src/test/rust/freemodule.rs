@@ -15,10 +15,10 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_crypto::algebra::{FreeModule, One};
+use blacknet_crypto::algebra::{Dot, FreeModule, One};
 use blacknet_crypto::norm::InfinityNorm;
 
-type R = blacknet_crypto::pervushin::PervushinField;
+type R = blacknet_crypto::uring::U8Ring;
 type M = FreeModule<R, 2>;
 
 #[test]
@@ -35,8 +35,19 @@ fn right() {
 }
 
 #[test]
+fn dot_product() {
+    let a = M::from([3, 252].map(R::from));
+    let b = M::from([254, 255].map(R::from));
+    let c = R::from(254);
+    let d = R::from(25);
+    assert_eq!(a.dot(b), c);
+    assert_eq!(b.dot(a), c);
+    assert_eq!(a.dot(a), d);
+}
+
+#[test]
 fn infinity_norm() {
-    let a = M::from([-1, 4].map(R::from));
+    let a = M::from([255, 4].map(R::from));
     let n = 4;
     let b = 8;
 

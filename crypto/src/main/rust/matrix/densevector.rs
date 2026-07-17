@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{Conjugate, Double, One, Square, Tensor, Zero};
+use crate::algebra::{Conjugate, Dot, Double, One, Square, Tensor, Zero};
 use crate::matrix::DenseMatrix;
 use crate::symmetric::{Absorb, Duplexer};
 use alloc::borrow::{Borrow, BorrowMut};
@@ -91,16 +91,6 @@ impl<T> DenseVector<T> {
         elements.extend_from_slice(&self.elements);
         elements.extend_from_slice(&rps.elements);
         Self { elements }
-    }
-
-    /// Compute the dot product.
-    pub fn dot(&self, rps: &Self) -> T
-    where
-        T: Sum,
-        for<'a> &'a T: Mul<Output = T>,
-    {
-        debug_assert_eq!(self.elements.len(), rps.elements.len());
-        zip(self, rps).map(|(l, r)| l * r).sum()
     }
 
     /// The `n`-dimensional multiplicative identity.
@@ -564,6 +554,48 @@ where
 
     fn conjugate(self) -> Self::Output {
         self.into_iter().map(Conjugate::conjugate).collect()
+    }
+}
+
+impl<T: Mul<Output = T> + Sum> Dot for DenseVector<T> {
+    type Output = T;
+
+    fn dot(self, rps: Self) -> Self::Output {
+        debug_assert_eq!(self.elements.len(), rps.elements.len());
+        zip(self, rps).map(|(l, r)| l * r).sum()
+    }
+}
+
+impl<T: for<'a> Mul<&'a T, Output = T> + Sum> Dot<&Self> for DenseVector<T> {
+    type Output = T;
+
+    fn dot(self, rps: &Self) -> Self::Output {
+        debug_assert_eq!(self.elements.len(), rps.elements.len());
+        zip(self, rps).map(|(l, r)| l * r).sum()
+    }
+}
+
+impl<T: Sum> Dot<DenseVector<T>> for &DenseVector<T>
+where
+    for<'a> &'a T: Mul<T, Output = T>,
+{
+    type Output = T;
+
+    fn dot(self, rps: DenseVector<T>) -> Self::Output {
+        debug_assert_eq!(self.elements.len(), rps.elements.len());
+        zip(self, rps).map(|(l, r)| l * r).sum()
+    }
+}
+
+impl<T: Sum> Dot for &DenseVector<T>
+where
+    for<'a> &'a T: Mul<Output = T>,
+{
+    type Output = T;
+
+    fn dot(self, rps: Self) -> Self::Output {
+        debug_assert_eq!(self.elements.len(), rps.elements.len());
+        zip(self, rps).map(|(l, r)| l * r).sum()
     }
 }
 
