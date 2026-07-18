@@ -16,7 +16,7 @@
  */
 
 use blacknet_crypto::algebra::{
-    Conjugate, Double, IntegerModRing, Inv, QuaternionAlgebra, TracelessQuaternion, Zero,
+    Conjugate, Double, IntegerModRing, Inv, QuaternionAlgebra, Square, TracelessQuaternion, Zero,
 };
 
 type Z = blacknet_crypto::pervushin::PervushinField;
@@ -68,6 +68,14 @@ fn sub() {
     assert_eq!(b - a, d);
     assert_eq!(c - M::ZERO, c);
     assert_eq!(M::ZERO - M::ZERO, M::ZERO);
+}
+
+#[test]
+fn sqr() {
+    let a = M::from([3, 5, 7].map(Z::from));
+    let b = Z::from(-83);
+    assert_eq!(a.square(), b);
+    assert_eq!(M::ZERO.square(), Z::ZERO);
 }
 
 #[test]

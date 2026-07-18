@@ -403,7 +403,7 @@ where
     }
 }
 
-impl<R: UnitalRing> Square for QuaternionAlgebra<R>
+impl<R: UnitalRing + CommutativeRing> Square for QuaternionAlgebra<R>
 where
     for<'a> &'a R: RingOps<R>,
 {
@@ -411,19 +411,24 @@ where
 
     #[inline]
     fn square(self) -> Self {
-        &self * &self
+        (&self).square()
     }
 }
 
-impl<R: UnitalRing> Square for &QuaternionAlgebra<R>
+impl<R: UnitalRing + CommutativeRing> Square for &QuaternionAlgebra<R>
 where
     for<'a> &'a R: RingOps<R>,
 {
     type Output = QuaternionAlgebra<R>;
 
-    #[inline]
     fn square(self) -> Self::Output {
-        self * self
+        let mut out = Self::Output::ZERO;
+        out[0] =
+            (&self[0]).square() - (&self[1]).square() - (&self[2]).square() - (&self[3]).square();
+        out[1] = (&self[0] * &self[1]).double();
+        out[2] = (&self[0] * &self[2]).double();
+        out[3] = (&self[0] * &self[3]).double();
+        out
     }
 }
 
@@ -648,14 +653,22 @@ impl<R: UnitalRing> AdditiveCommutativeMagma for QuaternionAlgebra<R> {}
 
 impl<R: UnitalRing> AdditiveSemigroup for QuaternionAlgebra<R> {}
 
-impl<R: UnitalRing> MultiplicativeSemigroup for QuaternionAlgebra<R> where for<'a> &'a R: RingOps<R> {}
+impl<R: UnitalRing + CommutativeRing> MultiplicativeSemigroup for QuaternionAlgebra<R> where
+    for<'a> &'a R: RingOps<R>
+{
+}
 
 impl<R: UnitalRing + Clone> Semimodule<R> for QuaternionAlgebra<R> {}
 
-impl<R: UnitalRing + Clone> Algebra<R> for QuaternionAlgebra<R> where for<'a> &'a R: RingOps<R> {}
+impl<R: UnitalRing + CommutativeRing + Clone> Algebra<R> for QuaternionAlgebra<R> where
+    for<'a> &'a R: RingOps<R>
+{
+}
 
-impl<R: UnitalRing + Clone> UnitalAlgebra<R> for QuaternionAlgebra<R> where for<'a> &'a R: RingOps<R>
-{}
+impl<R: UnitalRing + CommutativeRing + Clone> UnitalAlgebra<R> for QuaternionAlgebra<R> where
+    for<'a> &'a R: RingOps<R>
+{
+}
 
 impl<R: UnitalRing> Conjugate for QuaternionAlgebra<R>
 where

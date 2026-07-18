@@ -16,8 +16,9 @@
  */
 
 use crate::algebra::{
-    AdditiveCommutativeMagma, AdditiveSemigroup, Conjugate, Double, FreeModule, Inv, LeftZero,
-    QuaternionAlgebra, RightZero, RingOps, Semimodule, Set, Square, UnitalRing, Zero,
+    AdditiveCommutativeMagma, AdditiveSemigroup, CommutativeRing, Conjugate, Double, FreeModule,
+    Inv, LeftZero, QuaternionAlgebra, RightZero, RingOps, Semimodule, Set, Square, UnitalRing,
+    Zero,
 };
 use crate::branchless::BlOption;
 use crate::symmetric::{Absorb, Duplexer, Squeeze};
@@ -368,6 +369,33 @@ impl<R: UnitalRing> MulAssign<R> for TracelessQuaternion<R> {
 impl<R: UnitalRing> MulAssign<&R> for TracelessQuaternion<R> {
     fn mul_assign(&mut self, rps: &R) {
         self.coefficients *= rps
+    }
+}
+
+impl<R: UnitalRing + CommutativeRing> Square for TracelessQuaternion<R> {
+    type Output = R;
+
+    fn square(self) -> Self::Output {
+        self.coefficients
+            .into_iter()
+            .map(Square::square)
+            .sum::<R>()
+            .neg()
+    }
+}
+
+impl<R: UnitalRing + CommutativeRing> Square for &TracelessQuaternion<R>
+where
+    for<'a> &'a R: RingOps<R>,
+{
+    type Output = R;
+
+    fn square(self) -> Self::Output {
+        self.coefficients
+            .iter()
+            .map(Square::square)
+            .sum::<R>()
+            .neg()
     }
 }
 
