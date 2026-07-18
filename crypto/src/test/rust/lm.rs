@@ -16,9 +16,10 @@
  */
 
 use blacknet_crypto::algebra::{
-    BalancedRepresentative, Double, IntegerModRing, Inv, One, Square, Zero,
+    BalancedRepresentative, Conjugate, Double, IntegerModRing, Inv, One, Square, Zero,
 };
 use blacknet_crypto::norm::InfinityNorm;
+use core::array;
 
 type Z = blacknet_crypto::lm::LMField;
 type F2 = blacknet_crypto::lm::LMField2;
@@ -530,6 +531,30 @@ fn r64_mul() {
     assert_eq!(a_ntt * b_ntt, c_ntt);
     assert_eq!(NTT64::ONE * c_ntt, c_ntt);
     assert_eq!(c_ntt * Z::ZERO, NTT64::ZERO);
+}
+
+#[test]
+fn r64_cnj() {
+    let a_coeffs: [Z; 64] = array::from_fn(|i| Z::from(i as i8 + 2));
+    let b_coeffs = [
+        2, -65, -64, -63, -62, -61, -60, -59, -58, -57, -56, -55, -54, -53, -52, -51, -50, -49,
+        -48, -47, -46, -45, -44, -43, -42, -41, -40, -39, -38, -37, -36, -35, -34, -33, -32, -31,
+        -30, -29, -28, -27, -26, -25, -24, -23, -22, -21, -20, -19, -18, -17, -16, -15, -14, -13,
+        -12, -11, -10, -9, -8, -7, -6, -5, -4, -3,
+    ]
+    .map(Z::from);
+
+    let a = R64::from(a_coeffs);
+    let b = R64::from(b_coeffs);
+
+    assert_eq!(a.conjugate(), b);
+    assert_eq!(b.conjugate(), a);
+
+    let a_ntt = NTT64::from(a_coeffs);
+    let b_ntt = NTT64::from(b_coeffs);
+
+    assert_eq!(a_ntt.conjugate(), b_ntt);
+    assert_eq!(b_ntt.conjugate(), a_ntt);
 }
 
 #[test]

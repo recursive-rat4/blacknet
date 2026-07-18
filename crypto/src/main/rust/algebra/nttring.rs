@@ -702,10 +702,45 @@ where
                 spectrum.swap(i, N - 1 - i);
             }
             Self { spectrum }
+        } else if Self::INERTIA == 4 {
+            let mut spectrum = self.spectrum;
+            for i in 0..M / 2 {
+                let j = i * Self::INERTIA;
+                let k = N - (i + 1) * Self::INERTIA;
+                let mut zeta_j = Z::TWIDDLES[M / 2 + i / 2].clone();
+                let mut zeta_k = Z::TWIDDLES[M - 1 - i / 2].clone();
+                if i & 1 == 0 {
+                    zeta_k = -zeta_k;
+                } else {
+                    zeta_j = -zeta_j;
+                }
+                spectrum[j + 1] *= &zeta_j;
+                spectrum[j + 2] *= &zeta_j;
+                spectrum[j + 3] *= &zeta_j;
+                spectrum[k + 1] *= &zeta_k;
+                spectrum[k + 2] *= &zeta_k;
+                spectrum[k + 3] *= &zeta_k;
+                spectrum.swap(j, k);
+                spectrum.swap(j + 1, k + 3);
+                spectrum.swap(j + 2, k + 2);
+                spectrum.swap(j + 3, k + 1);
+            }
+            Self { spectrum }
         } else {
-            let iso: Iso<Z, N> = self.into();
-            Self::from(iso.conjugate())
+            unimplemented!("Conjugate with inertia = {}", NTTRing::<Z, M, N>::INERTIA);
         }
+    }
+}
+
+impl<Z: Twiddles<M> + Clone, const M: usize, const N: usize> Conjugate for &NTTRing<Z, M, N>
+where
+    for<'a> &'a Z: RingOps<Z>,
+{
+    type Output = NTTRing<Z, M, N>;
+
+    #[inline]
+    fn conjugate(self) -> Self::Output {
+        self.clone().conjugate()
     }
 }
 
