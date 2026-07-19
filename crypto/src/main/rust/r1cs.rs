@@ -46,6 +46,13 @@ impl<R: Semiring> R1CS<R> {
         z.push(R::ONE);
         z
     }
+
+    pub fn linearize(&self, z: &DenseVector<R>) -> (DenseVector<R>, DenseVector<R>, DenseVector<R>)
+    where
+        for<'a> &'a R: SemiringOps<R>,
+    {
+        (&self.a * z, &self.b * z, &self.c * z)
+    }
 }
 
 impl<R: Semiring> From<R1CS<R>> for (SparseMatrix<R>, SparseMatrix<R>, SparseMatrix<R>) {
@@ -76,9 +83,8 @@ where
         if z.dimension() != self.variables() {
             return Err(Error::Length(z.dimension(), self.variables()));
         }
-        let az_bz = (&self.a * z) * (&self.b * z);
-        let cz = &self.c * z;
-        match zip(az_bz, cz).enumerate().find(|(_, (a, e))| a != e) {
+        let (az, bz, cz) = self.linearize(z);
+        match zip(az * bz, cz).enumerate().find(|(_, (a, e))| a != e) {
             Some((i, (a, e))) => Err(Error::Mismatch(i, a, e)),
             None => Ok(()),
         }
