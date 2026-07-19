@@ -20,7 +20,6 @@ use crate::circuit::builder::{CircuitBuilder, Constant, LinearCombination};
 use crate::circuit::symmetric::Permutation;
 use crate::random::UniformGenerator;
 use crate::symmetric::{Duplexer, Phase};
-use core::array;
 use core::marker::PhantomData;
 
 pub struct Duplex<
@@ -49,12 +48,12 @@ impl<
     P: Permutation<S, Domain = [LinearCombination<S>; WIDTH]>,
 > Duplex<'a, 'b, S, RATE, CAPACITY, WIDTH, P>
 {
-    pub fn new(circuit: &'a CircuitBuilder<'b, S>) -> Self {
+    pub const fn new(circuit: &'a CircuitBuilder<'b, S>) -> Self {
         Self {
             circuit,
             phase: Phase::Absorb,
             position: 0,
-            state: array::from_fn(|_| LinearCombination::new()),
+            state: [LinearCombination::<S>::ZERO; WIDTH],
             phantom: PhantomData,
         }
     }

@@ -50,6 +50,9 @@ impl<R: Semiring> LinearCombination<R> {
         terms.into_iter().for_each(|term| lc += term);
         lc
     }
+
+    /// Empty linear combination.
+    pub const ZERO: Self = Self::new();
 }
 
 impl<'a, R: Semiring + Clone + Eq + 'a> Expression<'a, R> for LinearCombination<R> {

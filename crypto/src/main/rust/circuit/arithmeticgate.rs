@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::circuit::builder::{CircuitBuilder, LinearCombination, Scope};
+use crate::circuit::builder::{CircuitBuilder, LinearCombination};
 use crate::gf2::GF2;
 use core::array;
 
@@ -29,51 +29,23 @@ impl<'a, 'b> ArithmeticGate<'a, 'b> {
         Self { circuit }
     }
 
-    fn half_adder(
-        scope: &Scope<GF2>,
-        a: &LinearCombination<GF2>,
-        b: &LinearCombination<GF2>,
-    ) -> (LinearCombination<GF2>, LinearCombination<GF2>) {
-        let ab = scope.auxiliary();
-        scope.constrain(a * b, ab);
-
-        let s = a + b;
-        let c = LinearCombination::from(ab);
-        (s, c)
-    }
-
-    fn full_adder(
-        scope: &Scope<GF2>,
-        a: &LinearCombination<GF2>,
-        b: &LinearCombination<GF2>,
-        c: &LinearCombination<GF2>,
-    ) -> (LinearCombination<GF2>, LinearCombination<GF2>) {
-        let ab = scope.auxiliary();
-        scope.constrain(a * b, ab);
-        let cab = scope.auxiliary();
-        scope.constrain(c * (a + b), cab);
-
-        let s = a + b + c;
-        let c = ab + cab;
-        (s, c)
-    }
-
     pub fn wrapping_add<const N: usize>(
         &self,
         a: &[LinearCombination<GF2>; N],
         b: &[LinearCombination<GF2>; N],
     ) -> [LinearCombination<GF2>; N] {
-        let mut s = [const { LinearCombination::new() }; N];
+        let mut s = [LinearCombination::ZERO; N];
         if N == 0 {
             return s;
         }
-        // Ripple-carry adder
         let scope = self.circuit.scope("ArithmeticGate::wrapping_add");
-        let mut c: LinearCombination<GF2>;
-        (s[0], c) = Self::half_adder(&scope, &a[0], &b[0]);
-        for i in 1..N {
-            (s[i], c) = Self::full_adder(&scope, &a[i], &b[i], &c);
+        let mut c = [LinearCombination::ZERO; N];
+        for i in 0..N - 1 {
+            let acbc = scope.auxiliary();
+            scope.constrain((&a[i] + &c[i]) * (&b[i] + &c[i]), acbc);
+            (s[i], c[i + 1]) = (&a[i] + &b[i] + &c[i], &c[i] + acbc);
         }
+        s[N - 1] = &a[N - 1] + &b[N - 1] + &c[N - 1];
         s
     }
 
@@ -84,7 +56,7 @@ impl<'a, 'b> ArithmeticGate<'a, 'b> {
     ) -> [LinearCombination<GF2>; N] {
         let n = n as usize % N;
         let (a_l, a_r) = a.split_at(n);
-        let mut o = [const { LinearCombination::new() }; N];
+        let mut o = [LinearCombination::ZERO; N];
         let (o_l, o_r) = o.split_at_mut(N - n);
         o_l.clone_from_slice(a_r);
         o_r.clone_from_slice(a_l);

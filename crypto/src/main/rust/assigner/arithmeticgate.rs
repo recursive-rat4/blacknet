@@ -29,37 +29,18 @@ impl<'a> ArithmeticGate<'a> {
         Self { assigment }
     }
 
-    fn half_adder(&self, a: GF2, b: GF2) -> (GF2, GF2) {
-        let ab = a * b;
-        self.assigment.push(ab);
-
-        let s = a + b;
-        let c = ab;
-        (s, c)
-    }
-
-    fn full_adder(&self, a: GF2, b: GF2, c: GF2) -> (GF2, GF2) {
-        let ab = a * b;
-        self.assigment.push(ab);
-        let cab = c * (a + b);
-        self.assigment.push(cab);
-
-        let s = a + b + c;
-        let c = ab + cab;
-        (s, c)
-    }
-
     pub fn wrapping_add<const N: usize>(&self, a: &[GF2; N], b: &[GF2; N]) -> [GF2; N] {
         let mut s = [GF2::ZERO; N];
         if N == 0 {
             return s;
         }
-        // Ripple-carry adder
-        let mut c: GF2;
-        (s[0], c) = self.half_adder(a[0], b[0]);
-        for i in 1..N {
-            (s[i], c) = self.full_adder(a[i], b[i], c);
+        let mut c = [GF2::ZERO; N];
+        for i in 0..N - 1 {
+            let acbc = (a[i] + c[i]) * (b[i] + c[i]);
+            self.assigment.push(acbc);
+            (s[i], c[i + 1]) = (a[i] + b[i] + c[i], c[i] + acbc);
         }
+        s[N - 1] = a[N - 1] + b[N - 1] + c[N - 1];
         s
     }
 

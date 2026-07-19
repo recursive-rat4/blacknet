@@ -18,7 +18,6 @@
 use crate::algebra::{AdditiveGroup, Semiring};
 use crate::circuit::builder::{CircuitBuilder, LinearCombination};
 use crate::circuit::symmetric::{CompressionFunction, Permutation};
-use core::array;
 use core::marker::PhantomData;
 
 pub struct Trunc<
@@ -65,11 +64,11 @@ impl<
     type Hash = [LinearCombination<G>; RANK];
 
     fn compress(&self, a: &Self::Hash, b: &Self::Hash) -> Self::Hash {
-        let mut state: [LinearCombination<G>; WIDTH] = array::from_fn(|_| LinearCombination::new());
+        let mut state = [LinearCombination::<G>::ZERO; WIDTH];
         state[..WIDTH / 2].clone_from_slice(a);
         state[WIDTH / 2..].clone_from_slice(b);
         P::permute(self.circuit, &mut state);
-        let mut hash: [LinearCombination<G>; RANK] = array::from_fn(|_| LinearCombination::new());
+        let mut hash = [LinearCombination::<G>::ZERO; RANK];
         for i in 0..RANK {
             hash[i] = &a[i] + &state[i];
         }

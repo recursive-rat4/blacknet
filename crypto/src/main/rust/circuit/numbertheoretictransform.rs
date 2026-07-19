@@ -111,7 +111,7 @@ where
             4 => {
                 let k = inertia * 2;
                 let l = N / k;
-                let mut c: [LinearCombination<Z>; N] = array::from_fn(|_| LinearCombination::new());
+                let mut c = [LinearCombination::<Z>::ZERO; N];
                 for i in 0..l {
                     binomial::<Z, 4>(
                         scope,
