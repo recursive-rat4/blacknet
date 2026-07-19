@@ -20,6 +20,7 @@ use crate::blake2b::Hash;
 use crate::ed25519::PublicKey;
 use crate::error::{Error, Result};
 use alloc::boxed::Box;
+use alloc::collections::VecDeque;
 use blacknet_crypto::{
     bigint::{UInt256, UInt320},
     symmetric::Blake2b256,
@@ -107,12 +108,12 @@ pub fn guess_initial_synchronization(
     external > internal + target_block_time(version) * (ROLLBACK_LIMIT as i64)
 }
 
-pub fn max_block_size(block_sizes: &[u32]) -> u32 {
+pub fn max_block_size(block_sizes: &VecDeque<u32>) -> u32 {
     if block_sizes.len() != BLOCK_SIZE_SPAN {
         return DEFAULT_MAX_BLOCK_SIZE;
     }
 
-    let mut sizes: Box<[u32]> = block_sizes.into();
+    let mut sizes: Box<[u32]> = block_sizes.iter().copied().collect();
     sizes.sort();
     let median = sizes[BLOCK_SIZE_SPAN / 2];
     let size = median.saturating_mul(2);

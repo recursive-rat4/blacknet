@@ -25,14 +25,15 @@ use blacknet_crypto::bigint::UInt256;
 use blacknet_kernel::account::Account;
 use blacknet_kernel::amount::Amount;
 use blacknet_kernel::blake2b::Hash;
-use blacknet_kernel::block::Block;
+use blacknet_kernel::block::{BLOCK_VERSION, Block};
 use blacknet_kernel::ed25519::PublicKey;
 use blacknet_kernel::error::{Error, Result};
 use blacknet_kernel::htlc::HTLC;
 use blacknet_kernel::multisig::Multisig;
 use blacknet_kernel::proofofstake::{
     BLOCK_SIZE_SPAN, DEFAULT_MAX_BLOCK_SIZE, INITIAL_DIFFICULTY, ROLLBACK_LIMIT, UPGRADE_THRESHOLD,
-    Version as PoSVersion, mint, verify as verify_pos,
+    Version as PoSVersion, cumulative_difficulty, max_block_size, mint, next_difficulty, nxtrng,
+    verify as verify_pos,
 };
 use blacknet_kernel::transaction::{
     CoinTx, HashTimeLockContractId, MultiSignatureLockContractId, Transaction,
@@ -40,6 +41,7 @@ use blacknet_kernel::transaction::{
 use blacknet_log::{LogManager, Logger, error};
 use blacknet_serialization::format::{from_bytes, to_bytes};
 use blacknet_time::Seconds;
+use core::cmp::{max, min};
 use core::error::Error as StdError;
 use fjall::OwnedWriteBatch as WriteBatch;
 use serde::{Deserialize, Serialize};
@@ -414,6 +416,42 @@ impl Update {
         }
         self.state.block_sizes.push_back(self.block_size);
 
+        #[expect(unreachable_code, unused_variables)]
+        let pos_version = self.state.pos_version(todo!());
+        let difficulty = next_difficulty(
+            pos_version,
+            self.undo.difficulty(),
+            self.undo.block_time(),
+            self.block_time,
+        );
+        let cumulative_difficulty =
+            cumulative_difficulty(self.undo.cumulative_difficulty(), difficulty);
+        let nxtrng = nxtrng(self.state.nxtrng, self.block_generator);
+        let max_block_size = max_block_size(&self.state.block_sizes);
+        let upgraded = if self.block_version > BLOCK_VERSION {
+            min(self.state.upgraded + 1, UPGRADE_THRESHOLD + 1)
+        } else {
+            max(self.state.upgraded.saturating_sub(1), 0)
+        };
+        let fork_v2 = if self.block_version >= 2 {
+            min(self.state.fork_v2 + 1, UPGRADE_THRESHOLD + 1)
+        } else {
+            max(self.state.fork_v2.saturating_sub(1), 0)
+        };
+        let new_state = State {
+            height: self.height,
+            block_hash: self.block_hash,
+            block_time: self.block_time,
+            difficulty,
+            cumulative_difficulty,
+            supply: self.supply,
+            nxtrng,
+            rolling_checkpoint: self.rolling_checkpoint,
+            max_block_size,
+            upgraded,
+            fork_v2,
+            block_sizes: self.state.block_sizes,
+        };
         todo!();
     }
 }

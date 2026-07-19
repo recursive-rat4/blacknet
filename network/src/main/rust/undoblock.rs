@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2025 Pavel Vasin
+ * Copyright (c) 2018-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -83,5 +83,17 @@ impl UndoBlock {
 
     pub fn add_blob(&mut self, key: Box<[u8]>, data: Option<Box<[u8]>>) {
         self.blobs.push((key, data));
+    }
+
+    pub const fn block_time(&self) -> Seconds {
+        self.block_time
+    }
+
+    pub const fn difficulty(&self) -> UInt256 {
+        self.difficulty
+    }
+
+    pub const fn cumulative_difficulty(&self) -> UInt256 {
+        self.cumulative_difficulty
     }
 }
