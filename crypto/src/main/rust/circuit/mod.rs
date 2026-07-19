@@ -17,6 +17,7 @@
 
 //! Arithmetic circuits for proof systems.
 
+pub mod arithmeticgate;
 pub mod builder;
 pub mod convolution;
 pub mod logicgate;

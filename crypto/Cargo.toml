@@ -60,6 +60,10 @@ name = "ajtaicommitment"
 path = "src/test/rust/ajtaicommitment.rs"
 
 [[test]]
+name = "arithmeticgate"
+path = "src/test/rust/arithmeticgate.rs"
+
+[[test]]
 name = "bigint"
 path = "src/test/rust/bigint.rs"
 
