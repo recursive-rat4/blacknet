@@ -33,7 +33,7 @@ fn wrapping_add() {
     let c = [0, 0, 0, 1, 0, 0, 0, 1].map(Z::new);
 
     let circuit = CircuitBuilder::<Z>::new(2);
-    let arithmetic_gate_circuit = Circuit::new(&circuit);
+    let arithmetic_gate_circuit = Circuit::<Z>::new(&circuit);
     let scope = circuit.scope("test");
     let a_lc: [LinearCombination<Z>; 8] = array::from_fn(|_| scope.public_input().into());
     let b_lc: [LinearCombination<Z>; 8] = array::from_fn(|_| scope.public_input().into());
@@ -50,7 +50,7 @@ fn wrapping_add() {
     z.extend(b);
     z.extend(c);
 
-    let assigner = Assigner::new(&z);
+    let assigner = Assigner::<Z>::new(&z);
     assigner.wrapping_add(&a, &b);
 
     assert_matches!(r1cs.is_satisfied(&z.finish()), Ok(()));
@@ -63,7 +63,7 @@ fn rotate_right() {
     let c = [0, 1, 0, 0, 0, 0, 0, 1].map(Z::new);
 
     let circuit = CircuitBuilder::<Z>::new(2);
-    let arithmetic_gate_circuit = Circuit::new(&circuit);
+    let arithmetic_gate_circuit = Circuit::<Z>::new(&circuit);
     let scope = circuit.scope("test");
     let a_lc: [LinearCombination<Z>; 8] = array::from_fn(|_| scope.public_input().into());
     let c_lc: [LinearCombination<Z>; 8] = array::from_fn(|_| scope.public_input().into());
@@ -78,7 +78,7 @@ fn rotate_right() {
     z.extend(a);
     z.extend(c);
 
-    let assigner = Assigner::new(&z);
+    let assigner = Assigner::<Z>::new(&z);
     assigner.rotate_right(&a, b);
 
     assert_matches!(r1cs.is_satisfied(&z.finish()), Ok(()));
@@ -91,7 +91,7 @@ fn bitxor() {
     let c = [0, 1, 1, 0].map(Z::new);
 
     let circuit = CircuitBuilder::<Z>::new(2);
-    let arithmetic_gate_circuit = Circuit::new(&circuit);
+    let arithmetic_gate_circuit = Circuit::<Z>::new(&circuit);
     let scope = circuit.scope("test");
     let a_lc: [LinearCombination<Z>; 4] = array::from_fn(|_| scope.public_input().into());
     let b_lc: [LinearCombination<Z>; 4] = array::from_fn(|_| scope.public_input().into());
@@ -108,7 +108,7 @@ fn bitxor() {
     z.extend(b);
     z.extend(c);
 
-    let assigner = Assigner::new(&z);
+    let assigner = Assigner::<Z>::new(&z);
     assigner.bitxor(&a, &b);
 
     assert_matches!(r1cs.is_satisfied(&z.finish()), Ok(()));

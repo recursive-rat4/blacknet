@@ -15,46 +15,49 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::Zero;
+use crate::algebra::{Algebra, AlgebraOps};
 use crate::assigner::assigment::Assigment;
 use crate::gf2::GF2;
 use core::array;
 
-pub struct ArithmeticGate<'a> {
-    assigment: &'a Assigment<GF2>,
+pub struct ArithmeticGate<'a, A: Algebra<GF2>> {
+    assigment: &'a Assigment<A>,
 }
 
-impl<'a> ArithmeticGate<'a> {
-    pub const fn new(assigment: &'a Assigment<GF2>) -> Self {
+impl<'a, A: Algebra<GF2> + Clone> ArithmeticGate<'a, A>
+where
+    for<'b> &'b A: AlgebraOps<GF2, A>,
+{
+    pub const fn new(assigment: &'a Assigment<A>) -> Self {
         Self { assigment }
     }
 
-    pub fn wrapping_add<const N: usize>(&self, a: &[GF2; N], b: &[GF2; N]) -> [GF2; N] {
-        let mut s = [GF2::ZERO; N];
+    pub fn wrapping_add<const N: usize>(&self, a: &[A; N], b: &[A; N]) -> [A; N] {
+        let mut s = [A::ZERO; N];
         if N == 0 {
             return s;
         }
-        let mut c = [GF2::ZERO; N];
+        let mut c = [A::ZERO; N];
         for i in 0..N - 1 {
-            let acbc = (a[i] + c[i]) * (b[i] + c[i]);
-            self.assigment.push(acbc);
-            (s[i], c[i + 1]) = (a[i] + b[i] + c[i], c[i] + acbc);
+            let acbc = (&a[i] + &c[i]) * (&b[i] + &c[i]);
+            self.assigment.push(acbc.clone());
+            (s[i], c[i + 1]) = (&a[i] + &b[i] + &c[i], &c[i] + acbc);
         }
-        s[N - 1] = a[N - 1] + b[N - 1] + c[N - 1];
+        s[N - 1] = &a[N - 1] + &b[N - 1] + &c[N - 1];
         s
     }
 
-    pub const fn rotate_right<const N: usize>(&self, a: &[GF2; N], n: u32) -> [GF2; N] {
+    pub fn rotate_right<const N: usize>(&self, a: &[A; N], n: u32) -> [A; N] {
         let n = n as usize % N;
         let (a_l, a_r) = a.split_at(n);
-        let mut o = [GF2::ZERO; N];
+        let mut o = [A::ZERO; N];
         let (o_l, o_r) = o.split_at_mut(N - n);
-        o_l.copy_from_slice(a_r);
-        o_r.copy_from_slice(a_l);
+        o_l.clone_from_slice(a_r);
+        o_r.clone_from_slice(a_l);
         o
     }
 
-    pub fn bitxor<const N: usize>(&self, a: &[GF2; N], b: &[GF2; N]) -> [GF2; N] {
-        array::from_fn(|i| a[i] + b[i])
+    pub fn bitxor<const N: usize>(&self, a: &[A; N], b: &[A; N]) -> [A; N] {
+        array::from_fn(|i| &a[i] + &b[i])
     }
 }

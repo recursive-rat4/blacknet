@@ -15,25 +15,29 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::algebra::{AlgebraOps, UnitalAlgebra};
 use crate::circuit::builder::{CircuitBuilder, LinearCombination};
 use crate::gf2::GF2;
 use core::array;
 
-/// Arithmetic gates over `GF(2)`.
-pub struct ArithmeticGate<'a, 'b> {
-    circuit: &'a CircuitBuilder<'b, GF2>,
+/// Arithmetic gates over GF(2)-algebra.
+pub struct ArithmeticGate<'a, 'b, A: UnitalAlgebra<GF2>> {
+    circuit: &'a CircuitBuilder<'b, A>,
 }
 
-impl<'a, 'b> ArithmeticGate<'a, 'b> {
-    pub const fn new(circuit: &'a CircuitBuilder<'b, GF2>) -> Self {
+impl<'a, 'b, A: UnitalAlgebra<GF2> + Clone + Eq> ArithmeticGate<'a, 'b, A>
+where
+    for<'c> &'c A: AlgebraOps<GF2, A>,
+{
+    pub const fn new(circuit: &'a CircuitBuilder<'b, A>) -> Self {
         Self { circuit }
     }
 
     pub fn wrapping_add<const N: usize>(
         &self,
-        a: &[LinearCombination<GF2>; N],
-        b: &[LinearCombination<GF2>; N],
-    ) -> [LinearCombination<GF2>; N] {
+        a: &[LinearCombination<A>; N],
+        b: &[LinearCombination<A>; N],
+    ) -> [LinearCombination<A>; N] {
         let mut s = [LinearCombination::ZERO; N];
         if N == 0 {
             return s;
@@ -51,9 +55,9 @@ impl<'a, 'b> ArithmeticGate<'a, 'b> {
 
     pub fn rotate_right<const N: usize>(
         &self,
-        a: &[LinearCombination<GF2>; N],
+        a: &[LinearCombination<A>; N],
         n: u32,
-    ) -> [LinearCombination<GF2>; N] {
+    ) -> [LinearCombination<A>; N] {
         let n = n as usize % N;
         let (a_l, a_r) = a.split_at(n);
         let mut o = [LinearCombination::ZERO; N];
@@ -65,9 +69,9 @@ impl<'a, 'b> ArithmeticGate<'a, 'b> {
 
     pub fn bitxor<const N: usize>(
         &self,
-        a: &[LinearCombination<GF2>; N],
-        b: &[LinearCombination<GF2>; N],
-    ) -> [LinearCombination<GF2>; N] {
+        a: &[LinearCombination<A>; N],
+        b: &[LinearCombination<A>; N],
+    ) -> [LinearCombination<A>; N] {
         array::from_fn(|i| &a[i] + &b[i])
     }
 }
