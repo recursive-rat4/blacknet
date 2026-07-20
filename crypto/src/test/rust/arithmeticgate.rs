@@ -28,16 +28,16 @@ type Z = blacknet_crypto::gf2::GF2;
 
 #[test]
 fn wrapping_add() {
-    let a = [1, 0, 1, 0].map(Z::new);
-    let b = [1, 1, 0, 0].map(Z::new);
-    let c = [0, 0, 0, 1].map(Z::new);
+    let a = [1, 0, 1, 0, 0, 0, 1, 0].map(Z::new);
+    let b = [1, 1, 0, 0, 0, 0, 1, 0].map(Z::new);
+    let c = [0, 0, 0, 1, 0, 0, 0, 1].map(Z::new);
 
     let circuit = CircuitBuilder::<Z>::new(2);
     let arithmetic_gate_circuit = Circuit::new(&circuit);
     let scope = circuit.scope("test");
-    let a_lc: [LinearCombination<Z>; 4] = array::from_fn(|_| scope.public_input().into());
-    let b_lc: [LinearCombination<Z>; 4] = array::from_fn(|_| scope.public_input().into());
-    let c_lc: [LinearCombination<Z>; 4] = array::from_fn(|_| scope.public_input().into());
+    let a_lc: [LinearCombination<Z>; 8] = array::from_fn(|_| scope.public_input().into());
+    let b_lc: [LinearCombination<Z>; 8] = array::from_fn(|_| scope.public_input().into());
+    let c_lc: [LinearCombination<Z>; 8] = array::from_fn(|_| scope.public_input().into());
     let c_circuit = arithmetic_gate_circuit.wrapping_add(&a_lc, &b_lc);
     for (l, r) in zip(c_circuit, c_lc) {
         scope.constrain(l, r);
