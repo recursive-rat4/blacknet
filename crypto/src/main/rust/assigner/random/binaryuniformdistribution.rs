@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{IntegerModRing, One};
+use crate::algebra::{IntegerModRing, One, RingOps};
 use crate::assigner::assigment::Assigment;
 use crate::assigner::logicgate::LogicGate;
 use crate::assigner::random::Distribution;
@@ -40,8 +40,10 @@ impl<'a, G: UniformGenerator<Output: IntegerModRing>> BinaryUniformDistribution<
     }
 }
 
-impl<'a, G: UniformGenerator<Output: IntegerModRing + Eq + Copy>> Distribution<'a, G::Output, G>
+impl<'a, G: UniformGenerator<Output: IntegerModRing + Clone + Eq>> Distribution<'a, G::Output, G>
     for BinaryUniformDistribution<'a, G>
+where
+    for<'b> &'b G::Output: RingOps<G::Output>,
 {
     type Output = G::Output;
 
@@ -49,7 +51,7 @@ impl<'a, G: UniformGenerator<Output: IntegerModRing + Eq + Copy>> Distribution<'
         Self {
             cache: Vec::new(),
             have_bits: 0,
-            logic_gate: LogicGate::new(assigment),
+            logic_gate: LogicGate::<G::Output>::new(assigment),
             assigment,
         }
     }
@@ -63,7 +65,7 @@ impl<'a, G: UniformGenerator<Output: IntegerModRing + Eq + Copy>> Distribution<'
             self.cache = gadget;
             self.have_bits = Self::useful_bits();
         }
-        let result = self.cache[(Self::useful_bits() - self.have_bits) as usize];
+        let result = self.cache[(Self::useful_bits() - self.have_bits) as usize].clone();
         self.have_bits -= 1;
         result
     }

@@ -51,7 +51,7 @@ fn xor() {
         z.push(c);
     }
 
-    let assigner = Assigner::new(&z);
+    let assigner = Assigner::<R>::new(&z);
     for (a, b, _) in truth {
         assigner.xor(a, b);
     }
@@ -87,7 +87,7 @@ fn and() {
         z.push(c);
     }
 
-    let assigner = Assigner::new(&z);
+    let assigner = Assigner::<R>::new(&z);
     for (a, b, _) in truth {
         assigner.and(a, b);
     }
@@ -123,7 +123,7 @@ fn or() {
         z.push(c);
     }
 
-    let assigner = Assigner::new(&z);
+    let assigner = Assigner::<R>::new(&z);
     for (a, b, _) in truth {
         assigner.or(a, b);
     }
@@ -156,7 +156,7 @@ fn not() {
         z.push(b);
     }
 
-    let assigner = Assigner::new(&z);
+    let assigner = Assigner::<R>::new(&z);
     for (a, _) in truth {
         assigner.not(a);
     }
@@ -183,7 +183,7 @@ fn check_less_or_equal() {
     let z = r1cs.assigment();
     z.extend(a);
 
-    let assigner = Assigner::new(&z);
+    let assigner = Assigner::<R>::new(&z);
     assigner.check_less_or_equal(&a, &b);
 
     assert_matches!(r1cs.is_satisfied(&z.finish()), Ok(()));

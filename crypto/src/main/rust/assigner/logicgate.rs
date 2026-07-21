@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::UnitalRing;
+use crate::algebra::{RingOps, UnitalRing};
 use crate::assigner::assigment::Assigment;
 use alloc::vec::Vec;
 
@@ -23,53 +23,50 @@ pub struct LogicGate<'a, R: UnitalRing> {
     assigment: &'a Assigment<R>,
 }
 
-impl<'a, R: UnitalRing + Eq + Copy> LogicGate<'a, R> {
+impl<'a, R: UnitalRing + Clone + Eq> LogicGate<'a, R>
+where
+    for<'b> &'b R: RingOps<R>,
+{
     pub const fn new(assigment: &'a Assigment<R>) -> Self {
         Self { assigment }
     }
 
     pub fn xor(&self, a: R, b: R) -> R {
-        let ab = a * b;
-        let r = a + b - ab.double();
-        self.assigment.push(ab);
-        r
+        let ab = &a * &b;
+        self.assigment.push(ab.clone());
+        a + b - ab.double()
     }
 
-    #[allow(clippy::clone_on_copy)]
     pub fn and(&self, a: R, b: R) -> R {
         let ab = a * b;
         self.assigment.push(ab.clone());
         ab
     }
 
-    #[allow(clippy::op_ref)]
     pub fn or(&self, a: R, b: R) -> R {
-        let ab = a * b;
-        let r = a + b - &ab;
-        self.assigment.push(ab);
-        r
+        let ab = &a * &b;
+        self.assigment.push(ab.clone());
+        a + b - ab
     }
 
     pub fn not(&self, a: R) -> R {
         R::ONE - a
     }
 
-    #[allow(clippy::clone_on_copy)]
     pub fn and_slice(&self, a: &[R]) -> R {
         match a.len() {
             0 => R::ONE,
             1 => a[0].clone(),
             _ => {
-                let mut pi = a[0];
-                for &a in a.iter().skip(1) {
-                    pi = self.and(pi, a);
+                let mut pi = a[0].clone();
+                for a in a.iter().skip(1) {
+                    pi = self.and(pi, a.clone());
                 }
                 pi
             }
         }
     }
 
-    #[allow(clippy::clone_on_copy)]
     pub fn check_less_or_equal(&self, a: &[R], b: &[R]) {
         let mut current_run = Vec::<R>::with_capacity(b.len());
         let mut last_run: Option<R> = None;

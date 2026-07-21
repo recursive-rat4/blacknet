@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{Double, IntegerModRing};
+use crate::algebra::{Double, IntegerModRing, RingOps};
 use crate::assigner::assigment::Assigment;
 use crate::assigner::random::{BinaryUniformDistribution, Distribution};
 use crate::random::UniformGenerator;
@@ -24,14 +24,16 @@ pub struct QuartaryUniformDistribution<'a, G: UniformGenerator<Output: IntegerMo
     bud: BinaryUniformDistribution<'a, G>,
 }
 
-impl<'a, G: UniformGenerator<Output: IntegerModRing + Eq + Copy>> Distribution<'a, G::Output, G>
+impl<'a, G: UniformGenerator<Output: IntegerModRing + Clone + Eq>> Distribution<'a, G::Output, G>
     for QuartaryUniformDistribution<'a, G>
+where
+    for<'b> &'b G::Output: RingOps<G::Output>,
 {
     type Output = G::Output;
 
     fn new(assigment: &'a Assigment<G::Output>) -> Self {
         Self {
-            bud: BinaryUniformDistribution::new(assigment),
+            bud: BinaryUniformDistribution::<G>::new(assigment),
         }
     }
 
