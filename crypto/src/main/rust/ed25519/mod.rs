@@ -15,12 +15,17 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+mod affine;
 mod edwards25519;
-mod field25519;
-mod scalar25519;
-mod twistededwardsgroup;
+mod extended;
+mod field;
+mod projective;
+mod scalar;
 
-pub use edwards25519::*;
-pub use field25519::Field25519;
-pub use scalar25519::Scalar25519;
-pub use twistededwardsgroup::*;
+use edwards25519::{E25519_D, E25519_D_TWICE, is_on_curve25519};
+
+pub use affine::Edwards25519Affine;
+pub use extended::Edwards25519Extended;
+pub use field::Field25519;
+pub use projective::Edwards25519Projective;
+pub use scalar::Scalar25519;

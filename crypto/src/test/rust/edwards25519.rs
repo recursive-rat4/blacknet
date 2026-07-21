@@ -19,9 +19,9 @@ use blacknet_crypto::algebra::Zero;
 use blacknet_crypto::bigint::UInt256;
 
 type F = blacknet_crypto::ed25519::Field25519;
-type A = blacknet_crypto::ed25519::Edwards25519GroupAffine;
-type E = blacknet_crypto::ed25519::Edwards25519GroupExtended;
-type P = blacknet_crypto::ed25519::Edwards25519GroupProjective;
+type A = blacknet_crypto::ed25519::Edwards25519Affine;
+type E = blacknet_crypto::ed25519::Edwards25519Extended;
+type P = blacknet_crypto::ed25519::Edwards25519Projective;
 
 #[test]
 fn group_add_affine() {

@@ -20,29 +20,27 @@ use crate::algebra::{
     Square, Zero, add_sub_chain, bl_double_and_add,
 };
 use crate::branchless::BlSelect;
-use crate::ed25519::{TwistedEdwardsGroupAffine, TwistedEdwardsGroupParams, is_on_curve};
+use crate::ed25519::{E25519_D_TWICE, Edwards25519Affine, Field25519, is_on_curve25519};
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::Sum;
 use core::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 use zeroize::DefaultIsZeroes as ZeroizeIsDefault;
 
-pub struct TwistedEdwardsGroupExtended<P: TwistedEdwardsGroupParams> {
-    x: P::F,
-    y: P::F,
-    z: P::F,
-    t: P::F,
+#[derive(Clone, Copy)]
+pub struct Edwards25519Extended {
+    x: Field25519,
+    y: Field25519,
+    z: Field25519,
+    t: Field25519,
 }
 
-impl<P: TwistedEdwardsGroupParams> TwistedEdwardsGroupExtended<P> {
-    pub fn new(x: P::F, y: P::F) -> Option<Self>
-    where
-        P: TwistedEdwardsGroupParams<F: Eq>,
-    {
-        if is_on_curve::<P>(x, y) {
+impl Edwards25519Extended {
+    pub fn new(x: Field25519, y: Field25519) -> Option<Self> {
+        if is_on_curve25519(x, y) {
             Some(Self {
                 x,
                 y,
-                z: P::F::ONE,
+                z: Field25519::ONE,
                 t: x * y,
             })
         } else {
@@ -52,18 +50,23 @@ impl<P: TwistedEdwardsGroupParams> TwistedEdwardsGroupExtended<P> {
 
     /// # Safety
     /// Point `(x, y)` is on the curve.
-    pub unsafe fn from_unchecked(x: P::F, y: P::F) -> Self {
+    pub unsafe fn from_unchecked(x: Field25519, y: Field25519) -> Self {
         Self {
             x,
             y,
-            z: P::F::ONE,
+            z: Field25519::ONE,
             t: x * y,
         }
     }
 
     /// # Safety
     /// Point `(x, y, z, t)` is on the curve.
-    pub const unsafe fn const_from_unchecked(x: P::F, y: P::F, z: P::F, t: P::F) -> Self {
+    pub const unsafe fn const_from_unchecked(
+        x: Field25519,
+        y: Field25519,
+        z: Field25519,
+        t: Field25519,
+    ) -> Self {
         Self { x, y, z, t }
     }
 
@@ -72,46 +75,31 @@ impl<P: TwistedEdwardsGroupParams> TwistedEdwardsGroupExtended<P> {
         Self {
             x: self.x * a,
             y: self.y * a,
-            z: P::F::ONE,
+            z: Field25519::ONE,
             t: self.t * a,
         }
     }
 
-    pub fn bl_mul<Scalar: IntoIterator<Item = bool>>(self, rps: Scalar) -> Self
-    where
-        P::F: BlSelect<Output = P::F>,
-    {
+    pub fn bl_mul<Scalar: IntoIterator<Item = bool>>(self, rps: Scalar) -> Self {
         bl_double_and_add::<Self, Scalar>(self, rps)
     }
 }
 
-impl<P: TwistedEdwardsGroupParams<F: Clone>> Clone for TwistedEdwardsGroupExtended<P> {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
-impl<P: TwistedEdwardsGroupParams<F: Copy>> Copy for TwistedEdwardsGroupExtended<P> {}
-
-impl<P: TwistedEdwardsGroupParams> From<TwistedEdwardsGroupAffine<P>>
-    for TwistedEdwardsGroupExtended<P>
-{
-    fn from(affine: TwistedEdwardsGroupAffine<P>) -> TwistedEdwardsGroupExtended<P> {
+impl From<Edwards25519Affine> for Edwards25519Extended {
+    fn from(affine: Edwards25519Affine) -> Self {
         let (x, y) = affine.into();
         unsafe { Self::from_unchecked(x, y) }
     }
 }
 
-impl<P: TwistedEdwardsGroupParams> From<TwistedEdwardsGroupExtended<P>>
-    for TwistedEdwardsGroupAffine<P>
-{
-    fn from(extended: TwistedEdwardsGroupExtended<P>) -> TwistedEdwardsGroupAffine<P> {
+impl From<Edwards25519Extended> for Edwards25519Affine {
+    fn from(extended: Edwards25519Extended) -> Self {
         let a = extended.z.inv().expect("Elliptic curve arithmetic");
-        unsafe { TwistedEdwardsGroupAffine::from_unchecked(extended.x * a, extended.y * a) }
+        unsafe { Self::from_unchecked(extended.x * a, extended.y * a) }
     }
 }
 
-impl<P: TwistedEdwardsGroupParams<F: Debug>> Debug for TwistedEdwardsGroupExtended<P> {
+impl Debug for Edwards25519Extended {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         write!(
             f,
@@ -121,28 +109,28 @@ impl<P: TwistedEdwardsGroupParams<F: Debug>> Debug for TwistedEdwardsGroupExtend
     }
 }
 
-impl<P: TwistedEdwardsGroupParams> Default for TwistedEdwardsGroupExtended<P> {
+impl Default for Edwards25519Extended {
     fn default() -> Self {
         Self::ZERO
     }
 }
 
-impl<P: TwistedEdwardsGroupParams<F: PartialEq>> PartialEq for TwistedEdwardsGroupExtended<P> {
+impl PartialEq for Edwards25519Extended {
     fn eq(&self, rps: &Self) -> bool {
         (self.x * rps.z == self.z * rps.x) && (self.y * rps.z == self.z * rps.y)
     }
 }
 
-impl<P: TwistedEdwardsGroupParams<F: Eq>> Eq for TwistedEdwardsGroupExtended<P> {}
+impl Eq for Edwards25519Extended {}
 
-impl<P: TwistedEdwardsGroupParams> Add for TwistedEdwardsGroupExtended<P> {
+impl Add for Edwards25519Extended {
     type Output = Self;
 
     fn add(self, rps: Self) -> Self::Output {
         // add-2008-hwcd-3
         let a = (self.y - self.x) * (rps.y - rps.x);
         let b = (self.y + self.x) * (rps.y + rps.x);
-        let c = self.t * P::D_TWICE * rps.t;
+        let c = self.t * E25519_D_TWICE * rps.t;
         let d = self.z.double() * rps.z;
         let e = b - a;
         let f = d - c;
@@ -161,7 +149,7 @@ impl<P: TwistedEdwardsGroupParams> Add for TwistedEdwardsGroupExtended<P> {
     }
 }
 
-impl<P: TwistedEdwardsGroupParams> Add<&Self> for TwistedEdwardsGroupExtended<P> {
+impl Add<&Self> for Edwards25519Extended {
     type Output = Self;
 
     #[inline]
@@ -170,43 +158,39 @@ impl<P: TwistedEdwardsGroupParams> Add<&Self> for TwistedEdwardsGroupExtended<P>
     }
 }
 
-impl<P: TwistedEdwardsGroupParams> Add<TwistedEdwardsGroupExtended<P>>
-    for &TwistedEdwardsGroupExtended<P>
-{
-    type Output = TwistedEdwardsGroupExtended<P>;
+impl Add<Edwards25519Extended> for &Edwards25519Extended {
+    type Output = Edwards25519Extended;
 
     #[inline]
-    fn add(self, rps: TwistedEdwardsGroupExtended<P>) -> Self::Output {
+    fn add(self, rps: Edwards25519Extended) -> Self::Output {
         *self + rps
     }
 }
 
-impl<'a, P: TwistedEdwardsGroupParams> Add<&'a TwistedEdwardsGroupExtended<P>>
-    for &TwistedEdwardsGroupExtended<P>
-{
-    type Output = TwistedEdwardsGroupExtended<P>;
+impl<'a> Add<&'a Edwards25519Extended> for &Edwards25519Extended {
+    type Output = Edwards25519Extended;
 
     #[inline]
-    fn add(self, rps: &'a TwistedEdwardsGroupExtended<P>) -> Self::Output {
+    fn add(self, rps: &'a Edwards25519Extended) -> Self::Output {
         *self + *rps
     }
 }
 
-impl<P: TwistedEdwardsGroupParams> AddAssign for TwistedEdwardsGroupExtended<P> {
+impl AddAssign for Edwards25519Extended {
     #[inline]
     fn add_assign(&mut self, rps: Self) {
         *self = *self + rps
     }
 }
 
-impl<P: TwistedEdwardsGroupParams> AddAssign<&Self> for TwistedEdwardsGroupExtended<P> {
+impl AddAssign<&Self> for Edwards25519Extended {
     #[inline]
     fn add_assign(&mut self, rps: &Self) {
         *self = *self + rps
     }
 }
 
-impl<P: TwistedEdwardsGroupParams> Double for TwistedEdwardsGroupExtended<P> {
+impl Double for Edwards25519Extended {
     type Output = Self;
 
     fn double(self) -> Self {
@@ -214,11 +198,11 @@ impl<P: TwistedEdwardsGroupParams> Double for TwistedEdwardsGroupExtended<P> {
         let xx = self.x.square();
         let yy = self.y.square();
         let zz2 = self.z.square().double();
-        let d = if P::A_IS_MINUS_ONE { -xx } else { P::A * xx };
-        let e = (self.x + self.y).square() - xx - yy;
-        let g = d + yy;
+        let d = xx + yy;
+        let e = (self.x + self.y).square() - d;
+        let g = yy - xx;
         let f = g - zz2;
-        let h = d - yy;
+        let h = -d;
         let xr = e * f;
         let yr = g * h;
         let zr = f * g;
@@ -232,8 +216,8 @@ impl<P: TwistedEdwardsGroupParams> Double for TwistedEdwardsGroupExtended<P> {
     }
 }
 
-impl<P: TwistedEdwardsGroupParams> Double for &TwistedEdwardsGroupExtended<P> {
-    type Output = TwistedEdwardsGroupExtended<P>;
+impl Double for &Edwards25519Extended {
+    type Output = Edwards25519Extended;
 
     #[inline]
     fn double(self) -> Self::Output {
@@ -241,7 +225,7 @@ impl<P: TwistedEdwardsGroupParams> Double for &TwistedEdwardsGroupExtended<P> {
     }
 }
 
-impl<P: TwistedEdwardsGroupParams> Neg for TwistedEdwardsGroupExtended<P> {
+impl Neg for Edwards25519Extended {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
@@ -254,8 +238,8 @@ impl<P: TwistedEdwardsGroupParams> Neg for TwistedEdwardsGroupExtended<P> {
     }
 }
 
-impl<P: TwistedEdwardsGroupParams> Neg for &TwistedEdwardsGroupExtended<P> {
-    type Output = TwistedEdwardsGroupExtended<P>;
+impl Neg for &Edwards25519Extended {
+    type Output = Edwards25519Extended;
 
     fn neg(self) -> Self::Output {
         Self::Output {
@@ -267,13 +251,13 @@ impl<P: TwistedEdwardsGroupParams> Neg for &TwistedEdwardsGroupExtended<P> {
     }
 }
 
-impl<P: TwistedEdwardsGroupParams> Sub for TwistedEdwardsGroupExtended<P> {
+impl Sub for Edwards25519Extended {
     type Output = Self;
 
     fn sub(self, rps: Self) -> Self::Output {
         let a = (self.y - self.x) * (rps.y + rps.x);
         let b = (self.y + self.x) * (rps.y - rps.x);
-        let c = self.t * P::D_TWICE * rps.t;
+        let c = self.t * E25519_D_TWICE * rps.t;
         let d = self.z.double() * rps.z;
         let e = b - a;
         let f = d + c;
@@ -292,7 +276,7 @@ impl<P: TwistedEdwardsGroupParams> Sub for TwistedEdwardsGroupExtended<P> {
     }
 }
 
-impl<P: TwistedEdwardsGroupParams> Sub<&Self> for TwistedEdwardsGroupExtended<P> {
+impl Sub<&Self> for Edwards25519Extended {
     type Output = Self;
 
     #[inline]
@@ -301,45 +285,39 @@ impl<P: TwistedEdwardsGroupParams> Sub<&Self> for TwistedEdwardsGroupExtended<P>
     }
 }
 
-impl<P: TwistedEdwardsGroupParams> Sub<TwistedEdwardsGroupExtended<P>>
-    for &TwistedEdwardsGroupExtended<P>
-{
-    type Output = TwistedEdwardsGroupExtended<P>;
+impl Sub<Edwards25519Extended> for &Edwards25519Extended {
+    type Output = Edwards25519Extended;
 
     #[inline]
-    fn sub(self, rps: TwistedEdwardsGroupExtended<P>) -> Self::Output {
+    fn sub(self, rps: Edwards25519Extended) -> Self::Output {
         *self - rps
     }
 }
 
-impl<'a, P: TwistedEdwardsGroupParams> Sub<&'a TwistedEdwardsGroupExtended<P>>
-    for &TwistedEdwardsGroupExtended<P>
-{
-    type Output = TwistedEdwardsGroupExtended<P>;
+impl<'a> Sub<&'a Edwards25519Extended> for &Edwards25519Extended {
+    type Output = Edwards25519Extended;
 
     #[inline]
-    fn sub(self, rps: &'a TwistedEdwardsGroupExtended<P>) -> Self::Output {
+    fn sub(self, rps: &'a Edwards25519Extended) -> Self::Output {
         *self - *rps
     }
 }
 
-impl<P: TwistedEdwardsGroupParams> SubAssign for TwistedEdwardsGroupExtended<P> {
+impl SubAssign for Edwards25519Extended {
     #[inline]
     fn sub_assign(&mut self, rps: Self) {
         *self = *self - rps
     }
 }
 
-impl<P: TwistedEdwardsGroupParams> SubAssign<&Self> for TwistedEdwardsGroupExtended<P> {
+impl SubAssign<&Self> for Edwards25519Extended {
     #[inline]
     fn sub_assign(&mut self, rps: &Self) {
         *self = *self - rps
     }
 }
 
-impl<P: TwistedEdwardsGroupParams, Scalar: IntoIterator<Item = bool>> Mul<Scalar>
-    for TwistedEdwardsGroupExtended<P>
-{
+impl<Scalar: IntoIterator<Item = bool>> Mul<Scalar> for Edwards25519Extended {
     type Output = Self;
 
     #[inline]
@@ -348,64 +326,60 @@ impl<P: TwistedEdwardsGroupParams, Scalar: IntoIterator<Item = bool>> Mul<Scalar
     }
 }
 
-impl<P: TwistedEdwardsGroupParams, Scalar: IntoIterator<Item = bool>> MulAssign<Scalar>
-    for TwistedEdwardsGroupExtended<P>
-{
+impl<Scalar: IntoIterator<Item = bool>> MulAssign<Scalar> for Edwards25519Extended {
     #[inline]
     fn mul_assign(&mut self, rps: Scalar) {
         *self = *self * rps
     }
 }
 
-impl<P: TwistedEdwardsGroupParams> Sum for TwistedEdwardsGroupExtended<P> {
+impl Sum for Edwards25519Extended {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
         iter.reduce(|lps, rps| lps + rps).unwrap_or(Self::ZERO)
     }
 }
 
-impl<'a, P: TwistedEdwardsGroupParams> Sum<&'a Self> for TwistedEdwardsGroupExtended<P> {
+impl<'a> Sum<&'a Self> for Edwards25519Extended {
     #[inline]
     fn sum<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
         iter.copied().sum()
     }
 }
 
-impl<P: TwistedEdwardsGroupParams> LeftZero for TwistedEdwardsGroupExtended<P> {
+impl LeftZero for Edwards25519Extended {
     const LEFT_ZERO: Self = Self {
-        x: P::F::ZERO,
-        y: P::F::ONE,
-        z: P::F::ONE,
-        t: P::F::ZERO,
+        x: Field25519::ZERO,
+        y: Field25519::ONE,
+        z: Field25519::ONE,
+        t: Field25519::ZERO,
     };
 }
 
-impl<P: TwistedEdwardsGroupParams> RightZero for TwistedEdwardsGroupExtended<P> {
+impl RightZero for Edwards25519Extended {
     const RIGHT_ZERO: Self = Self {
-        x: P::F::ZERO,
-        y: P::F::ONE,
-        z: P::F::ONE,
-        t: P::F::ZERO,
+        x: Field25519::ZERO,
+        y: Field25519::ONE,
+        z: Field25519::ONE,
+        t: Field25519::ZERO,
     };
 }
 
-impl<P: TwistedEdwardsGroupParams> Zero for TwistedEdwardsGroupExtended<P> {
+impl Zero for Edwards25519Extended {
     const ZERO: Self = Self {
-        x: P::F::ZERO,
-        y: P::F::ONE,
-        z: P::F::ONE,
-        t: P::F::ZERO,
+        x: Field25519::ZERO,
+        y: Field25519::ONE,
+        z: Field25519::ONE,
+        t: Field25519::ZERO,
     };
 }
 
-impl<P: TwistedEdwardsGroupParams> Set for TwistedEdwardsGroupExtended<P> {}
+impl Set for Edwards25519Extended {}
 
-impl<P: TwistedEdwardsGroupParams> AdditiveCommutativeMagma for TwistedEdwardsGroupExtended<P> {}
+impl AdditiveCommutativeMagma for Edwards25519Extended {}
 
-impl<P: TwistedEdwardsGroupParams> AdditiveSemigroup for TwistedEdwardsGroupExtended<P> {}
+impl AdditiveSemigroup for Edwards25519Extended {}
 
-impl<P: TwistedEdwardsGroupParams<F: BlSelect<Output = P::F>>> BlSelect
-    for TwistedEdwardsGroupExtended<P>
-{
+impl BlSelect for Edwards25519Extended {
     type Output = Self;
 
     fn bl_select(self, rps: Self, condition: bool) -> Self {
@@ -418,9 +392,7 @@ impl<P: TwistedEdwardsGroupParams<F: BlSelect<Output = P::F>>> BlSelect
     }
 }
 
-impl<P: TwistedEdwardsGroupParams<F: for<'a> BlSelect<&'a P::F, Output = P::F>>> BlSelect<&Self>
-    for TwistedEdwardsGroupExtended<P>
-{
+impl BlSelect<&Self> for Edwards25519Extended {
     type Output = Self;
 
     fn bl_select(self, rps: &Self, condition: bool) -> Self {
@@ -433,14 +405,10 @@ impl<P: TwistedEdwardsGroupParams<F: for<'a> BlSelect<&'a P::F, Output = P::F>>>
     }
 }
 
-impl<P: TwistedEdwardsGroupParams> BlSelect<TwistedEdwardsGroupExtended<P>>
-    for &TwistedEdwardsGroupExtended<P>
-where
-    for<'a> &'a P::F: BlSelect<P::F, Output = P::F>,
-{
-    type Output = TwistedEdwardsGroupExtended<P>;
+impl BlSelect<Edwards25519Extended> for &Edwards25519Extended {
+    type Output = Edwards25519Extended;
 
-    fn bl_select(self, rps: TwistedEdwardsGroupExtended<P>, condition: bool) -> Self::Output {
+    fn bl_select(self, rps: Edwards25519Extended, condition: bool) -> Self::Output {
         Self::Output {
             x: (&self.x).bl_select(rps.x, condition),
             y: (&self.y).bl_select(rps.y, condition),
@@ -450,11 +418,8 @@ where
     }
 }
 
-impl<P: TwistedEdwardsGroupParams> BlSelect for &TwistedEdwardsGroupExtended<P>
-where
-    for<'a> &'a P::F: BlSelect<Output = P::F>,
-{
-    type Output = TwistedEdwardsGroupExtended<P>;
+impl BlSelect for &Edwards25519Extended {
+    type Output = Edwards25519Extended;
 
     fn bl_select(self, rps: Self, condition: bool) -> Self::Output {
         Self::Output {
@@ -466,4 +431,4 @@ where
     }
 }
 
-impl<P: TwistedEdwardsGroupParams> ZeroizeIsDefault for TwistedEdwardsGroupExtended<P> {}
+impl ZeroizeIsDefault for Edwards25519Extended {}

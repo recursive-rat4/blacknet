@@ -21,7 +21,7 @@ use alloc::vec::Vec;
 use blacknet_crypto::{
     algebra::{IntegerModRing, One},
     bigint::UInt256,
-    ed25519::{Edwards25519GroupAffine, Edwards25519GroupExtended, Field25519, Scalar25519},
+    ed25519::{Edwards25519Affine, Edwards25519Extended, Field25519, Scalar25519},
     symmetric::{Blake2b256, Blake2b512},
 };
 use core::array::TryFromSliceError;
@@ -34,8 +34,8 @@ use zeroize::Zeroize;
 // For compatibility, implementation follows eddsa-java 0.3.0
 // https://eprint.iacr.org/2020/1244
 
-const BASE: Edwards25519GroupExtended = unsafe {
-    Edwards25519GroupExtended::const_from_unchecked(
+const BASE: Edwards25519Extended = unsafe {
+    Edwards25519Extended::const_from_unchecked(
         Field25519::from_unchecked(UInt256::from_hex(
             "216936D3CD6E53FEC0A4E231FDD6DC5C692CC7609525A7B2C9562D608F25D51A",
         )),
@@ -229,7 +229,7 @@ pub fn sign(hash: Hash, secret_key: SecretKey) -> Signature {
 }
 
 pub fn verify(signature: Signature, hash: Hash, public_key: PublicKey) -> Result<(), Error> {
-    let a = Edwards25519GroupAffine::decode(public_key.0)
+    let a = Edwards25519Affine::decode(public_key.0)
         .ok_or_else(|| Error::invalid("Invalid public key"))?;
     let mut hasher = Blake2b512::new();
     hasher.update(signature.r);
@@ -238,14 +238,14 @@ pub fn verify(signature: Signature, hash: Hash, public_key: PublicKey) -> Result
     let h: [u8; 64] = hasher.finalize();
     let h = Scalar25519::with_512(h);
     let h = h.canonical().bits::<{ Scalar25519::BITS as usize }>();
-    let a: Edwards25519GroupExtended = a.into();
+    let a: Edwards25519Extended = a.into();
     let s = UInt256::from_le_bytes(signature.s);
     let s = s
         .bits::<{ UInt256::BITS as usize }>()
         .into_iter()
         .take(s.bit_width() as usize);
     let r = BASE * s - a * h;
-    let r: Edwards25519GroupAffine = r.into();
+    let r: Edwards25519Affine = r.into();
     if r.encode() == signature.r {
         Ok(())
     } else {
@@ -267,6 +267,6 @@ fn parse_secret_key(secret_key: SecretKey) -> (Scalar25519, [u8; 32]) {
 fn mul_base_encode(scalar: Scalar25519) -> [u8; 32] {
     let bits = scalar.canonical().bits::<{ Scalar25519::BITS as usize }>();
     let extended = BASE.bl_mul(bits);
-    let affine: Edwards25519GroupAffine = extended.into();
+    let affine: Edwards25519Affine = extended.into();
     affine.encode()
 }
