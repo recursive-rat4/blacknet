@@ -128,14 +128,14 @@ impl Add for Edwards25519Extended {
 
     fn add(self, rps: Self) -> Self::Output {
         // add-2008-hwcd-3
-        let a = (self.y - self.x) * (rps.y - rps.x);
-        let b = (self.y + self.x) * (rps.y + rps.x);
+        let a = (self.y.sub_lazy(self.x)) * (rps.y.sub_lazy(rps.x));
+        let b = (self.y.add_lazy(self.x)) * (rps.y.add_lazy(rps.x));
         let c = self.t * E25519_D_TWICE * rps.t;
-        let d = self.z.double() * rps.z;
-        let e = b - a;
-        let f = d - c;
-        let g = d + c;
-        let h = b + a;
+        let d = self.z.double_lazy() * rps.z;
+        let e = b.sub_lazy(a);
+        let f = d.sub_lazy(c);
+        let g = d.add_lazy(c);
+        let h = b.add_lazy(a);
         let xr = e * f;
         let yr = g * h;
         let zr = f * g;
@@ -199,10 +199,10 @@ impl Double for Edwards25519Extended {
         let yy = self.y.square();
         let zz2 = self.z.square().double();
         let d = xx + yy;
-        let e = (self.x + self.y).square() - d;
+        let e = (self.x.add_lazy(self.y)).square().sub_lazy(d);
         let g = yy - xx;
-        let f = g - zz2;
-        let h = -d;
+        let f = g.sub_lazy(zz2);
+        let h = d.neg_lazy();
         let xr = e * f;
         let yr = g * h;
         let zr = f * g;
@@ -255,14 +255,14 @@ impl Sub for Edwards25519Extended {
     type Output = Self;
 
     fn sub(self, rps: Self) -> Self::Output {
-        let a = (self.y - self.x) * (rps.y + rps.x);
-        let b = (self.y + self.x) * (rps.y - rps.x);
+        let a = (self.y.sub_lazy(self.x)) * (rps.y.add_lazy(rps.x));
+        let b = (self.y.add_lazy(self.x)) * (rps.y.sub_lazy(rps.x));
         let c = self.t * E25519_D_TWICE * rps.t;
-        let d = self.z.double() * rps.z;
-        let e = b - a;
-        let f = d + c;
-        let g = d - c;
-        let h = b + a;
+        let d = self.z.double_lazy() * rps.z;
+        let e = b.sub_lazy(a);
+        let f = d.add_lazy(c);
+        let g = d.sub_lazy(c);
+        let h = b.add_lazy(a);
         let xr = e * f;
         let yr = g * h;
         let zr = f * g;

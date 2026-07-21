@@ -50,6 +50,26 @@ impl Field25519 {
         Self { n }
     }
 
+    pub(crate) fn add_lazy(self, rps: Self) -> Self {
+        let n = self.n + rps.n;
+        Self { n }
+    }
+
+    pub(crate) fn double_lazy(self) -> Self {
+        let n = self.n + self.n;
+        Self { n }
+    }
+
+    pub(crate) fn neg_lazy(self) -> Self {
+        let n = Self::MODULUS - self.n;
+        Self { n }
+    }
+
+    pub(crate) fn sub_lazy(self, rps: Self) -> Self {
+        let n = Self::MODULUS - rps.n + self.n;
+        Self { n }
+    }
+
     fn reduce_256(n: UInt256) -> UInt256 {
         let (x, o) = n.overflowing_sub(Self::MODULUS);
         x.bl_select(n, o)

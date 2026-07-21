@@ -28,7 +28,7 @@ use core::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 use serde::{Deserialize, Deserializer, Serialize, Serializer, de::Error};
 use zeroize::DefaultIsZeroes as ZeroizeIsDefault;
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Eq, PartialEq)]
 pub struct Edwards25519Affine {
     x: Field25519,
     y: Field25519,
@@ -110,14 +110,6 @@ impl Default for Edwards25519Affine {
         Self::ZERO
     }
 }
-
-impl PartialEq for Edwards25519Affine {
-    fn eq(&self, rps: &Self) -> bool {
-        self.x == rps.x && self.y == rps.y
-    }
-}
-
-impl Eq for Edwards25519Affine {}
 
 impl Add for Edwards25519Affine {
     type Output = Self;

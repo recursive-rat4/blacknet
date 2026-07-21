@@ -107,10 +107,10 @@ impl Add for Edwards25519Projective {
         let z1z2 = self.z * rps.z;
         let b = z1z2.square();
         let e = E25519_D * x1x2 * y1y2;
-        let f = b - e;
-        let g = b + e;
-        let j = y1y2 + x1x2;
-        let xr = z1z2 * f * ((self.x + self.y) * (rps.x + rps.y) - (y1y2 + x1x2));
+        let f = b.sub_lazy(e);
+        let g = b.add_lazy(e);
+        let j = y1y2.add_lazy(x1x2);
+        let xr = z1z2 * f * ((self.x.add_lazy(self.y)) * (rps.x.add_lazy(rps.y)) - (y1y2 + x1x2));
         let yr = z1z2 * g * j;
         let zr = f * g;
         Self {
@@ -167,14 +167,14 @@ impl Double for Edwards25519Projective {
 
     fn double(self) -> Self {
         // dbl-2008-bbjlp
-        let b = (self.x + self.y).square();
+        let b = (self.x.add_lazy(self.y)).square();
         let xx = self.x.square();
         let yy = self.y.square();
         let zz = self.z.square();
-        let e = -xx - yy;
+        let e = xx.neg_lazy() - yy;
         let f = yy - xx;
-        let j = f - zz.double();
-        let xr = (b + e) * j;
+        let j = f.sub_lazy(zz.double());
+        let xr = (b.add_lazy(e)) * j;
         let yr = f * e;
         let zr = f * j;
         Self {
@@ -227,10 +227,10 @@ impl Sub for Edwards25519Projective {
         let z1z2 = self.z * rps.z;
         let b = z1z2.square();
         let e = E25519_D * x1x2 * y1y2;
-        let f = b + e;
-        let g = b - e;
-        let j = y1y2 - x1x2;
-        let xr = z1z2 * f * ((self.x + self.y) * (rps.y - rps.x) - (y1y2 - x1x2));
+        let f = b.add_lazy(e);
+        let g = b.sub_lazy(e);
+        let j = y1y2.sub_lazy(x1x2);
+        let xr = z1z2 * f * ((self.x.add_lazy(self.y)) * (rps.y.sub_lazy(rps.x)) - (y1y2 - x1x2));
         let yr = z1z2 * g * j;
         let zr = f * g;
         Self {
