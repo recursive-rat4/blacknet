@@ -51,6 +51,8 @@ use std::sync::Arc;
 pub struct CoinDB {
     logger: Logger,
     state: State,
+    #[expect(dead_code)]
+    db_state: DBView<[u8; 0], State>,
     accounts: DBView<PublicKey, Account>,
     htlcs: DBView<HashTimeLockContractId, HTLC>,
     multisigs: DBView<MultiSignatureLockContractId, Multisig>,
@@ -64,9 +66,15 @@ impl CoinDB {
         block_db: Arc<BlockDB>,
         log_manager: &LogManager,
     ) -> core::result::Result<Arc<Self>, Box<dyn StdError>> {
+        let db_state = DBView::new(fjall, "state")?;
+        let state = db_state
+            .get([0u8; 0])
+            .unwrap_or_else(|| State::genesis(mode));
+
         Ok(Arc::new(Self {
             logger: log_manager.logger("CoinDB")?,
-            state: State::genesis(mode), //TODO
+            state,
+            db_state,
             accounts: DBView::new(fjall, "accounts")?,
             htlcs: DBView::new(fjall, "htlcs")?,
             multisigs: DBView::new(fjall, "multisigs")?,
