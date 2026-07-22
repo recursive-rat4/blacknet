@@ -20,6 +20,7 @@ use crate::dbview::DBView;
 use crate::fjall::Fjall;
 use crate::genesis;
 use crate::undoblock::UndoBlock;
+use arc_swap::ArcSwap;
 use blacknet_compat::Mode;
 use blacknet_crypto::bigint::UInt256;
 use blacknet_kernel::account::Account;
@@ -46,24 +47,24 @@ use core::error::Error as StdError;
 use fjall::OwnedWriteBatch as WriteBatch;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, VecDeque, hash_map};
-use std::sync::Arc;
+use std::sync::{Arc, Weak};
 
 pub struct CoinDB {
     logger: Logger,
-    state: State,
+    state: ArcSwap<State>,
     db_state: DBView<[u8; 0], State>,
     accounts: DBView<PublicKey, Account>,
     htlcs: DBView<HashTimeLockContractId, HTLC>,
     multisigs: DBView<MultiSignatureLockContractId, Multisig>,
     undos: DBView<Hash, UndoBlock>,
-    block_db: Arc<BlockDB>,
+    requires_network: bool,
+    block_db: Weak<BlockDB>,
 }
 
 impl CoinDB {
     pub fn new(
         mode: &Mode,
         fjall: &Fjall,
-        block_db: Arc<BlockDB>,
         log_manager: &LogManager,
     ) -> core::result::Result<Arc<Self>, Box<dyn StdError>> {
         let db_state = DBView::new(fjall, "state")?;
@@ -73,17 +74,22 @@ impl CoinDB {
 
         Ok(Arc::new(Self {
             logger: log_manager.logger("CoinDB")?,
-            state,
+            state: ArcSwap::new(Arc::new(state)),
             db_state,
             accounts: DBView::new(fjall, "accounts")?,
             htlcs: DBView::new(fjall, "htlcs")?,
             multisigs: DBView::new(fjall, "multisigs")?,
             undos: DBView::new(fjall, "undos")?,
-            block_db,
+            requires_network: mode.requires_network(),
+            block_db: Weak::new(),
         }))
     }
 
-    pub const fn state(&self) -> &State {
+    pub fn set_block_db(&mut self, block_db: &Arc<BlockDB>) {
+        self.block_db = Arc::downgrade(block_db)
+    }
+
+    pub const fn state(&self) -> &ArcSwap<State> {
         &self.state
     }
 
@@ -100,18 +106,20 @@ impl CoinDB {
     }
 
     pub fn warnings(&self, warnings: &mut Vec<String>) {
-        if self.state.upgraded >= UPGRADE_THRESHOLD / 2 {
+        let state = self.state.load();
+        if state.upgraded >= UPGRADE_THRESHOLD / 2 {
             warnings.push("This version is obsolete, upgrade required!".to_owned())
         }
     }
 
     pub fn check(&self) -> Check {
+        let state = self.state.load();
         let mut check = Check {
             result: false,
             accounts: 0,
             htlcs: 0,
             multisigs: 0,
-            expected_supply: self.state.supply,
+            expected_supply: state.supply,
             actual_supply: Amount::ZERO,
         };
         for (_, account) in self.accounts.iter() {
@@ -133,7 +141,8 @@ impl CoinDB {
     }
 
     pub fn check_anchor(&self, hash: Hash) -> Result<()> {
-        if hash == genesis::hash() || self.block_db.indexes.contains(hash) {
+        let block_db = self.block_db.upgrade().expect("BlockDB in CoinDB");
+        if hash == genesis::hash() || block_db.indexes.contains(hash) {
             Ok(())
         } else {
             Err(Error::not_reachable_vertex(hash.to_string()))
@@ -141,26 +150,25 @@ impl CoinDB {
     }
 
     fn next_rolling_checkpoint(&self) -> Hash {
-        if self.state.rolling_checkpoint != genesis::hash() {
-            let block_index = self
-                .block_db
+        let block_db = self.block_db.upgrade().expect("BlockDB in CoinDB");
+        let state = self.state.load();
+        if state.rolling_checkpoint != genesis::hash() {
+            let block_index = block_db
                 .indexes
-                .get(self.state.rolling_checkpoint)
+                .get(state.rolling_checkpoint)
                 .expect("consistent block index");
             block_index.next()
         } else {
-            if self.state.height < ROLLBACK_LIMIT as u32 + 1 {
+            if state.height < ROLLBACK_LIMIT as u32 + 1 {
                 return genesis::hash();
             }
-            let checkpoint = self.state.height - ROLLBACK_LIMIT as u32;
-            let mut block_index = self
-                .block_db
+            let checkpoint = state.height - ROLLBACK_LIMIT as u32;
+            let mut block_index = block_db
                 .indexes
-                .get(self.state.block_hash)
+                .get(state.block_hash)
                 .expect("consistent block index");
             while block_index.height() != checkpoint + 1 {
-                block_index = self
-                    .block_db
+                block_index = block_db
                     .indexes
                     .get(block_index.previous())
                     .expect("consistent block index");
@@ -169,7 +177,6 @@ impl CoinDB {
         }
     }
 
-    #[expect(unused)]
     pub fn process_block_impl(
         &self,
         coin_tx: &mut Update,
@@ -177,36 +184,37 @@ impl CoinDB {
         block: &Block,
         size: u32,
     ) -> Result<Vec<Hash>> {
-        if block.previous() != self.state.block_hash {
+        let state = self.state.load();
+        if block.previous() != state.block_hash {
             error!(
                 self.logger,
                 "{hash} not adjacent to {} edge {}",
-                self.state.block_hash,
+                state.block_hash,
                 block.previous()
             );
             return Err(Error::not_reachable_vertex(block.previous().to_string()));
         }
-        if size > self.state.max_block_size {
+        if size > state.max_block_size {
             return Err(Error::invalid(format!(
                 "Too large block {size} bytes, maximum {}",
-                self.state.max_block_size
+                state.max_block_size
             )));
         }
-        if block.time() <= self.state.block_time {
+        if block.time() <= state.block_time {
             return Err(Error::invalid("Timestamp is too early"));
         }
         let mut generator = coin_tx.get_account(block.generator())?;
         let height = coin_tx.height();
-        let tx_hashes = Vec::<Hash>::with_capacity(block.raw_transactions().len());
-        let pos_version = self.state.pos_version(todo!());
+        let mut tx_hashes = Vec::<Hash>::with_capacity(block.raw_transactions().len());
+        let pos_version = state.pos_version(self.requires_network);
 
         verify_pos(
             pos_version,
             block.time(),
             block.generator(),
-            self.state.nxtrng(),
-            self.state.difficulty(),
-            self.state.block_time(),
+            state.nxtrng(),
+            state.difficulty(),
+            state.block_time(),
             generator.staking_balance(height),
         )?;
 
@@ -225,11 +233,11 @@ impl CoinDB {
 
         generator = coin_tx.get_account(block.generator())?;
 
-        let mint = mint(pos_version, self.state.supply);
+        let mint = mint(pos_version, state.supply);
         let generated = mint + fees;
 
-        let mut prev_index = self
-            .block_db
+        let block_db = self.block_db.upgrade().expect("BlockDB in CoinDB");
+        let mut prev_index = block_db
             .indexes
             .get(block.previous())
             .expect("Previous block index");
@@ -349,7 +357,6 @@ impl State {
     }
 }
 
-#[expect(unused)]
 pub struct Update {
     coin_db: Arc<CoinDB>,
     write_batch: WriteBatch,
@@ -382,7 +389,7 @@ impl Update {
         block_size: u32,
         block_generator: PublicKey,
     ) -> Self {
-        let state = coin_db.state().clone();
+        let state = coin_db.state().load_full();
         let height = state.height() + 1;
         let supply = state.supply();
         let rolling_checkpoint = coin_db.next_rolling_checkpoint();
@@ -406,7 +413,7 @@ impl Update {
             block_time,
             block_size,
             block_generator,
-            state,
+            state: Arc::unwrap_or_clone(state),
             height,
             supply,
             rolling_checkpoint,
@@ -425,8 +432,7 @@ impl Update {
         }
         self.state.block_sizes.push_back(self.block_size);
 
-        #[expect(unreachable_code, unused_variables)]
-        let pos_version = self.state.pos_version(todo!());
+        let pos_version = self.state.pos_version(self.coin_db.requires_network);
         let difficulty = next_difficulty(
             pos_version,
             self.undo.difficulty(),
@@ -461,14 +467,19 @@ impl Update {
             fork_v2,
             block_sizes: self.state.block_sizes,
         };
-        //TODO self.coin_db.state = new_state;
+        let block_db = self.coin_db.block_db.upgrade().expect("BlockDB in CoinDB");
         let batch = &mut self.write_batch;
         self.coin_db.db_state.insert(batch, [0u8; 0], &new_state);
+        self.coin_db.state.store(Arc::new(new_state));
         self.coin_db
             .undos
             .insert(batch, self.block_hash, &self.undo);
-        //TODO self.block_db.indexes.insert(batch, self.block_previous, &self.prev_index.unwrap());
-        //TODO self.block_db.indexes.insert(batch, self.block_hash, &self.block_index.unwrap());
+        block_db
+            .indexes
+            .insert(batch, self.block_previous, &self.prev_index.unwrap());
+        block_db
+            .indexes
+            .insert(batch, self.block_hash, &self.block_index.unwrap());
         for (key, account) in self.accounts {
             self.coin_db.accounts.insert(batch, key, &account)
         }
@@ -484,7 +495,7 @@ impl Update {
                 None => self.coin_db.multisigs.remove(batch, id),
             }
         }
-        batch.commit().unwrap();
+        self.write_batch.commit().unwrap();
     }
 }
 

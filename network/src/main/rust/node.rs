@@ -107,8 +107,16 @@ impl Node {
         let settings = Arc::new(Settings::default(&mode));
         let peer_table = PeerTable::new(&mode, dirs, log_manager, settings.clone())?;
         let fjall = Fjall::open(dirs, &settings)?;
-        let block_db = BlockDB::new(&mode, dirs, fjall.clone(), log_manager)?;
-        let coin_db = CoinDB::new(&mode, &fjall, block_db.clone(), log_manager)?;
+
+        let mut block_db = BlockDB::new(&mode, dirs, fjall.clone(), log_manager)?;
+        let mut coin_db = CoinDB::new(&mode, &fjall, log_manager)?;
+        Arc::get_mut(&mut block_db)
+            .expect("Node new")
+            .set_coin_db(&coin_db);
+        Arc::get_mut(&mut coin_db)
+            .expect("Node new")
+            .set_block_db(&block_db);
+
         let tx_pool = Arc::new(RwLock::new(TxPool::new(
             log_manager,
             settings.clone(),
@@ -207,10 +215,8 @@ impl Node {
 
     pub fn warnings(&self, warnings: &mut Vec<String>) {
         let time_offset = self.time_offset();
-        let pos_version = self
-            .coin_db
-            .state()
-            .pos_version(self.mode.requires_network());
+        let state = self.coin_db.state().load();
+        let pos_version = state.pos_version(self.mode.requires_network());
         let time_slot = time_slot(pos_version);
 
         if time_offset <= -time_slot || time_offset >= time_slot {
@@ -221,7 +227,7 @@ impl Node {
     }
 
     pub fn max_packet_size(&self) -> u32 {
-        self.coin_db.state().max_block_size() + BLOCK_RESERVED_SIZE
+        self.coin_db.state().load().max_block_size() + BLOCK_RESERVED_SIZE
     }
 
     pub const fn min_packet_size(&self) -> u32 {
@@ -229,16 +235,10 @@ impl Node {
     }
 
     pub fn is_initial_synchronization(&self) -> bool {
-        let pos_version = self
-            .coin_db
-            .state()
-            .pos_version(self.mode.requires_network());
+        let state = self.coin_db.state().load();
+        let pos_version = state.pos_version(self.mode.requires_network());
         self.block_fetcher.is_synchronizing()
-            && guess_initial_synchronization(
-                pos_version,
-                SystemClock::secs(),
-                self.coin_db.state().block_time(),
-            )
+            && guess_initial_synchronization(pos_version, SystemClock::secs(), state.block_time())
     }
 
     pub const fn fjall(&self) -> &Arc<Fjall> {

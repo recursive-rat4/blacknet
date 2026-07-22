@@ -58,7 +58,9 @@ impl BlockFetcher {
     }
 
     pub fn offer(&self, connection: &Connection, block_announce: BlockAnnounce) {
-        if block_announce.cumulative_difficulty() <= self.coin_db.state().cumulative_difficulty() {
+        if block_announce.cumulative_difficulty()
+            <= self.coin_db.state().load().cumulative_difficulty()
+        {
             return;
         }
 

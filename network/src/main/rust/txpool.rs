@@ -198,15 +198,15 @@ impl CoinTx for TxPool {
     }
 
     fn block_hash(&self) -> Hash {
-        self.coin_db.state().block_hash()
+        self.coin_db.state().load().block_hash()
     }
 
     fn block_time(&self) -> Seconds {
-        self.coin_db.state().block_time()
+        self.coin_db.state().load().block_time()
     }
 
     fn height(&self) -> u32 {
-        self.coin_db.state().height()
+        self.coin_db.state().load().height()
     }
 
     fn get_account(&mut self, key: PublicKey) -> Result<Account> {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2025 Pavel Vasin
+ * Copyright (c) 2018-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -234,7 +234,7 @@ fn send_handshake(connection: &Connection) -> Result<(), SerializationError> {
     connection.send_packet(&hello);
 
     if connection.state() != State::ProberWaiting {
-        let state = node.coin_db().state();
+        let state = node.coin_db().state().load();
         let block_announce = BlockAnnounce::new(state.block_hash(), state.cumulative_difficulty());
         connection.send_packet(&block_announce);
     }
