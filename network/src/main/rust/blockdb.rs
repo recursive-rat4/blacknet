@@ -336,7 +336,7 @@ impl BlockDB {
         let coin_db: CoinDB = todo!();
         let tx_hashes =
             coin_db.process_block_impl(&mut coin_tx, hash, &block, bytes.len() as u32)?;
-        self.blocks.batch_bytes(&mut batch, hash, &bytes);
+        self.blocks.insert_bytes(&mut batch, hash, &bytes);
         coin_tx.commit_impl();
         //TODO RPC
         self.cached_block

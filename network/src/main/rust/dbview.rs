@@ -16,20 +16,20 @@
  */
 
 use crate::fjall::Fjall;
-use blacknet_serialization::format::from_bytes;
+use blacknet_serialization::format::{from_bytes, to_bytes};
 use core::fmt::Debug;
 use core::marker::PhantomData;
 use core::ops::Deref;
 use fjall::{Keyspace, OwnedWriteBatch as WriteBatch, Result};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
-pub struct DBView<K: AsRef<[u8]>, V: for<'de> Deserialize<'de>> {
+pub struct DBView<K: AsRef<[u8]>, V: for<'de> Deserialize<'de> + Serialize> {
     keyspace: Keyspace,
     phantom_k: PhantomData<K>,
     phantom_v: PhantomData<V>,
 }
 
-impl<K: AsRef<[u8]>, V: for<'de> Deserialize<'de>> DBView<K, V> {
+impl<K: AsRef<[u8]>, V: for<'de> Deserialize<'de> + Serialize> DBView<K, V> {
     pub fn new(fjall: &Fjall, name: &str) -> Result<Self> {
         Ok(Self {
             keyspace: fjall.database().keyspace(name, Fjall::kv_options)?,
@@ -89,7 +89,15 @@ impl<K: AsRef<[u8]>, V: for<'de> Deserialize<'de>> DBView<K, V> {
         self.keyspace.len().unwrap()
     }
 
-    pub fn batch_bytes(&self, batch: &mut WriteBatch, key: K, bytes: &[u8]) {
+    pub fn insert(&self, batch: &mut WriteBatch, key: K, value: &V) {
+        batch.insert(&self.keyspace, key.as_ref(), to_bytes(value).unwrap())
+    }
+
+    pub fn insert_bytes(&self, batch: &mut WriteBatch, key: K, bytes: &[u8]) {
         batch.insert(&self.keyspace, key.as_ref(), bytes)
+    }
+
+    pub fn remove(&self, batch: &mut WriteBatch, key: K) {
+        batch.remove(&self.keyspace, key.as_ref())
     }
 }

@@ -51,11 +51,11 @@ use std::sync::Arc;
 pub struct CoinDB {
     logger: Logger,
     state: State,
-    #[expect(dead_code)]
     db_state: DBView<[u8; 0], State>,
     accounts: DBView<PublicKey, Account>,
     htlcs: DBView<HashTimeLockContractId, HTLC>,
     multisigs: DBView<MultiSignatureLockContractId, Multisig>,
+    undos: DBView<Hash, UndoBlock>,
     block_db: Arc<BlockDB>,
 }
 
@@ -78,6 +78,7 @@ impl CoinDB {
             accounts: DBView::new(fjall, "accounts")?,
             htlcs: DBView::new(fjall, "htlcs")?,
             multisigs: DBView::new(fjall, "multisigs")?,
+            undos: DBView::new(fjall, "undos")?,
             block_db,
         }))
     }
@@ -460,7 +461,30 @@ impl Update {
             fork_v2,
             block_sizes: self.state.block_sizes,
         };
-        todo!();
+        //TODO self.coin_db.state = new_state;
+        let batch = &mut self.write_batch;
+        self.coin_db.db_state.insert(batch, [0u8; 0], &new_state);
+        self.coin_db
+            .undos
+            .insert(batch, self.block_hash, &self.undo);
+        //TODO self.block_db.indexes.insert(batch, self.block_previous, &self.prev_index.unwrap());
+        //TODO self.block_db.indexes.insert(batch, self.block_hash, &self.block_index.unwrap());
+        for (key, account) in self.accounts {
+            self.coin_db.accounts.insert(batch, key, &account)
+        }
+        for (id, htlc) in self.htlcs {
+            match htlc {
+                Some(htlc) => self.coin_db.htlcs.insert(batch, id, &htlc),
+                None => self.coin_db.htlcs.remove(batch, id),
+            }
+        }
+        for (id, multisig) in self.multisigs {
+            match multisig {
+                Some(multisig) => self.coin_db.multisigs.insert(batch, id, &multisig),
+                None => self.coin_db.multisigs.remove(batch, id),
+            }
+        }
+        batch.commit().unwrap();
     }
 }
 
