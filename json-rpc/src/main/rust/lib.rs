@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -16,8 +16,6 @@
  */
 
 mod rpcserver;
-mod settings;
 pub mod v2;
 
 pub use rpcserver::*;
-pub use settings::*;

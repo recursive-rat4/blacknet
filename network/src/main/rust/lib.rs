@@ -30,7 +30,6 @@ pub mod packet;
 pub mod peertable;
 pub mod rollinghashset;
 pub mod router;
-pub mod settings;
 pub mod socks5;
 pub mod staker;
 pub mod torcontroller;

@@ -15,8 +15,9 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use blacknet_compat::config::Config;
 use blacknet_compat::{XDGDirectories, mode};
-use blacknet_json_rpc::{Settings as RPCSettings, rpc_server};
+use blacknet_json_rpc::rpc_server;
 use blacknet_log::{LogManager, Strategy};
 use blacknet_network::node::Node;
 use std::env::args;
@@ -45,12 +46,12 @@ fn daemon() -> Result<(), Box<dyn Error>> {
         })
         .build()?;
     let (shutdown_send, mut shutdown_recv) = unbounded_channel::<()>();
-    let rpc_settings = RPCSettings::default(&mode);
-    let node = Node::new(mode, &dirs, &log_manager, &runtime)?;
-    if rpc_settings.enabled {
+    let config = Config::load(dirs.config())?;
+    let node = Node::new(mode, &dirs, &log_manager, &runtime, &config.network)?;
+    if config.rpc.enabled {
         let node = node.clone();
         runtime.spawn(async move {
-            rpc_server(rpc_settings, &log_manager, node, shutdown_send).await;
+            rpc_server(&config.rpc, &log_manager, node, shutdown_send).await;
         });
     }
     runtime.block_on(async move {

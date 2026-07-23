@@ -18,7 +18,7 @@
 use crate::coindb::CoinDB;
 use crate::connection::Connection;
 use crate::packet::{BlockAnnounce, Blocks, ConsensusFault};
-use crate::settings::Settings;
+use blacknet_compat::config::Network as Config;
 use blacknet_crypto::bigint::UInt256;
 use blacknet_kernel::blake2b::Hash;
 use blacknet_kernel::error::Result;
@@ -34,8 +34,8 @@ pub struct BlockFetcher {
 }
 
 impl BlockFetcher {
-    pub fn new(coin_db: Arc<CoinDB>, settings: &Arc<Settings>) -> Self {
-        let size = settings.incoming_connections as usize + settings.outgoing_connections as usize;
+    pub fn new(coin_db: Arc<CoinDB>, config: &Arc<Config>) -> Self {
+        let size = config.incoming_connections as usize + config.outgoing_connections as usize;
         let (announces_sender, announces_receiver) = mpsc::channel(size);
         Self {
             connection_id: 0,

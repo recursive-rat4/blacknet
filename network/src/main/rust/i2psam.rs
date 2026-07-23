@@ -16,7 +16,7 @@
  */
 
 use crate::endpoint::Endpoint;
-use crate::settings::Settings;
+use blacknet_compat::config::Network as Config;
 use blacknet_compat::{Mode, XDGDirectories};
 use blacknet_crypto::random::{Distribution, FAST_RNG, FastRNG, UniformIntDistribution};
 use blacknet_io::file::replace;
@@ -228,7 +228,7 @@ impl Session {
 
 pub struct SAM {
     logger: Logger,
-    settings: Arc<Settings>,
+    config: Arc<Config>,
     data_dir: PathBuf,
     private_key: String,
     endpoint: Endpoint,
@@ -240,11 +240,11 @@ impl SAM {
         mode: &Mode,
         dirs: &XDGDirectories,
         log_manager: &LogManager,
-        settings: Arc<Settings>,
+        config: Arc<Config>,
     ) -> Result<Self, Error> {
-        let endpoint = match Endpoint::parse(&settings.i2p_sam_host, settings.i2p_sam_port) {
+        let endpoint = match Endpoint::parse(&config.i2p_sam_host, config.i2p_sam_port) {
             Some(endpoint) => endpoint,
-            None => return Err("Can't parse settings.i2p_sam_host".into()),
+            None => return Err("Can't parse config.i2p_sam_host".into()),
         };
 
         let data_dir = dirs.data().to_owned();
@@ -252,7 +252,7 @@ impl SAM {
 
         Ok(Self {
             logger: log_manager.logger("I2PSAM")?,
-            settings,
+            config,
             data_dir,
             private_key,
             endpoint,
@@ -268,7 +268,7 @@ impl SAM {
             .await?;
         let destination = connection.lookup("ME").await?;
         let local_endpoint = Endpoint::I2P {
-            port: self.settings.port,
+            port: self.config.port,
             address: Answer::hash(&destination)?,
         };
         if self.private_key == TRANSIENT_KEY {

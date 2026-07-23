@@ -15,6 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+pub mod config;
 mod errno;
 mod getentropy;
 mod getuid;

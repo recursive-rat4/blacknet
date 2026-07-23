@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::settings::Settings;
+use blacknet_compat::config::Network as Config;
 use blacknet_compat::{XDGDirectories, ulimit};
 use core::cmp::max;
 use fjall::{
@@ -29,22 +29,22 @@ pub struct Fjall {
 }
 
 impl Fjall {
-    fn max_open_files(settings: &Arc<Settings>) -> usize {
+    fn max_open_files(config: &Arc<Config>) -> usize {
         let max_open_files = max(
             ulimit().unwrap() as isize
-                - settings.incoming_connections as isize
-                - settings.outgoing_connections as isize
+                - config.incoming_connections as isize
+                - config.outgoing_connections as isize
                 - 20_isize,
             64,
         );
         max_open_files as usize
     }
 
-    pub fn open(dirs: &XDGDirectories, settings: &Arc<Settings>) -> Result<Arc<Fjall>> {
+    pub fn open(dirs: &XDGDirectories, config: &Arc<Config>) -> Result<Arc<Fjall>> {
         let path = dirs.data().join("fjall");
         let database = Database::builder(path)
-            .max_cached_files(Some(Self::max_open_files(settings)))
-            .cache_size(settings.db_cache)
+            .max_cached_files(Some(Self::max_open_files(config)))
+            .cache_size(config.db_cache)
             .journal_compression(CompressionType::None)
             .open()?;
         Ok(Arc::new(Fjall { database }))

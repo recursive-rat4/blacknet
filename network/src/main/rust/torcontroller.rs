@@ -16,8 +16,8 @@
  */
 
 use crate::endpoint::Endpoint;
-use crate::settings::Settings;
 use blacknet_compat::XDGDirectories;
+use blacknet_compat::config::Network as Config;
 use blacknet_io::file::replace;
 use blacknet_log::{Error as LogError, LogManager, Logger, error, info, warn};
 use core::fmt;
@@ -34,7 +34,7 @@ const TRANSIENT_KEY: &str = "NEW:ED25519-V3";
 
 pub struct TorController {
     logger: Logger,
-    settings: Arc<Settings>,
+    config: Arc<Config>,
     data_dir: PathBuf,
     private_key: String,
     endpoint: Endpoint,
@@ -44,12 +44,11 @@ impl TorController {
     pub fn new(
         dirs: &XDGDirectories,
         log_manager: &LogManager,
-        settings: Arc<Settings>,
+        config: Arc<Config>,
     ) -> Result<Self> {
-        let endpoint = match Endpoint::parse(&settings.tor_control_host, settings.tor_control_port)
-        {
+        let endpoint = match Endpoint::parse(&config.tor_control_host, config.tor_control_port) {
             Some(endpoint) => endpoint,
-            None => return Err("Can't parse settings.tor_control_host".into()),
+            None => return Err("Can't parse config.tor_control_host".into()),
         };
 
         let data_dir = dirs.data().to_owned();
@@ -57,7 +56,7 @@ impl TorController {
 
         Ok(TorController {
             logger: log_manager.logger("TorController")?,
-            settings,
+            config,
             data_dir,
             private_key,
             endpoint,
@@ -69,9 +68,9 @@ impl TorController {
         connection.authenticate().await?;
         //XXX port
         let (service_id, new_key) = connection
-            .add_onion(&self.private_key, self.settings.port)
+            .add_onion(&self.private_key, self.config.port)
             .await?;
-        let local_endpoint = Endpoint::parse(&(service_id + ".onion"), self.settings.port)
+        let local_endpoint = Endpoint::parse(&(service_id + ".onion"), self.config.port)
             .ok_or("Failed to parse Onion Service ID")?;
         if self.private_key.starts_with("NEW:") {
             if !new_key.is_empty() {

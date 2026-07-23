@@ -79,13 +79,15 @@ async fn block(
 async fn block_db_check(State(node): State<Arc<Node>>) -> Json<BlockDBCheck> {
     let block_db = node.block_db();
     let coin_db = node.coin_db();
-    Json(block_db.check(coin_db.state()))
+    let state = coin_db.state().load();
+    Json(block_db.check(&state))
 }
 
 async fn block_hash(Path(height): Path<u32>, State(node): State<Arc<Node>>) -> Response<String> {
     let block_db = node.block_db();
     let coin_db = node.coin_db();
-    if let Some(hash) = block_db.hash(height, coin_db.state()) {
+    let state = coin_db.state().load();
+    if let Some(hash) = block_db.hash(height, &state) {
         respond_text(hash.to_string())
     } else {
         respond_error("Block not found")
@@ -104,7 +106,8 @@ async fn block_index(Path(hash): Path<Hash>, State(node): State<Arc<Node>>) -> R
 async fn make_bootstrap(State(node): State<Arc<Node>>) -> Response<String> {
     let block_db = node.block_db();
     let coin_db = node.coin_db();
-    match block_db.export(coin_db.state()) {
+    let state = coin_db.state().load();
+    match block_db.export(&state) {
         Some(path) => match absolute(&path) {
             Ok(path) => respond_text(path.display().to_string()),
             Err(_) => respond_text(path.display().to_string()),
@@ -115,7 +118,8 @@ async fn make_bootstrap(State(node): State<Arc<Node>>) -> Response<String> {
 
 async fn coin_db(State(node): State<Arc<Node>>) -> Json<CoinDBInfo> {
     let coin_db = node.coin_db();
-    Json(CoinDBInfo::new(coin_db.state()))
+    let state = coin_db.state().load();
+    Json(CoinDBInfo::new(&state))
 }
 
 async fn coin_db_check(State(node): State<Arc<Node>>) -> Json<CoinDBCheck> {
@@ -140,7 +144,7 @@ async fn account(
 
     let coin_db = node.coin_db();
     if let Some(account) = coin_db.account(public_key) {
-        let state = coin_db.state();
+        let state = coin_db.state().load();
         match AccountInfo::new(&account, state.height(), confirmations, address_codec) {
             Ok(info) => respond_json(&info),
             Err(err) => respond_error(format!("Internal error: {err}")),

@@ -15,8 +15,9 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::{Settings, v2};
+use crate::v2;
 use axum::{Router, routing::get};
+use blacknet_compat::config::RPC as Config;
 use blacknet_log::{LogManager, error, info};
 use blacknet_network::node::Node;
 use std::sync::Arc;
@@ -24,7 +25,7 @@ use tokio::net::TcpListener;
 use tokio::sync::mpsc::UnboundedSender;
 
 pub async fn rpc_server(
-    settings: Settings,
+    config: &Config,
     log_manager: &LogManager,
     node: Arc<Node>,
     shutdown_send: UnboundedSender<()>,
@@ -36,7 +37,7 @@ pub async fn rpc_server(
         )
         .merge(v2::routes())
         .with_state(node);
-    let addr = format!("{}:{}", settings.host, settings.port);
+    let addr = format!("{}:{}", config.host, config.port);
     let logger = log_manager.logger("RPCServer").unwrap();
     match TcpListener::bind(&addr).await {
         Ok(listener) => {

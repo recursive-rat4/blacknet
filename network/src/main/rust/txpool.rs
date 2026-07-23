@@ -16,7 +16,7 @@
  */
 
 use crate::coindb::CoinDB;
-use crate::settings::Settings;
+use blacknet_compat::config::Network as Config;
 use blacknet_kernel::account::Account;
 use blacknet_kernel::amount::Amount;
 use blacknet_kernel::blake2b::Hash;
@@ -35,7 +35,7 @@ use std::sync::Arc;
 
 pub struct TxPool {
     logger: Logger,
-    settings: Arc<Settings>,
+    config: Arc<Config>,
     map: HashMap<Hash, Box<[u8]>>,
     rejects: HashSet<Hash>,
     data_len: usize,
@@ -52,12 +52,12 @@ pub struct TxPool {
 impl TxPool {
     pub fn new(
         log_manager: &LogManager,
-        settings: Arc<Settings>,
+        config: Arc<Config>,
         coin_db: Arc<CoinDB>,
     ) -> core::result::Result<Self, LogError> {
         Ok(Self {
             logger: log_manager.logger("TxPool")?,
-            settings,
+            config,
             map: HashMap::new(),
             rejects: HashSet::new(),
             data_len: 0,
@@ -85,7 +85,7 @@ impl TxPool {
     }
 
     pub fn min_fee_rate(&self) -> Amount {
-        self.settings.min_relay_fee_rate
+        Amount::new(self.config.min_relay_fee_rate)
     }
 
     pub fn hashes(&self) -> Keys<'_, Hash, Box<[u8]>> {
@@ -113,7 +113,7 @@ impl TxPool {
         if self.map.contains_key(&hash) {
             return Err(Error::already_have(hash.to_string()));
         }
-        if self.data_len + bytes.len() > self.settings.tx_pool_size {
+        if self.data_len + bytes.len() > self.config.tx_pool_size {
             if remote {
                 return Err(Error::in_future("TxPool is full"));
             } else {
@@ -148,7 +148,7 @@ impl TxPool {
     }
 
     fn check_fee(&self, size: u32, amount: Amount) -> Result<()> {
-        if amount >= self.settings.min_relay_fee_rate * (1 + size / 1000).into() {
+        if amount >= Amount::new(self.config.min_relay_fee_rate) * (1 + size / 1000).into() {
             Ok(())
         } else {
             Err(Error::invalid(format!("Too low fee {}", amount)))

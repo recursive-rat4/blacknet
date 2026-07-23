@@ -16,7 +16,7 @@
  */
 
 use crate::endpoint::Endpoint;
-use crate::settings::Settings;
+use blacknet_compat::config::Network as Config;
 use blacknet_compat::{Mode, XDGDirectories};
 use blacknet_crypto::random::{
     Distribution, FAST_RNG, FastRNG, Float01Distribution, UniformIntDistribution,
@@ -42,7 +42,7 @@ const FILE_NAME: &str = "peers.dat";
 
 pub struct PeerTable {
     logger: Logger,
-    settings: Arc<Settings>,
+    config: Arc<Config>,
     data_dir: PathBuf,
     peers: RwLock<HashMap<Endpoint, Entry>>,
 }
@@ -52,11 +52,11 @@ impl PeerTable {
         mode: &Mode,
         dirs: &XDGDirectories,
         log_manager: &LogManager,
-        settings: Arc<Settings>,
+        config: Arc<Config>,
     ) -> Result<Arc<Self>, Box<dyn Error>> {
         let peer_table = Self {
             logger: log_manager.logger("PeerTable")?,
-            settings,
+            config,
             data_dir: dirs.data().to_owned(),
             peers: RwLock::new(HashMap::with_capacity(MAX_SIZE)),
         };
@@ -174,7 +174,7 @@ impl PeerTable {
         error!(
             self.logger,
             "Inconsistent contact to {}",
-            endpoint.to_log(self.settings.log_endpoint)
+            endpoint.to_log(self.config.log_endpoint)
         );
     }
 
@@ -199,13 +199,13 @@ impl PeerTable {
             error!(
                 self.logger,
                 "Not found entry of {}",
-                endpoint.to_log(self.settings.log_endpoint)
+                endpoint.to_log(self.config.log_endpoint)
             );
         } else {
             error!(
                 self.logger,
                 "Inconsistent discontact from {}",
-                endpoint.to_log(self.settings.log_endpoint)
+                endpoint.to_log(self.config.log_endpoint)
             );
         }
     }

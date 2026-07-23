@@ -15,10 +15,39 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_compat::Mode;
-use blacknet_kernel::amount::Amount;
+use crate::Mode;
+use core::error::Error;
+use serde::Deserialize;
+use std::fs::read_to_string;
+use std::path::Path;
+use std::sync::Arc;
+use toml::from_str;
 
-pub struct Settings {
+#[derive(Deserialize)]
+pub struct Config {
+    pub network: Arc<Network>,
+    pub rpc: RPC,
+}
+
+impl Config {
+    pub fn load(config_dir: &Path) -> Result<Self, Box<dyn Error>> {
+        let path = config_dir.join("blacknet.conf");
+        let string = read_to_string(path)?;
+        Ok(from_str::<Config>(&string)?)
+    }
+
+    //TODO use default
+
+    pub fn default(mode: &Mode) -> Self {
+        Self {
+            network: Arc::new(Network::default(mode)),
+            rpc: RPC::default(mode),
+        }
+    }
+}
+
+#[derive(Deserialize)]
+pub struct Network {
     pub port: u16,
     pub ipv4: bool,
     pub ipv6: bool,
@@ -34,10 +63,10 @@ pub struct Settings {
     pub tor_control_port: u16,
     pub db_cache: u64,
     pub tx_pool_size: usize,
-    pub min_relay_fee_rate: Amount,
+    pub min_relay_fee_rate: u64,
 }
 
-impl Settings {
+impl Network {
     pub fn default(mode: &Mode) -> Self {
         Self {
             port: mode.default_p2p_port(),
@@ -55,7 +84,24 @@ impl Settings {
             tor_control_port: 9051,
             db_cache: 256 * 1024 * 1024,
             tx_pool_size: 128 * 1024 * 1024,
-            min_relay_fee_rate: Amount::new(100000), // 0.001
+            min_relay_fee_rate: 100000, // 0.001
+        }
+    }
+}
+
+#[derive(Deserialize)]
+pub struct RPC {
+    pub enabled: bool,
+    pub host: String,
+    pub port: u16,
+}
+
+impl RPC {
+    pub fn default(mode: &Mode) -> Self {
+        Self {
+            enabled: true,
+            host: "127.0.0.1".to_owned(),
+            port: mode.default_rpc_port(),
         }
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -19,8 +19,8 @@ use crate::endpoint::{Endpoint, ipv4_any, ipv6_any};
 use crate::i2psam::SAM;
 use crate::natpmp::natpmp_forward;
 use crate::peertable::PeerTable;
-use crate::settings::Settings;
 use crate::torcontroller::TorController;
+use blacknet_compat::config::Network as Config;
 use blacknet_compat::{Mode, XDGDirectories};
 use blacknet_log::{LogManager, Logger, info, warn};
 use std::cmp::min;
@@ -34,7 +34,7 @@ use tokio::time::{Duration, sleep};
 
 pub struct Router {
     logger: Logger,
-    settings: Arc<Settings>,
+    config: Arc<Config>,
     listens: RwLock<HashSet<Endpoint>>,
     peer_table: Arc<PeerTable>,
     i2p_sam: Mutex<SAM>,
@@ -47,28 +47,28 @@ impl Router {
         dirs: &XDGDirectories,
         log_manager: &LogManager,
         runtime: &Runtime,
-        settings: &Arc<Settings>,
+        config: &Arc<Config>,
         peer_table: Arc<PeerTable>,
     ) -> Result<Arc<Self>, Box<dyn Error>> {
         let router = Arc::new(Self {
             logger: log_manager.logger("Router")?,
-            settings: settings.clone(),
+            config: config.clone(),
             listens: RwLock::new(HashSet::new()),
             peer_table,
-            i2p_sam: Mutex::new(SAM::new(mode, dirs, log_manager, settings.clone())?),
-            tor_controller: Mutex::new(TorController::new(dirs, log_manager, settings.clone())?),
+            i2p_sam: Mutex::new(SAM::new(mode, dirs, log_manager, config.clone())?),
+            tor_controller: Mutex::new(TorController::new(dirs, log_manager, config.clone())?),
         });
 
-        if settings.ipv6 || settings.ipv4 {
+        if config.ipv6 || config.ipv4 {
             runtime.spawn(router.clone().listen_ip());
-            if settings.natpmp {
+            if config.natpmp {
                 runtime.spawn(router.clone().forward_natpmp());
             }
         }
-        if settings.tor {
+        if config.tor {
             runtime.spawn(router.clone().listen_tor());
         }
-        if settings.i2p {
+        if config.i2p {
             runtime.spawn(router.clone().listen_i2p());
         }
 
@@ -77,10 +77,10 @@ impl Router {
 
     async fn listen_ip(self: Arc<Self>) {
         let mut timeout = Self::INIT_TIMEOUT;
-        let endpoint = if self.settings.ipv6 {
-            ipv6_any(self.settings.port)
-        } else if self.settings.ipv4 {
-            ipv4_any(self.settings.port)
+        let endpoint = if self.config.ipv6 {
+            ipv6_any(self.config.port)
+        } else if self.config.ipv4 {
+            ipv4_any(self.config.port)
         } else {
             panic!("Both IPv4 and IPv6 are disabled");
         };
@@ -156,7 +156,7 @@ impl Router {
     }
 
     async fn forward_natpmp(self: Arc<Self>) {
-        match natpmp_forward(self.settings.port).await {
+        match natpmp_forward(self.config.port).await {
             Ok(endpoint) => {
                 self.add_listener(endpoint);
             }
@@ -170,7 +170,7 @@ impl Router {
         info!(
             self.logger,
             "Listening on {}",
-            endpoint.to_log(self.settings.log_endpoint)
+            endpoint.to_log(self.config.log_endpoint)
         );
         let inserted = {
             let mut listens = self.listens.write().unwrap();
@@ -184,7 +184,7 @@ impl Router {
         info!(
             self.logger,
             "Lost binding to {}",
-            endpoint.to_log(self.settings.log_endpoint)
+            endpoint.to_log(self.config.log_endpoint)
         );
         let removed = {
             let mut listens = self.listens.write().unwrap();

@@ -24,10 +24,10 @@ use crate::fjall::Fjall;
 use crate::packet::UnfilteredInvList;
 use crate::peertable::PeerTable;
 use crate::router::Router;
-use crate::settings::Settings;
 use crate::staker::Staker;
 use crate::txfetcher::TxFetcher;
 use crate::txpool::TxPool;
+use blacknet_compat::config::Network as Config;
 use blacknet_compat::{Mode, XDGDirectories, getuid, uname};
 use blacknet_crypto::random::{Distribution, FAST_RNG, FastRNG, UniformIntDistribution};
 use blacknet_io::Write;
@@ -57,7 +57,7 @@ pub const MIN_PROTOCOL_VERSION: u32 = 12;
 #[expect(dead_code)]
 pub struct Node {
     logger: Logger,
-    settings: Arc<Settings>,
+    config: Arc<Config>,
     state_dir: PathBuf,
     next_peer_id: AtomicU64,
     connections: RwLock<Vec<Connection>>,
@@ -85,6 +85,7 @@ impl Node {
         dirs: &XDGDirectories,
         log_manager: &LogManager,
         runtime: &Runtime,
+        config: &Arc<Config>,
     ) -> Result<Arc<Self>, Box<dyn StdError>> {
         let (os_name, os_version, os_machine) = uname();
         let (agent_name, agent_version) = (mode.agent_name(), env!("CARGO_PKG_VERSION"));
@@ -104,9 +105,8 @@ impl Node {
             warn!(logger, "Running as root");
         }
 
-        let settings = Arc::new(Settings::default(&mode));
-        let peer_table = PeerTable::new(&mode, dirs, log_manager, settings.clone())?;
-        let fjall = Fjall::open(dirs, &settings)?;
+        let peer_table = PeerTable::new(&mode, dirs, log_manager, config.clone())?;
+        let fjall = Fjall::open(dirs, config)?;
 
         let mut block_db = BlockDB::new(&mode, dirs, fjall.clone(), log_manager)?;
         let mut coin_db = CoinDB::new(&mode, &fjall, log_manager)?;
@@ -119,21 +119,21 @@ impl Node {
 
         let tx_pool = Arc::new(RwLock::new(TxPool::new(
             log_manager,
-            settings.clone(),
+            config.clone(),
             coin_db.clone(),
         )?));
         let node = Arc::new(Self {
             logger,
-            settings: settings.clone(),
+            config: config.clone(),
             state_dir: dirs.state().to_owned(),
             next_peer_id: AtomicU64::new(1),
             connections: RwLock::new(Vec::new()),
             peer_table: peer_table.clone(),
-            router: Router::new(&mode, dirs, log_manager, runtime, &settings, peer_table)?,
+            router: Router::new(&mode, dirs, log_manager, runtime, config, peer_table)?,
             fjall,
             block_db,
             coin_db: coin_db.clone(),
-            block_fetcher: BlockFetcher::new(coin_db, &settings),
+            block_fetcher: BlockFetcher::new(coin_db, config),
             tx_pool: tx_pool.clone(),
             tx_fetcher: TxFetcher::new(runtime, Arc::downgrade(&tx_pool)),
             wallet_db: WalletDB::new(&mode, dirs, log_manager)?,
@@ -282,7 +282,7 @@ impl Node {
     }
 
     fn time_offset(&self) -> Seconds {
-        let min = self.settings.outgoing_connections;
+        let min = self.config.outgoing_connections;
         let mut offsets: Vec<Seconds> = self
             .connections
             .read()
