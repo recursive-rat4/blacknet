@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -62,11 +62,11 @@ impl LogManager {
         }
 
         #[cfg(feature = "log")]
-        spdlog::init_log_crate_proxy()?;
-        #[cfg(feature = "log")]
-        spdlog::log_crate_proxy().set_filter(None);
-        #[cfg(feature = "log")]
-        log::set_max_level(log::LevelFilter::Trace);
+        {
+            spdlog::init_log_crate_proxy()?;
+            spdlog::log_crate_proxy().set_filter(None);
+            log::set_max_level(log::LevelFilter::Trace);
+        }
 
         let logger = Self::factory("LogManager", filter_level, &sinks)?;
         info!(logger, "Initialized logging");
@@ -100,7 +100,7 @@ impl LogManager {
             .style_mode(StyleMode::Auto)
             .formatter(Self::formatter())
             .build()
-            .map(|sink| Arc::new(sink) as Arc<dyn Sink>)?)
+            .map(Arc::new)?)
     }
 
     fn file_sink(dir: &Path) -> Result<Arc<dyn Sink>> {
@@ -111,7 +111,7 @@ impl LogManager {
             .rotate_on_open(false)
             .formatter(Self::formatter())
             .build()
-            .map(|sink| Arc::new(sink) as Arc<dyn Sink>)?)
+            .map(Arc::new)?)
     }
 
     fn formatter() -> impl Formatter {
