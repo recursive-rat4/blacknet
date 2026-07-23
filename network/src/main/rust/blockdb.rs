@@ -37,7 +37,7 @@ use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::{BufWriter, Write};
 use std::path::PathBuf;
-use std::sync::{Arc, Weak};
+use std::sync::Arc;
 
 const MIN_DISK_SPACE: u64 = MAX_BLOCK_SIZE as u64 * 2;
 
@@ -106,7 +106,6 @@ pub struct BlockDB {
     fjall: Arc<Fjall>,
     data_dir: PathBuf,
     requires_network: bool,
-    coin_db: Weak<CoinDB>,
 }
 
 impl BlockDB {
@@ -126,12 +125,7 @@ impl BlockDB {
             fjall,
             data_dir: dirs.data().to_owned(),
             requires_network: mode.requires_network(),
-            coin_db: Weak::new(),
         }))
-    }
-
-    pub fn set_coin_db(&mut self, coin_db: &Arc<CoinDB>) {
-        self.coin_db = Arc::downgrade(coin_db)
     }
 
     pub const fn cached_block(&self) -> &ArcSwapOption<(Hash, Box<[u8]>)> {
@@ -283,23 +277,22 @@ impl BlockDB {
         check
     }
 
-    pub fn process(&mut self, hash: Hash, bytes: Box<[u8]>) -> Result<()> {
+    pub fn process(&mut self, coin_db: &Arc<CoinDB>, hash: Hash, bytes: Box<[u8]>) -> Result<()> {
         if self.is_rejected(hash) {
             return Err(Error::invalid("Already rejected block"));
         }
         if self.contains(hash) {
             return Err(Error::already_have(hash.to_string()));
         }
-        let result = self.process_block(hash, bytes);
+        let result = self.process_block(coin_db, hash, bytes);
         if matches!(result, Err(Error::Invalid(_))) {
             self.rejects.insert(hash);
         }
         result
     }
 
-    fn process_block(&self, hash: Hash, bytes: Box<[u8]>) -> Result<()> {
+    fn process_block(&self, coin_db: &Arc<CoinDB>, hash: Hash, bytes: Box<[u8]>) -> Result<()> {
         let block = from_bytes::<Block>(&bytes, false)?;
-        let coin_db = self.coin_db.upgrade().expect("CoinDB in BlockDB");
         let state = coin_db.state().load();
         if block.version() > BLOCK_VERSION {
             let percent = 100 * state.upgraded() / UPGRADE_THRESHOLD;

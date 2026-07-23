@@ -107,16 +107,8 @@ impl Node {
 
         let peer_table = PeerTable::new(&mode, dirs, log_manager, config.clone())?;
         let fjall = Fjall::open(dirs, config)?;
-
-        let mut block_db = BlockDB::new(&mode, dirs, fjall.clone(), log_manager)?;
-        let mut coin_db = CoinDB::new(&mode, &fjall, log_manager)?;
-        Arc::get_mut(&mut block_db)
-            .expect("Node new")
-            .set_coin_db(&coin_db);
-        Arc::get_mut(&mut coin_db)
-            .expect("Node new")
-            .set_block_db(&block_db);
-
+        let block_db = BlockDB::new(&mode, dirs, fjall.clone(), log_manager)?;
+        let coin_db = CoinDB::new(&mode, &fjall, log_manager, block_db.clone())?;
         let tx_pool = Arc::new(RwLock::new(TxPool::new(
             log_manager,
             config.clone(),

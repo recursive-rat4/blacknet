@@ -47,7 +47,7 @@ use core::error::Error as StdError;
 use fjall::OwnedWriteBatch as WriteBatch;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, VecDeque, hash_map};
-use std::sync::{Arc, Weak};
+use std::sync::Arc;
 
 pub struct CoinDB {
     logger: Logger,
@@ -58,7 +58,7 @@ pub struct CoinDB {
     multisigs: DBView<MultiSignatureLockContractId, Multisig>,
     undos: DBView<Hash, UndoBlock>,
     requires_network: bool,
-    block_db: Weak<BlockDB>,
+    block_db: Arc<BlockDB>,
 }
 
 impl CoinDB {
@@ -66,6 +66,7 @@ impl CoinDB {
         mode: &Mode,
         fjall: &Fjall,
         log_manager: &LogManager,
+        block_db: Arc<BlockDB>,
     ) -> core::result::Result<Arc<Self>, Box<dyn StdError>> {
         let db_state = DBView::new(fjall, "state")?;
         let state = db_state
@@ -81,12 +82,8 @@ impl CoinDB {
             multisigs: DBView::new(fjall, "multisigs")?,
             undos: DBView::new(fjall, "undos")?,
             requires_network: mode.requires_network(),
-            block_db: Weak::new(),
+            block_db,
         }))
-    }
-
-    pub fn set_block_db(&mut self, block_db: &Arc<BlockDB>) {
-        self.block_db = Arc::downgrade(block_db)
     }
 
     pub const fn state(&self) -> &ArcSwap<State> {
@@ -141,8 +138,7 @@ impl CoinDB {
     }
 
     pub fn check_anchor(&self, hash: Hash) -> Result<()> {
-        let block_db = self.block_db.upgrade().expect("BlockDB in CoinDB");
-        if hash == genesis::hash() || block_db.indexes.contains(hash) {
+        if hash == genesis::hash() || self.block_db.indexes.contains(hash) {
             Ok(())
         } else {
             Err(Error::not_reachable_vertex(hash.to_string()))
@@ -150,10 +146,10 @@ impl CoinDB {
     }
 
     fn next_rolling_checkpoint(&self) -> Hash {
-        let block_db = self.block_db.upgrade().expect("BlockDB in CoinDB");
         let state = self.state.load();
         if state.rolling_checkpoint != genesis::hash() {
-            let block_index = block_db
+            let block_index = self
+                .block_db
                 .indexes
                 .get(state.rolling_checkpoint)
                 .expect("consistent block index");
@@ -163,12 +159,14 @@ impl CoinDB {
                 return genesis::hash();
             }
             let checkpoint = state.height - ROLLBACK_LIMIT as u32;
-            let mut block_index = block_db
+            let mut block_index = self
+                .block_db
                 .indexes
                 .get(state.block_hash)
                 .expect("consistent block index");
             while block_index.height() != checkpoint + 1 {
-                block_index = block_db
+                block_index = self
+                    .block_db
                     .indexes
                     .get(block_index.previous())
                     .expect("consistent block index");
@@ -236,8 +234,8 @@ impl CoinDB {
         let mint = mint(pos_version, state.supply);
         let generated = mint + fees;
 
-        let block_db = self.block_db.upgrade().expect("BlockDB in CoinDB");
-        let mut prev_index = block_db
+        let mut prev_index = self
+            .block_db
             .indexes
             .get(block.previous())
             .expect("Previous block index");
@@ -467,17 +465,18 @@ impl Update {
             fork_v2,
             block_sizes: self.state.block_sizes,
         };
-        let block_db = self.coin_db.block_db.upgrade().expect("BlockDB in CoinDB");
         let batch = &mut self.write_batch;
         self.coin_db.db_state.insert(batch, [0u8; 0], &new_state);
         self.coin_db.state.store(Arc::new(new_state));
         self.coin_db
             .undos
             .insert(batch, self.block_hash, &self.undo);
-        block_db
+        self.coin_db
+            .block_db
             .indexes
             .insert(batch, self.block_previous, &self.prev_index.unwrap());
-        block_db
+        self.coin_db
+            .block_db
             .indexes
             .insert(batch, self.block_hash, &self.block_index.unwrap());
         for (key, account) in self.accounts {
