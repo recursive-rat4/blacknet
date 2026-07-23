@@ -63,12 +63,14 @@ impl LogManager {
 
         #[cfg(feature = "log")]
         {
+            let logger = Arc::new(Self::factory(None, filter_level, &sinks)?);
+            spdlog::set_default_logger(logger);
             spdlog::init_log_crate_proxy()?;
             spdlog::log_crate_proxy().set_filter(None);
             log::set_max_level(log::LevelFilter::Trace);
         }
 
-        let logger = Self::factory("LogManager", filter_level, &sinks)?;
+        let logger = Self::factory(Some("LogManager"), filter_level, &sinks)?;
         info!(logger, "Initialized logging");
         Ok(Self {
             logger,
@@ -78,16 +80,19 @@ impl LogManager {
     }
 
     pub fn logger(&self, name: &'static str) -> Result<Logger> {
-        Self::factory(name, self.filter_level, &self.sinks)
+        Self::factory(Some(name), self.filter_level, &self.sinks)
     }
 
     fn factory(
-        name: &'static str,
+        name: Option<&'static str>,
         filter_level: Level,
         sinks: &Vec<Arc<dyn Sink>>,
     ) -> Result<Logger> {
-        Ok(Logger::builder()
-            .name(name)
+        let mut builder = Logger::builder();
+        if let Some(name) = name {
+            builder.name(name);
+        }
+        Ok(builder
             .level_filter(LevelFilter::MoreSevereEqual(filter_level))
             .flush_level_filter(LevelFilter::MoreSevereEqual(Level::Error))
             .sinks(sinks.iter().cloned())
