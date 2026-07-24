@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{Semiring, SemiringOps};
+use crate::algebra::{SemiringOps, UnitalSemiring};
 use crate::assigner::assigment::Assigment;
 use crate::constraintsystem::{ConstraintSystem, Error, Result};
 use crate::matrix::{DenseVector, SparseMatrix};
@@ -25,13 +25,13 @@ use serde::{Deserialize, Serialize};
 /// Rank-1 constraint system over semirings consists of matrices `a, b, c`.
 /// It asks for a vector `z` such that `(a * z) * (b * z) = (c * z)`.
 #[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
-pub struct R1CS<R: Semiring> {
+pub struct R1CS<R: UnitalSemiring> {
     a: SparseMatrix<R>,
     b: SparseMatrix<R>,
     c: SparseMatrix<R>,
 }
 
-impl<R: Semiring> R1CS<R> {
+impl<R: UnitalSemiring> R1CS<R> {
     /// Construct a new R1CS given the three matrices.
     pub const fn new(a: SparseMatrix<R>, b: SparseMatrix<R>, c: SparseMatrix<R>) -> Self {
         Self { a, b, c }
@@ -55,13 +55,13 @@ impl<R: Semiring> R1CS<R> {
     }
 }
 
-impl<R: Semiring> From<R1CS<R>> for (SparseMatrix<R>, SparseMatrix<R>, SparseMatrix<R>) {
+impl<R: UnitalSemiring> From<R1CS<R>> for (SparseMatrix<R>, SparseMatrix<R>, SparseMatrix<R>) {
     fn from(r1cs: R1CS<R>) -> Self {
         (r1cs.a, r1cs.b, r1cs.c)
     }
 }
 
-impl<R: Semiring + Eq + Send + Sync> ConstraintSystem<R> for R1CS<R>
+impl<R: UnitalSemiring + Eq + Send + Sync> ConstraintSystem<R> for R1CS<R>
 where
     for<'a> &'a R: SemiringOps<R>,
 {

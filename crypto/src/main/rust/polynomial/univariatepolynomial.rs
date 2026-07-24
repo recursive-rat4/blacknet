@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{Double, Inv, RingOps, Semiring, SemiringOps, Square, UnitalRing};
+use crate::algebra::{Double, Inv, RingOps, SemiringOps, Square, UnitalRing, UnitalSemiring};
 use crate::branchless::BlOption;
 use crate::matrix::DenseVector;
 use crate::polynomial::{InBasis, Polynomial, TensorBasis};
@@ -25,15 +25,17 @@ use alloc::vec;
 use alloc::vec::Vec;
 use core::iter::zip;
 use core::ops::{Add, AddAssign, Deref, DerefMut, Div, Index, IndexMut, Mul, MulAssign, Neg};
+#[cfg(feature = "rayon")]
+use rayon::iter::IntoParallelIterator;
 use serde::{Deserialize, Serialize};
 
 /// A polynomial in one indeterminate.
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
-pub struct UnivariatePolynomial<R: Semiring> {
+pub struct UnivariatePolynomial<R: UnitalSemiring> {
     coefficients: Vec<R>,
 }
 
-impl<R: Semiring> UnivariatePolynomial<R> {
+impl<R: UnitalSemiring> UnivariatePolynomial<R> {
     pub fn at_0_plus_1(&self) -> R
     where
         for<'a> &'a R: SemiringOps<R>,
@@ -46,7 +48,7 @@ impl<R: Semiring> UnivariatePolynomial<R> {
     }
 }
 
-impl<R: Semiring, const N: usize> From<[R; N]> for UnivariatePolynomial<R> {
+impl<R: UnitalSemiring, const N: usize> From<[R; N]> for UnivariatePolynomial<R> {
     fn from(coefficients: [R; N]) -> Self {
         Self {
             coefficients: coefficients.into(),
@@ -54,49 +56,49 @@ impl<R: Semiring, const N: usize> From<[R; N]> for UnivariatePolynomial<R> {
     }
 }
 
-impl<R: Semiring> From<Vec<R>> for UnivariatePolynomial<R> {
+impl<R: UnitalSemiring> From<Vec<R>> for UnivariatePolynomial<R> {
     #[inline]
     fn from(coefficients: Vec<R>) -> Self {
         Self { coefficients }
     }
 }
 
-impl<R: Semiring> From<UnivariatePolynomial<R>> for Vec<R> {
+impl<R: UnitalSemiring> From<UnivariatePolynomial<R>> for Vec<R> {
     #[inline]
     fn from(polynomial: UnivariatePolynomial<R>) -> Self {
         polynomial.coefficients
     }
 }
 
-impl<R: Semiring> AsRef<[R]> for UnivariatePolynomial<R> {
+impl<R: UnitalSemiring> AsRef<[R]> for UnivariatePolynomial<R> {
     #[inline]
     fn as_ref(&self) -> &[R] {
         &self.coefficients
     }
 }
 
-impl<R: Semiring> AsMut<[R]> for UnivariatePolynomial<R> {
+impl<R: UnitalSemiring> AsMut<[R]> for UnivariatePolynomial<R> {
     #[inline]
     fn as_mut(&mut self) -> &mut [R] {
         self
     }
 }
 
-impl<R: Semiring> Borrow<[R]> for UnivariatePolynomial<R> {
+impl<R: UnitalSemiring> Borrow<[R]> for UnivariatePolynomial<R> {
     #[inline]
     fn borrow(&self) -> &[R] {
         &self.coefficients
     }
 }
 
-impl<R: Semiring> BorrowMut<[R]> for UnivariatePolynomial<R> {
+impl<R: UnitalSemiring> BorrowMut<[R]> for UnivariatePolynomial<R> {
     #[inline]
     fn borrow_mut(&mut self) -> &mut [R] {
         &mut self.coefficients
     }
 }
 
-impl<R: Semiring> Deref for UnivariatePolynomial<R> {
+impl<R: UnitalSemiring> Deref for UnivariatePolynomial<R> {
     type Target = [R];
 
     #[inline]
@@ -105,14 +107,14 @@ impl<R: Semiring> Deref for UnivariatePolynomial<R> {
     }
 }
 
-impl<R: Semiring> DerefMut for UnivariatePolynomial<R> {
+impl<R: UnitalSemiring> DerefMut for UnivariatePolynomial<R> {
     #[inline]
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.coefficients
     }
 }
 
-impl<R: Semiring> Index<usize> for UnivariatePolynomial<R> {
+impl<R: UnitalSemiring> Index<usize> for UnivariatePolynomial<R> {
     type Output = R;
 
     #[inline]
@@ -121,14 +123,14 @@ impl<R: Semiring> Index<usize> for UnivariatePolynomial<R> {
     }
 }
 
-impl<R: Semiring> IndexMut<usize> for UnivariatePolynomial<R> {
+impl<R: UnitalSemiring> IndexMut<usize> for UnivariatePolynomial<R> {
     #[inline]
     fn index_mut(&mut self, index: usize) -> &mut Self::Output {
         &mut self.coefficients[index]
     }
 }
 
-impl<R: Semiring> IntoIterator for UnivariatePolynomial<R> {
+impl<R: UnitalSemiring> IntoIterator for UnivariatePolynomial<R> {
     type Item = R;
     type IntoIter = alloc::vec::IntoIter<R>;
 
@@ -138,7 +140,7 @@ impl<R: Semiring> IntoIterator for UnivariatePolynomial<R> {
     }
 }
 
-impl<'a, R: Semiring> IntoIterator for &'a UnivariatePolynomial<R> {
+impl<'a, R: UnitalSemiring> IntoIterator for &'a UnivariatePolynomial<R> {
     type Item = &'a R;
     type IntoIter = core::slice::Iter<'a, R>;
 
@@ -148,7 +150,28 @@ impl<'a, R: Semiring> IntoIterator for &'a UnivariatePolynomial<R> {
     }
 }
 
-impl<R: Semiring + Clone> Polynomial for UnivariatePolynomial<R>
+impl<'a, R: UnitalSemiring> IntoIterator for &'a mut UnivariatePolynomial<R> {
+    type Item = &'a mut R;
+    type IntoIter = core::slice::IterMut<'a, R>;
+
+    #[inline]
+    fn into_iter(self) -> Self::IntoIter {
+        self.coefficients.iter_mut()
+    }
+}
+
+#[cfg(feature = "rayon")]
+impl<R: UnitalSemiring + Send> IntoParallelIterator for UnivariatePolynomial<R> {
+    type Item = R;
+    type Iter = rayon::vec::IntoIter<R>;
+
+    #[inline]
+    fn into_par_iter(self) -> Self::Iter {
+        self.coefficients.into_par_iter()
+    }
+}
+
+impl<R: UnitalSemiring + Clone> Polynomial for UnivariatePolynomial<R>
 where
     for<'a> &'a R: SemiringOps<R>,
 {
@@ -170,7 +193,7 @@ where
 }
 
 /// In monomial basis.
-impl<R: Semiring + Clone> InBasis for UnivariatePolynomial<R>
+impl<R: UnitalSemiring + Clone> InBasis for UnivariatePolynomial<R>
 where
     for<'a> &'a R: SemiringOps<R>,
 {
@@ -195,7 +218,7 @@ where
     }
 }
 
-impl<R: Semiring + Clone> TensorBasis for UnivariatePolynomial<R>
+impl<R: UnitalSemiring + Clone> TensorBasis for UnivariatePolynomial<R>
 where
     for<'a> &'a R: SemiringOps<R>,
 {
@@ -229,7 +252,7 @@ where
     }
 }
 
-impl<R: Semiring> Add for UnivariatePolynomial<R> {
+impl<R: UnitalSemiring> Add for UnivariatePolynomial<R> {
     type Output = Self;
 
     fn add(self, rps: Self) -> Self::Output {
@@ -242,14 +265,14 @@ impl<R: Semiring> Add for UnivariatePolynomial<R> {
     }
 }
 
-impl<R: Semiring> AddAssign for UnivariatePolynomial<R> {
+impl<R: UnitalSemiring> AddAssign for UnivariatePolynomial<R> {
     fn add_assign(&mut self, rps: Self) {
         debug_assert_eq!(self.coefficients.len(), rps.coefficients.len());
         zip(self.coefficients.iter_mut(), rps.coefficients).for_each(|(l, r)| *l += r);
     }
 }
 
-impl<R: Semiring> Double for UnivariatePolynomial<R> {
+impl<R: UnitalSemiring> Double for UnivariatePolynomial<R> {
     type Output = Self;
 
     fn double(self) -> Self::Output {
@@ -259,7 +282,7 @@ impl<R: Semiring> Double for UnivariatePolynomial<R> {
     }
 }
 
-impl<R: Semiring> Double for &UnivariatePolynomial<R>
+impl<R: UnitalSemiring> Double for &UnivariatePolynomial<R>
 where
     for<'a> &'a R: SemiringOps<R>,
 {
@@ -295,7 +318,7 @@ where
     }
 }
 
-impl<R: Semiring + Clone> Mul for UnivariatePolynomial<R>
+impl<R: UnitalSemiring + Clone> Mul for UnivariatePolynomial<R>
 where
     for<'a> &'a R: SemiringOps<R>,
 {
@@ -306,7 +329,7 @@ where
     }
 }
 
-impl<R: Semiring + Clone> MulAssign for UnivariatePolynomial<R>
+impl<R: UnitalSemiring + Clone> MulAssign for UnivariatePolynomial<R>
 where
     for<'a> &'a R: SemiringOps<R>,
 {
@@ -315,7 +338,7 @@ where
     }
 }
 
-impl<R: Semiring + Clone> Square for UnivariatePolynomial<R>
+impl<R: UnitalSemiring + Clone> Square for UnivariatePolynomial<R>
 where
     for<'a> &'a R: SemiringOps<R>,
 {
@@ -326,7 +349,7 @@ where
     }
 }
 
-impl<R: Semiring + Clone> Square for &UnivariatePolynomial<R>
+impl<R: UnitalSemiring + Clone> Square for &UnivariatePolynomial<R>
 where
     for<'a> &'a R: SemiringOps<R>,
 {
@@ -337,7 +360,7 @@ where
     }
 }
 
-impl<R: Semiring + Clone> Mul<&UnivariatePolynomial<R>> for &UnivariatePolynomial<R>
+impl<R: UnitalSemiring + Clone> Mul<&UnivariatePolynomial<R>> for &UnivariatePolynomial<R>
 where
     for<'a> &'a R: SemiringOps<R>,
 {
@@ -355,7 +378,7 @@ where
     }
 }
 
-impl<R: Semiring> Mul<R> for UnivariatePolynomial<R>
+impl<R: UnitalSemiring> Mul<R> for UnivariatePolynomial<R>
 where
     for<'a> &'a R: SemiringOps<R>,
 {
@@ -366,7 +389,7 @@ where
     }
 }
 
-impl<R: Semiring> Mul<&R> for UnivariatePolynomial<R>
+impl<R: UnitalSemiring> Mul<&R> for UnivariatePolynomial<R>
 where
     for<'a> &'a R: SemiringOps<R>,
 {
@@ -379,7 +402,7 @@ where
     }
 }
 
-impl<R: Semiring + Inv<Output = BlOption<R>>> Div<R> for UnivariatePolynomial<R>
+impl<R: UnitalSemiring + Inv<Output = BlOption<R>>> Div<R> for UnivariatePolynomial<R>
 where
     for<'a> &'a R: SemiringOps<R>,
 {
@@ -390,19 +413,19 @@ where
     }
 }
 
-impl<Msg, R: Semiring + Absorb<Msg>> Absorb<Msg> for UnivariatePolynomial<R> {
+impl<Msg, R: UnitalSemiring + Absorb<Msg>> Absorb<Msg> for UnivariatePolynomial<R> {
     fn absorb_into<D: Duplexer<Msg = Msg>>(self, duplex: &mut D) {
         duplex.absorb_iter(self.coefficients)
     }
 }
 
-impl<Msg, R: Semiring + Absorb<Msg> + Clone> Absorb<Msg> for &UnivariatePolynomial<R> {
+impl<Msg, R: UnitalSemiring + Absorb<Msg> + Clone> Absorb<Msg> for &UnivariatePolynomial<R> {
     fn absorb_into<D: Duplexer<Msg = Msg>>(self, duplex: &mut D) {
         duplex.absorb_iter(self.coefficients.iter().cloned())
     }
 }
 
-impl<Msg, R: Semiring + Squeeze<Msg>> SqueezeWithSize<Msg> for UnivariatePolynomial<R> {
+impl<Msg, R: UnitalSemiring + Squeeze<Msg>> SqueezeWithSize<Msg> for UnivariatePolynomial<R> {
     fn squeeze_from<D: Duplexer<Msg = Msg>>(duplex: &mut D, size: usize) -> Self {
         Self {
             coefficients: (0..size).map(|_| duplex.squeeze::<R>()).collect(),

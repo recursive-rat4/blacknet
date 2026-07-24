@@ -15,17 +15,17 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::Semiring;
+use crate::algebra::UnitalSemiring;
 use crate::circuit::builder::{CircuitBuilder, LinearCombination, VariableKind};
 use alloc::borrow::{Borrow, BorrowMut};
 use alloc::vec::Vec;
 use core::ops::{Deref, DerefMut, Index, IndexMut};
 
-pub struct Point<S: Semiring> {
+pub struct Point<S: UnitalSemiring> {
     coordinates: Vec<LinearCombination<S>>,
 }
 
-impl<S: Semiring> Point<S> {
+impl<S: UnitalSemiring> Point<S> {
     pub const fn new(coordinates: Vec<LinearCombination<S>>) -> Self {
         Self { coordinates }
     }
@@ -48,7 +48,7 @@ impl<S: Semiring> Point<S> {
     }
 }
 
-impl<S: Semiring, const N: usize> From<[LinearCombination<S>; N]> for Point<S> {
+impl<S: UnitalSemiring, const N: usize> From<[LinearCombination<S>; N]> for Point<S> {
     fn from(coordinates: [LinearCombination<S>; N]) -> Self {
         Self {
             coordinates: coordinates.into(),
@@ -56,49 +56,49 @@ impl<S: Semiring, const N: usize> From<[LinearCombination<S>; N]> for Point<S> {
     }
 }
 
-impl<S: Semiring> From<Vec<LinearCombination<S>>> for Point<S> {
+impl<S: UnitalSemiring> From<Vec<LinearCombination<S>>> for Point<S> {
     #[inline]
     fn from(coordinates: Vec<LinearCombination<S>>) -> Self {
         Self { coordinates }
     }
 }
 
-impl<S: Semiring> From<Point<S>> for Vec<LinearCombination<S>> {
+impl<S: UnitalSemiring> From<Point<S>> for Vec<LinearCombination<S>> {
     #[inline]
     fn from(point: Point<S>) -> Self {
         point.coordinates
     }
 }
 
-impl<S: Semiring> AsRef<[LinearCombination<S>]> for Point<S> {
+impl<S: UnitalSemiring> AsRef<[LinearCombination<S>]> for Point<S> {
     #[inline]
     fn as_ref(&self) -> &[LinearCombination<S>] {
         &self.coordinates
     }
 }
 
-impl<S: Semiring> AsMut<[LinearCombination<S>]> for Point<S> {
+impl<S: UnitalSemiring> AsMut<[LinearCombination<S>]> for Point<S> {
     #[inline]
     fn as_mut(&mut self) -> &mut [LinearCombination<S>] {
         self
     }
 }
 
-impl<S: Semiring> Borrow<[LinearCombination<S>]> for Point<S> {
+impl<S: UnitalSemiring> Borrow<[LinearCombination<S>]> for Point<S> {
     #[inline]
     fn borrow(&self) -> &[LinearCombination<S>] {
         &self.coordinates
     }
 }
 
-impl<S: Semiring> BorrowMut<[LinearCombination<S>]> for Point<S> {
+impl<S: UnitalSemiring> BorrowMut<[LinearCombination<S>]> for Point<S> {
     #[inline]
     fn borrow_mut(&mut self) -> &mut [LinearCombination<S>] {
         &mut self.coordinates
     }
 }
 
-impl<S: Semiring> Deref for Point<S> {
+impl<S: UnitalSemiring> Deref for Point<S> {
     type Target = [LinearCombination<S>];
 
     #[inline]
@@ -107,14 +107,14 @@ impl<S: Semiring> Deref for Point<S> {
     }
 }
 
-impl<S: Semiring> DerefMut for Point<S> {
+impl<S: UnitalSemiring> DerefMut for Point<S> {
     #[inline]
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.coordinates
     }
 }
 
-impl<S: Semiring> Index<usize> for Point<S> {
+impl<S: UnitalSemiring> Index<usize> for Point<S> {
     type Output = LinearCombination<S>;
 
     #[inline]
@@ -123,14 +123,14 @@ impl<S: Semiring> Index<usize> for Point<S> {
     }
 }
 
-impl<S: Semiring> IndexMut<usize> for Point<S> {
+impl<S: UnitalSemiring> IndexMut<usize> for Point<S> {
     #[inline]
     fn index_mut(&mut self, index: usize) -> &mut Self::Output {
         &mut self.coordinates[index]
     }
 }
 
-impl<S: Semiring> IntoIterator for Point<S> {
+impl<S: UnitalSemiring> IntoIterator for Point<S> {
     type Item = LinearCombination<S>;
     type IntoIter = alloc::vec::IntoIter<LinearCombination<S>>;
 
@@ -140,7 +140,7 @@ impl<S: Semiring> IntoIterator for Point<S> {
     }
 }
 
-impl<'a, S: Semiring> IntoIterator for &'a Point<S> {
+impl<'a, S: UnitalSemiring> IntoIterator for &'a Point<S> {
     type Item = &'a LinearCombination<S>;
     type IntoIter = core::slice::Iter<'a, LinearCombination<S>>;
 

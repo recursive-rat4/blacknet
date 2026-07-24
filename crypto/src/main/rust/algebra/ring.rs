@@ -17,8 +17,8 @@
 
 use crate::algebra::{
     AdditiveAbelianGroup, AdditiveCyclicGroup, AdditiveGroupOps, CommutativeAlgebra,
-    CommutativeSemiring, Conjugate, MultiplicativeMagmaOps, Presemiring, Semifield, SemifieldOps,
-    Semiring, UnitalAlgebra,
+    CommutativeSemiring, Conjugate, MultiplicativeMagmaOps, Semifield, SemifieldOps, Semiring,
+    UnitalAlgebra, UnitalSemiring,
 };
 use crate::integer::{Integer, SignedInteger};
 use alloc::vec::Vec;
@@ -53,7 +53,7 @@ impl<R, T
 
 #[rustfmt::skip]
 pub trait Ring
-    : Presemiring
+    : Semiring
     + AdditiveAbelianGroup
     + RingOps<Self>
 {
@@ -61,7 +61,7 @@ pub trait Ring
 
 #[rustfmt::skip]
 impl<R
-    : Presemiring
+    : Semiring
     + AdditiveAbelianGroup
     + RingOps<Self>
 > Ring for R {}
@@ -70,14 +70,14 @@ impl<R
 #[rustfmt::skip]
 pub trait UnitalRing
     : Ring
-    + Semiring
+    + UnitalSemiring
 {
 }
 
 #[rustfmt::skip]
 impl<R
     : Ring
-    + Semiring
+    + UnitalSemiring
 > UnitalRing for R {}
 
 /// A marker for rings with commutative multiplication.

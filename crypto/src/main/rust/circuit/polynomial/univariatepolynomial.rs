@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{Double, Semiring, SemiringOps};
+use crate::algebra::{Double, SemiringOps, UnitalSemiring};
 use crate::circuit::builder::{CircuitBuilder, LinearCombination, VariableKind};
 use crate::polynomial::Polynomial;
 use crate::symmetric::{Absorb, Duplexer};
@@ -23,12 +23,12 @@ use alloc::vec::Vec;
 use core::iter::zip;
 use core::ops::{Add, AddAssign};
 
-pub struct UnivariatePolynomial<'a, 'b, R: Semiring> {
+pub struct UnivariatePolynomial<'a, 'b, R: UnitalSemiring> {
     circuit: &'a CircuitBuilder<'b, R>,
     coefficients: Vec<LinearCombination<R>>,
 }
 
-impl<'a, 'b, R: Semiring + Clone> UnivariatePolynomial<'a, 'b, R> {
+impl<'a, 'b, R: UnitalSemiring + Clone> UnivariatePolynomial<'a, 'b, R> {
     pub fn allocate(circuit: &'a CircuitBuilder<'b, R>, kind: VariableKind, len: usize) -> Self {
         let scope = circuit.scope("UnivariatePolynomial::allocate");
         Self {
@@ -66,7 +66,7 @@ impl<'a, 'b, R: Semiring + Clone> UnivariatePolynomial<'a, 'b, R> {
     }
 }
 
-impl<'a, 'b, R: Semiring + Clone + Eq> Polynomial for UnivariatePolynomial<'a, 'b, R> {
+impl<'a, 'b, R: UnitalSemiring + Clone + Eq> Polynomial for UnivariatePolynomial<'a, 'b, R> {
     type Coefficient = LinearCombination<R>;
     type Point = LinearCombination<R>;
 
@@ -86,7 +86,7 @@ impl<'a, 'b, R: Semiring + Clone + Eq> Polynomial for UnivariatePolynomial<'a, '
     }
 }
 
-impl<'a, 'b, R: Semiring> Add for UnivariatePolynomial<'a, 'b, R> {
+impl<'a, 'b, R: UnitalSemiring> Add for UnivariatePolynomial<'a, 'b, R> {
     type Output = Self;
 
     fn add(self, rps: Self) -> Self::Output {
@@ -100,20 +100,20 @@ impl<'a, 'b, R: Semiring> Add for UnivariatePolynomial<'a, 'b, R> {
     }
 }
 
-impl<'a, 'b, R: Semiring> AddAssign for UnivariatePolynomial<'a, 'b, R> {
+impl<'a, 'b, R: UnitalSemiring> AddAssign for UnivariatePolynomial<'a, 'b, R> {
     fn add_assign(&mut self, rps: Self) {
         debug_assert_eq!(self.coefficients.len(), rps.coefficients.len());
         zip(self.coefficients.iter_mut(), rps.coefficients).for_each(|(l, r)| *l += r);
     }
 }
 
-impl<'a, 'b, R: Semiring> Absorb<LinearCombination<R>> for UnivariatePolynomial<'a, 'b, R> {
+impl<'a, 'b, R: UnitalSemiring> Absorb<LinearCombination<R>> for UnivariatePolynomial<'a, 'b, R> {
     fn absorb_into<D: Duplexer<Msg = LinearCombination<R>>>(self, duplex: &mut D) {
         duplex.absorb_iter(self.coefficients)
     }
 }
 
-impl<'a, 'b, R: Semiring + Clone> Absorb<LinearCombination<R>>
+impl<'a, 'b, R: UnitalSemiring + Clone> Absorb<LinearCombination<R>>
     for &UnivariatePolynomial<'a, 'b, R>
 {
     fn absorb_into<D: Duplexer<Msg = LinearCombination<R>>>(self, duplex: &mut D) {

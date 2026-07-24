@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{Double, RingOps, Semiring, SemiringOps, Square, UnitalRing};
+use crate::algebra::{Double, RingOps, SemiringOps, Square, UnitalRing, UnitalSemiring};
 use crate::circuit::builder::{
     Constant, Expression, LinearCombination, LinearMonoid, LinearSpan, Variable,
 };
@@ -24,12 +24,12 @@ use core::ops::{Add, Mul, MulAssign, Neg, Sub};
 
 /// A linear term is a pair of a variable and a coefficient.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct LinearTerm<R: Semiring> {
+pub struct LinearTerm<R: UnitalSemiring> {
     pub(super) variable: Variable<R>,
     pub(super) coefficient: Constant<R>,
 }
 
-impl<R: Semiring> LinearTerm<R> {
+impl<R: UnitalSemiring> LinearTerm<R> {
     /// Construct a new linear term.
     pub const fn new(variable: Variable<R>, coefficient: Constant<R>) -> Self {
         Self {
@@ -39,7 +39,7 @@ impl<R: Semiring> LinearTerm<R> {
     }
 }
 
-impl<'a, R: Semiring + Clone + Eq + 'a> Expression<'a, R> for LinearTerm<R> {
+impl<'a, R: UnitalSemiring + Clone + Eq + 'a> Expression<'a, R> for LinearTerm<R> {
     fn span(&self) -> LinearSpan<R> {
         vec![self.clone().into()].into()
     }
@@ -53,7 +53,7 @@ impl<'a, R: Semiring + Clone + Eq + 'a> Expression<'a, R> for LinearTerm<R> {
     }
 }
 
-impl<R: Semiring> From<(Variable<R>, Constant<R>)> for LinearTerm<R> {
+impl<R: UnitalSemiring> From<(Variable<R>, Constant<R>)> for LinearTerm<R> {
     fn from(pair: (Variable<R>, Constant<R>)) -> Self {
         Self {
             variable: pair.0,
@@ -62,7 +62,7 @@ impl<R: Semiring> From<(Variable<R>, Constant<R>)> for LinearTerm<R> {
     }
 }
 
-impl<R: Semiring> Add for LinearTerm<R> {
+impl<R: UnitalSemiring> Add for LinearTerm<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: Self) -> Self::Output {
@@ -70,7 +70,7 @@ impl<R: Semiring> Add for LinearTerm<R> {
     }
 }
 
-impl<R: Semiring + Clone> Add<&Self> for LinearTerm<R> {
+impl<R: UnitalSemiring + Clone> Add<&Self> for LinearTerm<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: &Self) -> Self::Output {
@@ -78,7 +78,7 @@ impl<R: Semiring + Clone> Add<&Self> for LinearTerm<R> {
     }
 }
 
-impl<R: Semiring + Clone> Add<LinearTerm<R>> for &LinearTerm<R> {
+impl<R: UnitalSemiring + Clone> Add<LinearTerm<R>> for &LinearTerm<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: LinearTerm<R>) -> Self::Output {
@@ -86,7 +86,7 @@ impl<R: Semiring + Clone> Add<LinearTerm<R>> for &LinearTerm<R> {
     }
 }
 
-impl<R: Semiring + Clone> Add for &LinearTerm<R> {
+impl<R: UnitalSemiring + Clone> Add for &LinearTerm<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: Self) -> Self::Output {
@@ -94,7 +94,7 @@ impl<R: Semiring + Clone> Add for &LinearTerm<R> {
     }
 }
 
-impl<R: Semiring> Double for LinearTerm<R> {
+impl<R: UnitalSemiring> Double for LinearTerm<R> {
     type Output = Self;
 
     fn double(self) -> Self::Output {
@@ -105,7 +105,7 @@ impl<R: Semiring> Double for LinearTerm<R> {
     }
 }
 
-impl<R: Semiring> Double for &LinearTerm<R>
+impl<R: UnitalSemiring> Double for &LinearTerm<R>
 where
     for<'a> &'a R: SemiringOps<R>,
 {
@@ -176,7 +176,7 @@ impl<R: UnitalRing + Clone> Sub for &LinearTerm<R> {
     }
 }
 
-impl<R: Semiring> Mul for LinearTerm<R> {
+impl<R: UnitalSemiring> Mul for LinearTerm<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, rps: Self) -> Self::Output {
@@ -186,7 +186,7 @@ impl<R: Semiring> Mul for LinearTerm<R> {
     }
 }
 
-impl<R: Semiring + Clone> Mul<&Self> for LinearTerm<R> {
+impl<R: UnitalSemiring + Clone> Mul<&Self> for LinearTerm<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, rps: &Self) -> Self::Output {
@@ -194,7 +194,7 @@ impl<R: Semiring + Clone> Mul<&Self> for LinearTerm<R> {
     }
 }
 
-impl<R: Semiring + Clone> Mul<LinearTerm<R>> for &LinearTerm<R> {
+impl<R: UnitalSemiring + Clone> Mul<LinearTerm<R>> for &LinearTerm<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, rps: LinearTerm<R>) -> Self::Output {
@@ -202,7 +202,7 @@ impl<R: Semiring + Clone> Mul<LinearTerm<R>> for &LinearTerm<R> {
     }
 }
 
-impl<R: Semiring + Clone> Mul for &LinearTerm<R> {
+impl<R: UnitalSemiring + Clone> Mul for &LinearTerm<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, rps: Self) -> Self::Output {
@@ -210,7 +210,7 @@ impl<R: Semiring + Clone> Mul for &LinearTerm<R> {
     }
 }
 
-impl<R: Semiring + Clone> Square for LinearTerm<R> {
+impl<R: UnitalSemiring + Clone> Square for LinearTerm<R> {
     type Output = LinearMonoid<R>;
 
     fn square(self) -> Self::Output {
@@ -219,7 +219,7 @@ impl<R: Semiring + Clone> Square for LinearTerm<R> {
     }
 }
 
-impl<R: Semiring + Clone> Square for &LinearTerm<R> {
+impl<R: UnitalSemiring + Clone> Square for &LinearTerm<R> {
     type Output = LinearMonoid<R>;
 
     fn square(self) -> Self::Output {
@@ -227,7 +227,7 @@ impl<R: Semiring + Clone> Square for &LinearTerm<R> {
     }
 }
 
-impl<R: Semiring> Add<Constant<R>> for LinearTerm<R> {
+impl<R: UnitalSemiring> Add<Constant<R>> for LinearTerm<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: Constant<R>) -> Self::Output {
@@ -237,7 +237,7 @@ impl<R: Semiring> Add<Constant<R>> for LinearTerm<R> {
     }
 }
 
-impl<R: Semiring + Clone> Add<&Constant<R>> for LinearTerm<R> {
+impl<R: UnitalSemiring + Clone> Add<&Constant<R>> for LinearTerm<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: &Constant<R>) -> Self::Output {
@@ -245,7 +245,7 @@ impl<R: Semiring + Clone> Add<&Constant<R>> for LinearTerm<R> {
     }
 }
 
-impl<R: Semiring + Clone> Add<Constant<R>> for &LinearTerm<R> {
+impl<R: UnitalSemiring + Clone> Add<Constant<R>> for &LinearTerm<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: Constant<R>) -> Self::Output {
@@ -253,7 +253,7 @@ impl<R: Semiring + Clone> Add<Constant<R>> for &LinearTerm<R> {
     }
 }
 
-impl<R: Semiring + Clone> Add<&Constant<R>> for &LinearTerm<R> {
+impl<R: UnitalSemiring + Clone> Add<&Constant<R>> for &LinearTerm<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: &Constant<R>) -> Self::Output {
@@ -295,7 +295,7 @@ impl<R: UnitalRing + Clone> Sub<&Constant<R>> for &LinearTerm<R> {
     }
 }
 
-impl<R: Semiring> Mul<Constant<R>> for LinearTerm<R> {
+impl<R: UnitalSemiring> Mul<Constant<R>> for LinearTerm<R> {
     type Output = LinearTerm<R>;
 
     fn mul(self, rps: Constant<R>) -> Self::Output {
@@ -306,7 +306,7 @@ impl<R: Semiring> Mul<Constant<R>> for LinearTerm<R> {
     }
 }
 
-impl<R: Semiring> Mul<&Constant<R>> for LinearTerm<R> {
+impl<R: UnitalSemiring> Mul<&Constant<R>> for LinearTerm<R> {
     type Output = LinearTerm<R>;
 
     fn mul(self, rps: &Constant<R>) -> Self::Output {
@@ -317,7 +317,7 @@ impl<R: Semiring> Mul<&Constant<R>> for LinearTerm<R> {
     }
 }
 
-impl<R: Semiring> Mul<Constant<R>> for &LinearTerm<R>
+impl<R: UnitalSemiring> Mul<Constant<R>> for &LinearTerm<R>
 where
     for<'a> &'a R: SemiringOps<R>,
 {
@@ -331,7 +331,7 @@ where
     }
 }
 
-impl<R: Semiring> Mul<&Constant<R>> for &LinearTerm<R>
+impl<R: UnitalSemiring> Mul<&Constant<R>> for &LinearTerm<R>
 where
     for<'a> &'a R: SemiringOps<R>,
 {
@@ -345,19 +345,19 @@ where
     }
 }
 
-impl<R: Semiring> MulAssign<Constant<R>> for LinearTerm<R> {
+impl<R: UnitalSemiring> MulAssign<Constant<R>> for LinearTerm<R> {
     fn mul_assign(&mut self, rps: Constant<R>) {
         self.coefficient *= rps
     }
 }
 
-impl<R: Semiring> MulAssign<&Constant<R>> for LinearTerm<R> {
+impl<R: UnitalSemiring> MulAssign<&Constant<R>> for LinearTerm<R> {
     fn mul_assign(&mut self, rps: &Constant<R>) {
         self.coefficient *= rps
     }
 }
 
-impl<R: Semiring> Add<Variable<R>> for LinearTerm<R> {
+impl<R: UnitalSemiring> Add<Variable<R>> for LinearTerm<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: Variable<R>) -> Self::Output {
@@ -365,7 +365,7 @@ impl<R: Semiring> Add<Variable<R>> for LinearTerm<R> {
     }
 }
 
-impl<R: Semiring> Add<&Variable<R>> for LinearTerm<R> {
+impl<R: UnitalSemiring> Add<&Variable<R>> for LinearTerm<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: &Variable<R>) -> Self::Output {
@@ -373,7 +373,7 @@ impl<R: Semiring> Add<&Variable<R>> for LinearTerm<R> {
     }
 }
 
-impl<R: Semiring + Clone> Add<Variable<R>> for &LinearTerm<R> {
+impl<R: UnitalSemiring + Clone> Add<Variable<R>> for &LinearTerm<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: Variable<R>) -> Self::Output {
@@ -381,7 +381,7 @@ impl<R: Semiring + Clone> Add<Variable<R>> for &LinearTerm<R> {
     }
 }
 
-impl<R: Semiring + Clone> Add<&Variable<R>> for &LinearTerm<R> {
+impl<R: UnitalSemiring + Clone> Add<&Variable<R>> for &LinearTerm<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: &Variable<R>) -> Self::Output {
@@ -421,7 +421,7 @@ impl<R: UnitalRing + Clone> Sub<&Variable<R>> for &LinearTerm<R> {
     }
 }
 
-impl<R: Semiring> Mul<Variable<R>> for LinearTerm<R> {
+impl<R: UnitalSemiring> Mul<Variable<R>> for LinearTerm<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, rps: Variable<R>) -> Self::Output {
@@ -429,7 +429,7 @@ impl<R: Semiring> Mul<Variable<R>> for LinearTerm<R> {
     }
 }
 
-impl<R: Semiring> Mul<&Variable<R>> for LinearTerm<R> {
+impl<R: UnitalSemiring> Mul<&Variable<R>> for LinearTerm<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, rps: &Variable<R>) -> Self::Output {
@@ -437,7 +437,7 @@ impl<R: Semiring> Mul<&Variable<R>> for LinearTerm<R> {
     }
 }
 
-impl<R: Semiring + Clone> Mul<Variable<R>> for &LinearTerm<R> {
+impl<R: UnitalSemiring + Clone> Mul<Variable<R>> for &LinearTerm<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, rps: Variable<R>) -> Self::Output {
@@ -445,7 +445,7 @@ impl<R: Semiring + Clone> Mul<Variable<R>> for &LinearTerm<R> {
     }
 }
 
-impl<R: Semiring + Clone> Mul<&Variable<R>> for &LinearTerm<R> {
+impl<R: UnitalSemiring + Clone> Mul<&Variable<R>> for &LinearTerm<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, rps: &Variable<R>) -> Self::Output {
@@ -453,7 +453,7 @@ impl<R: Semiring + Clone> Mul<&Variable<R>> for &LinearTerm<R> {
     }
 }
 
-impl<R: Semiring> Add<LinearCombination<R>> for LinearTerm<R> {
+impl<R: UnitalSemiring> Add<LinearCombination<R>> for LinearTerm<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: LinearCombination<R>) -> Self::Output {
@@ -463,7 +463,7 @@ impl<R: Semiring> Add<LinearCombination<R>> for LinearTerm<R> {
     }
 }
 
-impl<R: Semiring + Clone> Add<&LinearCombination<R>> for LinearTerm<R> {
+impl<R: UnitalSemiring + Clone> Add<&LinearCombination<R>> for LinearTerm<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: &LinearCombination<R>) -> Self::Output {
@@ -473,7 +473,7 @@ impl<R: Semiring + Clone> Add<&LinearCombination<R>> for LinearTerm<R> {
     }
 }
 
-impl<R: Semiring + Clone> Add<LinearCombination<R>> for &LinearTerm<R> {
+impl<R: UnitalSemiring + Clone> Add<LinearCombination<R>> for &LinearTerm<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: LinearCombination<R>) -> Self::Output {
@@ -481,7 +481,7 @@ impl<R: Semiring + Clone> Add<LinearCombination<R>> for &LinearTerm<R> {
     }
 }
 
-impl<R: Semiring + Clone> Add<&LinearCombination<R>> for &LinearTerm<R> {
+impl<R: UnitalSemiring + Clone> Add<&LinearCombination<R>> for &LinearTerm<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: &LinearCombination<R>) -> Self::Output {
@@ -531,7 +531,7 @@ where
     }
 }
 
-impl<R: Semiring> Mul<LinearCombination<R>> for LinearTerm<R> {
+impl<R: UnitalSemiring> Mul<LinearCombination<R>> for LinearTerm<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, rps: LinearCombination<R>) -> Self::Output {
@@ -539,7 +539,7 @@ impl<R: Semiring> Mul<LinearCombination<R>> for LinearTerm<R> {
     }
 }
 
-impl<R: Semiring + Clone> Mul<&LinearCombination<R>> for LinearTerm<R> {
+impl<R: UnitalSemiring + Clone> Mul<&LinearCombination<R>> for LinearTerm<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, rps: &LinearCombination<R>) -> Self::Output {
@@ -547,7 +547,7 @@ impl<R: Semiring + Clone> Mul<&LinearCombination<R>> for LinearTerm<R> {
     }
 }
 
-impl<R: Semiring + Clone> Mul<LinearCombination<R>> for &LinearTerm<R> {
+impl<R: UnitalSemiring + Clone> Mul<LinearCombination<R>> for &LinearTerm<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, rps: LinearCombination<R>) -> Self::Output {
@@ -555,7 +555,7 @@ impl<R: Semiring + Clone> Mul<LinearCombination<R>> for &LinearTerm<R> {
     }
 }
 
-impl<R: Semiring + Clone> Mul<&LinearCombination<R>> for &LinearTerm<R> {
+impl<R: UnitalSemiring + Clone> Mul<&LinearCombination<R>> for &LinearTerm<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, rps: &LinearCombination<R>) -> Self::Output {
@@ -563,7 +563,7 @@ impl<R: Semiring + Clone> Mul<&LinearCombination<R>> for &LinearTerm<R> {
     }
 }
 
-impl<R: Semiring> Mul<LinearMonoid<R>> for LinearTerm<R> {
+impl<R: UnitalSemiring> Mul<LinearMonoid<R>> for LinearTerm<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, mut rps: LinearMonoid<R>) -> Self::Output {
@@ -572,7 +572,7 @@ impl<R: Semiring> Mul<LinearMonoid<R>> for LinearTerm<R> {
     }
 }
 
-impl<R: Semiring + Clone> Mul<&LinearMonoid<R>> for LinearTerm<R> {
+impl<R: UnitalSemiring + Clone> Mul<&LinearMonoid<R>> for LinearTerm<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, rps: &LinearMonoid<R>) -> Self::Output {
@@ -580,7 +580,7 @@ impl<R: Semiring + Clone> Mul<&LinearMonoid<R>> for LinearTerm<R> {
     }
 }
 
-impl<R: Semiring + Clone> Mul<LinearMonoid<R>> for &LinearTerm<R> {
+impl<R: UnitalSemiring + Clone> Mul<LinearMonoid<R>> for &LinearTerm<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, rps: LinearMonoid<R>) -> Self::Output {
@@ -588,7 +588,7 @@ impl<R: Semiring + Clone> Mul<LinearMonoid<R>> for &LinearTerm<R> {
     }
 }
 
-impl<R: Semiring + Clone> Mul<&LinearMonoid<R>> for &LinearTerm<R> {
+impl<R: UnitalSemiring + Clone> Mul<&LinearMonoid<R>> for &LinearTerm<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, rps: &LinearMonoid<R>) -> Self::Output {

@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::Semiring;
+use crate::algebra::UnitalSemiring;
 use crate::circuit::builder::{CircuitBuilder, Constant, LinearCombination};
 use crate::circuit::symmetric::Permutation;
 use crate::random::UniformGenerator;
@@ -25,7 +25,7 @@ use core::marker::PhantomData;
 pub struct Duplex<
     'a,
     'b,
-    S: Semiring + From<i8>,
+    S: UnitalSemiring + From<i8>,
     const RATE: usize,
     const CAPACITY: usize,
     const WIDTH: usize,
@@ -41,7 +41,7 @@ pub struct Duplex<
 impl<
     'a,
     'b,
-    S: Semiring + Clone + From<i8>,
+    S: UnitalSemiring + Clone + From<i8>,
     const RATE: usize,
     const CAPACITY: usize,
     const WIDTH: usize,
@@ -94,7 +94,7 @@ impl<
 impl<
     'a,
     'b,
-    S: Semiring + Clone + From<i8>,
+    S: UnitalSemiring + Clone + From<i8>,
     const RATE: usize,
     const CAPACITY: usize,
     const WIDTH: usize,
@@ -140,7 +140,7 @@ impl<
 impl<
     'a,
     'b,
-    S: Semiring + Clone + From<i8>,
+    S: UnitalSemiring + Clone + From<i8>,
     const RATE: usize,
     const CAPACITY: usize,
     const WIDTH: usize,

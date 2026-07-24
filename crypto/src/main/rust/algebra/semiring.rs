@@ -50,7 +50,7 @@ impl<R, T
 /// A generalization of [nonunital ring][`crate::algebra::Ring`]
 /// that doesn't require subtraction.
 #[rustfmt::skip]
-pub trait Presemiring
+pub trait Semiring
     : AdditiveCommutativeMonoid
     + MultiplicativeSemigroup
     + SemiringOps<Self>
@@ -62,37 +62,37 @@ impl<R
     : AdditiveCommutativeMonoid
     + MultiplicativeSemigroup
     + SemiringOps<Self>
-> Presemiring for R
+> Semiring for R
 {
 }
 
 /// A generalization of [unital ring][`crate::algebra::UnitalRing`]
 /// that doesn't require subtraction.
 #[rustfmt::skip]
-pub trait Semiring
-    : Presemiring
+pub trait UnitalSemiring
+    : Semiring
     + MultiplicativeMonoid
 {
 }
 
 #[rustfmt::skip]
 impl<R
-    : Presemiring
+    : Semiring
     + MultiplicativeMonoid
-> Semiring for R {}
+> UnitalSemiring for R {}
 
 /// A marker for semirings with commutative multiplication.
 /// Semiring elements commute under addition by definition.
 #[rustfmt::skip]
 pub trait CommutativeSemiring
-    : Presemiring
+    : Semiring
     + MultiplicativeCommutativeSemigroup
 {
 }
 
 #[rustfmt::skip]
 impl<R
-    : Presemiring
+    : Semiring
     + MultiplicativeCommutativeSemigroup
 > CommutativeSemiring for R {}
 
@@ -100,7 +100,7 @@ impl<R
 /// that doesn't require subtraction.
 #[rustfmt::skip]
 pub trait Semifield
-    : Presemiring
+    : Semiring
     + SemifieldOps<Self>
 {
 }

@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{Semiring, SemiringOps, UnitalRing};
+use crate::algebra::{SemiringOps, UnitalRing, UnitalSemiring};
 use crate::assigner::assigment::Assigment;
 use crate::constraintsystem::{ConstraintSystem, Error, Result};
 use crate::matrix::{DenseVector, SparseMatrix};
@@ -26,13 +26,13 @@ use serde::{Deserialize, Serialize};
 
 /// CCS <https://eprint.iacr.org/2023/552>
 #[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
-pub struct CustomizableConstraintSystem<R: Semiring> {
+pub struct CustomizableConstraintSystem<R: UnitalSemiring> {
     matrices: Vec<SparseMatrix<R>>,
     multisets: Vec<Vec<usize>>,
     constants: Vec<R>,
 }
 
-impl<R: Semiring> CustomizableConstraintSystem<R> {
+impl<R: UnitalSemiring> CustomizableConstraintSystem<R> {
     pub const fn new(
         matrices: Vec<SparseMatrix<R>>,
         multisets: Vec<Vec<usize>>,
@@ -70,7 +70,8 @@ impl<R: UnitalRing> From<R1CS<R>> for CustomizableConstraintSystem<R> {
     }
 }
 
-impl<R: Semiring + Clone + Eq + Send + Sync> ConstraintSystem<R> for CustomizableConstraintSystem<R>
+impl<R: UnitalSemiring + Clone + Eq + Send + Sync> ConstraintSystem<R>
+    for CustomizableConstraintSystem<R>
 where
     for<'a> &'a R: SemiringOps<R>,
 {

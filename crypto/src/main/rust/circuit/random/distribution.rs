@@ -15,11 +15,11 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::Semiring;
+use crate::algebra::UnitalSemiring;
 use crate::circuit::builder::CircuitBuilder;
 use crate::random::{UniformDistribution, UniformGenerator};
 
-pub trait Distribution<'a, 'b, R: Semiring, G: UniformGenerator> {
+pub trait Distribution<'a, 'b, R: UnitalSemiring, G: UniformGenerator> {
     type Output;
 
     fn new(circuit: &'a CircuitBuilder<'b, R>) -> Self;
@@ -29,7 +29,7 @@ pub trait Distribution<'a, 'b, R: Semiring, G: UniformGenerator> {
     fn reset(&mut self);
 }
 
-impl<'a, 'b, R: Semiring, G: UniformGenerator> Distribution<'a, 'b, R, G>
+impl<'a, 'b, R: UnitalSemiring, G: UniformGenerator> Distribution<'a, 'b, R, G>
     for UniformDistribution<G>
 {
     type Output = G::Output;

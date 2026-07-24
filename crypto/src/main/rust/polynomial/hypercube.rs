@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::Semiring;
+use crate::algebra::UnitalSemiring;
 use crate::polynomial::MultivariatePolynomial;
 use alloc::vec::Vec;
 use core::iter::Map;
@@ -23,13 +23,13 @@ use core::marker::PhantomData;
 use core::ops::Range;
 
 /// An n-dimensional unit hypercube with a vertex at the origin in the coordinate system.
-pub struct Hypercube<R: Semiring> {
+pub struct Hypercube<R: UnitalSemiring> {
     dimension: usize,
     vertices: usize,
     phantom: PhantomData<R>,
 }
 
-impl<R: Semiring> Hypercube<R> {
+impl<R: UnitalSemiring> Hypercube<R> {
     /// Construct a new hypercube.
     pub const fn new(dimension: usize) -> Self {
         Self {

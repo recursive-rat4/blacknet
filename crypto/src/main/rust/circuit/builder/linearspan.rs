@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::Semiring;
+use crate::algebra::UnitalSemiring;
 use crate::circuit::builder::LinearCombination;
 use alloc::borrow::Borrow;
 use alloc::collections::VecDeque;
@@ -23,23 +23,23 @@ use alloc::vec::Vec;
 use core::ops::{Deref, Index};
 
 /// A smallest linear subspace that contains an expression.
-pub struct LinearSpan<R: Semiring> {
+pub struct LinearSpan<R: UnitalSemiring> {
     vectors: Vec<LinearCombination<R>>,
 }
 
-impl<R: Semiring> LinearSpan<R> {
+impl<R: UnitalSemiring> LinearSpan<R> {
     pub const fn dimension(&self) -> usize {
         self.vectors.len()
     }
 }
 
-impl<R: Semiring> From<Vec<LinearCombination<R>>> for LinearSpan<R> {
+impl<R: UnitalSemiring> From<Vec<LinearCombination<R>>> for LinearSpan<R> {
     fn from(vectors: Vec<LinearCombination<R>>) -> Self {
         Self { vectors }
     }
 }
 
-impl<R: Semiring> From<VecDeque<LinearCombination<R>>> for LinearSpan<R> {
+impl<R: UnitalSemiring> From<VecDeque<LinearCombination<R>>> for LinearSpan<R> {
     fn from(vectors: VecDeque<LinearCombination<R>>) -> Self {
         Self {
             vectors: vectors.into(),
@@ -47,21 +47,21 @@ impl<R: Semiring> From<VecDeque<LinearCombination<R>>> for LinearSpan<R> {
     }
 }
 
-impl<R: Semiring> AsRef<[LinearCombination<R>]> for LinearSpan<R> {
+impl<R: UnitalSemiring> AsRef<[LinearCombination<R>]> for LinearSpan<R> {
     #[inline]
     fn as_ref(&self) -> &[LinearCombination<R>] {
         &self.vectors
     }
 }
 
-impl<R: Semiring> Borrow<[LinearCombination<R>]> for LinearSpan<R> {
+impl<R: UnitalSemiring> Borrow<[LinearCombination<R>]> for LinearSpan<R> {
     #[inline]
     fn borrow(&self) -> &[LinearCombination<R>] {
         &self.vectors
     }
 }
 
-impl<R: Semiring> Deref for LinearSpan<R> {
+impl<R: UnitalSemiring> Deref for LinearSpan<R> {
     type Target = [LinearCombination<R>];
 
     #[inline]
@@ -70,7 +70,7 @@ impl<R: Semiring> Deref for LinearSpan<R> {
     }
 }
 
-impl<R: Semiring> Index<usize> for LinearSpan<R> {
+impl<R: UnitalSemiring> Index<usize> for LinearSpan<R> {
     type Output = LinearCombination<R>;
 
     fn index(&self, dimension: usize) -> &Self::Output {
@@ -78,7 +78,7 @@ impl<R: Semiring> Index<usize> for LinearSpan<R> {
     }
 }
 
-impl<R: Semiring> IntoIterator for LinearSpan<R> {
+impl<R: UnitalSemiring> IntoIterator for LinearSpan<R> {
     type Item = LinearCombination<R>;
     type IntoIter = alloc::vec::IntoIter<LinearCombination<R>>;
 
@@ -88,7 +88,7 @@ impl<R: Semiring> IntoIterator for LinearSpan<R> {
     }
 }
 
-impl<'a, R: Semiring> IntoIterator for &'a LinearSpan<R> {
+impl<'a, R: UnitalSemiring> IntoIterator for &'a LinearSpan<R> {
     type Item = &'a LinearCombination<R>;
     type IntoIter = core::slice::Iter<'a, LinearCombination<R>>;
 

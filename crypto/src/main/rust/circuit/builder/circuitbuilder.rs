@@ -15,8 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::Semiring;
-use crate::algebra::UnitalRing;
+use crate::algebra::{UnitalRing, UnitalSemiring};
 use crate::circuit::builder::{
     LinearCombination, LinearSpan, Variable, VariableKind,
     tree::{NodeId, Tree},
@@ -33,19 +32,19 @@ use core::fmt::{Display, Formatter, Result};
 use core::iter::zip;
 
 /// An expression to be constrained.
-pub trait Expression<'a, R: Semiring + 'a>: 'a {
+pub trait Expression<'a, R: UnitalSemiring + 'a>: 'a {
     fn span(&self) -> LinearSpan<R>;
     fn degree(&self) -> usize;
 }
 
 /// An equivalence constraint.
-pub struct Constraint<'a, R: Semiring> {
+pub struct Constraint<'a, R: UnitalSemiring> {
     lps: Box<dyn Expression<'a, R>>,
     rps: Box<dyn Expression<'a, R>>,
 }
 
 /// The builder.
-pub struct CircuitBuilder<'a, R: Semiring> {
+pub struct CircuitBuilder<'a, R: UnitalSemiring> {
     degree: usize,
     public_inputs: Cell<usize>,
     public_outputs: Cell<usize>,
@@ -57,7 +56,7 @@ pub struct CircuitBuilder<'a, R: Semiring> {
     current_scope: Cell<NodeId>,
 }
 
-impl<'a, R: Semiring> CircuitBuilder<'a, R> {
+impl<'a, R: UnitalSemiring> CircuitBuilder<'a, R> {
     /// Construct a new builder with a maximum `degree` of constraints.
     pub fn new(degree: usize) -> Self {
         let (tree, root) = Tree::with_root(ScopeInfo::root());
@@ -192,7 +191,7 @@ impl<'a, R: Semiring> CircuitBuilder<'a, R> {
     }
 }
 
-impl<'a, R: Semiring + Clone + Eq> CircuitBuilder<'a, R> {
+impl<'a, R: UnitalSemiring + Clone + Eq> CircuitBuilder<'a, R> {
     fn put(&self, m: &mut SparseMatrixBuilder<R>, lc: &LinearCombination<R>) {
         for (variable, coefficient) in &lc.terms {
             let column: usize = match variable.kind {
@@ -311,7 +310,7 @@ impl<'a, R: UnitalRing + Clone + Eq> CircuitBuilder<'a, R> {
     }
 }
 
-impl<'a, R: Semiring> Display for CircuitBuilder<'a, R> {
+impl<'a, R: UnitalSemiring> Display for CircuitBuilder<'a, R> {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         write!(
             f,
@@ -325,11 +324,11 @@ impl<'a, R: Semiring> Display for CircuitBuilder<'a, R> {
 }
 
 /// A named scope to allocate variables and constrain expressions.
-pub struct Scope<'a, 'b, R: Semiring> {
+pub struct Scope<'a, 'b, R: UnitalSemiring> {
     builder: &'a CircuitBuilder<'b, R>,
 }
 
-impl<'a, 'b, R: Semiring> Scope<'a, 'b, R> {
+impl<'a, 'b, R: UnitalSemiring> Scope<'a, 'b, R> {
     /// Build a constraint `lps == rps`.
     ///
     /// # Panics
@@ -383,7 +382,7 @@ impl<'a, 'b, R: Semiring> Scope<'a, 'b, R> {
     }
 }
 
-impl<'a, 'b, R: Semiring> Drop for Scope<'a, 'b, R> {
+impl<'a, 'b, R: UnitalSemiring> Drop for Scope<'a, 'b, R> {
     fn drop(&mut self) {
         let scopes = self.builder.scopes.borrow();
         self.builder

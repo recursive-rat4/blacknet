@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{Double, RingOps, Semiring, SemiringOps, Square, UnitalRing};
+use crate::algebra::{Double, RingOps, SemiringOps, Square, UnitalRing, UnitalSemiring};
 use crate::circuit::builder::{
     Expression, LinearCombination, LinearMonoid, LinearSpan, LinearTerm, Variable,
 };
@@ -25,11 +25,11 @@ use core::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
 /// A constant coefficient.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct Constant<R: Semiring> {
+pub struct Constant<R: UnitalSemiring> {
     pub(super) value: R,
 }
 
-impl<R: Semiring> Constant<R> {
+impl<R: UnitalSemiring> Constant<R> {
     pub const ZERO: Self = Self { value: R::ZERO };
     pub const ONE: Self = Self { value: R::ONE };
 
@@ -38,7 +38,7 @@ impl<R: Semiring> Constant<R> {
     }
 }
 
-impl<'a, R: Semiring + Clone + 'a> Expression<'a, R> for Constant<R> {
+impl<'a, R: UnitalSemiring + Clone + 'a> Expression<'a, R> for Constant<R> {
     fn span(&self) -> LinearSpan<R> {
         vec![self.clone().into()].into()
     }
@@ -48,13 +48,13 @@ impl<'a, R: Semiring + Clone + 'a> Expression<'a, R> for Constant<R> {
     }
 }
 
-impl<R: Semiring> From<R> for Constant<R> {
+impl<R: UnitalSemiring> From<R> for Constant<R> {
     fn from(value: R) -> Self {
         Self { value }
     }
 }
 
-impl<R: Semiring> Add for Constant<R> {
+impl<R: UnitalSemiring> Add for Constant<R> {
     type Output = Self;
 
     fn add(self, rps: Self) -> Self::Output {
@@ -64,7 +64,7 @@ impl<R: Semiring> Add for Constant<R> {
     }
 }
 
-impl<R: Semiring> Add<&Self> for Constant<R> {
+impl<R: UnitalSemiring> Add<&Self> for Constant<R> {
     type Output = Self;
 
     fn add(self, rps: &Self) -> Self::Output {
@@ -74,7 +74,7 @@ impl<R: Semiring> Add<&Self> for Constant<R> {
     }
 }
 
-impl<R: Semiring> Add<Constant<R>> for &Constant<R>
+impl<R: UnitalSemiring> Add<Constant<R>> for &Constant<R>
 where
     for<'a> &'a R: SemiringOps<R>,
 {
@@ -87,7 +87,7 @@ where
     }
 }
 
-impl<R: Semiring> Add for &Constant<R>
+impl<R: UnitalSemiring> Add for &Constant<R>
 where
     for<'a> &'a R: SemiringOps<R>,
 {
@@ -100,19 +100,19 @@ where
     }
 }
 
-impl<R: Semiring> AddAssign for Constant<R> {
+impl<R: UnitalSemiring> AddAssign for Constant<R> {
     fn add_assign(&mut self, rps: Self) {
         self.value += rps.value
     }
 }
 
-impl<R: Semiring> AddAssign<&Self> for Constant<R> {
+impl<R: UnitalSemiring> AddAssign<&Self> for Constant<R> {
     fn add_assign(&mut self, rps: &Self) {
         self.value += &rps.value
     }
 }
 
-impl<R: Semiring> Double for Constant<R> {
+impl<R: UnitalSemiring> Double for Constant<R> {
     type Output = Self;
 
     fn double(self) -> Self::Output {
@@ -122,7 +122,7 @@ impl<R: Semiring> Double for Constant<R> {
     }
 }
 
-impl<R: Semiring> Double for &Constant<R>
+impl<R: UnitalSemiring> Double for &Constant<R>
 where
     for<'a> &'a R: SemiringOps<R>,
 {
@@ -214,7 +214,7 @@ impl<R: UnitalRing> SubAssign<&Self> for Constant<R> {
     }
 }
 
-impl<R: Semiring> Mul for Constant<R> {
+impl<R: UnitalSemiring> Mul for Constant<R> {
     type Output = Self;
 
     fn mul(self, rps: Constant<R>) -> Self::Output {
@@ -224,7 +224,7 @@ impl<R: Semiring> Mul for Constant<R> {
     }
 }
 
-impl<R: Semiring> Mul<&Constant<R>> for Constant<R> {
+impl<R: UnitalSemiring> Mul<&Constant<R>> for Constant<R> {
     type Output = Self;
 
     fn mul(self, rps: &Constant<R>) -> Self::Output {
@@ -234,7 +234,7 @@ impl<R: Semiring> Mul<&Constant<R>> for Constant<R> {
     }
 }
 
-impl<R: Semiring> Mul<Constant<R>> for &Constant<R>
+impl<R: UnitalSemiring> Mul<Constant<R>> for &Constant<R>
 where
     for<'a> &'a R: SemiringOps<R>,
 {
@@ -247,7 +247,7 @@ where
     }
 }
 
-impl<R: Semiring> Mul for &Constant<R>
+impl<R: UnitalSemiring> Mul for &Constant<R>
 where
     for<'a> &'a R: SemiringOps<R>,
 {
@@ -260,19 +260,19 @@ where
     }
 }
 
-impl<R: Semiring> MulAssign for Constant<R> {
+impl<R: UnitalSemiring> MulAssign for Constant<R> {
     fn mul_assign(&mut self, rps: Self) {
         self.value *= rps.value
     }
 }
 
-impl<R: Semiring> MulAssign<&Self> for Constant<R> {
+impl<R: UnitalSemiring> MulAssign<&Self> for Constant<R> {
     fn mul_assign(&mut self, rps: &Self) {
         self.value *= &rps.value
     }
 }
 
-impl<R: Semiring> Square for Constant<R> {
+impl<R: UnitalSemiring> Square for Constant<R> {
     type Output = Self;
 
     fn square(self) -> Self::Output {
@@ -282,7 +282,7 @@ impl<R: Semiring> Square for Constant<R> {
     }
 }
 
-impl<R: Semiring> Square for &Constant<R>
+impl<R: UnitalSemiring> Square for &Constant<R>
 where
     for<'a> &'a R: SemiringOps<R>,
 {
@@ -295,7 +295,7 @@ where
     }
 }
 
-impl<R: Semiring> Add<Variable<R>> for Constant<R> {
+impl<R: UnitalSemiring> Add<Variable<R>> for Constant<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: Variable<R>) -> Self::Output {
@@ -306,7 +306,7 @@ impl<R: Semiring> Add<Variable<R>> for Constant<R> {
     }
 }
 
-impl<R: Semiring + Clone> Add<Variable<R>> for &Constant<R> {
+impl<R: UnitalSemiring + Clone> Add<Variable<R>> for &Constant<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: Variable<R>) -> Self::Output {
@@ -333,7 +333,7 @@ impl<R: UnitalRing + Clone> Sub<Variable<R>> for &Constant<R> {
     }
 }
 
-impl<R: Semiring> Mul<Variable<R>> for Constant<R> {
+impl<R: UnitalSemiring> Mul<Variable<R>> for Constant<R> {
     type Output = LinearTerm<R>;
 
     fn mul(self, rps: Variable<R>) -> Self::Output {
@@ -341,7 +341,7 @@ impl<R: Semiring> Mul<Variable<R>> for Constant<R> {
     }
 }
 
-impl<R: Semiring + Clone> Mul<Variable<R>> for &Constant<R> {
+impl<R: UnitalSemiring + Clone> Mul<Variable<R>> for &Constant<R> {
     type Output = LinearTerm<R>;
 
     fn mul(self, rps: Variable<R>) -> Self::Output {
@@ -349,7 +349,7 @@ impl<R: Semiring + Clone> Mul<Variable<R>> for &Constant<R> {
     }
 }
 
-impl<R: Semiring> Add<LinearTerm<R>> for Constant<R> {
+impl<R: UnitalSemiring> Add<LinearTerm<R>> for Constant<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: LinearTerm<R>) -> Self::Output {
@@ -357,7 +357,7 @@ impl<R: Semiring> Add<LinearTerm<R>> for Constant<R> {
     }
 }
 
-impl<R: Semiring + Clone> Add<LinearTerm<R>> for &Constant<R> {
+impl<R: UnitalSemiring + Clone> Add<LinearTerm<R>> for &Constant<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: LinearTerm<R>) -> Self::Output {
@@ -365,7 +365,7 @@ impl<R: Semiring + Clone> Add<LinearTerm<R>> for &Constant<R> {
     }
 }
 
-impl<R: Semiring + Clone> Add<&LinearTerm<R>> for Constant<R> {
+impl<R: UnitalSemiring + Clone> Add<&LinearTerm<R>> for Constant<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: &LinearTerm<R>) -> Self::Output {
@@ -373,7 +373,7 @@ impl<R: Semiring + Clone> Add<&LinearTerm<R>> for Constant<R> {
     }
 }
 
-impl<R: Semiring + Clone> Add<&LinearTerm<R>> for &Constant<R> {
+impl<R: UnitalSemiring + Clone> Add<&LinearTerm<R>> for &Constant<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: &LinearTerm<R>) -> Self::Output {
@@ -413,7 +413,7 @@ impl<R: UnitalRing + Clone> Sub<&LinearTerm<R>> for &Constant<R> {
     }
 }
 
-impl<R: Semiring> Mul<LinearTerm<R>> for Constant<R> {
+impl<R: UnitalSemiring> Mul<LinearTerm<R>> for Constant<R> {
     type Output = LinearTerm<R>;
 
     fn mul(self, rps: LinearTerm<R>) -> Self::Output {
@@ -421,7 +421,7 @@ impl<R: Semiring> Mul<LinearTerm<R>> for Constant<R> {
     }
 }
 
-impl<R: Semiring> Mul<LinearTerm<R>> for &Constant<R>
+impl<R: UnitalSemiring> Mul<LinearTerm<R>> for &Constant<R>
 where
     for<'a> &'a R: SemiringOps<R>,
 {
@@ -432,7 +432,7 @@ where
     }
 }
 
-impl<R: Semiring + Clone> Mul<&LinearTerm<R>> for Constant<R> {
+impl<R: UnitalSemiring + Clone> Mul<&LinearTerm<R>> for Constant<R> {
     type Output = LinearTerm<R>;
 
     fn mul(self, rps: &LinearTerm<R>) -> Self::Output {
@@ -440,7 +440,7 @@ impl<R: Semiring + Clone> Mul<&LinearTerm<R>> for Constant<R> {
     }
 }
 
-impl<R: Semiring + Clone> Mul<&LinearTerm<R>> for &Constant<R>
+impl<R: UnitalSemiring + Clone> Mul<&LinearTerm<R>> for &Constant<R>
 where
     for<'a> &'a R: SemiringOps<R>,
 {
@@ -451,7 +451,7 @@ where
     }
 }
 
-impl<R: Semiring> Add<LinearCombination<R>> for Constant<R> {
+impl<R: UnitalSemiring> Add<LinearCombination<R>> for Constant<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, mut rps: LinearCombination<R>) -> Self::Output {
@@ -460,7 +460,7 @@ impl<R: Semiring> Add<LinearCombination<R>> for Constant<R> {
     }
 }
 
-impl<R: Semiring + Clone> Add<LinearCombination<R>> for &Constant<R> {
+impl<R: UnitalSemiring + Clone> Add<LinearCombination<R>> for &Constant<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: LinearCombination<R>) -> Self::Output {
@@ -468,7 +468,7 @@ impl<R: Semiring + Clone> Add<LinearCombination<R>> for &Constant<R> {
     }
 }
 
-impl<R: Semiring + Clone> Add<&LinearCombination<R>> for Constant<R> {
+impl<R: UnitalSemiring + Clone> Add<&LinearCombination<R>> for Constant<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: &LinearCombination<R>) -> Self::Output {
@@ -476,7 +476,7 @@ impl<R: Semiring + Clone> Add<&LinearCombination<R>> for Constant<R> {
     }
 }
 
-impl<R: Semiring + Clone> Add<&LinearCombination<R>> for &Constant<R> {
+impl<R: UnitalSemiring + Clone> Add<&LinearCombination<R>> for &Constant<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: &LinearCombination<R>) -> Self::Output {
@@ -518,7 +518,7 @@ impl<R: UnitalRing + Clone> Sub<&LinearCombination<R>> for &Constant<R> {
     }
 }
 
-impl<R: Semiring> Mul<LinearCombination<R>> for Constant<R>
+impl<R: UnitalSemiring> Mul<LinearCombination<R>> for Constant<R>
 where
     for<'a> &'a R: SemiringOps<R>,
 {
@@ -529,7 +529,7 @@ where
     }
 }
 
-impl<R: Semiring> Mul<LinearCombination<R>> for &Constant<R>
+impl<R: UnitalSemiring> Mul<LinearCombination<R>> for &Constant<R>
 where
     for<'a> &'a R: SemiringOps<R>,
 {
@@ -543,7 +543,7 @@ where
     }
 }
 
-impl<R: Semiring + Clone> Mul<&LinearCombination<R>> for Constant<R>
+impl<R: UnitalSemiring + Clone> Mul<&LinearCombination<R>> for Constant<R>
 where
     for<'a> &'a R: SemiringOps<R>,
 {
@@ -554,7 +554,7 @@ where
     }
 }
 
-impl<R: Semiring + Clone> Mul<&LinearCombination<R>> for &Constant<R>
+impl<R: UnitalSemiring + Clone> Mul<&LinearCombination<R>> for &Constant<R>
 where
     for<'a> &'a R: SemiringOps<R>,
 {
@@ -565,7 +565,7 @@ where
     }
 }
 
-impl<R: Semiring + Clone> Mul<LinearMonoid<R>> for Constant<R>
+impl<R: UnitalSemiring + Clone> Mul<LinearMonoid<R>> for Constant<R>
 where
     for<'a> &'a R: SemiringOps<R>,
 {
@@ -580,7 +580,7 @@ where
     }
 }
 
-impl<R: Semiring + Clone> Mul<LinearMonoid<R>> for &Constant<R>
+impl<R: UnitalSemiring + Clone> Mul<LinearMonoid<R>> for &Constant<R>
 where
     for<'a> &'a R: SemiringOps<R>,
 {
@@ -595,7 +595,7 @@ where
     }
 }
 
-impl<R: Semiring + Clone> Mul<&LinearMonoid<R>> for Constant<R>
+impl<R: UnitalSemiring + Clone> Mul<&LinearMonoid<R>> for Constant<R>
 where
     for<'a> &'a R: SemiringOps<R>,
 {
@@ -606,7 +606,7 @@ where
     }
 }
 
-impl<R: Semiring + Clone> Mul<&LinearMonoid<R>> for &Constant<R>
+impl<R: UnitalSemiring + Clone> Mul<&LinearMonoid<R>> for &Constant<R>
 where
     for<'a> &'a R: SemiringOps<R>,
 {
@@ -617,7 +617,7 @@ where
     }
 }
 
-impl<R: Semiring> Sum for Constant<R> {
+impl<R: UnitalSemiring> Sum for Constant<R> {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
         Self {
             value: iter.map(|constant| constant.value).sum(),
@@ -625,7 +625,7 @@ impl<R: Semiring> Sum for Constant<R> {
     }
 }
 
-impl<'a, R: Semiring> Sum<&'a Self> for Constant<R> {
+impl<'a, R: UnitalSemiring> Sum<&'a Self> for Constant<R> {
     fn sum<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
         Self {
             value: iter.map(|constant| &constant.value).sum(),
@@ -633,7 +633,7 @@ impl<'a, R: Semiring> Sum<&'a Self> for Constant<R> {
     }
 }
 
-impl<R: Semiring> Product for Constant<R> {
+impl<R: UnitalSemiring> Product for Constant<R> {
     fn product<I: Iterator<Item = Self>>(iter: I) -> Self {
         Self {
             value: iter.map(|constant| constant.value).product(),
@@ -641,7 +641,7 @@ impl<R: Semiring> Product for Constant<R> {
     }
 }
 
-impl<'a, R: Semiring> Product<&'a Self> for Constant<R> {
+impl<'a, R: UnitalSemiring> Product<&'a Self> for Constant<R> {
     fn product<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
         Self {
             value: iter.map(|constant| &constant.value).product(),

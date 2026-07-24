@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{AdditiveCommutativeMonoid, AdditiveMagmaOps, Presemiring};
+use crate::algebra::{AdditiveCommutativeMonoid, AdditiveMagmaOps, Semiring};
 use core::ops::{Mul, MulAssign};
 
 #[rustfmt::skip]
@@ -35,7 +35,7 @@ impl<R, M, T
 
 /// A generalization of [module][`crate::algebra::Module`] to semirings.
 #[rustfmt::skip]
-pub trait Semimodule<R: Presemiring>
+pub trait Semimodule<R: Semiring>
     : AdditiveCommutativeMonoid
     + SemimoduleOps<R, Self>
     + MulAssign<R>
@@ -44,4 +44,4 @@ pub trait Semimodule<R: Presemiring>
 }
 
 /// Any semiring is a semimodule over itself.
-impl<R: Presemiring> Semimodule<R> for R {}
+impl<R: Semiring> Semimodule<R> for R {}

@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{AdditiveGroup, Semiring};
+use crate::algebra::{AdditiveGroup, UnitalSemiring};
 use crate::circuit::builder::{CircuitBuilder, LinearCombination};
 use crate::circuit::symmetric::{CompressionFunction, Permutation};
 use core::marker::PhantomData;
@@ -23,7 +23,7 @@ use core::marker::PhantomData;
 pub struct Trunc<
     'a,
     'b,
-    G: Semiring + AdditiveGroup,
+    G: UnitalSemiring + AdditiveGroup,
     const RANK: usize,
     const WIDTH: usize,
     P: Permutation<G, Domain = [LinearCombination<G>; WIDTH]>,
@@ -35,7 +35,7 @@ pub struct Trunc<
 impl<
     'a,
     'b,
-    G: Semiring + AdditiveGroup,
+    G: UnitalSemiring + AdditiveGroup,
     const RANK: usize,
     const WIDTH: usize,
     P: Permutation<G, Domain = [LinearCombination<G>; WIDTH]>,
@@ -55,7 +55,7 @@ impl<
 impl<
     'a,
     'b,
-    G: Semiring + AdditiveGroup + Clone,
+    G: UnitalSemiring + AdditiveGroup + Clone,
     const RANK: usize,
     const WIDTH: usize,
     P: Permutation<G, Domain = [LinearCombination<G>; WIDTH]>,
