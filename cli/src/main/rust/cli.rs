@@ -15,6 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use blacknet_compat::config::Config;
 use blacknet_compat::{XDGDirectories, mode};
 use clap::Parser;
 use std::error::Error;
@@ -35,6 +36,7 @@ fn cli() -> Result<(), Box<dyn Error>> {
     let cli = Cli::parse();
     let mode = mode()?;
     let dirs = XDGDirectories::new(mode.subdirectory())?;
+    let config = Config::load(dirs.config())?;
     todo!();
 }
 

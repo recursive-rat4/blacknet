@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -30,8 +30,9 @@ pub struct Mode {
     default_p2p_port: u16,
     default_rpc_port: u16,
     network_magic: u32,
-    builtin_peers: &'static str,
+    peers_txt: &'static str,
     genesis_json: &'static str,
+    blacknet_conf: &'static str,
 }
 
 impl Mode {
@@ -42,8 +43,9 @@ impl Mode {
         address_prefix: Option<&'static str>,
         sign_suffix: Option<&'static str>,
         requires_network: bool,
-        builtin_peers: &'static str,
+        peers_txt: &'static str,
         genesis_json: &'static str,
+        blacknet_conf: &'static str,
     ) -> Self {
         Self {
             subdirectory,
@@ -63,8 +65,9 @@ impl Mode {
             default_p2p_port: DEFAULT_P2P_PORT + ordinal as u16,
             default_rpc_port: DEFAULT_RPC_PORT + ordinal as u16,
             network_magic: NETWORK_MAGIC + ordinal as u32,
-            builtin_peers,
+            peers_txt,
             genesis_json,
+            blacknet_conf,
         }
     }
 
@@ -74,7 +77,18 @@ impl Mode {
     pub fn mainnet() -> Self {
         let peers_txt = include_str!("../../../../kernel/src/main/resources/peers.txt");
         let genesis_json = include_str!("../../../../kernel/src/main/resources/genesis.json");
-        Self::new(0, None, None, None, None, true, peers_txt, genesis_json)
+        let blacknet_conf = include_str!("../../../src/resource/mainnet.conf");
+        Self::new(
+            0,
+            None,
+            None,
+            None,
+            None,
+            true,
+            peers_txt,
+            genesis_json,
+            blacknet_conf,
+        )
     }
 
     pub fn testnet() -> Self {
@@ -87,6 +101,7 @@ impl Mode {
             true,
             "",
             "",
+            "",
         )
     }
 
@@ -96,6 +111,7 @@ impl Mode {
      */
     pub fn regtest() -> Self {
         let genesis_json = include_str!("../../../../kernel/src/main/resources/regtest.json");
+        let blacknet_conf = include_str!("../../../src/resource/regtest.conf");
         Self::new(
             3,
             Some("-RegTest"),
@@ -105,6 +121,7 @@ impl Mode {
             false,
             "",
             genesis_json,
+            blacknet_conf,
         )
     }
 
@@ -156,12 +173,16 @@ impl Mode {
         self.network_magic
     }
 
-    pub const fn builtin_peers(&self) -> &'static str {
-        self.builtin_peers
+    pub const fn peers_txt(&self) -> &'static str {
+        self.peers_txt
     }
 
     pub const fn genesis_json(&self) -> &'static str {
         self.genesis_json
+    }
+
+    pub const fn blacknet_conf(&self) -> &'static str {
+        self.blacknet_conf
     }
 }
 

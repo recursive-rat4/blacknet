@@ -71,7 +71,7 @@ impl PeerTable {
             }
         }
         if peer_table.len() < 128 {
-            let added = peer_table.add(Self::builtin_peers(mode));
+            let added = peer_table.add(Self::peers_txt(mode));
             if added > 0 {
                 info!(peer_table.logger, "Added {added} built-in peers");
             }
@@ -355,8 +355,8 @@ impl PeerTable {
         }
     }
 
-    fn builtin_peers(mode: &Mode) -> impl Iterator<Item = Endpoint> {
-        mode.builtin_peers()
+    fn peers_txt(mode: &Mode) -> impl Iterator<Item = Endpoint> {
+        mode.peers_txt()
             .lines()
             .map(|line| Endpoint::parse(line, mode.default_p2p_port()).expect("peers.txt"))
     }

@@ -46,7 +46,7 @@ fn daemon() -> Result<(), Box<dyn Error>> {
         })
         .build()?;
     let (shutdown_send, mut shutdown_recv) = unbounded_channel::<()>();
-    let config = Config::load(dirs.config())?;
+    let config = Config::load_or_create(&mode, dirs.config())?;
     let node = Node::new(mode, &dirs, &log_manager, &runtime, &config.network)?;
     if config.rpc.enabled {
         let node = node.clone();
