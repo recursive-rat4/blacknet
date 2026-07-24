@@ -48,7 +48,7 @@ impl<T> SymmetricMatrix<T> {
         }
     }
 
-    /// Fill a new `n ⨉ n` matrix with a single `element`.
+    /// Fill a new `n × n` matrix with a single `element`.
     pub fn fill(dimension: usize, element: T) -> Self
     where
         T: Clone,

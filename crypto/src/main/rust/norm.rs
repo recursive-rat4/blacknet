@@ -16,7 +16,7 @@
  */
 
 use crate::algebra::{
-    FreeModule, IntegerModRing, MatrixRing, QuaternionAlgebra, Ring, UnitalRing, UnivariateRing,
+    FreeModule, IntegerModRing, MatrixSpace, QuaternionAlgebra, Ring, UnitalRing, UnivariateRing,
 };
 use crate::convolution::Convolution;
 use crate::float::Cast;
@@ -187,8 +187,8 @@ impl<Length: Ord, R: Ring + InfinityNorm<Length>> InfinityNorm<Length> for Spars
     }
 }
 
-impl<Length: Ord, R: Ring + InfinityNorm<Length>, const N: usize, const NN: usize>
-    InfinityNorm<Length> for MatrixRing<R, N, NN>
+impl<Length: Ord, R: Ring + InfinityNorm<Length>, const M: usize, const N: usize, const MN: usize>
+    InfinityNorm<Length> for MatrixSpace<R, M, N, MN>
 {
     fn check_infinity_norm(&self, bound: &Length) -> bool {
         self.as_ref().iter().all(|i| i.check_infinity_norm(bound))

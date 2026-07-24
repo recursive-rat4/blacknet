@@ -23,7 +23,7 @@ use core::iter::Sum;
 use core::marker::PhantomData;
 use serde::{Deserialize, Serialize};
 
-/// The `n ⨉ n` matrix with ones on the leading diagonal and zeros otherwise.
+/// The `n × n` matrix with ones on the leading diagonal and zeros otherwise.
 #[derive(Default, Deserialize, Eq, PartialEq, Serialize)]
 pub struct IdentityMatrix<T: One + Zero> {
     dimension: usize,

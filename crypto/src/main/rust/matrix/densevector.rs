@@ -30,7 +30,7 @@ use core::ops::{
 use rayon::iter::{FromParallelIterator, IntoParallelIterator, ParallelIterator};
 use serde::{Deserialize, Serialize};
 
-/// A row (column) vector is a `1 ⨉ n` (`m ⨉ 1`) matrix.
+/// A row (column) vector is a `1 × n` (`m × 1`) matrix.
 ///
 /// Multiplication is defined as the Hadamard product.
 ///

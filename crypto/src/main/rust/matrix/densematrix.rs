@@ -52,7 +52,7 @@ impl<T> DenseMatrix<T> {
         }
     }
 
-    /// Fill a new `m ⨉ n` matrix with a single `element`.
+    /// Fill a new `m × n` matrix with a single `element`.
     pub fn fill(rows: usize, columns: usize, element: T) -> Self
     where
         T: Clone,
@@ -143,7 +143,7 @@ impl<T> DenseMatrix<T> {
         }
     }
 
-    /// Convert a `m ⨉ n` matrix into a `1 ⨉ mn` row vector.
+    /// Convert a `m × n` matrix into a `1 × mn` row vector.
     #[inline]
     pub fn vectorize(self) -> DenseVector<T> {
         self.elements.into()
