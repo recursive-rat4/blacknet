@@ -16,8 +16,8 @@
  */
 
 use crate::algebra::{
-    AdditiveCommutativeMagma, AdditiveSemigroup, DivisionRingOps, Dot, Double, Inv, LeftZero,
-    RightZero, Ring, RingOps, Semimodule, Set, Zero,
+    AdditiveCommutativeMagma, AdditiveSemigroup, Dot, Double, Inv, LeftZero, RightZero, Ring,
+    RingOps, SemifieldOps, Semimodule, Semiring, SemiringOps, Set, Zero,
 };
 use crate::branchless::BlOption;
 use crate::symmetric::{Absorb, Duplexer, Squeeze};
@@ -38,11 +38,11 @@ use zeroize::Zeroize;
     deserialize = "[R; N]: Deserialize<'de>",
     serialize = "[R; N]: Serialize"
 ))]
-pub struct FreeModule<R: Ring, const N: usize> {
+pub struct FreeModule<R: Semiring, const N: usize> {
     components: [R; N],
 }
 
-impl<R: Ring, const N: usize> FreeModule<R, N> {
+impl<R: Semiring, const N: usize> FreeModule<R, N> {
     pub const fn new(components: [R; N]) -> Self {
         Self { components }
     }
@@ -55,97 +55,97 @@ impl<R: Ring, const N: usize> FreeModule<R, N> {
     }
 
     #[inline]
-    pub fn map<F: FnMut(R) -> T, T: Ring>(self, f: F) -> FreeModule<T, N> {
+    pub fn map<F: FnMut(R) -> T, T: Semiring>(self, f: F) -> FreeModule<T, N> {
         FreeModule::<T, N> {
             components: self.components.map(f),
         }
     }
 }
 
-impl<R: Ring, const N: usize> Default for FreeModule<R, N> {
+impl<R: Semiring, const N: usize> Default for FreeModule<R, N> {
     #[inline]
     fn default() -> Self {
         Self::ZERO
     }
 }
 
-impl<R: Ring, const N: usize> From<[R; N]> for FreeModule<R, N> {
+impl<R: Semiring, const N: usize> From<[R; N]> for FreeModule<R, N> {
     #[inline]
     fn from(components: [R; N]) -> Self {
         Self { components }
     }
 }
 
-impl<R: Ring, const N: usize> From<FreeModule<R, N>> for [R; N] {
+impl<R: Semiring, const N: usize> From<FreeModule<R, N>> for [R; N] {
     #[inline]
     fn from(module: FreeModule<R, N>) -> Self {
         module.components
     }
 }
 
-impl<R: Ring + Debug, const N: usize> Debug for FreeModule<R, N> {
+impl<R: Semiring + Debug, const N: usize> Debug for FreeModule<R, N> {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         write!(f, "{:?}", self.components)
     }
 }
 
-impl<R: Ring, const N: usize> AsRef<[R]> for FreeModule<R, N> {
+impl<R: Semiring, const N: usize> AsRef<[R]> for FreeModule<R, N> {
     #[inline]
     fn as_ref(&self) -> &[R] {
         &self.components
     }
 }
 
-impl<R: Ring, const N: usize> AsRef<[R; N]> for FreeModule<R, N> {
+impl<R: Semiring, const N: usize> AsRef<[R; N]> for FreeModule<R, N> {
     #[inline]
     fn as_ref(&self) -> &[R; N] {
         &self.components
     }
 }
 
-impl<R: Ring, const N: usize> AsMut<[R]> for FreeModule<R, N> {
+impl<R: Semiring, const N: usize> AsMut<[R]> for FreeModule<R, N> {
     #[inline]
     fn as_mut(&mut self) -> &mut [R] {
         &mut self.components
     }
 }
 
-impl<R: Ring, const N: usize> AsMut<[R; N]> for FreeModule<R, N> {
+impl<R: Semiring, const N: usize> AsMut<[R; N]> for FreeModule<R, N> {
     #[inline]
     fn as_mut(&mut self) -> &mut [R; N] {
         &mut self.components
     }
 }
 
-impl<R: Ring, const N: usize> Borrow<[R]> for FreeModule<R, N> {
+impl<R: Semiring, const N: usize> Borrow<[R]> for FreeModule<R, N> {
     #[inline]
     fn borrow(&self) -> &[R] {
         &self.components
     }
 }
 
-impl<R: Ring, const N: usize> Borrow<[R; N]> for FreeModule<R, N> {
+impl<R: Semiring, const N: usize> Borrow<[R; N]> for FreeModule<R, N> {
     #[inline]
     fn borrow(&self) -> &[R; N] {
         &self.components
     }
 }
 
-impl<R: Ring, const N: usize> BorrowMut<[R]> for FreeModule<R, N> {
+impl<R: Semiring, const N: usize> BorrowMut<[R]> for FreeModule<R, N> {
     #[inline]
     fn borrow_mut(&mut self) -> &mut [R] {
         &mut self.components
     }
 }
 
-impl<R: Ring, const N: usize> BorrowMut<[R; N]> for FreeModule<R, N> {
+impl<R: Semiring, const N: usize> BorrowMut<[R; N]> for FreeModule<R, N> {
     #[inline]
     fn borrow_mut(&mut self) -> &mut [R; N] {
         &mut self.components
     }
 }
 
-impl<R: Ring, const N: usize> Deref for FreeModule<R, N> {
+impl<R: Semiring, const N: usize> Deref for FreeModule<R, N> {
     type Target = [R; N];
 
     #[inline]
@@ -154,14 +154,14 @@ impl<R: Ring, const N: usize> Deref for FreeModule<R, N> {
     }
 }
 
-impl<R: Ring, const N: usize> DerefMut for FreeModule<R, N> {
+impl<R: Semiring, const N: usize> DerefMut for FreeModule<R, N> {
     #[inline]
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.components
     }
 }
 
-impl<R: Ring, const N: usize> Index<usize> for FreeModule<R, N> {
+impl<R: Semiring, const N: usize> Index<usize> for FreeModule<R, N> {
     type Output = R;
 
     #[inline]
@@ -170,14 +170,14 @@ impl<R: Ring, const N: usize> Index<usize> for FreeModule<R, N> {
     }
 }
 
-impl<R: Ring, const N: usize> IndexMut<usize> for FreeModule<R, N> {
+impl<R: Semiring, const N: usize> IndexMut<usize> for FreeModule<R, N> {
     #[inline]
     fn index_mut(&mut self, i: usize) -> &mut Self::Output {
         &mut self.components[i]
     }
 }
 
-impl<R: Ring, const N: usize> IntoIterator for FreeModule<R, N> {
+impl<R: Semiring, const N: usize> IntoIterator for FreeModule<R, N> {
     type Item = R;
     type IntoIter = core::array::IntoIter<R, N>;
 
@@ -187,7 +187,7 @@ impl<R: Ring, const N: usize> IntoIterator for FreeModule<R, N> {
     }
 }
 
-impl<'a, R: Ring, const N: usize> IntoIterator for &'a FreeModule<R, N> {
+impl<'a, R: Semiring, const N: usize> IntoIterator for &'a FreeModule<R, N> {
     type Item = &'a R;
     type IntoIter = core::slice::Iter<'a, R>;
 
@@ -197,7 +197,7 @@ impl<'a, R: Ring, const N: usize> IntoIterator for &'a FreeModule<R, N> {
     }
 }
 
-impl<'a, R: Ring, const N: usize> IntoIterator for &'a mut FreeModule<R, N> {
+impl<'a, R: Semiring, const N: usize> IntoIterator for &'a mut FreeModule<R, N> {
     type Item = &'a mut R;
     type IntoIter = core::slice::IterMut<'a, R>;
 
@@ -208,7 +208,7 @@ impl<'a, R: Ring, const N: usize> IntoIterator for &'a mut FreeModule<R, N> {
 }
 
 #[cfg(feature = "rayon")]
-impl<R: Ring + Send, const N: usize> IntoParallelIterator for FreeModule<R, N> {
+impl<R: Semiring + Send, const N: usize> IntoParallelIterator for FreeModule<R, N> {
     type Item = R;
     type Iter = rayon::array::IntoIter<R, N>;
 
@@ -218,7 +218,7 @@ impl<R: Ring + Send, const N: usize> IntoParallelIterator for FreeModule<R, N> {
     }
 }
 
-impl<R: Ring, const N: usize> Add for FreeModule<R, N> {
+impl<R: Semiring, const N: usize> Add for FreeModule<R, N> {
     type Output = Self;
 
     fn add(self, rps: Self) -> Self::Output {
@@ -228,7 +228,7 @@ impl<R: Ring, const N: usize> Add for FreeModule<R, N> {
     }
 }
 
-impl<R: Ring, const N: usize> Add<&Self> for FreeModule<R, N> {
+impl<R: Semiring, const N: usize> Add<&Self> for FreeModule<R, N> {
     type Output = Self;
 
     fn add(self, rps: &Self) -> Self::Output {
@@ -238,9 +238,9 @@ impl<R: Ring, const N: usize> Add<&Self> for FreeModule<R, N> {
     }
 }
 
-impl<R: Ring, const N: usize> Add<FreeModule<R, N>> for &FreeModule<R, N>
+impl<R: Semiring, const N: usize> Add<FreeModule<R, N>> for &FreeModule<R, N>
 where
-    for<'a> &'a R: RingOps<R>,
+    for<'a> &'a R: SemiringOps<R>,
 {
     type Output = FreeModule<R, N>;
 
@@ -251,9 +251,9 @@ where
     }
 }
 
-impl<'a, R: Ring, const N: usize> Add<&'a FreeModule<R, N>> for &FreeModule<R, N>
+impl<'a, R: Semiring, const N: usize> Add<&'a FreeModule<R, N>> for &FreeModule<R, N>
 where
-    for<'b> &'b R: RingOps<R>,
+    for<'b> &'b R: SemiringOps<R>,
 {
     type Output = FreeModule<R, N>;
 
@@ -262,19 +262,19 @@ where
     }
 }
 
-impl<R: Ring, const N: usize> AddAssign for FreeModule<R, N> {
+impl<R: Semiring, const N: usize> AddAssign for FreeModule<R, N> {
     fn add_assign(&mut self, rps: Self) {
         zip(self, rps).for_each(|(l, r)| *l += r);
     }
 }
 
-impl<R: Ring, const N: usize> AddAssign<&Self> for FreeModule<R, N> {
+impl<R: Semiring, const N: usize> AddAssign<&Self> for FreeModule<R, N> {
     fn add_assign(&mut self, rps: &Self) {
         zip(self, rps).for_each(|(l, r)| *l += r);
     }
 }
 
-impl<R: Ring, const N: usize> Double for FreeModule<R, N> {
+impl<R: Semiring, const N: usize> Double for FreeModule<R, N> {
     type Output = Self;
 
     fn double(self) -> Self {
@@ -282,9 +282,9 @@ impl<R: Ring, const N: usize> Double for FreeModule<R, N> {
     }
 }
 
-impl<R: Ring, const N: usize> Double for &FreeModule<R, N>
+impl<R: Semiring, const N: usize> Double for &FreeModule<R, N>
 where
-    for<'a> &'a R: RingOps<R>,
+    for<'a> &'a R: SemiringOps<R>,
 {
     type Output = FreeModule<R, N>;
 
@@ -368,7 +368,7 @@ impl<R: Ring, const N: usize> SubAssign<&Self> for FreeModule<R, N> {
     }
 }
 
-impl<R: Ring, const N: usize> Mul<R> for FreeModule<R, N> {
+impl<R: Semiring, const N: usize> Mul<R> for FreeModule<R, N> {
     type Output = Self;
 
     #[inline]
@@ -377,7 +377,7 @@ impl<R: Ring, const N: usize> Mul<R> for FreeModule<R, N> {
     }
 }
 
-impl<R: Ring, const N: usize> Mul<&R> for FreeModule<R, N> {
+impl<R: Semiring, const N: usize> Mul<&R> for FreeModule<R, N> {
     type Output = Self;
 
     fn mul(self, rps: &R) -> Self::Output {
@@ -387,9 +387,9 @@ impl<R: Ring, const N: usize> Mul<&R> for FreeModule<R, N> {
     }
 }
 
-impl<R: Ring, const N: usize> Mul<R> for &FreeModule<R, N>
+impl<R: Semiring, const N: usize> Mul<R> for &FreeModule<R, N>
 where
-    for<'a> &'a R: RingOps<R>,
+    for<'a> &'a R: SemiringOps<R>,
 {
     type Output = FreeModule<R, N>;
 
@@ -399,9 +399,9 @@ where
     }
 }
 
-impl<R: Ring, const N: usize> Mul<&R> for &FreeModule<R, N>
+impl<R: Semiring, const N: usize> Mul<&R> for &FreeModule<R, N>
 where
-    for<'a> &'a R: RingOps<R>,
+    for<'a> &'a R: SemiringOps<R>,
 {
     type Output = FreeModule<R, N>;
 
@@ -410,20 +410,20 @@ where
     }
 }
 
-impl<R: Ring, const N: usize> MulAssign<R> for FreeModule<R, N> {
+impl<R: Semiring, const N: usize> MulAssign<R> for FreeModule<R, N> {
     #[inline]
     fn mul_assign(&mut self, rps: R) {
         *self *= &rps
     }
 }
 
-impl<R: Ring, const N: usize> MulAssign<&R> for FreeModule<R, N> {
+impl<R: Semiring, const N: usize> MulAssign<&R> for FreeModule<R, N> {
     fn mul_assign(&mut self, rps: &R) {
         self.components.iter_mut().for_each(|l| *l *= rps);
     }
 }
 
-impl<R: Ring + Inv<Output = BlOption<R>>, const N: usize> Div<R> for FreeModule<R, N> {
+impl<R: Semiring + Inv<Output = BlOption<R>>, const N: usize> Div<R> for FreeModule<R, N> {
     type Output = BlOption<Self>;
 
     fn div(self, rps: R) -> Self::Output {
@@ -431,7 +431,7 @@ impl<R: Ring + Inv<Output = BlOption<R>>, const N: usize> Div<R> for FreeModule<
     }
 }
 
-impl<R: Ring, const N: usize> Div<&R> for FreeModule<R, N>
+impl<R: Semiring, const N: usize> Div<&R> for FreeModule<R, N>
 where
     for<'a> &'a R: Inv<Output = BlOption<R>>,
 {
@@ -442,9 +442,9 @@ where
     }
 }
 
-impl<R: Ring + Inv<Output = BlOption<R>>, const N: usize> Div<R> for &FreeModule<R, N>
+impl<R: Semiring + Inv<Output = BlOption<R>>, const N: usize> Div<R> for &FreeModule<R, N>
 where
-    for<'a> &'a R: RingOps<R>,
+    for<'a> &'a R: SemiringOps<R>,
 {
     type Output = BlOption<FreeModule<R, N>>;
 
@@ -453,9 +453,9 @@ where
     }
 }
 
-impl<R: Ring, const N: usize> Div<&R> for &FreeModule<R, N>
+impl<R: Semiring, const N: usize> Div<&R> for &FreeModule<R, N>
 where
-    for<'a> &'a R: DivisionRingOps<R>,
+    for<'a> &'a R: SemifieldOps<R>,
 {
     type Output = BlOption<FreeModule<R, N>>;
 
@@ -464,13 +464,13 @@ where
     }
 }
 
-impl<R: Ring, const N: usize> Sum for FreeModule<R, N> {
+impl<R: Semiring, const N: usize> Sum for FreeModule<R, N> {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
         iter.reduce(|lps, rps| lps + rps).unwrap_or(Self::ZERO)
     }
 }
 
-impl<'a, R: Ring + Clone, const N: usize> Sum<&'a Self> for FreeModule<R, N> {
+impl<'a, R: Semiring + Clone, const N: usize> Sum<&'a Self> for FreeModule<R, N> {
     fn sum<I: Iterator<Item = &'a Self>>(mut iter: I) -> Self {
         let first = match iter.next() {
             Some(i) => i.clone(),
@@ -480,7 +480,7 @@ impl<'a, R: Ring + Clone, const N: usize> Sum<&'a Self> for FreeModule<R, N> {
     }
 }
 
-impl<R: Ring, const N: usize> Dot for FreeModule<R, N> {
+impl<R: Semiring, const N: usize> Dot for FreeModule<R, N> {
     type Output = R;
 
     fn dot(self, rps: Self) -> Self::Output {
@@ -488,7 +488,7 @@ impl<R: Ring, const N: usize> Dot for FreeModule<R, N> {
     }
 }
 
-impl<R: Ring, const N: usize> Dot<&Self> for FreeModule<R, N> {
+impl<R: Semiring, const N: usize> Dot<&Self> for FreeModule<R, N> {
     type Output = R;
 
     fn dot(self, rps: &Self) -> Self::Output {
@@ -496,9 +496,9 @@ impl<R: Ring, const N: usize> Dot<&Self> for FreeModule<R, N> {
     }
 }
 
-impl<R: Ring, const N: usize> Dot<FreeModule<R, N>> for &FreeModule<R, N>
+impl<R: Semiring, const N: usize> Dot<FreeModule<R, N>> for &FreeModule<R, N>
 where
-    for<'a> &'a R: RingOps<R>,
+    for<'a> &'a R: SemiringOps<R>,
 {
     type Output = R;
 
@@ -507,9 +507,9 @@ where
     }
 }
 
-impl<R: Ring, const N: usize> Dot for &FreeModule<R, N>
+impl<R: Semiring, const N: usize> Dot for &FreeModule<R, N>
 where
-    for<'a> &'a R: RingOps<R>,
+    for<'a> &'a R: SemiringOps<R>,
 {
     type Output = R;
 
@@ -518,39 +518,39 @@ where
     }
 }
 
-impl<R: Ring, const N: usize> LeftZero for FreeModule<R, N> {
+impl<R: Semiring, const N: usize> LeftZero for FreeModule<R, N> {
     const LEFT_ZERO: Self = Self {
         components: [R::LEFT_ZERO; N],
     };
 }
 
-impl<R: Ring, const N: usize> RightZero for FreeModule<R, N> {
+impl<R: Semiring, const N: usize> RightZero for FreeModule<R, N> {
     const RIGHT_ZERO: Self = Self {
         components: [R::RIGHT_ZERO; N],
     };
 }
 
-impl<R: Ring, const N: usize> Zero for FreeModule<R, N> {
+impl<R: Semiring, const N: usize> Zero for FreeModule<R, N> {
     const ZERO: Self = Self {
         components: [R::ZERO; N],
     };
 }
 
-impl<R: Ring, const N: usize> Set for FreeModule<R, N> {}
+impl<R: Semiring, const N: usize> Set for FreeModule<R, N> {}
 
-impl<R: Ring, const N: usize> AdditiveCommutativeMagma for FreeModule<R, N> {}
+impl<R: Semiring, const N: usize> AdditiveCommutativeMagma for FreeModule<R, N> {}
 
-impl<R: Ring, const N: usize> AdditiveSemigroup for FreeModule<R, N> {}
+impl<R: Semiring, const N: usize> AdditiveSemigroup for FreeModule<R, N> {}
 
-impl<R: Ring + Clone, const N: usize> Semimodule<R> for FreeModule<R, N> {}
+impl<R: Semiring + Clone, const N: usize> Semimodule<R> for FreeModule<R, N> {}
 
-impl<Msg, R: Ring + Absorb<Msg>, const N: usize> Absorb<Msg> for FreeModule<R, N> {
+impl<Msg, R: Semiring + Absorb<Msg>, const N: usize> Absorb<Msg> for FreeModule<R, N> {
     fn absorb_into<D: Duplexer<Msg = Msg>>(self, duplex: &mut D) {
         duplex.absorb_iter(self.components)
     }
 }
 
-impl<Msg, R: Ring + Squeeze<Msg>, const N: usize> Squeeze<Msg> for FreeModule<R, N> {
+impl<Msg, R: Semiring + Squeeze<Msg>, const N: usize> Squeeze<Msg> for FreeModule<R, N> {
     fn squeeze_from<D: Duplexer<Msg = Msg>>(duplex: &mut D) -> Self {
         Self::from_fn(|_| duplex.squeeze())
     }
