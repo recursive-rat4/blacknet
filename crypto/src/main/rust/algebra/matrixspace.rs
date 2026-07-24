@@ -225,7 +225,7 @@ impl<R: Ring + Send, const M: usize, const N: usize, const MN: usize> IntoParall
     for MatrixSpace<R, M, N, MN>
 {
     type Item = R;
-    type Iter = rayon::array::IntoIter<R, N>;
+    type Iter = rayon::array::IntoIter<R, MN>;
 
     #[inline]
     fn into_par_iter(self) -> Self::Iter {
