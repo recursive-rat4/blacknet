@@ -19,7 +19,6 @@
     <packaging>pom</packaging>
 
     <modules>
-        <module>benchmarks</module>
         <module>io</module>
         <module>daemon</module>
         <module>json-rpc</module>
@@ -83,7 +82,6 @@
         <logging.version>7.0.14</logging.version>
         <guava.version>33.6.0-jre</guava.version>
         <weupnp.version>0.1.4</weupnp.version>
-        <jmh.version>1.37</jmh.version>
 
         <project.build.outputTimestamp>2024-01-01T00:00:00Z</project.build.outputTimestamp>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -196,17 +194,6 @@
                 <artifactId>kotlin-test-testng</artifactId>
                 <version>${kotlin.version}</version>
                 <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.openjdk.jmh</groupId>
-                <artifactId>jmh-core</artifactId>
-                <version>${jmh.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.openjdk.jmh</groupId>
-                <artifactId>jmh-generator-annprocess</artifactId>
-                <version>${jmh.version}</version>
-                <scope>provided</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>
