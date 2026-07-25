@@ -90,8 +90,8 @@ pub fn next_difficulty(
         target_block_time(version) * SPACING,
     );
     let (a1, a2) = (a1(version), a2(version));
-    let k = (a2 + 2 * d_time) / a1;
-    let next: UInt320 = difficulty.widening_mul_limb(k as u64);
+    let next: UInt320 =
+        difficulty.widening_mul_limb((a2 + 2 * d_time).value() as u64) / (a1.value() as u64);
     let max: UInt320 = MAX_DIFFICULTY.extend();
     min(next, max).truncate()
 }

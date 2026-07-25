@@ -69,6 +69,10 @@ name = "hashlock"
 path = "src/test/rust/hashlock.rs"
 
 [[test]]
+name = "proofofstake"
+path = "src/test/rust/proofofstake.rs"
+
+[[test]]
 name = "timelock"
 path = "src/test/rust/timelock.rs"
 

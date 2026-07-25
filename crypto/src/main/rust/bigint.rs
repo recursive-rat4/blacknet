@@ -46,6 +46,7 @@ pub struct BigInt<const N: usize> {
 }
 
 impl<const N: usize> BigInt<N> {
+    #[track_caller]
     pub const fn from_hex(mut hex: &str) -> Self {
         debug_assert!(hex.len() == N * 16);
         let mut limbs = [0; N];
