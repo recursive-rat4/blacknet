@@ -30,24 +30,27 @@ pub async fn rpc_server(
     node: Arc<Node>,
     shutdown_send: UnboundedSender<()>,
 ) {
+    let logger = log_manager.logger("RPCServer").unwrap();
+    let logger_shutdown = logger.clone();
     let router = Router::new()
         .route(
             "/api/shutdown",
-            get(|| async move { shutdown_send.send(()).unwrap() }),
+            get(|| async move {
+                info!(logger_shutdown, "Shutdown requested");
+                let _ = shutdown_send.send(());
+            }),
         )
         .merge(v2::routes())
         .with_state(node);
     let addr = format!("{}:{}", config.host, config.port);
-    let logger = log_manager.logger("RPCServer").unwrap();
     match TcpListener::bind(&addr).await {
         Ok(listener) => {
             info!(logger, "Serving RPC at {addr}");
-            drop(logger);
-            axum::serve(listener, router).await.unwrap();
+            let _ = axum::serve(listener, router).await;
+            unreachable!();
         }
         Err(err) => {
             error!(logger, "Can't bind to {addr} because {err}");
-            panic!();
         }
-    };
+    }
 }
