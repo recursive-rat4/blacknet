@@ -41,6 +41,15 @@ impl Account {
         }
     }
 
+    pub const fn with_stake(stake: Amount) -> Self {
+        Self {
+            seq: 0,
+            stake,
+            immature: Vec::new(),
+            leases: Vec::new(),
+        }
+    }
+
     pub const fn seq(&self) -> u32 {
         self.seq
     }
@@ -54,7 +63,7 @@ impl Account {
     }
 
     pub fn balance(&self) -> Amount {
-        self.stake + self.immature.iter().copied().map(Input::balance).sum()
+        self.stake + self.immature.iter().map(Input::balance).sum::<Amount>()
     }
 
     pub fn confirmed_balance(&self, height: u32, confirmations: u32) -> Amount {
@@ -64,7 +73,7 @@ impl Account {
                 .iter()
                 .copied()
                 .map(|i| i.confirmed_balance(height, confirmations))
-                .sum()
+                .sum::<Amount>()
     }
 
     pub fn staking_balance(&self, height: u32) -> Amount {
@@ -74,19 +83,19 @@ impl Account {
                 .iter()
                 .copied()
                 .map(|i| i.mature_balance(height))
-                .sum()
+                .sum::<Amount>()
             + self
                 .leases
                 .iter()
                 .copied()
                 .map(|i| i.mature_balance(height))
-                .sum()
+                .sum::<Amount>()
     }
 
     pub fn total_balance(&self) -> Amount {
         self.stake
-            + self.immature.iter().copied().map(Input::balance).sum()
-            + self.leases.iter().copied().map(Lease::balance).sum()
+            + self.immature.iter().map(Input::balance).sum::<Amount>()
+            + self.leases.iter().map(Lease::balance).sum::<Amount>()
     }
 
     pub fn credit(&mut self, amount: Amount) -> Result<()> {
@@ -200,23 +209,23 @@ pub struct Input {
 }
 
 impl Input {
-    const fn is_confirmed(self, height: u32, confirmations: u32) -> bool {
+    const fn is_confirmed(&self, height: u32, confirmations: u32) -> bool {
         height > self.height + confirmations
     }
-    const fn is_mature(self, height: u32) -> bool {
+    const fn is_mature(&self, height: u32) -> bool {
         height > self.height + MATURITY
     }
-    const fn balance(self) -> Amount {
+    const fn balance(&self) -> Amount {
         self.amount
     }
-    const fn confirmed_balance(self, height: u32, confirmations: u32) -> Amount {
+    const fn confirmed_balance(&self, height: u32, confirmations: u32) -> Amount {
         if self.is_confirmed(height, confirmations) {
             self.amount
         } else {
             Amount::ZERO
         }
     }
-    const fn mature_balance(self, height: u32) -> Amount {
+    const fn mature_balance(&self, height: u32) -> Amount {
         if self.is_mature(height) {
             self.amount
         } else {
@@ -240,19 +249,19 @@ impl Lease {
             amount,
         }
     }
-    pub const fn public_key(self) -> PublicKey {
+    pub const fn public_key(&self) -> PublicKey {
         self.public_key
     }
-    pub const fn height(self) -> u32 {
+    pub const fn height(&self) -> u32 {
         self.height
     }
-    pub const fn balance(self) -> Amount {
+    pub const fn balance(&self) -> Amount {
         self.amount
     }
-    const fn is_mature(self, height: u32) -> bool {
+    const fn is_mature(&self, height: u32) -> bool {
         height > self.height + MATURITY
     }
-    const fn mature_balance(self, height: u32) -> Amount {
+    const fn mature_balance(&self, height: u32) -> Amount {
         if self.is_mature(height) {
             self.amount
         } else {

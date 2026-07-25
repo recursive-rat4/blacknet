@@ -92,7 +92,15 @@ impl Add for Amount {
     type Output = Self;
 
     fn add(self, rps: Self) -> Self::Output {
-        Self::from(self.value + rps.value)
+        Self::new(self.value + rps.value)
+    }
+}
+
+impl Add<&Self> for Amount {
+    type Output = Self;
+
+    fn add(self, rps: &Self) -> Self::Output {
+        Self::new(self.value + rps.value)
     }
 }
 
@@ -106,7 +114,7 @@ impl Sub for Amount {
     type Output = Self;
 
     fn sub(self, rps: Self) -> Self::Output {
-        Self::from(self.value - rps.value)
+        Self::new(self.value - rps.value)
     }
 }
 
@@ -120,7 +128,7 @@ impl Mul<u64> for Amount {
     type Output = Self;
 
     fn mul(self, rps: u64) -> Self::Output {
-        Self::from(self.value * rps)
+        Self::new(self.value * rps)
     }
 }
 
@@ -134,12 +142,22 @@ impl Div<u64> for Amount {
     type Output = Self;
 
     fn div(self, rps: u64) -> Self::Output {
-        Self::from(self.value / rps)
+        Self::new(self.value / rps)
     }
 }
 
 impl Sum for Amount {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
         iter.reduce(|lps, rps| lps + rps).unwrap_or(Self::ZERO)
+    }
+}
+
+impl<'a> Sum<&'a Self> for Amount {
+    fn sum<I: Iterator<Item = &'a Self>>(mut iter: I) -> Self {
+        let first = match iter.next() {
+            Some(i) => *i,
+            None => return Self::ZERO,
+        };
+        iter.fold(first, |lps, rps| lps + rps)
     }
 }

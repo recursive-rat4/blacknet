@@ -49,10 +49,13 @@ use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, VecDeque, hash_map};
 use std::sync::Arc;
 
+type StateKey = [u8; 1];
+const STATE_KEY: StateKey = [0; 1];
+
 pub struct CoinDB {
     logger: Logger,
     state: ArcSwap<State>,
-    db_state: DBView<[u8; 0], State>,
+    db_state: DBView<StateKey, State>,
     accounts: DBView<PublicKey, Account>,
     htlcs: DBView<HashTimeLockContractId, HTLC>,
     multisigs: DBView<MultiSignatureLockContractId, Multisig>,
@@ -69,15 +72,17 @@ impl CoinDB {
         block_db: Arc<BlockDB>,
     ) -> core::result::Result<Arc<Self>, Box<dyn StdError>> {
         let db_state = DBView::new(fjall, "state")?;
-        let state = db_state
-            .get([0u8; 0])
-            .unwrap_or_else(|| State::genesis(mode));
+        let accounts = DBView::new(fjall, "accounts")?;
+
+        let state = db_state.get(STATE_KEY).unwrap_or_else(|| {
+            State::genesis(mode, fjall, &db_state, &accounts, &block_db.indexes)
+        });
 
         Ok(Arc::new(Self {
             logger: log_manager.logger("CoinDB")?,
             state: ArcSwap::new(Arc::new(state)),
             db_state,
-            accounts: DBView::new(fjall, "accounts")?,
+            accounts,
             htlcs: DBView::new(fjall, "htlcs")?,
             multisigs: DBView::new(fjall, "multisigs")?,
             undos: DBView::new(fjall, "undos")?,
@@ -100,6 +105,35 @@ impl CoinDB {
 
     pub fn multisig(&self, id: MultiSignatureLockContractId) -> Option<Multisig> {
         self.multisigs.get(id)
+    }
+
+    pub fn prune(&self) {
+        let mut batch = self.block_db.fjall.create_write_batch();
+        self.prune_batched(&mut batch);
+        batch.commit().unwrap();
+    }
+
+    pub fn prune_batched(&self, batch: &mut WriteBatch) {
+        let mut block_index = self
+            .block_db
+            .indexes
+            .get(self.state.load().rolling_checkpoint)
+            .expect("consistent block index");
+        loop {
+            let hash = block_index.previous();
+            if !self.undos.contains(hash) {
+                break;
+            }
+            self.undos.remove(batch, hash);
+            if hash == Hash::ZERO {
+                break;
+            }
+            block_index = self
+                .block_db
+                .indexes
+                .get(hash)
+                .expect("consistent block index");
+        }
     }
 
     pub fn warnings(&self, warnings: &mut Vec<String>) {
@@ -277,12 +311,25 @@ pub struct State {
 }
 
 impl State {
-    pub fn genesis(mode: &Mode) -> Self {
-        let balances = genesis::balances(mode);
-        let supply = balances.values().copied().sum();
+    pub fn genesis(
+        mode: &Mode,
+        fjall: &Fjall,
+        db_state: &DBView<StateKey, State>,
+        accounts: &DBView<PublicKey, Account>,
+        indexes: &DBView<Hash, BlockIndex>,
+    ) -> Self {
+        let mut supply = Amount::ZERO;
+        let mut batch = fjall.create_write_batch();
+
+        for (public_key, balance) in genesis::balances(mode) {
+            let account = Account::with_stake(balance);
+            accounts.insert(&mut batch, public_key, &account);
+            supply += balance;
+        }
+
         let mut block_sizes = VecDeque::with_capacity(BLOCK_SIZE_SPAN);
         block_sizes.push_back(0);
-        Self {
+        let state = Self {
             height: 0,
             block_hash: genesis::hash(),
             block_time: genesis::time(),
@@ -295,7 +342,14 @@ impl State {
             upgraded: 0,
             fork_v2: 0,
             block_sizes,
-        }
+        };
+
+        let block_index = BlockIndex::new(Hash::ZERO, Hash::ZERO, 0, 0, Amount::ZERO);
+        indexes.insert(&mut batch, genesis::hash(), &block_index);
+
+        db_state.insert(&mut batch, STATE_KEY, &state);
+        batch.commit().unwrap();
+        state
     }
 
     pub const fn pos_version(&self, requires_network: bool) -> PoSVersion {
@@ -466,7 +520,7 @@ impl Update {
             block_sizes: self.state.block_sizes,
         };
         let batch = &mut self.write_batch;
-        self.coin_db.db_state.insert(batch, [0u8; 0], &new_state);
+        self.coin_db.db_state.insert(batch, STATE_KEY, &new_state);
         self.coin_db.state.store(Arc::new(new_state));
         self.coin_db
             .undos

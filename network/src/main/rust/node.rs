@@ -105,10 +105,12 @@ impl Node {
             warn!(logger, "Running as root");
         }
 
-        let peer_table = PeerTable::new(&mode, dirs, log_manager, config.clone())?;
         let fjall = Fjall::open(dirs, config)?;
         let block_db = BlockDB::new(&mode, dirs, fjall.clone(), log_manager)?;
         let coin_db = CoinDB::new(&mode, &fjall, log_manager, block_db.clone())?;
+        block_db.import(&coin_db);
+
+        let peer_table = PeerTable::new(&mode, dirs, log_manager, config.clone())?;
         let tx_pool = Arc::new(RwLock::new(TxPool::new(
             log_manager,
             config.clone(),

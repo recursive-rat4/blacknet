@@ -29,15 +29,15 @@ use blacknet_kernel::error::{Error, Result};
 use blacknet_kernel::proofofstake::{
     MAX_BLOCK_SIZE, ROLLBACK_LIMIT, UPGRADE_THRESHOLD, Version as PoSVersion, is_too_far_in_future,
 };
-use blacknet_log::{LogManager, Logger, info};
+use blacknet_log::{LogManager, Logger, error, info, warn};
 use blacknet_serialization::format::from_bytes;
 use blacknet_time::SystemClock;
 use core::error::Error as StdError;
 use serde::{Deserialize, Serialize};
-use std::fs::File;
-use std::io::{BufWriter, Write};
+use std::fs::{self, File};
+use std::io::{BufReader, BufWriter, Read, Write};
 use std::path::PathBuf;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 const MIN_DISK_SPACE: u64 = MAX_BLOCK_SIZE as u64 * 2;
 
@@ -100,10 +100,10 @@ pub struct BlockDB {
     logger: Logger,
     cached_block: ArcSwapOption<(Hash, Box<[u8]>)>,
     cached_index: ArcSwapOption<(Hash, BlockIndex)>,
-    rejects: RollingHashSet<Hash>,
+    rejects: Mutex<RollingHashSet<Hash>>,
     blocks: DBView<Hash, Block>,
     pub(super) indexes: DBView<Hash, BlockIndex>,
-    fjall: Arc<Fjall>,
+    pub(super) fjall: Arc<Fjall>,
     data_dir: PathBuf,
     requires_network: bool,
 }
@@ -119,7 +119,7 @@ impl BlockDB {
             logger: log_manager.logger("BlockDB")?,
             cached_block: ArcSwapOption::empty(),
             cached_index: ArcSwapOption::empty(),
-            rejects: RollingHashSet::new(ROLLBACK_LIMIT),
+            rejects: Mutex::new(RollingHashSet::new(ROLLBACK_LIMIT)),
             blocks: DBView::with_blob(&fjall, "blocks")?,
             indexes: DBView::new(&fjall, "indexes")?,
             fjall,
@@ -133,7 +133,8 @@ impl BlockDB {
     }
 
     pub fn is_rejected(&self, hash: Hash) -> bool {
-        self.rejects.contains(&hash)
+        let rejects = self.rejects.lock().unwrap();
+        rejects.contains(&hash)
     }
 
     pub fn contains(&self, hash: Hash) -> bool {
@@ -221,6 +222,62 @@ impl BlockDB {
     }
 
     /**
+     * Import a bootstrap if the file exists.
+     */
+    pub fn import(&self, coin_db: &Arc<CoinDB>) {
+        let path = self.data_dir.join("bootstrap.dat");
+        if let Ok(file) = File::open(&path) {
+            let mut file = BufReader::new(file);
+            info!(self.logger, "Found bootstrap");
+            let mut n = 0;
+
+            loop {
+                let mut size = [0u8; 4];
+                if file.read_exact(&mut size).is_err() {
+                    break;
+                }
+                let size = u32::from_be_bytes(size);
+
+                let mut bytes =
+                    unsafe { Box::<[u8]>::new_zeroed_slice(size as usize).assume_init() };
+                if file.read_exact(&mut bytes).is_err() {
+                    break;
+                }
+
+                if let Some(hash) = Block::compute_hash(&bytes) {
+                    match self.process(coin_db, hash, bytes) {
+                        Ok(()) => {
+                            n += 1;
+                            if n & 0xFFFF == 0 {
+                                info!(self.logger, "Processed {n} blocks");
+                            }
+                            coin_db.prune();
+                        }
+                        Err(Error::AlreadyHave(_)) => {
+                            continue;
+                        }
+                        Err(err) => {
+                            warn!(self.logger, "{err} block {hash}");
+                            break;
+                        }
+                    }
+                } else {
+                    warn!(self.logger, "Can't hash a block in bootstrap");
+                    break;
+                }
+            }
+
+            drop(file);
+
+            if let Err(err) = fs::rename(path, self.data_dir.join("bootstrap.dat.old")) {
+                error!(self.logger, "Can't rename bootstrap.dat ({err})");
+            }
+
+            info!(self.logger, "Imported {n} blocks");
+        }
+    }
+
+    /**
      * Return `Some` path of written data or `None` if not synchronized
      */
     pub fn export(&self, state: &State) -> Option<PathBuf> {
@@ -277,8 +334,9 @@ impl BlockDB {
         check
     }
 
-    pub fn process(&mut self, coin_db: &Arc<CoinDB>, hash: Hash, bytes: Box<[u8]>) -> Result<()> {
-        if self.is_rejected(hash) {
+    pub fn process(&self, coin_db: &Arc<CoinDB>, hash: Hash, bytes: Box<[u8]>) -> Result<()> {
+        let mut rejects = self.rejects.lock().unwrap();
+        if rejects.contains(&hash) {
             return Err(Error::invalid("Already rejected block"));
         }
         if self.contains(hash) {
@@ -286,7 +344,7 @@ impl BlockDB {
         }
         let result = self.process_block(coin_db, hash, bytes);
         if matches!(result, Err(Error::Invalid(_))) {
-            self.rejects.insert(hash);
+            rejects.insert(hash);
         }
         result
     }
