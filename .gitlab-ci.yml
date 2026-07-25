@@ -47,11 +47,11 @@ rust-test:
   extends: .rust-llvm
   stage: test
   script:
-    - cargo build --package blacknet-crypto --package blacknet-io --package blacknet-kernel --package blacknet-serialization --package blacknet-time --no-default-features
-    - cargo test --package blacknet-crypto --package blacknet-io --package blacknet-kernel --package blacknet-serialization --package blacknet-time --no-default-features
-    - cargo build
-    - cargo test
-    - cargo bench --no-run --profile dev
+    - cargo build --locked --package blacknet-crypto --package blacknet-io --package blacknet-kernel --package blacknet-serialization --package blacknet-time --no-default-features
+    - cargo test --locked --package blacknet-crypto --package blacknet-io --package blacknet-kernel --package blacknet-serialization --package blacknet-time --no-default-features
+    - cargo build --locked
+    - cargo test --locked
+    - cargo bench --locked --no-run --profile dev
   rules:
     - changes:
       - Cargo.lock
