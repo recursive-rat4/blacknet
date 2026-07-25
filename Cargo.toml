@@ -70,6 +70,7 @@ rusqlite = { version = "0.40.0", features = ["fallible_uint"] }
 serde = { version = "1.0.228", default-features = false, features = ["alloc", "derive"] }
 serde_core = { version = "1.0.228", default-features = false, features = ["alloc"] }
 serde_json = { version = "1.0.150" }
+serde_repr = { version = "0.1.21" }
 sha2 = { version = "0.11.0", default-features = false }
 sha3 = { version = "0.12.0", default-features = false }
 spdlog-rs = { version = "0.5.3" }

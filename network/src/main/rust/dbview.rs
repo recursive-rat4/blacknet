@@ -60,8 +60,8 @@ impl<K: AsRef<[u8]>, V: for<'de> Deserialize<'de> + Serialize> DBView<K, V> {
     pub fn get_with_size(&self, key: K) -> Option<(V, usize)> {
         self.keyspace.get(key).unwrap().map(|slice| {
             let size = slice.len();
-            let deserealized = from_bytes::<V>(&slice, false).unwrap();
-            (deserealized, size)
+            let deserialized = from_bytes::<V>(&slice, false).unwrap();
+            (deserialized, size)
         })
     }
 

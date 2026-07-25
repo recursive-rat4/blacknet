@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,10 +15,20 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_kernel::transaction::Transaction;
+use blacknet_kernel::transaction::{Transaction, TxKind};
+use blacknet_serialization::format::{from_bytes, to_bytes};
 
 #[test]
 fn hash() {
     let invalid_bytes: [u8; 4] = [0, 1, 2, 3];
     assert_eq!(Transaction::compute_hash(&invalid_bytes), None);
+}
+
+#[test]
+fn kind() {
+    let bytes = [0u8; 1];
+    let deserialized = from_bytes::<TxKind>(&bytes, false).unwrap();
+    let serialized = to_bytes::<TxKind>(&TxKind::Transfer).unwrap();
+    assert_eq!(deserialized, TxKind::Transfer);
+    assert_eq!(bytes.as_slice(), serialized);
 }

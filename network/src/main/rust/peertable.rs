@@ -339,8 +339,8 @@ impl PeerTable {
             warn!(self.logger, "Unknown {FILE_NAME} version {version}");
             return Ok(());
         }
-        let deserealized: HashMap<Endpoint, Entry> = from_read(&mut file)?;
-        peers.extend(deserealized);
+        let deserialized: HashMap<Endpoint, Entry> = from_read(&mut file)?;
+        peers.extend(deserialized);
         Ok(())
     }
 
