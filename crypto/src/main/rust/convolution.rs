@@ -15,17 +15,17 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{Ring, RingOps};
+use crate::algebra::{Ring, RingOps, Semiring, SemiringOps};
 
-pub trait Convolution<R: Ring, const N: usize> {
+pub trait Convolution<R: Semiring, const N: usize> {
     fn convolute(a: &[R; N], b: &[R; N]) -> [R; N];
 }
 
 pub struct Cyclic {}
 
-impl<R: Ring, const N: usize> Convolution<R, N> for Cyclic
+impl<R: Semiring, const N: usize> Convolution<R, N> for Cyclic
 where
-    for<'a> &'a R: RingOps<R>,
+    for<'a> &'a R: SemiringOps<R>,
 {
     fn convolute(a: &[R; N], b: &[R; N]) -> [R; N] {
         let mut c = [R::ZERO; N];
@@ -62,9 +62,9 @@ where
 }
 
 #[inline]
-pub fn binomial<R: Ring, const N: usize>(c: &mut [R], a: &[R], b: &[R], zeta: &R)
+pub fn binomial<R: Semiring, const N: usize>(c: &mut [R], a: &[R], b: &[R], zeta: &R)
 where
-    for<'a> &'a R: RingOps<R>,
+    for<'a> &'a R: SemiringOps<R>,
 {
     match N {
         4 => {
@@ -88,9 +88,9 @@ where
     }
 }
 
-pub trait Binomial<R: Ring, const N: usize>: Convolution<R, N>
+pub trait Binomial<R: Semiring, const N: usize>: Convolution<R, N>
 where
-    for<'a> &'a R: RingOps<R>,
+    for<'a> &'a R: SemiringOps<R>,
 {
     const ZETA: R;
 
