@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2025 Pavel Vasin
+ * Copyright (c) 2018-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -17,7 +17,7 @@
 
 use crate::v2::error::Result;
 use crate::v2::{AmountInfo, PublicKeyInfo};
-use blacknet_kernel::transaction::{PaymentId, Transfer};
+use blacknet_kernel::transaction::{PayloadKind, PaymentId, Transfer};
 use blacknet_serialization::format::from_bytes;
 use blacknet_wallet::address::AddressCodec;
 use data_encoding::HEXUPPER;
@@ -25,17 +25,17 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]
 pub struct PaymentIdInfo {
-    kind: u8,
+    kind: PayloadKind,
     payload: String,
 }
 
 impl From<&PaymentId> for PaymentIdInfo {
     fn from(payment_id: &PaymentId) -> Self {
-        if payment_id.kind() == 0
+        if payment_id.kind() == PayloadKind::Plain
             && let Ok(string) = str::from_utf8(payment_id.payload())
         {
             Self {
-                kind: 0,
+                kind: PayloadKind::Plain,
                 payload: string.to_owned(),
             }
         } else {

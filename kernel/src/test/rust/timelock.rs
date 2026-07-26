@@ -20,7 +20,7 @@ use core::assert_matches;
 
 #[test]
 fn absolute_time() {
-    let time_lock = TimeLock::new(TIME, 1000000);
+    let time_lock = TimeLock::new(TimeKind::Time, 1000000);
     assert_matches!(
         time_lock.verify(0, 0.into(), 0, (1000000 - 1).into()),
         Err(_)
@@ -35,7 +35,7 @@ fn absolute_time() {
 
 #[test]
 fn absolute_height() {
-    let time_lock = TimeLock::new(HEIGHT, 1000000);
+    let time_lock = TimeLock::new(TimeKind::Height, 1000000);
     assert_matches!(time_lock.verify(0, 0.into(), 1000000 - 1, 0.into()), Err(_));
     assert_matches!(time_lock.verify(0, 0.into(), 1000000, 0.into()), Err(_));
     assert_matches!(time_lock.verify(0, 0.into(), 1000001, 0.into()), Ok(()));
@@ -44,7 +44,7 @@ fn absolute_height() {
 
 #[test]
 fn relative_time() {
-    let time_lock = TimeLock::new(RELATIVE_TIME, 10000);
+    let time_lock = TimeLock::new(TimeKind::RelativeTime, 10000);
     assert_matches!(
         time_lock.verify(0, 990000.into(), 0, (1000000 - 1).into()),
         Err(_)
@@ -65,7 +65,7 @@ fn relative_time() {
 
 #[test]
 fn relative_height() {
-    let time_lock = TimeLock::new(RELATIVE_HEIGHT, 10000);
+    let time_lock = TimeLock::new(TimeKind::RelativeHeight, 10000);
     assert_matches!(
         time_lock.verify(990000, 0.into(), 1000000 - 1, 0.into()),
         Err(_)

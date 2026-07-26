@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2025 Pavel Vasin
+ * Copyright (c) 2018-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -17,8 +17,8 @@
 
 use crate::v2::error::Result;
 use crate::v2::{AmountInfo, ByteArrayInfo, PublicKeyInfo};
-use blacknet_kernel::hashlock::HashLock;
-use blacknet_kernel::timelock::TimeLock;
+use blacknet_kernel::hashlock::{HashKind, HashLock};
+use blacknet_kernel::timelock::{TimeKind, TimeLock};
 use blacknet_kernel::transaction::CreateHTLC;
 use blacknet_serialization::format::from_bytes;
 use blacknet_wallet::address::AddressCodec;
@@ -26,7 +26,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]
 struct TimeLockInfo {
-    r#type: u8,
+    r#type: TimeKind,
     data: i64,
 }
 
@@ -41,7 +41,7 @@ impl From<&TimeLock> for TimeLockInfo {
 
 #[derive(Deserialize, Serialize)]
 struct HashLockInfo {
-    r#type: u8,
+    r#type: HashKind,
     data: ByteArrayInfo,
 }
 

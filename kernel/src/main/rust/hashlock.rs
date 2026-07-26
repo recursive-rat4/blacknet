@@ -21,26 +21,31 @@ use alloc::format;
 use blacknet_crypto::symmetric::Blake2b256;
 use ripemd::Ripemd160;
 use serde::{Deserialize, Serialize};
+use serde_repr::{Deserialize_repr, Serialize_repr};
 use sha2::Sha256;
 use sha3::Keccak256;
 
-pub const BLAKE2B_256: u8 = 0;
-pub const SHA2_256: u8 = 1;
-pub const KECCAK_256: u8 = 2;
-pub const RIPEMD_160: u8 = 3;
+#[derive(Clone, Copy, Debug, Deserialize_repr, Serialize_repr)]
+#[repr(u8)]
+pub enum HashKind {
+    Blake2b256 = 0,
+    SHA2_256 = 1,
+    Keccak256 = 2,
+    RipeMD160 = 3,
+}
 
 #[derive(Clone, Deserialize, Serialize)]
 pub struct HashLock {
-    algorithm: u8,
+    algorithm: HashKind,
     image: Box<[u8]>,
 }
 
 impl HashLock {
-    pub const fn new(algorithm: u8, image: Box<[u8]>) -> Self {
+    pub const fn new(algorithm: HashKind, image: Box<[u8]>) -> Self {
         Self { algorithm, image }
     }
 
-    pub fn with_slice(algorithm: u8, image: &[u8]) -> Self {
+    pub fn with_slice(algorithm: HashKind, image: &[u8]) -> Self {
         Self {
             algorithm,
             image: image.into(),
@@ -48,7 +53,7 @@ impl HashLock {
     }
 
     pub fn validate(&self) -> Result<()> {
-        let lengthe = self.hash_lengthe_bytes()?;
+        let lengthe = self.hash_lengthe_bytes();
         if lengthe == self.image.len() {
             Ok(())
         } else {
@@ -62,22 +67,16 @@ impl HashLock {
 
     pub fn verify(&self, preimage: &[u8]) -> Result<()> {
         let hash: Box<[u8]> = match self.algorithm {
-            BLAKE2B_256 => Box::new(Into::<[u8; 32]>::into(Blake2b256::digest(preimage))),
-            SHA2_256 => Box::new(Into::<[u8; 32]>::into(<Sha256 as sha2::Digest>::digest(
-                preimage,
-            ))),
-            KECCAK_256 => Box::new(Into::<[u8; 32]>::into(<Keccak256 as sha3::Digest>::digest(
-                preimage,
-            ))),
-            RIPEMD_160 => Box::new(Into::<[u8; 20]>::into(
+            HashKind::Blake2b256 => Box::new(Into::<[u8; 32]>::into(Blake2b256::digest(preimage))),
+            HashKind::SHA2_256 => Box::new(Into::<[u8; 32]>::into(
+                <Sha256 as sha2::Digest>::digest(preimage),
+            )),
+            HashKind::Keccak256 => Box::new(Into::<[u8; 32]>::into(
+                <Keccak256 as sha3::Digest>::digest(preimage),
+            )),
+            HashKind::RipeMD160 => Box::new(Into::<[u8; 20]>::into(
                 <Ripemd160 as ripemd::Digest>::digest(preimage),
             )),
-            _ => {
-                return Err(Error::invalid(format!(
-                    "Unknown hash type {0}",
-                    self.algorithm
-                )));
-            }
         };
         if hash == self.image {
             Ok(())
@@ -86,22 +85,16 @@ impl HashLock {
         }
     }
 
-    fn hash_lengthe_bytes(&self) -> Result<usize> {
-        Ok(match self.algorithm {
-            BLAKE2B_256 => 32,
-            SHA2_256 => 32,
-            KECCAK_256 => 32,
-            RIPEMD_160 => 20,
-            _ => {
-                return Err(Error::invalid(format!(
-                    "Unknown hash type {0}",
-                    self.algorithm
-                )));
-            }
-        })
+    const fn hash_lengthe_bytes(&self) -> usize {
+        match self.algorithm {
+            HashKind::Blake2b256 => 32,
+            HashKind::SHA2_256 => 32,
+            HashKind::Keccak256 => 32,
+            HashKind::RipeMD160 => 20,
+        }
     }
 
-    pub const fn algorithm(&self) -> u8 {
+    pub const fn algorithm(&self) -> HashKind {
         self.algorithm
     }
 

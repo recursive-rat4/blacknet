@@ -83,7 +83,6 @@ impl TxData for CreateHTLC {
         data_index: u32,
         coin_tx: &mut impl CoinTx,
     ) -> Result<()> {
-        self.time_lock.validate()?;
         self.hash_lock.validate()?;
 
         if self.amount == Amount::ZERO {

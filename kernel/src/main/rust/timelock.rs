@@ -16,37 +16,28 @@
  */
 
 use crate::error::{Error, Result};
-use alloc::format;
 use blacknet_time::Seconds;
 use serde::{Deserialize, Serialize};
+use serde_repr::{Deserialize_repr, Serialize_repr};
 
-pub const TIME: u8 = 0;
-pub const HEIGHT: u8 = 1;
-pub const RELATIVE_TIME: u8 = 2;
-pub const RELATIVE_HEIGHT: u8 = 3;
+#[derive(Clone, Copy, Debug, Deserialize_repr, Serialize_repr)]
+#[repr(u8)]
+pub enum TimeKind {
+    Time = 0,
+    Height = 1,
+    RelativeTime = 2,
+    RelativeHeight = 3,
+}
 
 #[derive(Clone, Deserialize, Serialize)]
 pub struct TimeLock {
-    algorithm: u8,
+    algorithm: TimeKind,
     data: i64,
 }
 
 impl TimeLock {
-    pub const fn new(algorithm: u8, data: i64) -> Self {
+    pub const fn new(algorithm: TimeKind, data: i64) -> Self {
         Self { algorithm, data }
-    }
-
-    pub fn validate(&self) -> Result<()> {
-        match self.algorithm {
-            TIME => Ok(()),
-            HEIGHT => Ok(()),
-            RELATIVE_TIME => Ok(()),
-            RELATIVE_HEIGHT => Ok(()),
-            _ => Err(Error::invalid(format!(
-                "Unknown time lock type {0}",
-                self.algorithm
-            ))),
-        }
     }
 
     pub fn verify(
@@ -57,16 +48,10 @@ impl TimeLock {
         time: Seconds,
     ) -> Result<()> {
         let result = match self.algorithm {
-            TIME => self.data < time.into(),
-            HEIGHT => self.data < height as i64,
-            RELATIVE_TIME => compiler_time + self.data.into() < time,
-            RELATIVE_HEIGHT => compiler_height as i64 + self.data < height as i64,
-            _ => {
-                return Err(Error::invalid(format!(
-                    "Unknown time lock type {0}",
-                    self.algorithm
-                )));
-            }
+            TimeKind::Time => self.data < time.into(),
+            TimeKind::Height => self.data < height as i64,
+            TimeKind::RelativeTime => compiler_time + self.data.into() < time,
+            TimeKind::RelativeHeight => compiler_height as i64 + self.data < height as i64,
         };
         if result {
             Ok(())
@@ -75,7 +60,7 @@ impl TimeLock {
         }
     }
 
-    pub const fn algorithm(&self) -> u8 {
+    pub const fn algorithm(&self) -> TimeKind {
         self.algorithm
     }
 

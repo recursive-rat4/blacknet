@@ -22,26 +22,31 @@ use crate::error::Result;
 use crate::transaction::{CoinTx, Transaction, TxData};
 use alloc::boxed::Box;
 use serde::{Deserialize, Serialize};
+use serde_repr::{Deserialize_repr, Serialize_repr};
 
-const PLAIN: u8 = 0;
-#[expect(dead_code)]
-const X25519_CHACHA20: u8 = 1;
+#[derive(Clone, Copy, Default, Deserialize_repr, Eq, PartialEq, Serialize_repr)]
+#[repr(u8)]
+pub enum PayloadKind {
+    #[default]
+    Plain = 0,
+    X25519Chacha20 = 1,
+}
 
 #[derive(Default, Deserialize, Serialize)]
 pub struct PaymentId {
-    kind: u8,
+    kind: PayloadKind,
     payload: Box<[u8]>,
 }
 
 impl PaymentId {
     pub fn plain(payload: &str) -> Self {
         Self {
-            kind: PLAIN,
+            kind: PayloadKind::Plain,
             payload: payload.as_bytes().into(),
         }
     }
 
-    pub const fn kind(&self) -> u8 {
+    pub const fn kind(&self) -> PayloadKind {
         self.kind
     }
 

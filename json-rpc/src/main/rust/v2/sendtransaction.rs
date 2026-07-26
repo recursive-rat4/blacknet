@@ -26,8 +26,8 @@ use axum::{
 use blacknet_kernel::amount::Amount;
 use blacknet_kernel::blake2b::Hash;
 use blacknet_kernel::ed25519::{to_public_key, to_secret_key};
-use blacknet_kernel::hashlock::HashLock;
-use blacknet_kernel::timelock::TimeLock;
+use blacknet_kernel::hashlock::{HashKind, HashLock};
+use blacknet_kernel::timelock::{TimeKind, TimeLock};
 use blacknet_kernel::transaction::*;
 use blacknet_network::node::Node;
 use blacknet_serialization::format::to_bytes;
@@ -311,9 +311,9 @@ pub struct CreateSwapRequest {
     pub fee: Amount,
     pub amount: Amount,
     pub to: String,
-    pub timeLockType: u8,
+    pub timeLockType: TimeKind,
     pub timeLockData: i64,
-    pub hashLockType: u8,
+    pub hashLockType: HashKind,
     pub hashLockData: String,
     pub referenceChain: Option<Hash>,
 }
