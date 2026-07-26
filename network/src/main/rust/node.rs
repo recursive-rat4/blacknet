@@ -18,7 +18,7 @@
 use crate::blockdb::BlockDB;
 use crate::blockfetcher::BlockFetcher;
 use crate::coindb::CoinDB;
-use crate::connection::{Connection, State};
+use crate::connection::{Connection, ConnectionId, State};
 use crate::endpoint::Endpoint;
 use crate::fjall::Fjall;
 use crate::packet::UnfilteredInvList;
@@ -45,7 +45,7 @@ use core::error::Error as StdError;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::path::PathBuf;
-use std::sync::atomic::AtomicU64;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, RwLock};
 use tokio::runtime::Runtime;
 use tokio::time::{Duration, sleep};
@@ -59,7 +59,7 @@ pub struct Node {
     logger: Logger,
     config: Arc<Config>,
     state_dir: PathBuf,
-    next_peer_id: AtomicU64,
+    next_connection_id: AtomicU64,
     connections: RwLock<Vec<Connection>>,
     peer_table: Arc<PeerTable>,
     router: Arc<Router>,
@@ -120,7 +120,7 @@ impl Node {
             logger,
             config: config.clone(),
             state_dir: dirs.state().to_owned(),
-            next_peer_id: AtomicU64::new(1),
+            next_connection_id: AtomicU64::new(1),
             connections: RwLock::new(Vec::new()),
             peer_table: peer_table.clone(),
             router: Router::new(&mode, dirs, log_manager, runtime, config, peer_table)?,
@@ -143,6 +143,12 @@ impl Node {
         runtime.spawn(node.clone().rotator());
 
         Ok(node)
+    }
+
+    #[expect(dead_code)]
+    fn next_connection_id(&self) -> ConnectionId {
+        let n = self.next_connection_id.fetch_add(1, Ordering::Relaxed);
+        ConnectionId::new(n).expect("64-bit id is enough")
     }
 
     fn generate_nonce() -> u64 {
@@ -332,7 +338,11 @@ impl Node {
         result.map(|_| ())
     }
 
-    pub fn broadcast_inv(&self, unfiltered: &UnfilteredInvList, source: Option<u64>) -> usize {
+    pub fn broadcast_inv(
+        &self,
+        unfiltered: &UnfilteredInvList,
+        source: Option<ConnectionId>,
+    ) -> usize {
         let mut n = 0;
         let mut to_send = Vec::<Hash>::with_capacity(unfiltered.len());
         let connections = self.connections.read().unwrap();

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2025 Pavel Vasin
+ * Copyright (c) 2018-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::connection::Connection;
+use crate::connection::{Connection, ConnectionId};
 use crate::node::NETWORK_TIMEOUT;
 use crate::packet::{GetTransactions, Inventory, MAX_INVENTORY, MAX_TRANSACTIONS};
 use crate::txpool::TxPool;
@@ -32,7 +32,7 @@ const MAX_REQUESTS: usize = 16 * MAX_INVENTORY;
 
 pub struct TxFetcher {
     inventory_send: UnboundedSender<(Weak<Connection>, Inventory)>,
-    requests: Mutex<HashMap<Hash, (u64, Milliseconds)>>,
+    requests: Mutex<HashMap<Hash, (ConnectionId, Milliseconds)>>,
     tx_pool: Weak<RwLock<TxPool>>,
 }
 

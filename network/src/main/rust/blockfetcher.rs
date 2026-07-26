@@ -16,7 +16,7 @@
  */
 
 use crate::coindb::CoinDB;
-use crate::connection::Connection;
+use crate::connection::{Connection, ConnectionId};
 use crate::packet::{BlockAnnounce, Blocks, ConsensusFault};
 use blacknet_compat::config::Network as Config;
 use blacknet_crypto::bigint::UInt256;
@@ -27,9 +27,9 @@ use tokio::sync::mpsc;
 
 #[expect(dead_code)]
 pub struct BlockFetcher {
-    connection_id: u64,
-    announces_receiver: mpsc::Receiver<(u64, BlockAnnounce)>,
-    announces_sender: mpsc::Sender<(u64, BlockAnnounce)>,
+    connection_id: Option<ConnectionId>,
+    announces_receiver: mpsc::Receiver<(ConnectionId, BlockAnnounce)>,
+    announces_sender: mpsc::Sender<(ConnectionId, BlockAnnounce)>,
     coin_db: Arc<CoinDB>,
 }
 
@@ -38,7 +38,7 @@ impl BlockFetcher {
         let size = config.incoming_connections as usize + config.outgoing_connections as usize;
         let (announces_sender, announces_receiver) = mpsc::channel(size);
         Self {
-            connection_id: 0,
+            connection_id: None,
             announces_receiver,
             announces_sender,
             coin_db,
@@ -46,15 +46,17 @@ impl BlockFetcher {
     }
 
     pub const fn is_synchronizing(&self) -> bool {
-        self.connection_id != 0
+        self.connection_id.is_some()
     }
 
     pub fn disconnected(&self, connection: &Connection) {
-        if self.connection_id != connection.id() {
-            return;
-        }
+        if let Some(connection_id) = self.connection_id {
+            if connection_id != connection.id() {
+                return;
+            }
 
-        todo!();
+            todo!();
+        }
     }
 
     pub fn offer(&self, connection: &Connection, block_announce: BlockAnnounce) {
@@ -81,11 +83,13 @@ impl BlockFetcher {
 
         connection.close();
 
-        if self.connection_id != connection.id() {
-            return;
-        }
+        if let Some(connection_id) = self.connection_id {
+            if connection_id != connection.id() {
+                return;
+            }
 
-        todo!();
+            todo!();
+        }
     }
 
     pub fn blocks(&self, connection: &Connection, _blocks: Blocks) {

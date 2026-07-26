@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2025 Pavel Vasin
+ * Copyright (c) 2018-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -31,6 +31,7 @@ use blacknet_serialization::format::to_bytes;
 use blacknet_time::{Milliseconds, Seconds, SystemClock};
 use bytemuck::NoUninit;
 use core::cmp::min;
+use core::num::NonZero;
 use std::sync::{Arc, Mutex, MutexGuard, RwLock, atomic::*};
 use tokio::io::{AsyncReadExt, AsyncWriteExt, BufReader, BufWriter};
 use tokio::net::TcpStream;
@@ -39,6 +40,8 @@ use tokio::runtime::Runtime;
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 use tokio::task::JoinHandle;
 use tokio::time::sleep;
+
+pub type ConnectionId = NonZero<u64>;
 
 #[expect(dead_code)]
 pub struct Connection {
@@ -70,7 +73,7 @@ pub struct Connection {
     ping_request: ArcSwapOption<(u32, Milliseconds)>,
     requested_difficulty: Atomic<UInt256>,
 
-    id: u64,
+    id: ConnectionId,
     version: AtomicU32,
     agent: ArcSwap<String>,
     fee_filter: Atomic<Amount>,
@@ -268,7 +271,7 @@ impl Connection {
             .store(last_inv_sent_time, Ordering::Release);
     }
 
-    pub const fn id(&self) -> u64 {
+    pub const fn id(&self) -> ConnectionId {
         self.id
     }
 
