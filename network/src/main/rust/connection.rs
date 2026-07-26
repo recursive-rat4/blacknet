@@ -36,14 +36,13 @@ use std::sync::{Arc, Mutex, MutexGuard, RwLock, atomic::*};
 use tokio::io::{AsyncReadExt, AsyncWriteExt, BufReader, BufWriter};
 use tokio::net::TcpStream;
 use tokio::net::tcp::{OwnedReadHalf, OwnedWriteHalf};
-use tokio::runtime::Runtime;
-use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
+use tokio::runtime::Handle;
+use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender, unbounded_channel};
 use tokio::task::JoinHandle;
 use tokio::time::sleep;
 
 pub type ConnectionId = NonZero<u64>;
 
-#[expect(dead_code)]
 pub struct Connection {
     logger: Logger,
     handles: RwLock<Vec<JoinHandle<()>>>,
@@ -80,13 +79,61 @@ pub struct Connection {
 }
 
 impl Connection {
-    #[expect(unused)]
-    pub fn launch(self: Arc<Self>, tcp_stream: TcpStream, runtime: &Runtime) {
+    pub fn new(
+        logger: Logger,
+        node: Arc<Node>,
+        remote_endpoint: Endpoint,
+        local_endpoint: Endpoint,
+        state: State,
+        id: ConnectionId,
+    ) -> (Arc<Self>, UnboundedReceiver<(PacketKind, Vec<u8>)>) {
+        let (send_channel, recv_channel) = unbounded_channel();
+        (
+            Arc::new(Self {
+                logger,
+                handles: RwLock::new(Vec::new()),
+                node,
+                remote_endpoint,
+                local_endpoint,
+                state: Atomic::new(state),
+                total_bytes_read: AtomicU64::new(0),
+                total_bytes_written: AtomicU64::new(0),
+                closed: AtomicBool::new(false),
+                dos_score: AtomicU8::new(0),
+                send_channel_size: AtomicUsize::new(0),
+                send_channel,
+                inventory_to_send: Mutex::new(Vec::new()),
+                connected_at: SystemClock::millis(),
+                last_packet_time: Atomic::new(Milliseconds::ZERO),
+                last_block: ArcSwap::new(Arc::new(BlockAnnounce::default())),
+                last_block_time: Atomic::new(Milliseconds::ZERO),
+                last_tx_time: Atomic::new(Milliseconds::ZERO),
+                last_ping_time: Atomic::new(Milliseconds::ZERO),
+                last_inv_sent_time: Atomic::new(Milliseconds::ZERO),
+                time_offset: Atomic::new(Seconds::ZERO),
+                ping: Atomic::new(Milliseconds::ZERO),
+                ping_request: ArcSwapOption::empty(),
+                requested_difficulty: Atomic::new(UInt256::ZERO),
+                id,
+                version: AtomicU32::new(0),
+                agent: ArcSwap::new(Arc::new(String::new())),
+                fee_filter: Atomic::new(Amount::ZERO),
+            }),
+            recv_channel,
+        )
+    }
+
+    pub fn launch(
+        self: Arc<Self>,
+        tcp_stream: TcpStream,
+        recv_channel: UnboundedReceiver<(PacketKind, Vec<u8>)>,
+        runtime: &Handle,
+    ) {
         let mut handles = self.handles.write().unwrap();
         let (tcp_read, tcp_write) = tcp_stream.into_split();
         handles.push(runtime.spawn(self.clone().pusher()));
         handles.push(runtime.spawn(self.clone().receiver(tcp_read)));
-        handles.push(runtime.spawn(self.clone().sender(todo!(), tcp_write)));
+        handles.push(runtime.spawn(self.clone().sender(recv_channel, tcp_write)));
     }
 
     pub async fn join(&self) {
@@ -244,6 +291,15 @@ impl Connection {
     pub fn set_last_packet_time(&self, last_packet_time: Milliseconds) {
         self.last_packet_time
             .store(last_packet_time, Ordering::Release);
+    }
+
+    pub fn last_block_time(&self) -> Milliseconds {
+        self.last_block_time.load(Ordering::Acquire)
+    }
+
+    pub fn set_last_block_time(&self, last_block_time: Milliseconds) {
+        self.last_block_time
+            .store(last_block_time, Ordering::Release);
     }
 
     pub fn last_tx_time(&self) -> Milliseconds {
@@ -460,15 +516,15 @@ pub enum State {
 
 impl State {
     // ProberConnected skips main logic
-    pub const fn is_established(self) -> bool {
+    pub const fn is_established(&self) -> bool {
         matches!(self, State::IncomingConnected | State::OutgoingConnected)
     }
 
-    pub const fn is_incoming(self) -> bool {
+    pub const fn is_incoming(&self) -> bool {
         matches!(self, State::IncomingConnected | State::IncomingWaiting)
     }
 
-    pub const fn is_outgoing(self) -> bool {
+    pub const fn is_outgoing(&self) -> bool {
         matches!(
             self,
             State::OutgoingConnected

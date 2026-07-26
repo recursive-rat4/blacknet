@@ -18,16 +18,19 @@
 use crate::endpoint::{Endpoint, ipv4_any, ipv6_any};
 use crate::i2psam::SAM;
 use crate::natpmp::natpmp_forward;
+use crate::node::Node;
 use crate::peertable::PeerTable;
 use crate::torcontroller::TorController;
 use blacknet_compat::config::Network as Config;
 use blacknet_compat::{Mode, XDGDirectories};
 use blacknet_log::{LogManager, Logger, info, warn};
-use std::cmp::min;
+use core::cmp::min;
+use core::error::Error;
+use core::net::SocketAddr;
+use core::ops::ControlFlow;
 use std::collections::HashSet;
-use std::error::Error;
-use std::sync::{Arc, RwLock};
-use tokio::net::TcpListener;
+use std::sync::{Arc, OnceLock, RwLock, Weak};
+use tokio::net::{TcpListener, TcpStream};
 use tokio::runtime::Runtime;
 use tokio::sync::Mutex;
 use tokio::time::{Duration, sleep};
@@ -39,6 +42,7 @@ pub struct Router {
     peer_table: Arc<PeerTable>,
     i2p_sam: Mutex<SAM>,
     tor_controller: Mutex<TorController>,
+    node: OnceLock<Weak<Node>>,
 }
 
 impl Router {
@@ -57,6 +61,7 @@ impl Router {
             peer_table,
             i2p_sam: Mutex::new(SAM::new(mode, dirs, log_manager, config.clone())?),
             tor_controller: Mutex::new(TorController::new(dirs, log_manager, config.clone())?),
+            node: OnceLock::new(),
         });
 
         if config.ipv6 || config.ipv4 {
@@ -75,6 +80,10 @@ impl Router {
         Ok(router)
     }
 
+    pub fn set_node(&self, node: Weak<Node>) {
+        self.node.set(node).expect("Node constructor")
+    }
+
     async fn listen_ip(self: Arc<Self>) {
         let mut timeout = Self::INIT_TIMEOUT;
         let endpoint = if self.config.ipv6 {
@@ -91,7 +100,11 @@ impl Router {
                     self.add_listener(endpoint);
                     loop {
                         match listener.accept().await {
-                            Ok((_socket, _addr)) => todo!(),
+                            Ok((socket, addr)) => {
+                                if self.accept_ip(socket, addr).is_break() {
+                                    break;
+                                }
+                            }
                             Err(msg) => {
                                 warn!(self.logger, "{msg}");
                                 break;
@@ -108,6 +121,25 @@ impl Router {
             sleep(timeout).await;
             timeout = min(timeout * 2, Self::MAX_TIMEOUT);
         }
+    }
+
+    fn accept_ip(&self, tcp_stream: TcpStream, addr: SocketAddr) -> ControlFlow<()> {
+        let remote_endpoint: Endpoint = addr.into();
+        let local_endpoint: Endpoint = match tcp_stream.local_addr() {
+            Ok(addr) => addr.into(),
+            Err(err) => {
+                warn!(self.logger, "local_addr: {err}");
+                return ControlFlow::Continue(());
+            }
+        };
+        if !local_endpoint.is_local() {
+            self.add_listener(local_endpoint)
+        }
+        match self.node.get().expect("Router initialized").upgrade() {
+            Some(node) => node.accept_ip(tcp_stream, remote_endpoint, local_endpoint),
+            None => return ControlFlow::Break(()),
+        }
+        ControlFlow::Continue(())
     }
 
     async fn listen_tor(self: Arc<Self>) {

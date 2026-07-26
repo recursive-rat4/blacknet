@@ -18,7 +18,7 @@
 use crate::v2::{AmountInfo, BigIntegerInfo, EndpointInfo, HashInfo};
 use blacknet_kernel::blake2b::Hash;
 use blacknet_network::blockdb::BlockDB;
-use blacknet_network::connection::Connection;
+use blacknet_network::connection::{Connection, ConnectionId};
 use blacknet_network::genesis;
 use blacknet_network::packet::BlockAnnounce;
 use serde::{Deserialize, Serialize};
@@ -26,7 +26,7 @@ use std::collections::HashMap;
 
 #[derive(Deserialize, Serialize)]
 pub struct PeerInfo {
-    peerId: u64,
+    peerId: ConnectionId,
     remoteAddress: EndpointInfo,
     localAddress: EndpointInfo,
     timeOffset: i64,

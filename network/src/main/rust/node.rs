@@ -21,7 +21,7 @@ use crate::coindb::CoinDB;
 use crate::connection::{Connection, ConnectionId, State};
 use crate::endpoint::Endpoint;
 use crate::fjall::Fjall;
-use crate::packet::UnfilteredInvList;
+use crate::packet::{PacketKind, UnfilteredInvList};
 use crate::peertable::PeerTable;
 use crate::router::Router;
 use crate::staker::Staker;
@@ -42,25 +42,28 @@ use blacknet_serialization::format::to_write;
 use blacknet_time::{Milliseconds, Seconds, SystemClock};
 use blacknet_wallet::walletdb::WalletDB;
 use core::error::Error as StdError;
+use core::ops::Deref;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, RwLock};
-use tokio::runtime::Runtime;
+use tokio::net::TcpStream;
+use tokio::runtime::{Handle, Runtime};
+use tokio::sync::mpsc::UnboundedReceiver;
 use tokio::time::{Duration, sleep};
 
 pub const NETWORK_TIMEOUT: Milliseconds = Milliseconds::with_seconds(90);
 pub const PROTOCOL_VERSION: u32 = 15;
 pub const MIN_PROTOCOL_VERSION: u32 = 12;
 
-#[expect(dead_code)]
 pub struct Node {
     logger: Logger,
+    runtime: Handle,
     config: Arc<Config>,
     state_dir: PathBuf,
     next_connection_id: AtomicU64,
-    connections: RwLock<Vec<Connection>>,
+    connections: RwLock<Vec<Arc<Connection>>>,
     peer_table: Arc<PeerTable>,
     router: Arc<Router>,
     fjall: Arc<Fjall>,
@@ -111,6 +114,14 @@ impl Node {
         block_db.import(&coin_db);
 
         let peer_table = PeerTable::new(&mode, dirs, log_manager, config.clone())?;
+        let router = Router::new(
+            &mode,
+            dirs,
+            log_manager,
+            runtime,
+            config,
+            peer_table.clone(),
+        )?;
         let tx_pool = Arc::new(RwLock::new(TxPool::new(
             log_manager,
             config.clone(),
@@ -118,12 +129,13 @@ impl Node {
         )?));
         let node = Arc::new(Self {
             logger,
+            runtime: runtime.handle().clone(),
             config: config.clone(),
             state_dir: dirs.state().to_owned(),
             next_connection_id: AtomicU64::new(1),
             connections: RwLock::new(Vec::new()),
-            peer_table: peer_table.clone(),
-            router: Router::new(&mode, dirs, log_manager, runtime, config, peer_table)?,
+            peer_table,
+            router,
             fjall,
             block_db,
             coin_db: coin_db.clone(),
@@ -140,12 +152,13 @@ impl Node {
             mode,
         });
 
+        node.router.set_node(Arc::downgrade(&node));
+
         runtime.spawn(node.clone().rotator());
 
         Ok(node)
     }
 
-    #[expect(dead_code)]
     fn next_connection_id(&self) -> ConnectionId {
         let n = self.next_connection_id.fetch_add(1, Ordering::Relaxed);
         ConnectionId::new(n).expect("64-bit id is enough")
@@ -178,14 +191,19 @@ impl Node {
 
     pub fn is_online(&self) -> bool {
         let connections = self.connections.read().unwrap();
-        connections.iter().any(Connection::is_established)
+        connections
+            .iter()
+            .map(Deref::deref)
+            .any(Connection::is_established)
     }
 
     pub fn outgoing(&self) -> usize {
         let connections = self.connections.read().unwrap();
         connections
             .iter()
-            .filter(|connection| connection.state() == State::OutgoingConnected)
+            .map(Deref::deref)
+            .map(Connection::state)
+            .filter(|&state| state == State::OutgoingConnected)
             .count()
     }
 
@@ -193,11 +211,22 @@ impl Node {
         let connections = self.connections.read().unwrap();
         connections
             .iter()
-            .filter(|connection| connection.state() == State::IncomingConnected)
+            .map(Deref::deref)
+            .map(Connection::state)
+            .filter(|&state| state == State::IncomingConnected)
             .count()
     }
 
-    pub const fn connections(&self) -> &RwLock<Vec<Connection>> {
+    fn all_incoming(connections: &[Arc<Connection>]) -> usize {
+        connections
+            .iter()
+            .map(Deref::deref)
+            .map(Connection::state)
+            .filter(State::is_incoming)
+            .count()
+    }
+
+    pub const fn connections(&self) -> &RwLock<Vec<Arc<Connection>>> {
         &self.connections
     }
 
@@ -362,6 +391,106 @@ impl Node {
             }
         }
         n
+    }
+
+    pub fn accept_ip(
+        self: Arc<Self>,
+        tcp_stream: TcpStream,
+        remote_endpoint: Endpoint,
+        local_endpoint: Endpoint,
+    ) {
+        let id = self.next_connection_id();
+        let (connection, recv_channel) = Connection::new(
+            self.logger.clone(),
+            self.clone(),
+            remote_endpoint,
+            local_endpoint,
+            State::IncomingWaiting,
+            id,
+        );
+        self.add_incoming_connection(connection, tcp_stream, recv_channel)
+    }
+
+    pub fn add_incoming_connection(
+        &self,
+        connection: Arc<Connection>,
+        tcp_stream: TcpStream,
+        recv_channel: UnboundedReceiver<(PacketKind, Vec<u8>)>,
+    ) {
+        let mut connections = self.connections.write().unwrap();
+        if !self.have_slot(&connections) {
+            info!(
+                self.logger,
+                "Too many connections, dropping {}",
+                connection
+                    .remote_endpoint()
+                    .to_log(self.config.log_endpoint)
+            );
+            connection.close();
+            return;
+        }
+        connections.push(connection.clone());
+        connection.launch(tcp_stream, recv_channel, &self.runtime)
+    }
+
+    fn have_slot(&self, connections: &[Arc<Connection>]) -> bool {
+        if Self::all_incoming(connections) < self.config.incoming_connections as usize {
+            true
+        } else {
+            self.evict_connection(connections)
+        }
+    }
+
+    fn evict_connection(&self, connections: &[Arc<Connection>]) -> bool {
+        let mut candidates = connections
+            .iter()
+            .filter(|c| c.state().is_incoming())
+            .collect::<Vec<&Arc<Connection>>>();
+
+        candidates.sort_by(|l, r| {
+            if l.ping() != Milliseconds::ZERO {
+                l.ping().cmp(&r.ping())
+            } else {
+                core::cmp::Ordering::Greater
+            }
+        });
+        if candidates.len() >= 4 {
+            candidates.truncate(candidates.len() - 4);
+        }
+
+        candidates.sort_by(|l, r| l.last_tx_time().cmp(&r.last_tx_time()).reverse());
+        if candidates.len() >= 4 {
+            candidates.truncate(candidates.len() - 4);
+        }
+
+        candidates.sort_by(|l, r| l.last_block_time().cmp(&r.last_block_time()).reverse());
+        if candidates.len() >= 4 {
+            candidates.truncate(candidates.len() - 4);
+        }
+
+        candidates.sort_by_key(|c| c.connected_at());
+        if candidates.len() >= 4 {
+            candidates.truncate(candidates.len() - 4);
+        }
+
+        //TODO network groups
+
+        if candidates.is_empty() {
+            return false;
+        }
+
+        let mut uid = UniformIntDistribution::<usize, FastRNG>::new(..candidates.len());
+        let idx = FAST_RNG.with_borrow_mut(|rng| uid.sample(rng));
+        let connection = candidates[idx];
+        info!(
+            self.logger,
+            "Evicting {}",
+            connection
+                .remote_endpoint()
+                .to_log(self.config.log_endpoint)
+        );
+        connection.close();
+        true
     }
 
     async fn rotator(self: Arc<Self>) {

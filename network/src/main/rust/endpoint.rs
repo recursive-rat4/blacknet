@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -106,6 +106,33 @@ impl Endpoint {
             Endpoint::TORv2 { .. } => "TORv2".to_string(),
             Endpoint::TORv3 { port, address } => to_log_torv3(port, address, detail),
             Endpoint::I2P { port, address } => to_log_i2p(port, address, detail),
+        }
+    }
+}
+
+impl From<SocketAddr> for Endpoint {
+    fn from(addr: SocketAddr) -> Self {
+        match addr {
+            SocketAddr::V4(addr_v4) => addr_v4.into(),
+            SocketAddr::V6(addr_v6) => addr_v6.into(),
+        }
+    }
+}
+
+impl From<SocketAddrV4> for Endpoint {
+    fn from(addr_v4: SocketAddrV4) -> Self {
+        Endpoint::IPv4 {
+            port: addr_v4.port(),
+            address: addr_v4.ip().octets(),
+        }
+    }
+}
+
+impl From<SocketAddrV6> for Endpoint {
+    fn from(addr_v6: SocketAddrV6) -> Self {
+        Endpoint::IPv6 {
+            port: addr_v6.port(),
+            address: addr_v6.ip().octets(),
         }
     }
 }

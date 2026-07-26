@@ -25,6 +25,7 @@ use axum::{
 };
 use blacknet_kernel::blake2b::Hash;
 use blacknet_kernel::transaction::Transaction;
+use blacknet_network::connection::ConnectionId;
 use blacknet_network::endpoint::Endpoint;
 use blacknet_network::node::Node;
 use blacknet_serialization::format::from_bytes;
@@ -114,7 +115,7 @@ async fn disconnect_peer_by_address(
 }
 
 async fn disconnect_peer(
-    Path((id, _force)): Path<(u64, Option<bool>)>,
+    Path((id, _force)): Path<(ConnectionId, Option<bool>)>,
     State(node): State<Arc<Node>>,
 ) -> Response<String> {
     let connections = node.connections().read().unwrap();
