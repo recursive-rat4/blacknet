@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -156,7 +156,7 @@ impl<E: Encoder> ser::Serializer for &mut Serializer<E> {
                 self.encoder.encode_var_int(len as u32)?;
                 Ok(self)
             }
-            None => Err(Error::StaticMessage("Unsized sequence")),
+            None => Err(Error::message("Unsized sequence")),
         }
     }
 

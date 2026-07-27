@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -40,7 +40,7 @@ impl<'de, D: Decoder> de::Deserializer<'de> for &mut Deserializer<D> {
     type Error = Error;
 
     fn deserialize_any<V: Visitor<'de>>(self, _visitor: V) -> Result<V::Value> {
-        Err(Error::StaticMessage("Unsupported"))
+        Err(Error::message("Unsupported"))
     }
 
     fn deserialize_bool<V: Visitor<'de>>(self, visitor: V) -> Result<V::Value> {
@@ -191,7 +191,7 @@ impl<'de, D: Decoder> de::Deserializer<'de> for &mut Deserializer<D> {
     }
 
     fn deserialize_ignored_any<V: Visitor<'de>>(self, _visitor: V) -> Result<V::Value> {
-        Err(Error::StaticMessage("Unsupported"))
+        Err(Error::message("Unsupported"))
     }
 }
 

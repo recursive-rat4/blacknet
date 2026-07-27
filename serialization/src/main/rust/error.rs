@@ -15,15 +15,16 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use alloc::string::{FromUtf8Error, String, ToString};
+use alloc::borrow::Cow;
+use alloc::string::{FromUtf8Error, ToString};
+use blacknet_io::Error as IoError;
 use core::fmt;
 use serde_core::{de, ser};
 
 #[derive(Debug)]
 pub enum Error {
-    Message(String),
-    StaticMessage(&'static str),
-    Io(blacknet_io::Error),
+    Message(Cow<'static, str>),
+    Io(IoError),
     Utf8(FromUtf8Error),
     TooLongVarInt,
     InvalidBool(u8),
@@ -31,8 +32,17 @@ pub enum Error {
     TrailingBytes(usize),
 }
 
-impl From<blacknet_io::Error> for Error {
-    fn from(error: blacknet_io::Error) -> Self {
+impl Error {
+    pub fn message<T>(msg: T) -> Self
+    where
+        Cow<'static, str>: From<T>,
+    {
+        Error::Message(msg.into())
+    }
+}
+
+impl From<IoError> for Error {
+    fn from(error: IoError) -> Self {
         Self::Io(error)
     }
 }
@@ -47,7 +57,6 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Message(msg) => f.write_str(msg),
-            Self::StaticMessage(msg) => f.write_str(msg),
             Self::Io(err) => write!(f, "{err}"),
             Self::Utf8(err) => write!(f, "{err}"),
             Self::TooLongVarInt => f.write_str("Too long VarInt"),
@@ -60,16 +69,16 @@ impl fmt::Display for Error {
 
 impl ser::Error for Error {
     fn custom<T: fmt::Display>(msg: T) -> Self {
-        Error::Message(msg.to_string())
+        Error::Message(msg.to_string().into())
     }
 }
 
 impl de::Error for Error {
     fn custom<T: fmt::Display>(msg: T) -> Self {
-        Error::Message(msg.to_string())
+        Error::Message(msg.to_string().into())
     }
 }
 
 impl core::error::Error for Error {}
 
-pub type Result<T> = core::result::Result<T, Error>;
+pub type Result<T, E = Error> = core::result::Result<T, E>;
