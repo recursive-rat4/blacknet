@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{Double, Field, Inv, SemifieldOps, Square, Tensor, Zero};
+use crate::algebra::{Concat, Double, Field, Inv, SemifieldOps, Square, Tensor, Zero};
 use crate::matrix::{DenseVector, IdentityMatrix};
 use alloc::vec;
 use alloc::vec::Vec;
@@ -123,24 +123,6 @@ impl<T> DenseMatrix<T> {
         let (_, right) = right.split_at_mut((j - i - 1) * self.columns);
         let (jth, _) = right.split_at_mut(self.columns);
         ith.swap_with_slice(jth);
-    }
-
-    /// Concatenate horizontally.
-    pub fn concat(&self, rps: &Self) -> Self
-    where
-        T: Clone,
-    {
-        debug_assert!(self.rows == rps.rows);
-        let mut elements = Vec::<T>::with_capacity(self.rows * (self.columns + rps.columns));
-        zip(self.iter_row(), rps.iter_row()).for_each(|(l, r)| {
-            elements.extend_from_slice(l);
-            elements.extend_from_slice(r);
-        });
-        Self {
-            rows: self.rows,
-            columns: self.columns + rps.columns,
-            elements,
-        }
     }
 
     /// Convert a `m × n` matrix into a `1 × mn` row vector.
@@ -844,6 +826,53 @@ where
                 }
             }
         }
+        Self::Output {
+            rows,
+            columns,
+            elements,
+        }
+    }
+}
+
+impl<T: Clone> Concat for DenseMatrix<T> {
+    type Output = Self;
+
+    #[inline]
+    fn concat(self, rps: Self) -> Self::Output {
+        (&self).concat(&rps)
+    }
+}
+
+impl<T: Clone> Concat<&Self> for DenseMatrix<T> {
+    type Output = Self;
+
+    #[inline]
+    fn concat(self, rps: &Self) -> Self::Output {
+        (&self).concat(rps)
+    }
+}
+
+impl<T: Clone> Concat<DenseMatrix<T>> for &DenseMatrix<T> {
+    type Output = DenseMatrix<T>;
+
+    #[inline]
+    fn concat(self, rps: DenseMatrix<T>) -> Self::Output {
+        self.concat(&rps)
+    }
+}
+
+impl<T: Clone> Concat for &DenseMatrix<T> {
+    type Output = DenseMatrix<T>;
+
+    fn concat(self, rps: Self) -> Self::Output {
+        debug_assert!(self.rows == rps.rows);
+        let rows = self.rows;
+        let columns = self.columns + rps.columns;
+        let mut elements = Vec::<T>::with_capacity(rows * columns);
+        zip(self.iter_row(), rps.iter_row()).for_each(|(l, r)| {
+            elements.extend_from_slice(l);
+            elements.extend_from_slice(r);
+        });
         Self::Output {
             rows,
             columns,

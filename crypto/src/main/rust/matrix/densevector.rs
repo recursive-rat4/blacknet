@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{Conjugate, Dot, Double, One, Square, Tensor, Zero};
+use crate::algebra::{Concat, Conjugate, Dot, Double, One, Square, Tensor, Zero};
 use crate::matrix::DenseMatrix;
 use crate::symmetric::{Absorb, Duplexer};
 use alloc::borrow::{Borrow, BorrowMut};
@@ -80,17 +80,6 @@ impl<T> DenseVector<T> {
     /// The number of dimensions.
     pub const fn dimension(&self) -> usize {
         self.elements.len()
-    }
-
-    /// Concatenate horizontally.
-    pub fn concat(&self, rps: &Self) -> Self
-    where
-        T: Clone,
-    {
-        let mut elements = Vec::<T>::with_capacity(self.elements.len() + rps.elements.len());
-        elements.extend_from_slice(&self.elements);
-        elements.extend_from_slice(&rps.elements);
-        Self { elements }
     }
 
     /// The `n`-dimensional multiplicative identity.
@@ -652,6 +641,48 @@ where
             }
         }
         DenseMatrix::new(rows, columns, elements)
+    }
+}
+
+impl<T> Concat for DenseVector<T> {
+    type Output = Self;
+
+    fn concat(self, mut rps: Self) -> Self::Output {
+        let mut elements = self.elements;
+        elements.append(&mut rps.elements);
+        Self { elements }
+    }
+}
+
+impl<T: Clone> Concat<&Self> for DenseVector<T> {
+    type Output = Self;
+
+    fn concat(self, rps: &Self) -> Self::Output {
+        let mut elements = self.elements;
+        elements.extend_from_slice(&rps.elements);
+        Self { elements }
+    }
+}
+
+impl<T: Clone> Concat<DenseVector<T>> for &DenseVector<T> {
+    type Output = DenseVector<T>;
+
+    fn concat(self, mut rps: DenseVector<T>) -> Self::Output {
+        let mut elements = Vec::<T>::with_capacity(self.elements.len() + rps.elements.len());
+        elements.extend_from_slice(&self.elements);
+        elements.append(&mut rps.elements);
+        Self::Output { elements }
+    }
+}
+
+impl<T: Clone> Concat for &DenseVector<T> {
+    type Output = DenseVector<T>;
+
+    fn concat(self, rps: Self) -> Self::Output {
+        let mut elements = Vec::<T>::with_capacity(self.elements.len() + rps.elements.len());
+        elements.extend_from_slice(&self.elements);
+        elements.extend_from_slice(&rps.elements);
+        Self::Output { elements }
     }
 }
 

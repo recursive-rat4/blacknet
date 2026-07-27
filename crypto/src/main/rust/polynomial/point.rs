@@ -15,6 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::algebra::Concat;
 use alloc::borrow::{Borrow, BorrowMut};
 use alloc::vec::Vec;
 use core::fmt::{Debug, Formatter, Result};
@@ -39,16 +40,6 @@ impl<S> Point<S> {
 
     pub const fn coordinates(&self) -> &Vec<S> {
         &self.coordinates
-    }
-
-    pub fn concat(&self, rps: &Self) -> Self
-    where
-        S: Clone,
-    {
-        let mut coordinates = Vec::with_capacity(self.coordinates.len() + rps.coordinates.len());
-        coordinates.extend_from_slice(&self.coordinates);
-        coordinates.extend_from_slice(&rps.coordinates);
-        Self { coordinates }
     }
 }
 
@@ -168,5 +159,49 @@ impl<S: Send> IntoParallelIterator for Point<S> {
     #[inline]
     fn into_par_iter(self) -> Self::Iter {
         self.coordinates.into_par_iter()
+    }
+}
+
+impl<S> Concat for Point<S> {
+    type Output = Self;
+
+    fn concat(self, rps: Self) -> Self::Output {
+        let mut coordinates = self.coordinates;
+        let mut rps = rps.coordinates;
+        coordinates.append(&mut rps);
+        Self { coordinates }
+    }
+}
+
+impl<S: Clone> Concat<&Self> for Point<S> {
+    type Output = Self;
+
+    fn concat(self, rps: &Self) -> Self::Output {
+        let mut coordinates = self.coordinates;
+        coordinates.extend_from_slice(&rps.coordinates);
+        Self { coordinates }
+    }
+}
+
+impl<S: Clone> Concat<Point<S>> for &Point<S> {
+    type Output = Point<S>;
+
+    fn concat(self, rps: Point<S>) -> Self::Output {
+        let mut coordinates = Vec::<S>::with_capacity(self.dimension() + rps.dimension());
+        let mut rps = rps.coordinates;
+        coordinates.extend_from_slice(&self.coordinates);
+        coordinates.append(&mut rps);
+        Self::Output { coordinates }
+    }
+}
+
+impl<S: Clone> Concat for &Point<S> {
+    type Output = Point<S>;
+
+    fn concat(self, rps: Self) -> Self::Output {
+        let mut coordinates = Vec::<S>::with_capacity(self.dimension() + rps.dimension());
+        coordinates.extend_from_slice(&self.coordinates);
+        coordinates.extend_from_slice(&rps.coordinates);
+        Self::Output { coordinates }
     }
 }

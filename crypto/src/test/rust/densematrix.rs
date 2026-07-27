@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_crypto::algebra::{Double, Inv, Square, Tensor};
+use blacknet_crypto::algebra::{Concat, Double, Inv, Square, Tensor};
 use blacknet_crypto::matrix::{DenseMatrix, DenseVector};
 use blacknet_crypto::norm::InfinityNorm;
 use core::iter::zip;
@@ -242,7 +242,13 @@ fn concat() {
         1, 0, 7, 5,
         1, 2, 2, 1,
     ].map(R::from).into());
-    assert_eq!(a.concat(&b), c);
+    let d = DenseMatrix::<R>::new(3, 4, [
+        0, 0, 1, 3,
+        7, 5, 1, 0,
+        2, 1, 1, 2,
+    ].map(R::from).into());
+    assert_eq!((&a).concat(&b), c);
+    assert_eq!(b.concat(a), d);
 }
 
 #[test]

@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{AdditiveGroup, AdditiveGroupOps, Zero};
+use crate::algebra::{AdditiveGroup, AdditiveGroupOps, Concat, Zero};
 use crate::matrix::{DenseMatrix, DenseVector};
 use alloc::vec::Vec;
 use core::iter::{Sum, zip};
@@ -161,5 +161,89 @@ impl<T: Zero + Clone> From<&SparseVector<T>> for DenseVector<T> {
         let mut dense = DenseVector::fill(sparse.dimension(), T::ZERO);
         zip(sparse.index.iter(), sparse.elements.iter()).for_each(|(&i, e)| dense[i] = e.clone());
         dense
+    }
+}
+
+impl<T: Zero> Concat for SparseVector<T> {
+    type Output = Self;
+
+    fn concat(self, mut rps: Self) -> Self::Output {
+        let dimension = self.dimension + rps.dimension;
+        let mut index = self.index;
+        index.reserve(rps.dimension);
+        for i in rps.index {
+            index.push(self.dimension + i)
+        }
+        let mut elements = self.elements;
+        elements.append(&mut rps.elements);
+        Self {
+            dimension,
+            index,
+            elements,
+        }
+    }
+}
+
+impl<T: Zero + Clone> Concat<&Self> for SparseVector<T> {
+    type Output = Self;
+
+    fn concat(self, rps: &Self) -> Self::Output {
+        let dimension = self.dimension + rps.dimension;
+        let mut index = self.index;
+        index.reserve(rps.dimension);
+        for i in &rps.index {
+            index.push(self.dimension + i)
+        }
+        let mut elements = self.elements;
+        elements.extend_from_slice(&rps.elements);
+        Self {
+            dimension,
+            index,
+            elements,
+        }
+    }
+}
+
+impl<T: Zero + Clone> Concat<SparseVector<T>> for &SparseVector<T> {
+    type Output = SparseVector<T>;
+
+    fn concat(self, mut rps: SparseVector<T>) -> Self::Output {
+        let dimension = self.dimension + rps.dimension;
+        let nnz = self.index.len() + rps.index.len();
+        let mut index = Vec::<usize>::with_capacity(nnz);
+        index.extend_from_slice(&self.index);
+        for i in rps.index {
+            index.push(self.dimension + i)
+        }
+        let mut elements = Vec::<T>::with_capacity(nnz);
+        elements.extend_from_slice(&self.elements);
+        elements.append(&mut rps.elements);
+        Self::Output {
+            dimension,
+            index,
+            elements,
+        }
+    }
+}
+
+impl<T: Zero + Clone> Concat for &SparseVector<T> {
+    type Output = SparseVector<T>;
+
+    fn concat(self, rps: Self) -> Self::Output {
+        let dimension = self.dimension + rps.dimension;
+        let nnz = self.index.len() + rps.index.len();
+        let mut index = Vec::<usize>::with_capacity(nnz);
+        index.extend_from_slice(&self.index);
+        for i in &rps.index {
+            index.push(self.dimension + i)
+        }
+        let mut elements = Vec::<T>::with_capacity(nnz);
+        elements.extend_from_slice(&self.elements);
+        elements.extend_from_slice(&rps.elements);
+        Self::Output {
+            dimension,
+            index,
+            elements,
+        }
     }
 }

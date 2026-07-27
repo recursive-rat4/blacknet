@@ -91,3 +91,12 @@ pub trait Commutator<Rps = Self> {
     /// Perform the binary `[a,b]` operation.
     fn commutator(self, rps: Rps) -> Self::Output;
 }
+
+/// The horizontal concatenation operator `a||b`.
+pub trait Concat<Rps = Self> {
+    /// Result type.
+    type Output;
+
+    /// Perform the binary `a||b` operation.
+    fn concat(self, rps: Rps) -> Self::Output;
+}

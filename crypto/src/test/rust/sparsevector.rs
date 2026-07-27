@@ -15,6 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use blacknet_crypto::algebra::Concat;
 use blacknet_crypto::matrix::{DenseMatrix, DenseVector, SparseVector};
 use blacknet_crypto::norm::InfinityNorm;
 
@@ -49,6 +50,24 @@ fn pad() {
     let b = SparseVector::<R>::new(4, [0, 1, 2].into(), [1, 2, 3].map(R::from).into());
     assert_eq!(a.pad_to_power_of_two(), b);
     assert_eq!(b.clone().pad_to_power_of_two(), b);
+}
+
+#[test]
+fn concat() {
+    let a = SparseVector::<R>::new(6, [1, 3, 4].into(), [1, 2, 3].map(R::from).into());
+    let b = SparseVector::<R>::new(6, [0, 3].into(), [4, 5].map(R::from).into());
+    let c = SparseVector::<R>::new(
+        12,
+        [1, 3, 4, 6, 9].into(),
+        [1, 2, 3, 4, 5].map(R::from).into(),
+    );
+    let d = SparseVector::<R>::new(
+        12,
+        [0, 3, 7, 9, 10].into(),
+        [4, 5, 1, 2, 3].map(R::from).into(),
+    );
+    assert_eq!((&a).concat(&b), c);
+    assert_eq!(b.concat(a), d);
 }
 
 #[test]
