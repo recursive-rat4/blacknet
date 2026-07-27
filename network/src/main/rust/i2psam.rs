@@ -26,6 +26,7 @@ use core::fmt;
 use data_encoding::{DecodeError, Encoding};
 use data_encoding_macro::new_encoding;
 use sha2::{Digest, Sha256};
+use std::borrow::Cow;
 use std::io::{Error as IoError, Write};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -143,7 +144,7 @@ impl Connection {
         let answer = self.request(&request).await?;
         match answer.get("VALUE") {
             Some(value) => Ok(value.to_owned()),
-            None => Err(Error::Message("lookup answer contains no VALUE".to_owned())),
+            None => Err(Error::message("lookup answer contains no VALUE")),
         }
     }
 
@@ -267,7 +268,7 @@ impl SAM {
             self.save_private_key(
                 answer
                     .get("DESTINATION")
-                    .ok_or(Error::Message("session returned no destination".to_owned()))?
+                    .ok_or(Error::message("session returned no destination"))?
                     .to_owned(),
             );
         }
@@ -295,7 +296,7 @@ impl SAM {
         }
         let destination = message
             .split_once(' ')
-            .ok_or_else(|| Error::Message("Can't parse destination line".to_owned()))?
+            .ok_or_else(|| Error::message("Can't parse destination line"))?
             .0;
         let remote_endpoint = Endpoint::I2P {
             port: self.config.port,
@@ -343,21 +344,30 @@ impl SAM {
 
 #[derive(Debug)]
 pub enum Error {
-    Message(String),
+    Message(Cow<'static, str>),
     Decode(DecodeError),
     Io(IoError),
     Log(LogError),
 }
 
-impl From<&str> for Error {
-    fn from(err: &str) -> Self {
-        Error::Message(err.to_owned())
+impl Error {
+    pub fn message<T>(msg: T) -> Self
+    where
+        Cow<'static, str>: From<T>,
+    {
+        Error::Message(msg.into())
+    }
+}
+
+impl From<&'static str> for Error {
+    fn from(err: &'static str) -> Self {
+        Error::message(err)
     }
 }
 
 impl From<String> for Error {
     fn from(err: String) -> Self {
-        Error::Message(err)
+        Error::message(err)
     }
 }
 

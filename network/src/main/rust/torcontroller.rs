@@ -21,6 +21,7 @@ use blacknet_compat::config::Network as Config;
 use blacknet_io::file::replace;
 use blacknet_log::{Error as LogError, LogManager, Logger, error, info, warn};
 use core::fmt;
+use std::borrow::Cow;
 use std::io::{Error as IoError, Write};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -196,14 +197,23 @@ type Result<T> = core::result::Result<T, Error>;
 
 #[derive(Debug)]
 pub enum Error {
-    Message(String),
+    Message(Cow<'static, str>),
     Io(IoError),
     Log(LogError),
 }
 
-impl From<&str> for Error {
-    fn from(err: &str) -> Self {
-        Error::Message(err.to_owned())
+impl Error {
+    pub fn message<T>(msg: T) -> Self
+    where
+        Cow<'static, str>: From<T>,
+    {
+        Error::Message(msg.into())
+    }
+}
+
+impl From<&'static str> for Error {
+    fn from(err: &'static str) -> Self {
+        Error::message(err)
     }
 }
 
