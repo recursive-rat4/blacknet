@@ -16,6 +16,7 @@
  */
 
 use crate::endpoint::Endpoint;
+use arc_swap::ArcSwap;
 use blacknet_compat::config::Network as Config;
 use blacknet_compat::{Mode, XDGDirectories};
 use blacknet_crypto::random::{Distribution, FAST_RNG, FastRNG, UniformIntDistribution};
@@ -98,9 +99,8 @@ impl Answer {
 
     pub fn hash(destination: &str) -> Result<[u8; 32], DecodeError> {
         let decoded = BASE64.decode(destination.as_bytes())?;
-        let mut hasher = Sha256::new();
-        hasher.update(decoded);
-        Ok(hasher.finalize().into())
+        let hash: [u8; 32] = Sha256::digest(decoded).into();
+        Ok(hash)
     }
 }
 
@@ -174,7 +174,6 @@ pub struct Session {
     logger: Logger,
     id: String,
     local_endpoint: Endpoint,
-    sam_endpoint: Endpoint,
     connection: Connection,
 }
 
@@ -209,20 +208,12 @@ impl Session {
         }
     }
 
-    pub async fn accept(&self) -> Result<Connection, Error> {
-        let mut connection = Connection::new(self.logger.clone(), self.sam_endpoint).await?;
-        let request = format!("STREAM ACCEPT ID={}\n", self.id);
-        connection.request(&request).await?;
-        let message = connection.read().await?;
-        if message.starts_with("STREAM STATUS") {
-            let answer = Answer::new(message);
-            answer.ok()?;
-        }
-        Ok(connection)
-    }
-
     pub const fn endpoint(&self) -> Endpoint {
         self.local_endpoint
+    }
+
+    pub fn id(&self) -> String {
+        self.id.to_owned()
     }
 }
 
@@ -230,7 +221,7 @@ pub struct SAM {
     logger: Logger,
     config: Arc<Config>,
     data_dir: PathBuf,
-    private_key: String,
+    private_key: ArcSwap<String>,
     endpoint: Endpoint,
     agent_name: String,
 }
@@ -254,24 +245,25 @@ impl SAM {
             logger: log_manager.logger("I2PSAM")?,
             config,
             data_dir,
-            private_key,
+            private_key: ArcSwap::new(Arc::new(private_key)),
             endpoint,
             agent_name: mode.agent_name().to_owned(),
         })
     }
 
-    pub async fn create_session(&mut self) -> Result<Session, Error> {
+    pub async fn create_session(&self) -> Result<Session, Error> {
         let session_id = Self::generate_id();
         let mut connection = Connection::new(self.logger.clone(), self.endpoint).await?;
+        let private_key = self.private_key.load();
         let answer = connection
-            .create_session(&session_id, &self.private_key, &self.agent_name)
+            .create_session(&session_id, &private_key, &self.agent_name)
             .await?;
         let destination = connection.lookup("ME").await?;
         let local_endpoint = Endpoint::I2P {
             port: self.config.port,
             address: Answer::hash(&destination)?,
         };
-        if self.private_key == TRANSIENT_KEY {
+        if **private_key == TRANSIENT_KEY {
             self.save_private_key(
                 answer
                     .get("DESTINATION")
@@ -283,11 +275,33 @@ impl SAM {
             logger: self.logger.clone(),
             id: session_id,
             local_endpoint,
-            sam_endpoint: self.endpoint,
             connection,
         };
         info!(self.logger, "Created session {}", session.id);
         Ok(session)
+    }
+
+    pub async fn accept(
+        &self,
+        session_id: &str,
+    ) -> Result<(BufStream<TcpStream>, Endpoint), Error> {
+        let mut connection = Connection::new(self.logger.clone(), self.endpoint).await?;
+        let request = format!("STREAM ACCEPT ID={}\n", session_id);
+        connection.request(&request).await?;
+        let message = connection.read().await?;
+        if message.starts_with("STREAM STATUS") {
+            let answer = Answer::new(message.clone());
+            answer.ok()?;
+        }
+        let destination = message
+            .split_once(' ')
+            .ok_or_else(|| Error::Message("Can't parse destination line".to_owned()))?
+            .0;
+        let remote_endpoint = Endpoint::I2P {
+            port: self.config.port,
+            address: Answer::hash(destination)?,
+        };
+        Ok((connection.stream, remote_endpoint))
     }
 
     fn generate_id() -> String {
@@ -315,11 +329,12 @@ impl SAM {
         }
     }
 
-    fn save_private_key(&mut self, new_key: String) {
-        self.private_key = new_key;
+    fn save_private_key(&self, new_key: String) {
+        let new_key = Arc::new(new_key);
+        self.private_key.store(new_key.clone());
         info!(self.logger, "Saving I2P private key");
         if let Err(err) = replace(&self.data_dir, FILE_NAME, |buffered| {
-            buffered.write_all(self.private_key.as_bytes())
+            buffered.write_all(new_key.as_bytes())
         }) {
             error!(self.logger, "Can't write {FILE_NAME}: {err}");
         }

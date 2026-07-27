@@ -31,16 +31,17 @@ use core::ops::ControlFlow;
 use std::collections::HashSet;
 use std::sync::{Arc, OnceLock, RwLock, Weak};
 use tokio::net::{TcpListener, TcpStream};
-use tokio::runtime::Runtime;
+use tokio::runtime::{Handle, Runtime};
 use tokio::sync::Mutex;
 use tokio::time::{Duration, sleep};
 
 pub struct Router {
     logger: Logger,
+    runtime: Handle,
     config: Arc<Config>,
     listens: RwLock<HashSet<Endpoint>>,
     peer_table: Arc<PeerTable>,
-    i2p_sam: Mutex<SAM>,
+    i2p_sam: SAM,
     tor_controller: Mutex<TorController>,
     node: OnceLock<Weak<Node>>,
 }
@@ -56,10 +57,11 @@ impl Router {
     ) -> Result<Arc<Self>, Box<dyn Error>> {
         let router = Arc::new(Self {
             logger: log_manager.logger("Router")?,
+            runtime: runtime.handle().clone(),
             config: config.clone(),
             listens: RwLock::new(HashSet::new()),
             peer_table,
-            i2p_sam: Mutex::new(SAM::new(mode, dirs, log_manager, config.clone())?),
+            i2p_sam: SAM::new(mode, dirs, log_manager, config.clone())?,
             tor_controller: Mutex::new(TorController::new(dirs, log_manager, config.clone())?),
             node: OnceLock::new(),
         });
@@ -142,6 +144,21 @@ impl Router {
         ControlFlow::Continue(())
     }
 
+    async fn accept_i2p(self: Arc<Self>, session_id: String) {
+        loop {
+            #[expect(unused_variables)]
+            match self.i2p_sam.accept(&session_id).await {
+                Ok((stream, remote_endpoint)) => {
+                    todo!();
+                }
+                Err(err) => {
+                    warn!(self.logger, "accept_i2p: {err}");
+                    break;
+                }
+            }
+        }
+    }
+
     async fn listen_tor(self: Arc<Self>) {
         let mut timeout = Self::INIT_TIMEOUT;
         let mut tor_controller = self.tor_controller.lock().await;
@@ -166,14 +183,13 @@ impl Router {
 
     async fn listen_i2p(self: Arc<Self>) {
         let mut timeout = Self::INIT_TIMEOUT;
-        let mut i2p_sam = self.i2p_sam.lock().await;
         loop {
-            match i2p_sam.create_session().await {
+            match self.i2p_sam.create_session().await {
                 Ok(mut session) => {
                     timeout = Self::INIT_TIMEOUT;
                     self.add_listener(session.endpoint());
+                    self.runtime.spawn(self.clone().accept_i2p(session.id()));
                     session.hung().await;
-                    //TODO accept
                     info!(self.logger, "Closing I2P session");
                     self.remove_listener(session.endpoint());
                 }
