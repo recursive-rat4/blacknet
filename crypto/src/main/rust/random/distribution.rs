@@ -35,10 +35,10 @@ pub trait UniformGenerator {
 
 /// A probability distribution.
 ///
-/// It takes a uniform generator as input and
+/// It takes a generator as input and
 /// possibly caches indeterminate values between samples.
-pub trait Distribution<G: UniformGenerator> {
-    /// Result type.
+pub trait Distribution<G> {
+    /// Sample type.
     type Output;
 
     /// Sample a random value.

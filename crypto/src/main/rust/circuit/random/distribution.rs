@@ -19,7 +19,7 @@ use crate::algebra::UnitalSemiring;
 use crate::circuit::builder::CircuitBuilder;
 use crate::random::{UniformDistribution, UniformGenerator};
 
-pub trait Distribution<'a, 'b, R: UnitalSemiring, G: UniformGenerator> {
+pub trait Distribution<'a, 'b, R: UnitalSemiring, G> {
     type Output;
 
     fn new(circuit: &'a CircuitBuilder<'b, R>) -> Self;

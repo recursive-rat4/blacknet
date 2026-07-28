@@ -19,7 +19,7 @@ use crate::algebra::Set;
 use crate::assigner::assigment::Assigment;
 use crate::random::{UniformDistribution, UniformGenerator};
 
-pub trait Distribution<'a, S: Set, G: UniformGenerator> {
+pub trait Distribution<'a, S: Set, G> {
     type Output;
 
     fn new(assigment: &'a Assigment<S>) -> Self;
