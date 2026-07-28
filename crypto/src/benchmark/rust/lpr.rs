@@ -25,7 +25,7 @@ fn criterion_benchmark(crit: &mut Criterion) {
     let mut grp = crit.benchmark_group("LPR");
     grp.throughput(Throughput::Elements(1));
 
-    let mut drg = black_box(Blake2xb::new().finalize());
+    let mut drg = black_box(Blake2xb::new().finalize_xof());
     let bytes: [u8; 128] = black_box(array::from_fn(|i| i as u8));
     let pt = black_box(encode(&bytes));
     let sk = black_box(generate_secret_key(&mut drg));

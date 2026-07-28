@@ -68,7 +68,7 @@ fn xof() {
     ];
     let mut hasher = Blake2xb::with_length(hash1024.len() as u32);
     hasher.update(message);
-    let mut xof = hasher.finalize();
+    let mut xof = hasher.finalize_xof();
     let generated: [u8; 128] = array::from_fn(|_| xof.generate());
     assert_eq!(hash1024, generated);
 }

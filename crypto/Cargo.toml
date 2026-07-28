@@ -284,6 +284,11 @@ path = "src/benchmark/rust/lpr.rs"
 harness = false
 
 [[bench]]
+name = "merkletree"
+path = "src/benchmark/rust/merkletree.rs"
+harness = false
+
+[[bench]]
 name = "poseidon2"
 path = "src/benchmark/rust/poseidon2.rs"
 harness = false

@@ -49,7 +49,7 @@ impl Blake2xb {
     }
 
     /// Produce XOF output.
-    pub fn finalize(self) -> XOFOutput {
+    pub fn finalize_xof(self) -> XOFOutput {
         XOFOutput {
             buffer: [0; 64],
             position: 64,

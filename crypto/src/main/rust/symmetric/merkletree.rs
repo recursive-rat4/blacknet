@@ -26,7 +26,7 @@ pub struct MerkleTree<F: CompressionFunction> {
 }
 
 impl<F: CompressionFunction<Hash: Clone>> MerkleTree<F> {
-    pub fn compute_root(mut i: usize, leaf: F::Hash, branch: &Vec<F::Hash>) -> F::Hash {
+    pub fn compute_root(mut i: usize, leaf: F::Hash, branch: &[F::Hash]) -> F::Hash {
         let mut hash = leaf;
         for node in branch {
             if (i & 1) == 1 {
