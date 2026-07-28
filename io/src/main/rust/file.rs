@@ -18,17 +18,17 @@
 #![cfg(feature = "std")]
 
 use alloc::format;
-use blacknet_crypto::integer::Integer;
-use blacknet_crypto::random::{FAST_RNG, UniformGenerator};
+use blacknet_crypto::random::{Distribution, FAST_RNG, FastRNG, UniformIntDistribution};
 use core::error::Error;
 use std::fs::{File, remove_file, rename};
 use std::io::{BufWriter, Error as IoError, ErrorKind};
 use std::path::{Path, PathBuf};
 
 pub fn create_temp_file(dir: &Path, prefix: &str) -> Result<(PathBuf, File), IoError> {
+    let mut uid = UniformIntDistribution::<u32, FastRNG>::default();
     FAST_RNG.with_borrow_mut(|rng| {
         loop {
-            let name = format!("{}-{}", prefix, rng.generate().cast_unsigned());
+            let name = format!("{}-{}", prefix, uid.sample(rng));
             let path = dir.join(name);
             match File::create_new(&path) {
                 Ok(file) => return Ok((path, file)),
