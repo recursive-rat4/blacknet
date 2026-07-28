@@ -34,7 +34,6 @@ use core::cmp::min;
 use core::num::NonZero;
 use std::sync::{Arc, Mutex, MutexGuard, RwLock, atomic::*};
 use tokio::io::{AsyncReadExt, AsyncWriteExt, BufReader, BufWriter};
-use tokio::net::TcpStream;
 use tokio::net::tcp::{OwnedReadHalf, OwnedWriteHalf};
 use tokio::runtime::Handle;
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender, unbounded_channel};
@@ -125,15 +124,15 @@ impl Connection {
 
     pub fn launch(
         self: Arc<Self>,
-        tcp_stream: TcpStream,
+        buf_reader: BufReader<OwnedReadHalf>,
+        buf_writer: BufWriter<OwnedWriteHalf>,
         recv_channel: UnboundedReceiver<(PacketKind, Vec<u8>)>,
         runtime: &Handle,
     ) {
         let mut handles = self.handles.write().unwrap();
-        let (tcp_read, tcp_write) = tcp_stream.into_split();
         handles.push(runtime.spawn(self.clone().pusher()));
-        handles.push(runtime.spawn(self.clone().receiver(tcp_read)));
-        handles.push(runtime.spawn(self.clone().sender(recv_channel, tcp_write)));
+        handles.push(runtime.spawn(self.clone().receiver(buf_reader)));
+        handles.push(runtime.spawn(self.clone().sender(recv_channel, buf_writer)));
     }
 
     pub async fn join(&self) {
@@ -438,8 +437,7 @@ impl Connection {
         }
     }
 
-    async fn receiver(self: Arc<Self>, tcp_read: OwnedReadHalf) {
-        let mut buf_reader = BufReader::new(tcp_read);
+    async fn receiver(self: Arc<Self>, mut buf_reader: BufReader<OwnedReadHalf>) {
         loop {
             let size = buf_reader.read_u32().await.unwrap();
             let max = self.node.max_packet_size();
@@ -482,9 +480,8 @@ impl Connection {
     async fn sender(
         self: Arc<Self>,
         mut recv_channel: UnboundedReceiver<(PacketKind, Vec<u8>)>,
-        tcp_write: OwnedWriteHalf,
+        mut buf_writer: BufWriter<OwnedWriteHalf>,
     ) {
-        let mut buf_writer = BufWriter::new(tcp_write);
         loop {
             let (kind, bytes) = recv_channel.recv().await.unwrap();
             debug!(self.logger, "Sending {:?}", kind);

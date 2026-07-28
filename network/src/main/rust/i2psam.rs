@@ -30,8 +30,9 @@ use std::borrow::Cow;
 use std::io::{Error as IoError, Write};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
-use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufStream};
+use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader, BufWriter};
 use tokio::net::TcpStream;
+use tokio::net::tcp::{OwnedReadHalf, OwnedWriteHalf};
 
 // https://geti2p.net/en/docs/api/samv3
 
@@ -107,17 +108,19 @@ impl Answer {
 
 pub struct Connection {
     _logger: Logger,
-    stream: BufStream<TcpStream>,
+    buf_reader: BufReader<OwnedReadHalf>,
+    buf_writer: BufWriter<OwnedWriteHalf>,
 }
 
 impl Connection {
     async fn new(logger: Logger, endpoint: Endpoint) -> Result<Self, Error> {
         let endpoint = endpoint.to_rust().ok_or("Not TCP/IP endpoint")?;
         let socket = TcpStream::connect(endpoint).await?;
-        let stream = BufStream::new(socket);
+        let (tcp_read, tcp_write) = socket.into_split();
         let mut connection = Self {
             _logger: logger,
-            stream,
+            buf_reader: BufReader::new(tcp_read),
+            buf_writer: BufWriter::new(tcp_write),
         };
         connection
             .request("HELLO VERSION MIN=3.2 MAX=3.3\n")
@@ -150,14 +153,14 @@ impl Connection {
 
     async fn write(&mut self, message: &str) -> Result<(), IoError> {
         // debug!(self._logger, "-> {:?}", message);
-        self.stream.write_all(message.as_bytes()).await?;
-        self.stream.flush().await?;
+        self.buf_writer.write_all(message.as_bytes()).await?;
+        self.buf_writer.flush().await?;
         Ok(())
     }
 
     async fn read(&mut self) -> Result<String, IoError> {
         let mut message = String::new();
-        self.stream.read_line(&mut message).await?;
+        self.buf_reader.read_line(&mut message).await?;
         // debug!(self._logger, "<- {:?}", message);
         Ok(message)
     }
@@ -285,7 +288,14 @@ impl SAM {
     pub async fn accept(
         &self,
         session_id: &str,
-    ) -> Result<(BufStream<TcpStream>, Endpoint), Error> {
+    ) -> Result<
+        (
+            BufReader<OwnedReadHalf>,
+            BufWriter<OwnedWriteHalf>,
+            Endpoint,
+        ),
+        Error,
+    > {
         let mut connection = Connection::new(self.logger.clone(), self.endpoint).await?;
         let request = format!("STREAM ACCEPT ID={}\n", session_id);
         connection.request(&request).await?;
@@ -302,7 +312,11 @@ impl SAM {
             port: self.config.port,
             address: Answer::hash(destination)?,
         };
-        Ok((connection.stream, remote_endpoint))
+        Ok((
+            connection.buf_reader,
+            connection.buf_writer,
+            remote_endpoint,
+        ))
     }
 
     fn generate_id() -> String {

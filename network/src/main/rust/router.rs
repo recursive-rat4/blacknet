@@ -30,6 +30,7 @@ use core::net::SocketAddr;
 use core::ops::ControlFlow;
 use std::collections::HashSet;
 use std::sync::{Arc, OnceLock, RwLock, Weak};
+use tokio::io::{BufReader, BufWriter};
 use tokio::net::{TcpListener, TcpStream};
 use tokio::runtime::{Handle, Runtime};
 use tokio::sync::Mutex;
@@ -137,19 +138,30 @@ impl Router {
         if !local_endpoint.is_local() {
             self.add_listener(local_endpoint)
         }
+        let (tcp_read, tcp_write) = tcp_stream.into_split();
+        let (buf_reader, buf_writer) = (BufReader::new(tcp_read), BufWriter::new(tcp_write));
         match self.node.get().expect("Router initialized").upgrade() {
-            Some(node) => node.accept_ip(tcp_stream, remote_endpoint, local_endpoint),
+            Some(node) => {
+                node.accept_connection(buf_reader, buf_writer, remote_endpoint, local_endpoint)
+            }
             None => return ControlFlow::Break(()),
         }
         ControlFlow::Continue(())
     }
 
-    async fn accept_i2p(self: Arc<Self>, session_id: String) {
+    async fn accept_i2p(self: Arc<Self>, session_id: String, local_endpoint: Endpoint) {
         loop {
-            #[expect(unused_variables)]
             match self.i2p_sam.accept(&session_id).await {
-                Ok((stream, remote_endpoint)) => {
-                    todo!();
+                Ok((buf_reader, buf_writer, remote_endpoint)) => {
+                    match self.node.get().expect("Router initialized").upgrade() {
+                        Some(node) => node.accept_connection(
+                            buf_reader,
+                            buf_writer,
+                            remote_endpoint,
+                            local_endpoint,
+                        ),
+                        None => break,
+                    }
                 }
                 Err(err) => {
                     warn!(self.logger, "accept_i2p: {err}");
@@ -188,7 +200,8 @@ impl Router {
                 Ok(mut session) => {
                     timeout = Self::INIT_TIMEOUT;
                     self.add_listener(session.endpoint());
-                    self.runtime.spawn(self.clone().accept_i2p(session.id()));
+                    self.runtime
+                        .spawn(self.clone().accept_i2p(session.id(), session.endpoint()));
                     session.hung().await;
                     info!(self.logger, "Closing I2P session");
                     self.remove_listener(session.endpoint());

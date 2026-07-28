@@ -48,7 +48,8 @@ use std::collections::HashSet;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, RwLock};
-use tokio::net::TcpStream;
+use tokio::io::{BufReader, BufWriter};
+use tokio::net::tcp::{OwnedReadHalf, OwnedWriteHalf};
 use tokio::runtime::{Handle, Runtime};
 use tokio::sync::mpsc::UnboundedReceiver;
 use tokio::time::{Duration, sleep};
@@ -393,9 +394,10 @@ impl Node {
         n
     }
 
-    pub fn accept_ip(
+    pub fn accept_connection(
         self: Arc<Self>,
-        tcp_stream: TcpStream,
+        buf_reader: BufReader<OwnedReadHalf>,
+        buf_writer: BufWriter<OwnedWriteHalf>,
         remote_endpoint: Endpoint,
         local_endpoint: Endpoint,
     ) {
@@ -408,13 +410,14 @@ impl Node {
             State::IncomingWaiting,
             id,
         );
-        self.add_incoming_connection(connection, tcp_stream, recv_channel)
+        self.add_incoming_connection(connection, buf_reader, buf_writer, recv_channel)
     }
 
     pub fn add_incoming_connection(
         &self,
         connection: Arc<Connection>,
-        tcp_stream: TcpStream,
+        buf_reader: BufReader<OwnedReadHalf>,
+        buf_writer: BufWriter<OwnedWriteHalf>,
         recv_channel: UnboundedReceiver<(PacketKind, Vec<u8>)>,
     ) {
         let mut connections = self.connections.write().unwrap();
@@ -430,7 +433,7 @@ impl Node {
             return;
         }
         connections.push(connection.clone());
-        connection.launch(tcp_stream, recv_channel, &self.runtime)
+        connection.launch(buf_reader, buf_writer, recv_channel, &self.runtime)
     }
 
     fn have_slot(&self, connections: &[Arc<Connection>]) -> bool {
