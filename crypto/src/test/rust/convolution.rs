@@ -34,27 +34,27 @@ impl Binomial<Z, 3> for TestBinomial {
 
 #[test]
 fn cyclic() {
-    let a = [3, 5, 7].map(Z::new);
-    let b = [11, 13, 17].map(Z::new);
-    let c = [209, 213, 193].map(Z::new);
+    let a = [3, 5, 7].map(Z::with_int);
+    let b = [11, 13, 17].map(Z::with_int);
+    let c = [209, 213, 193].map(Z::with_int);
     let d = <Cyclic as Convolution<Z, 3>>::convolute(&a, &b);
     assert_eq!(d, c);
 }
 
 #[test]
 fn negacyclic() {
-    let a = [3, 5, 7].map(Z::new);
-    let b = [11, 13, 17].map(Z::new);
-    let c = [-143, -25, 193].map(Z::new);
+    let a = [3, 5, 7].map(Z::with_int);
+    let b = [11, 13, 17].map(Z::with_int);
+    let c = [-143, -25, 193].map(Z::with_int);
     let d = <Negacyclic as Convolution<Z, 3>>::convolute(&a, &b);
     assert_eq!(d, c);
 }
 
 #[test]
 fn binomial() {
-    let a = [3, 5, 7].map(Z::new);
-    let b = [11, 13, 17].map(Z::new);
-    let c = [209, 213, 193].map(Z::new);
+    let a = [3, 5, 7].map(Z::with_int);
+    let b = [11, 13, 17].map(Z::with_int);
+    let c = [209, 213, 193].map(Z::with_int);
     let d = <TestBinomial as Convolution<Z, 3>>::convolute(&a, &b);
     assert_eq!(d, c);
 }

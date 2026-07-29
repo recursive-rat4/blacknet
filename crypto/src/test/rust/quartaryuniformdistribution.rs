@@ -15,14 +15,10 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_crypto::algebra::IntegerModRing;
-use blacknet_crypto::assigner::random::{
-    Distribution as DistributionAssigner, QuartaryUniformDistribution as Assigner,
-};
+use blacknet_crypto::algebra::One;
+use blacknet_crypto::assigner::random::QuartaryUniformDistribution as Assigner;
 use blacknet_crypto::circuit::builder::{CircuitBuilder, Constant, LinearCombination};
-use blacknet_crypto::circuit::random::{
-    Distribution as DistributionCircuit, QuartaryUniformDistribution as Circuit,
-};
+use blacknet_crypto::circuit::random::QuartaryUniformDistribution as Circuit;
 use blacknet_crypto::constraintsystem::ConstraintSystem;
 use blacknet_crypto::random::{Distribution, QuartaryUniformDistribution, UniformGenerator};
 use core::{array, assert_matches};
@@ -73,7 +69,7 @@ impl UniformGenerator for GeneratorCircuit {
 
     fn generate(&mut self) -> Self::Output {
         let result = Constant::new(self.i);
-        self.i += Z::new(1);
+        self.i += Z::ONE;
         result.into()
     }
 }

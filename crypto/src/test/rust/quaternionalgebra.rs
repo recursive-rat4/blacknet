@@ -102,7 +102,7 @@ fn inv() {
             0x0640BC52640BC526,
             0x1BF43AD9BF43AD9B,
         ]
-        .map(Z::new),
+        .map(Z::with_int),
     );
     assert_eq!(b.inv().unwrap(), a);
     assert_eq!(a.inv().unwrap(), b);

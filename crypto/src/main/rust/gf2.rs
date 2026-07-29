@@ -367,11 +367,11 @@ impl IntegerModRing for GF2 {
     type Int = i8;
     type Modulus = i8;
 
-    fn new(n: Self::Int) -> Self {
+    fn with_int(n: Self::Int) -> Self {
         Self { n: (n & 1) == 1 }
     }
     fn with_limb(n: <Self::Int as Integer>::Limb) -> Self {
-        Self::new(n)
+        Self::with_int(n)
     }
 
     fn canonical(&self) -> Self::Int {

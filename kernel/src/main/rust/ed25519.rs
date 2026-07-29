@@ -260,7 +260,7 @@ fn parse_secret_key(secret_key: SecretKey) -> (Scalar25519, [u8; 32]) {
     hash[31] |= 0x40;
     let hash: [[u8; 32]; 2] = unsafe { transmute(hash) };
     let integer = UInt256::from_le_bytes(hash[0]);
-    let scalar = Scalar25519::new(integer);
+    let scalar = Scalar25519::with_int(integer);
     (scalar, hash[1])
 }
 

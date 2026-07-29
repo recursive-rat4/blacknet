@@ -81,7 +81,7 @@ fn sqr() {
 #[test]
 fn inv() {
     let a = M::from([3, 5, 7].map(Z::from));
-    let b = M::from([0x1BC2503159721ED7, 0x0E43DAFCEA68DE12, 0x00C565C87B5F9D4D].map(Z::new));
+    let b = M::from([0x1BC2503159721ED7, 0x0E43DAFCEA68DE12, 0x00C565C87B5F9D4D].map(Z::with_int));
     assert_eq!(b.inv().unwrap(), a);
     assert_eq!(a.inv().unwrap(), b);
     assert!(M::ZERO.inv().is_none());

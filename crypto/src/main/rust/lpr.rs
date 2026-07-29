@@ -69,7 +69,7 @@ pub(crate) fn upscale(rt: &Rt) -> RqNTT {
 pub(crate) fn generate_uniform<RNG: UniformGenerator<Output = u8>>(rng: &mut RNG) -> RqNTT {
     let mut uid = UniformIntDistribution::<<Zq as IntegerModRing>::Int, RNG>::new(0..Zq::MODULUS);
     let residues: [<Zq as IntegerModRing>::Int; D] = array::from_fn(|_| uid.sample(rng));
-    let coefficients = residues.map(Zq::new);
+    let coefficients = residues.map(Zq::with_int);
     coefficients.into()
 }
 

@@ -28,9 +28,9 @@ type Z = blacknet_crypto::gf2::GF2;
 
 #[test]
 fn wrapping_add() {
-    let a = [1, 0, 1, 0, 0, 0, 1, 0].map(Z::new);
-    let b = [1, 1, 0, 0, 0, 0, 1, 0].map(Z::new);
-    let c = [0, 0, 0, 1, 0, 0, 0, 1].map(Z::new);
+    let a = [1, 0, 1, 0, 0, 0, 1, 0].map(Z::with_int);
+    let b = [1, 1, 0, 0, 0, 0, 1, 0].map(Z::with_int);
+    let c = [0, 0, 0, 1, 0, 0, 0, 1].map(Z::with_int);
 
     let circuit = CircuitBuilder::<Z>::new(2);
     let arithmetic_gate_circuit = Circuit::<Z>::new(&circuit);
@@ -58,9 +58,9 @@ fn wrapping_add() {
 
 #[test]
 fn rotate_right() {
-    let a = [1, 0, 1, 0, 0, 0, 0, 0].map(Z::new);
+    let a = [1, 0, 1, 0, 0, 0, 0, 0].map(Z::with_int);
     let b = 17;
-    let c = [0, 1, 0, 0, 0, 0, 0, 1].map(Z::new);
+    let c = [0, 1, 0, 0, 0, 0, 0, 1].map(Z::with_int);
 
     let circuit = CircuitBuilder::<Z>::new(2);
     let arithmetic_gate_circuit = Circuit::<Z>::new(&circuit);
@@ -86,9 +86,9 @@ fn rotate_right() {
 
 #[test]
 fn bitxor() {
-    let a = [0, 0, 1, 1].map(Z::new);
-    let b = [0, 1, 0, 1].map(Z::new);
-    let c = [0, 1, 1, 0].map(Z::new);
+    let a = [0, 0, 1, 1].map(Z::with_int);
+    let b = [0, 1, 0, 1].map(Z::with_int);
+    let c = [0, 1, 1, 0].map(Z::with_int);
 
     let circuit = CircuitBuilder::<Z>::new(2);
     let arithmetic_gate_circuit = Circuit::<Z>::new(&circuit);

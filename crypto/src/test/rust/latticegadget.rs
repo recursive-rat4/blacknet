@@ -32,10 +32,10 @@ fn matrix() {
             6, 2, 1, 0,
     ].map(Z::from).map(R::from).into());
     let b = DenseMatrix::new(2, 2, [
-            R::from([4295098371, 0].map(Z::new)),
-            R::from([4295098372, 0].map(Z::new)),
-            R::from([4295098373, 0].map(Z::new)),
-            R::from([4295098374, 0].map(Z::new)),
+            R::from([4295098371, 0].map(Z::with_int)),
+            R::from([4295098372, 0].map(Z::with_int)),
+            R::from([4295098373, 0].map(Z::with_int)),
+            R::from([4295098374, 0].map(Z::with_int)),
      ].into());
     let g = latticegadget::matrix::<Z, R>(&Z::from(65536), 2, 4);
     assert_eq!(&a * g.transpose(), b);
@@ -46,7 +46,7 @@ fn matrix() {
 #[test]
 fn vector() {
     let a = DenseVector::from([3, 2, 1, 0, 4, 2, 1, 0].map(Z::from).map(R::from));
-    let b = DenseVector::from([4295098371, 4295098372].map(Z::new).map(R::from));
+    let b = DenseVector::from([4295098371, 4295098372].map(Z::with_int).map(R::from));
     let g = latticegadget::matrix::<Z, R>(&Z::from(65536), 2, 4);
     assert_eq!(&g * &a, b);
     let c = latticegadget::decompose_vector(&b, 65535, 16, 4);

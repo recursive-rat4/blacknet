@@ -18,8 +18,8 @@
 use crate::algebra::{Double, RingOps, UnitalRing};
 use crate::assigner::assigment::Assigment;
 use crate::assigner::polynomial::UnivariatePolynomial;
-use crate::assigner::random::Distribution;
 use crate::polynomial::{MultivariatePolynomial, Polynomial};
+use crate::random::Distribution;
 use crate::symmetric::{Absorb, Duplexer};
 use alloc::vec::Vec;
 use core::marker::PhantomData;
@@ -56,7 +56,7 @@ pub struct SumCheck<
     R: UnitalRing,
     P: MultivariatePolynomial<Coefficient = R, Point: From<Vec<R>>>,
     D: Duplexer,
-    E: Distribution<'a, R, R, D>,
+    E: Distribution<R, D>,
 > {
     _assigment: &'a Assigment<R>,
     phantom_p: PhantomData<P>,
@@ -69,7 +69,7 @@ impl<
     R: UnitalRing + Absorb<D::Msg> + Clone,
     P: MultivariatePolynomial<Coefficient = R, Point: From<Vec<R>>>,
     D: Duplexer,
-    E: Distribution<'a, R, R, D>,
+    E: Distribution<R, D>,
 > SumCheck<'a, R, P, D, E>
 {
     pub const fn new(assigment: &'a Assigment<R>) -> Self {

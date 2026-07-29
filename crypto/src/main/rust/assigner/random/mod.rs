@@ -16,9 +16,7 @@
  */
 
 mod binaryuniformdistribution;
-mod distribution;
 mod quartaryuniformdistribution;
 
 pub use binaryuniformdistribution::BinaryUniformDistribution;
-pub use distribution::Distribution;
 pub use quartaryuniformdistribution::QuartaryUniformDistribution;

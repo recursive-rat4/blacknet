@@ -21,70 +21,76 @@ use blacknet_crypto::norm::InfinityNorm;
 
 #[test]
 fn congruence() {
-    assert_eq!(GF2::new(-2), GF2::new(2));
-    assert_ne!(GF2::new(-3), GF2::new(2));
+    assert_eq!(GF2::with_int(-2), GF2::with_int(2));
+    assert_ne!(GF2::with_int(-3), GF2::with_int(2));
 }
 
 #[test]
 fn add() {
-    assert_eq!(GF2::new(0) + GF2::new(0), GF2::new(0));
-    assert_eq!(GF2::new(0) + GF2::new(1), GF2::new(1));
-    assert_eq!(GF2::new(1) + GF2::new(0), GF2::new(1));
-    assert_eq!(GF2::new(1) + GF2::new(1), GF2::new(0));
+    assert_eq!(GF2::with_int(0) + GF2::with_int(0), GF2::with_int(0));
+    assert_eq!(GF2::with_int(0) + GF2::with_int(1), GF2::with_int(1));
+    assert_eq!(GF2::with_int(1) + GF2::with_int(0), GF2::with_int(1));
+    assert_eq!(GF2::with_int(1) + GF2::with_int(1), GF2::with_int(0));
 }
 
 #[test]
 fn mul() {
-    assert_eq!(GF2::new(0) * GF2::new(0), GF2::new(0));
-    assert_eq!(GF2::new(0) * GF2::new(1), GF2::new(0));
-    assert_eq!(GF2::new(1) * GF2::new(0), GF2::new(0));
-    assert_eq!(GF2::new(1) * GF2::new(1), GF2::new(1));
+    assert_eq!(GF2::with_int(0) * GF2::with_int(0), GF2::with_int(0));
+    assert_eq!(GF2::with_int(0) * GF2::with_int(1), GF2::with_int(0));
+    assert_eq!(GF2::with_int(1) * GF2::with_int(0), GF2::with_int(0));
+    assert_eq!(GF2::with_int(1) * GF2::with_int(1), GF2::with_int(1));
 }
 
 #[test]
 fn sqr() {
-    assert_eq!(GF2::new(0).square(), GF2::new(0));
-    assert_eq!(GF2::new(1).square(), GF2::new(1));
+    assert_eq!(GF2::with_int(0).square(), GF2::with_int(0));
+    assert_eq!(GF2::with_int(1).square(), GF2::with_int(1));
 }
 
 #[test]
 fn neg() {
-    assert_eq!(-GF2::new(0), GF2::new(0));
-    assert_eq!(-GF2::new(1), GF2::new(1));
+    assert_eq!(-GF2::with_int(0), GF2::with_int(0));
+    assert_eq!(-GF2::with_int(1), GF2::with_int(1));
 }
 
 #[test]
 fn sub() {
-    assert_eq!(GF2::new(0) - GF2::new(0), GF2::new(0));
-    assert_eq!(GF2::new(0) - GF2::new(1), GF2::new(1));
-    assert_eq!(GF2::new(1) - GF2::new(0), GF2::new(1));
-    assert_eq!(GF2::new(1) - GF2::new(1), GF2::new(0));
+    assert_eq!(GF2::with_int(0) - GF2::with_int(0), GF2::with_int(0));
+    assert_eq!(GF2::with_int(0) - GF2::with_int(1), GF2::with_int(1));
+    assert_eq!(GF2::with_int(1) - GF2::with_int(0), GF2::with_int(1));
+    assert_eq!(GF2::with_int(1) - GF2::with_int(1), GF2::with_int(0));
 }
 
 #[test]
 fn inv() {
-    assert_eq!(GF2::new(1).inv().unwrap(), GF2::new(1));
-    assert!(GF2::new(0).inv().is_none());
+    assert_eq!(GF2::with_int(1).inv().unwrap(), GF2::with_int(1));
+    assert!(GF2::with_int(0).inv().is_none());
 }
 
 #[test]
 fn div() {
-    assert!((GF2::new(0) / GF2::new(0)).is_none());
-    assert_eq!((GF2::new(0) / GF2::new(1)).unwrap(), GF2::new(0));
-    assert!((GF2::new(1) / GF2::new(0)).is_none());
-    assert_eq!((GF2::new(1) / GF2::new(1)).unwrap(), GF2::new(1));
+    assert!((GF2::with_int(0) / GF2::with_int(0)).is_none());
+    assert_eq!(
+        (GF2::with_int(0) / GF2::with_int(1)).unwrap(),
+        GF2::with_int(0)
+    );
+    assert!((GF2::with_int(1) / GF2::with_int(0)).is_none());
+    assert_eq!(
+        (GF2::with_int(1) / GF2::with_int(1)).unwrap(),
+        GF2::with_int(1)
+    );
 }
 
 #[test]
 fn sqrt() {
-    assert_eq!(GF2::new(0).sqrt(), GF2::new(0));
-    assert_eq!(GF2::new(1).sqrt(), GF2::new(1));
+    assert_eq!(GF2::with_int(0).sqrt(), GF2::with_int(0));
+    assert_eq!(GF2::with_int(1).sqrt(), GF2::with_int(1));
 }
 
 #[test]
 fn infinity_norm() {
-    assert!(!GF2::new(0).check_infinity_norm(&0));
-    assert!(GF2::new(0).check_infinity_norm(&1));
-    assert!(!GF2::new(1).check_infinity_norm(&0));
-    assert!(!GF2::new(1).check_infinity_norm(&1));
+    assert!(!GF2::with_int(0).check_infinity_norm(&0));
+    assert!(GF2::with_int(0).check_infinity_norm(&1));
+    assert!(!GF2::with_int(1).check_infinity_norm(&0));
+    assert!(!GF2::with_int(1).check_infinity_norm(&1));
 }

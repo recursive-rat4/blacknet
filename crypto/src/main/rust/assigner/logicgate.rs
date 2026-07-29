@@ -23,14 +23,16 @@ pub struct LogicGate<'a, R: UnitalRing> {
     assigment: &'a Assigment<R>,
 }
 
+impl<'a, R: UnitalRing> LogicGate<'a, R> {
+    pub const fn new(assigment: &'a Assigment<R>) -> Self {
+        Self { assigment }
+    }
+}
+
 impl<'a, R: UnitalRing + Clone + Eq> LogicGate<'a, R>
 where
     for<'b> &'b R: RingOps<R>,
 {
-    pub const fn new(assigment: &'a Assigment<R>) -> Self {
-        Self { assigment }
-    }
-
     pub fn xor(&self, a: R, b: R) -> R {
         let ab = &a * &b;
         self.assigment.push(ab.clone());

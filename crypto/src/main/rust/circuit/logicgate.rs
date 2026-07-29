@@ -25,11 +25,13 @@ pub struct LogicGate<'a, 'b, R: UnitalRing> {
     circuit: &'a CircuitBuilder<'b, R>,
 }
 
-impl<'a, 'b, R: UnitalRing + Clone + Eq> LogicGate<'a, 'b, R> {
+impl<'a, 'b, R: UnitalRing> LogicGate<'a, 'b, R> {
     pub const fn new(circuit: &'a CircuitBuilder<'b, R>) -> Self {
         Self { circuit }
     }
+}
 
+impl<'a, 'b, R: UnitalRing + Clone + Eq> LogicGate<'a, 'b, R> {
     /// Constrain that `a` is a Boolean value.
     pub fn check_range(&self, a: &LinearCombination<R>) {
         let scope = self.circuit.scope("LogicGate::check_range");

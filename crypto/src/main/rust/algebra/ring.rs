@@ -119,7 +119,7 @@ pub trait IntegerModRing
     type Int: Integer;
     type Modulus: Integer;
 
-    fn new(n: Self::Int) -> Self;
+    fn with_int(n: Self::Int) -> Self;
     fn with_limb(n: <Self::Int as Integer>::Limb) -> Self;
 
     /// Canonical representative

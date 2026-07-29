@@ -68,7 +68,7 @@ impl FermatField {
             d <<= 1;
         }
         let d = Self::reduce_64(d);
-        let d = Self::new(d);
+        let d = Self::with_int(d);
         BlOption::new(d, b == 1)
     }
 }
@@ -427,13 +427,13 @@ impl IntegerModRing for FermatField {
     type Int = i32;
     type Modulus = i32;
 
-    fn new(n: Self::Int) -> Self {
+    fn with_int(n: Self::Int) -> Self {
         Self {
             n: Self::reduce_32(n),
         }
     }
     fn with_limb(n: <Self::Int as Integer>::Limb) -> Self {
-        Self::new(n)
+        Self::with_int(n)
     }
 
     fn canonical(&self) -> Self::Int {

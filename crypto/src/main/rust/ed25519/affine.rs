@@ -87,7 +87,7 @@ impl Edwards25519Affine {
         let x_is_odd = (bytes[31] & 0x80) != 0;
         bytes[31] &= 0x7F;
         let n = UInt256::from_le_bytes(bytes);
-        let y = Field25519::new(n);
+        let y = Field25519::with_int(n);
         Self::try_from_y(x_is_odd, y)
     }
 }

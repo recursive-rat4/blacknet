@@ -40,7 +40,7 @@ impl Scalar25519 {
     /// # Panics
     /// On inappropriate string.
     pub fn with_hex(hex: &str) -> Self {
-        Self::new(UInt256::from_hex(hex))
+        Self::with_int(UInt256::from_hex(hex))
     }
 
     /// Construct an element.
@@ -54,10 +54,10 @@ impl Scalar25519 {
     pub fn with_512(bytes: [u8; 64]) -> Self {
         let bytes: [[u8; 32]; 2] = unsafe { transmute(bytes) };
         let x = UInt256::from_le_bytes(bytes[0]);
-        let l = Scalar25519::new(x);
+        let l = Scalar25519::with_int(x);
         let x = UInt256::from_le_bytes(bytes[1]);
         let x = Self::to_form(x);
-        let r = Scalar25519::new(x);
+        let r = Scalar25519::with_int(x);
         l + r
     }
 
@@ -195,7 +195,7 @@ impl From<i64> for Scalar25519 {
         let mut n = UInt256::from(n.bl_unsigned_abs());
         let x = Self::MODULUS - n;
         n.bl_assign(x, s);
-        Self::new(n)
+        Self::with_int(n)
     }
 }
 
@@ -219,7 +219,7 @@ impl From<u32> for Scalar25519 {
 
 impl From<u64> for Scalar25519 {
     fn from(n: u64) -> Self {
-        Self::new(n.into())
+        Self::with_limb(n)
     }
 }
 
@@ -590,7 +590,7 @@ impl IntegerModRing for Scalar25519 {
     type Int = UInt256;
     type Modulus = UInt256;
 
-    fn new(n: UInt256) -> Self {
+    fn with_int(n: UInt256) -> Self {
         Self {
             n: Self::to_form(n),
         }
@@ -669,7 +669,7 @@ impl<'de> Deserialize<'de> for Scalar25519 {
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         let bytes = <[u8; 32]>::deserialize(deserializer)?;
         let n = UInt256::from_le_bytes(bytes);
-        Ok(Self::new(n))
+        Ok(Self::with_int(n))
     }
 }
 

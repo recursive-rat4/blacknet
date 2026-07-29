@@ -47,7 +47,7 @@ fn lm_12() {
         0x000000000000000a,
         0x000000000000000b,
     ]
-    .map(F::new);
+    .map(F::with_int);
     let b_plain = [
         0x0833b3a9b92da868,
         0x0534198f3736b18f,
@@ -62,7 +62,7 @@ fn lm_12() {
         0x0fdfa4c346c6bf96,
         0x01198b4d4e4a9785,
     ]
-    .map(F::new);
+    .map(F::with_int);
     let mut c_plain = a_plain;
     <Poseidon2LM12 as Poseidon2Plain<F, W, 48, 26, 48>>::permute(&mut c_plain);
     assert_eq!(c_plain, b_plain);
@@ -103,7 +103,7 @@ fn lm_8() {
         0x0000000000000006,
         0x0000000000000007,
     ]
-    .map(F::new);
+    .map(F::with_int);
     let b_plain = [
         0x0bd8c4c53bf8fe12,
         0x0355600cb28c7f23,
@@ -114,7 +114,7 @@ fn lm_8() {
         0x0003d9655be21aaf,
         0x08d63701b7a44777,
     ]
-    .map(F::new);
+    .map(F::with_int);
     let mut c_plain = a_plain;
     <Poseidon2LM8 as Poseidon2Plain<F, W, 32, 26, 32>>::permute(&mut c_plain);
     assert_eq!(c_plain, b_plain);
@@ -159,7 +159,7 @@ fn pervushin_12() {
         0x000000000000000a,
         0x000000000000000b,
     ]
-    .map(F::new);
+    .map(F::with_int);
     let b_plain = [
         0x14ad43d6b732aa1f,
         0x02fbf1c807dd0281,
@@ -174,7 +174,7 @@ fn pervushin_12() {
         0x1d00514d0694390a,
         0x03f39f82fb43ef6c,
     ]
-    .map(F::new);
+    .map(F::with_int);
     let mut c_plain = a_plain;
     <Poseidon2Pervushin12 as Poseidon2Plain<F, W, 48, 12, 48>>::permute(&mut c_plain);
     assert_eq!(c_plain, b_plain);
@@ -215,7 +215,7 @@ fn pervushin_8() {
         0x0000000000000006,
         0x0000000000000007,
     ]
-    .map(F::new);
+    .map(F::with_int);
     let b_plain = [
         0x1a8775be9bdb5c86,
         0x084e734b4eba7e69,
@@ -226,7 +226,7 @@ fn pervushin_8() {
         0x0aab068f99aec08b,
         0x1d231eb4c9e7dcdd,
     ]
-    .map(F::new);
+    .map(F::with_int);
     let mut c_plain = a_plain;
     <Poseidon2Pervushin8 as Poseidon2Plain<F, W, 32, 12, 32>>::permute(&mut c_plain);
     assert_eq!(c_plain, b_plain);

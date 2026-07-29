@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_crypto::algebra::{IntegerModRing, One, Zero};
+use blacknet_crypto::algebra::{One, Zero};
 use blacknet_crypto::lm::LMField;
 use blacknet_crypto::polynomial::{
     BinarityPolynomial, EqExtension, MaskingPolynomial, MultilinearExtension,
@@ -34,7 +34,7 @@ type E = UniformDistribution;
 fn make_bin() -> (BinarityPolynomial<Z>, Z) {
     let mut coefficients = Vec::<Z>::with_capacity(1 << VARS);
     (0..1 << VARS).for_each(|i| {
-        coefficients.push(Z::new(i & 1));
+        coefficients.push(if i & 1 == 1 { Z::ONE } else { Z::ZERO });
     });
     (coefficients.into(), Z::ZERO)
 }

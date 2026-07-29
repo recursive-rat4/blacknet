@@ -25,7 +25,7 @@ fn representative() {
     let a = UInt256::from(1);
     let b = UInt256::from_hex("1000000000000000000000000000000014DEF9DEA2F79CD65812631A5CF5D3EC");
     let c = F::from(-1);
-    let d = F::new(b);
+    let d = F::with_int(b);
     assert_eq!(d, c);
     assert_eq!(c.canonical(), b);
     assert_eq!(d.canonical(), b);

@@ -25,8 +25,8 @@ type F = blacknet_crypto::pervushin::PervushinField2;
 
 #[test]
 fn z_representative() {
-    let a = Z::new(-1);
-    let b = Z::new(2305843009213693950);
+    let a = Z::with_int(-1);
+    let b = Z::with_int(2305843009213693950);
     assert_eq!(b, a);
     assert_eq!(a.canonical(), 2305843009213693950);
     assert_eq!(b.canonical(), 2305843009213693950);
@@ -38,22 +38,22 @@ fn z_representative() {
 
 #[test]
 fn z_add() {
-    let a = Z::new(1152921504606846974);
-    let b = Z::new(1152921504606846970);
-    let c = Z::new(-7);
+    let a = Z::with_int(1152921504606846974);
+    let b = Z::with_int(1152921504606846970);
+    let c = Z::with_int(-7);
     assert_eq!(a + b, c);
     assert_eq!(b + a, c);
     assert_eq!(c + Z::ZERO, c);
     assert_eq!(Z::ZERO + c, c);
     assert_eq!(Z::ONE + Z::ZERO, Z::ONE);
     assert_eq!(Z::ZERO + Z::ONE, Z::ONE);
-    assert_eq!(Z::new(1) + Z::new(-1), Z::ZERO);
+    assert_eq!(Z::ONE + (-Z::ONE), Z::ZERO);
 }
 
 #[test]
 fn z_neg() {
-    let a = Z::new(4);
-    let b = Z::new(-4);
+    let a = Z::from(4);
+    let b = Z::from(-4);
     assert_eq!(-a, b);
     assert_eq!(-b, a);
     assert_eq!(-Z::ZERO, Z::ZERO);
@@ -61,10 +61,10 @@ fn z_neg() {
 
 #[test]
 fn z_sub() {
-    let a = Z::new(-2048);
-    let b = Z::new(65536);
-    let c = Z::new(-67584);
-    let d = Z::new(67584);
+    let a = Z::from(-2048);
+    let b = Z::from(65536);
+    let c = Z::from(-67584);
+    let d = Z::from(67584);
     assert_eq!(a - b, c);
     assert_eq!(b - a, d);
     assert_eq!(c - Z::ZERO, c);
@@ -74,9 +74,9 @@ fn z_sub() {
 
 #[test]
 fn z_mul() {
-    let a = Z::new(1152102451225612864);
-    let b = Z::new(-32);
-    let c = Z::new(26209708199491568);
+    let a = Z::with_int(1152102451225612864);
+    let b = Z::with_int(-32);
+    let c = Z::with_int(26209708199491568);
     assert_eq!(a * b, c);
     assert_eq!(b * a, c);
     assert_eq!(c * Z::ZERO, Z::ZERO);
@@ -87,17 +87,17 @@ fn z_mul() {
 
 #[test]
 fn z_sqr() {
-    assert_eq!(Z::new(-1).square(), Z::new(1));
-    assert_eq!(Z::new(0).square(), Z::new(0));
-    assert_eq!(Z::new(1).square(), Z::new(1));
+    assert_eq!((-Z::ONE).square(), Z::ONE);
+    assert_eq!(Z::ZERO.square(), Z::ZERO);
+    assert_eq!(Z::ONE.square(), Z::ONE);
 }
 
 #[test]
 fn z_inv() {
-    let a = Z::new(24);
-    let b = Z::new(-672537544353994069);
-    let c = Z::new(-25);
-    let d = Z::new(92233720368547758);
+    let a = Z::with_int(24);
+    let b = Z::with_int(-672537544353994069);
+    let c = Z::with_int(-25);
+    let d = Z::with_int(92233720368547758);
     assert_eq!(b.inv().unwrap(), a);
     assert_eq!(a.inv().unwrap(), b);
     assert_eq!(c.inv().unwrap(), d);
@@ -107,10 +107,10 @@ fn z_inv() {
 
 #[test]
 fn z_div() {
-    let a = Z::new(0x1C31);
-    let b = Z::new(0xFCDD);
-    let c = Z::new(0x619A2686D8FA9A1);
-    let d = Z::new(0x1BCACAD3E896AF31);
+    let a = Z::with_int(0x1C31);
+    let b = Z::with_int(0xFCDD);
+    let c = Z::with_int(0x619A2686D8FA9A1);
+    let d = Z::with_int(0x1BCACAD3E896AF31);
     assert_eq!((a / b).unwrap(), c);
     assert_eq!((b / a).unwrap(), d);
     assert_eq!((-Z::ONE / -Z::ONE).unwrap(), Z::ONE);
@@ -119,9 +119,9 @@ fn z_div() {
 
 #[test]
 fn z_sqrt() {
-    let a = Z::new(0xC8F7B5AA744AF1);
-    let b = Z::new(0x121B318906FE12B);
-    let c = Z::new(0x2475A9E305021CF);
+    let a = Z::with_int(0xC8F7B5AA744AF1);
+    let b = Z::with_int(0x121B318906FE12B);
+    let c = Z::with_int(0x2475A9E305021CF);
     assert_eq!(a.sqrt().unwrap(), c);
     assert!(b.sqrt().is_none());
     assert_eq!(Z::ZERO.sqrt().unwrap(), Z::ZERO);
@@ -136,8 +136,8 @@ fn z_sum() {
 
 #[test]
 fn z_infinity_norm() {
-    let a = Z::new(-677133638855483916);
-    let b = Z::new(1140329745848183219);
+    let a = Z::with_int(-677133638855483916);
+    let b = Z::with_int(1140329745848183219);
     let ab = 677133638855483916;
     let ag = 677133638855483917;
     let bb = 1140329745848183219;
@@ -150,19 +150,19 @@ fn z_infinity_norm() {
 
 #[test]
 fn f_add() {
-    let a = F::from([4, 3].map(Z::new));
-    let b = F::from([2, 1].map(Z::new));
-    let c = F::from([6, 4].map(Z::new));
+    let a = F::from([4, 3].map(Z::from));
+    let b = F::from([2, 1].map(Z::from));
+    let c = F::from([6, 4].map(Z::from));
     assert_eq!(a + b, c);
     assert_eq!(b + a, c);
 }
 
 #[test]
 fn f_mul() {
-    let a = F::from([-562956929497444169, 136532190776072177].map(Z::new));
-    let b = Z::new(51280928868087145);
-    let c = F::from([-557186355960048698, -800938371403945454].map(Z::new));
-    let d = F::from([483463506662809566, -624462247079014308].map(Z::new));
+    let a = F::from([-562956929497444169, 136532190776072177].map(Z::with_int));
+    let b = Z::with_int(51280928868087145);
+    let c = F::from([-557186355960048698, -800938371403945454].map(Z::with_int));
+    let d = F::from([483463506662809566, -624462247079014308].map(Z::with_int));
     assert_eq!(a * b, c);
     //assert_eq!(b * a, c);
     assert_eq!(a * c, d);
@@ -171,8 +171,8 @@ fn f_mul() {
 
 #[test]
 fn f_inv() {
-    let a = F::from([-355525067034500326, -826748688154628891].map(Z::new));
-    let b = F::from([654336260586812980, -209289517407125934].map(Z::new));
+    let a = F::from([-355525067034500326, -826748688154628891].map(Z::with_int));
+    let b = F::from([654336260586812980, -209289517407125934].map(Z::with_int));
     assert_eq!(b.inv().unwrap(), a);
     assert_eq!(a.inv().unwrap(), b);
     assert!(F::ZERO.inv().is_none());
@@ -180,9 +180,9 @@ fn f_inv() {
 
 #[test]
 fn f_cnj() {
-    let a = F::from([4, 0].map(Z::new));
-    let b = F::from([654336260586812980, -209289517407125934].map(Z::new));
-    let c = F::from([654336260586812980, 209289517407125934].map(Z::new));
+    let a = F::from([4, 0].map(Z::with_int));
+    let b = F::from([654336260586812980, -209289517407125934].map(Z::with_int));
+    let c = F::from([654336260586812980, 209289517407125934].map(Z::with_int));
     assert_eq!(a.conjugate(), a);
     assert_eq!(b.conjugate(), c);
 }

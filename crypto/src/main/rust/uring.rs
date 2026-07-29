@@ -329,7 +329,7 @@ macro_rules! impl_uring {
                 type Int = $int;
                 type Modulus = $long;
 
-                fn new(n: $int) -> $x {
+                fn with_int(n: $int) -> $x {
                     $x { n }
                 }
                 fn with_limb(n: $int) -> $x {

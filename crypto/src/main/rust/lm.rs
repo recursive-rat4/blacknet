@@ -458,13 +458,13 @@ impl IntegerModRing for LMField {
     type Int = i64;
     type Modulus = i64;
 
-    fn new(n: Self::Int) -> Self {
+    fn with_int(n: Self::Int) -> Self {
         Self {
             n: Self::reduce_64(n),
         }
     }
     fn with_limb(n: <Self::Int as Integer>::Limb) -> Self {
-        Self::new(n)
+        Self::with_int(n)
     }
 
     fn canonical(&self) -> Self::Int {

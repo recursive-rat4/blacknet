@@ -18,9 +18,8 @@
 use crate::algebra::IntegerModRing;
 use crate::circuit::builder::{CircuitBuilder, Constant, LinearCombination};
 use crate::circuit::logicgate::LogicGate;
-use crate::circuit::random::Distribution;
 use crate::integer::Integer;
-use crate::random::UniformGenerator;
+use crate::random::{Distribution, UniformGenerator};
 use alloc::vec;
 use alloc::vec::Vec;
 
@@ -40,9 +39,18 @@ pub struct BinaryUniformDistribution<
 impl<
     'a,
     'b,
-    Z: IntegerModRing,
+    Z: IntegerModRing + Clone,
     G: UniformGenerator<Output = LinearCombination<Z>>
 > BinaryUniformDistribution<'a, 'b, Z, G> {
+    pub fn new(circuit: &'a CircuitBuilder<'b, Z>) -> Self {
+        Self {
+            circuit,
+            logic_gate: LogicGate::new(circuit),
+            cache: vec![LinearCombination::new(); Z::BITS as usize],
+            have_bits: 0,
+        }
+    }
+
     fn useful_bits() -> u32 {
         if Z::MODULUS.count_ones() == 1 {
             Z::BITS
@@ -58,16 +66,7 @@ impl<
     'b,
     Z: IntegerModRing + Clone + Eq,
     G: UniformGenerator<Output = LinearCombination<Z>>
-> Distribution<'a, 'b, Z, LinearCombination<Z>, G> for BinaryUniformDistribution<'a, 'b, Z, G> {
-    fn new(circuit: &'a CircuitBuilder<'b, Z>) -> Self {
-        Self {
-            circuit,
-            logic_gate: LogicGate::new(circuit),
-            cache: vec![LinearCombination::new(); Z::BITS as usize],
-            have_bits: 0,
-        }
-    }
-
+> Distribution<LinearCombination<Z>, G> for BinaryUniformDistribution<'a, 'b, Z, G> {
     fn sample(&mut self, generator: &mut G) -> LinearCombination<Z> {
         if self.have_bits == 0 {
             let scope = self.circuit.scope("BinaryUniformDistribution::sample");

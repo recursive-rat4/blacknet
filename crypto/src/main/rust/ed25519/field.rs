@@ -40,7 +40,7 @@ impl Field25519 {
     /// # Panics
     /// On inappropriate string.
     pub fn with_hex(hex: &str) -> Self {
-        Self::new(UInt256::from_hex(hex))
+        Self::with_int(UInt256::from_hex(hex))
     }
 
     /// Construct an element.
@@ -567,7 +567,7 @@ impl IntegerModRing for Field25519 {
     type Int = UInt256;
     type Modulus = UInt256;
 
-    fn new(n: UInt256) -> Self {
+    fn with_int(n: UInt256) -> Self {
         Self {
             n: Self::reduce_256(n),
         }
@@ -644,7 +644,7 @@ impl<'de> Deserialize<'de> for Field25519 {
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         let bytes = <[u8; 32]>::deserialize(deserializer)?;
         let n = UInt256::from_le_bytes(bytes);
-        Ok(Self::new(n))
+        Ok(Self::with_int(n))
     }
 }
 
