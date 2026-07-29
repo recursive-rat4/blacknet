@@ -15,6 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+//! Generalized length.
+
 use crate::algebra::{
     FreeModule, IntegerModRing, MatrixSpace, QuaternionAlgebra, Ring, UnitalRing, UnivariateRing,
 };
@@ -23,15 +25,19 @@ use crate::float::Cast;
 use crate::matrix::{DenseMatrix, DenseVector, SparseMatrix, SparseVector};
 use core::marker::PhantomData;
 
+/// ℓ₂ space.
 pub enum L2 {}
+/// ℓ-∞ space.
 pub enum LInf {}
 
+/// ℓₚ norm bound.
 pub struct NormBound<Lp, Length> {
     bound: Length,
     phantom: PhantomData<Lp>,
 }
 
 impl NormBound<L2, f64> {
+    /// Construct a Euclidean norm bound.
     pub const fn new(bound: f64) -> Self {
         Self {
             bound,
@@ -39,12 +45,14 @@ impl NormBound<L2, f64> {
         }
     }
 
+    /// Check whether the norm of an object is less than bound.
     pub fn check<Object: EuclideanNorm>(&self, object: &Object) -> bool {
         object.euclidean_norm() < self.bound
     }
 }
 
 impl<Length: Ord> NormBound<LInf, Length> {
+    /// Construct an infinity norm bound.
     pub const fn new(bound: Length) -> Self {
         Self {
             bound,
@@ -52,12 +60,15 @@ impl<Length: Ord> NormBound<LInf, Length> {
         }
     }
 
+    /// Check whether the norm of an object is less than bound.
     pub fn check<Object: InfinityNorm<Length>>(&self, object: &Object) -> bool {
         object.check_infinity_norm(&self.bound)
     }
 }
 
+/// ℓ₂ norm.
 pub trait EuclideanNorm {
+    /// Compute Euclidean norm.
     fn euclidean_norm(&self) -> f64;
 }
 
@@ -66,6 +77,8 @@ impl<Z: IntegerModRing<Int: Cast<f64>>> EuclideanNorm for Z {
         self.absolute().cast()
     }
 }
+
+//RUST https://github.com/rust-lang/rust/issues/137578
 
 impl<R: Ring + EuclideanNorm, const N: usize> EuclideanNorm for FreeModule<R, N> {
     fn euclidean_norm(&self) -> f64 {
@@ -117,9 +130,14 @@ impl<R: UnitalRing + EuclideanNorm, const N: usize, C: Convolution<R, N>> Euclid
     }
 }
 
+/// ℓ-∞ norm.
 pub trait InfinityNorm<Length: Ord> {
+    /// Check whether the norm is less than bound.
     fn check_infinity_norm(&self, bound: &Length) -> bool;
 
+    /// Compute infinity norm.
+    ///
+    /// For 0-dimensional objects returns default.
     fn infinity_norm(&self) -> Length
     where
         Length: Default;
