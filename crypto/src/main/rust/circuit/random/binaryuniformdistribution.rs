@@ -58,9 +58,7 @@ impl<
     'b,
     Z: IntegerModRing + Clone + Eq,
     G: UniformGenerator<Output = LinearCombination<Z>>
-> Distribution<'a, 'b, Z, G> for BinaryUniformDistribution<'a, 'b, Z, G> {
-    type Output = LinearCombination<Z>;
-
+> Distribution<'a, 'b, Z, LinearCombination<Z>, G> for BinaryUniformDistribution<'a, 'b, Z, G> {
     fn new(circuit: &'a CircuitBuilder<'b, Z>) -> Self {
         Self {
             circuit,
@@ -70,7 +68,7 @@ impl<
         }
     }
 
-    fn sample(&mut self, generator: &mut G) -> Self::Output {
+    fn sample(&mut self, generator: &mut G) -> LinearCombination<Z> {
         if self.have_bits == 0 {
             let scope = self.circuit.scope("BinaryUniformDistribution::sample");
             let generated = generator.generate();

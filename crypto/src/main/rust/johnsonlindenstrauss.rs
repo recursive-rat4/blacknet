@@ -62,10 +62,10 @@ impl<G: UniformGenerator<Output: IntegerModRing>> Default for WeightedDistributi
     }
 }
 
-impl<G: UniformGenerator<Output: IntegerModRing>> Distribution<G> for WeightedDistribution<G> {
-    type Output = G::Output;
-
-    fn sample(&mut self, generator: &mut G) -> Self::Output {
+impl<G: UniformGenerator<Output: IntegerModRing>> Distribution<G::Output, G>
+    for WeightedDistribution<G>
+{
+    fn sample(&mut self, generator: &mut G) -> G::Output {
         self.bud.sample(generator) + self.bud.sample(generator) - G::Output::ONE
     }
 

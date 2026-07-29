@@ -56,7 +56,7 @@ pub struct SumCheck<
     R: UnitalRing,
     P: MultivariatePolynomial<Coefficient = R, Point: From<Vec<R>>>,
     D: Duplexer,
-    E: Distribution<'a, R, D, Output = R>,
+    E: Distribution<'a, R, R, D>,
 > {
     _assigment: &'a Assigment<R>,
     phantom_p: PhantomData<P>,
@@ -69,7 +69,7 @@ impl<
     R: UnitalRing + Absorb<D::Msg> + Clone,
     P: MultivariatePolynomial<Coefficient = R, Point: From<Vec<R>>>,
     D: Duplexer,
-    E: Distribution<'a, R, D, Output = R>,
+    E: Distribution<'a, R, R, D>,
 > SumCheck<'a, R, P, D, E>
 {
     pub const fn new(assigment: &'a Assigment<R>) -> Self {

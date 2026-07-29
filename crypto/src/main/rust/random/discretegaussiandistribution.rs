@@ -62,12 +62,10 @@ where
     }
 }
 
-impl<I: Integer + Cast<f64>, G: UniformGenerator<Output = u8>> Distribution<G>
+impl<I: Integer + Cast<f64>, G: UniformGenerator<Output = u8>> Distribution<I, G>
     for DiscreteGaussianDistribution<I, G>
 {
-    type Output = I;
-
-    fn sample(&mut self, generator: &mut G) -> Self::Output {
+    fn sample(&mut self, generator: &mut G) -> I {
         loop {
             let xi: I = self.uid.sample(generator);
             let xf: f64 = xi.cast();

@@ -36,12 +36,10 @@ impl<G: UniformGenerator<Output: IntegerModRing>> Default for QuartaryUniformDis
     }
 }
 
-impl<G: UniformGenerator<Output: IntegerModRing>> Distribution<G>
+impl<G: UniformGenerator<Output: IntegerModRing>> Distribution<G::Output, G>
     for QuartaryUniformDistribution<G>
 {
-    type Output = G::Output;
-
-    fn sample(&mut self, generator: &mut G) -> Self::Output {
+    fn sample(&mut self, generator: &mut G) -> G::Output {
         self.bud.sample(generator).double() - self.bud.sample(generator)
     }
 

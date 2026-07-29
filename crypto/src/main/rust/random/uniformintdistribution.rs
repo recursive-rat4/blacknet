@@ -97,12 +97,10 @@ impl<I: Integer, G: UniformGenerator<Output = u8>> Default for UniformIntDistrib
     }
 }
 
-impl<I: Integer, G: UniformGenerator<Output = u8>> Distribution<G>
+impl<I: Integer, G: UniformGenerator<Output = u8>> Distribution<I, G>
     for UniformIntDistribution<I, G>
 {
-    type Output = I;
-
-    fn sample(&mut self, generator: &mut G) -> Self::Output {
+    fn sample(&mut self, generator: &mut G) -> I {
         loop {
             let result = self.next(generator);
             if result <= self.length {

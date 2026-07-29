@@ -42,12 +42,10 @@ impl<F: Float<Bits: UnsignedInteger>, G: UniformGenerator<Output = u8>> Default
     }
 }
 
-impl<F: Float<Bits: UnsignedInteger + Cast<F>>, G: UniformGenerator<Output = u8>> Distribution<G>
+impl<F: Float<Bits: UnsignedInteger + Cast<F>>, G: UniformGenerator<Output = u8>> Distribution<F, G>
     for Float01Distribution<F, G>
 {
-    type Output = F;
-
-    fn sample(&mut self, generator: &mut G) -> Self::Output {
+    fn sample(&mut self, generator: &mut G) -> F {
         let s: F = (F::Bits::ONE << F::MANTISSA_DIGITS).cast().recip();
         let m: F = self.uid.sample(generator).cast();
         s * m

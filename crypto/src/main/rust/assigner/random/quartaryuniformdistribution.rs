@@ -24,20 +24,18 @@ pub struct QuartaryUniformDistribution<'a, G: UniformGenerator<Output: IntegerMo
     bud: BinaryUniformDistribution<'a, G>,
 }
 
-impl<'a, G: UniformGenerator<Output: IntegerModRing + Clone + Eq>> Distribution<'a, G::Output, G>
-    for QuartaryUniformDistribution<'a, G>
+impl<'a, G: UniformGenerator<Output: IntegerModRing + Clone + Eq>>
+    Distribution<'a, G::Output, G::Output, G> for QuartaryUniformDistribution<'a, G>
 where
     for<'b> &'b G::Output: RingOps<G::Output>,
 {
-    type Output = G::Output;
-
     fn new(assigment: &'a Assigment<G::Output>) -> Self {
         Self {
             bud: BinaryUniformDistribution::<G>::new(assigment),
         }
     }
 
-    fn sample(&mut self, generator: &mut G) -> Self::Output {
+    fn sample(&mut self, generator: &mut G) -> G::Output {
         self.bud.sample(generator).double() - self.bud.sample(generator)
     }
 

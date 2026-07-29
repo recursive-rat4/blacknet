@@ -25,7 +25,7 @@ use blacknet_crypto::pervushin::PervushinField;
 use blacknet_crypto::polynomial::{
     EqExtension, MaskingPolynomial, MultilinearExtension, MultivariatePolynomial,
 };
-use blacknet_crypto::random::{Distribution, UniformDistribution};
+use blacknet_crypto::random::UniformDistribution;
 use blacknet_crypto::sumcheck::{Error, Proof as ProofPlain, SumCheck as SumCheckPlain};
 use blacknet_crypto::symmetric::{
     DuplexPoseidon2Pervushin as DuplexPoseidon2PervushinPlain, Duplexer,
@@ -34,7 +34,7 @@ use core::assert_matches;
 
 type Z = PervushinField;
 type D = DuplexPoseidon2PervushinPlain;
-type E = UniformDistribution<D>;
+type E = UniformDistribution;
 
 #[test]
 fn mle() {
@@ -176,7 +176,7 @@ fn circuit() {
     );
     type DuplexCircuit<'a, 'b> = DuplexPoseidon2PervushinCircuit<'a, 'b>;
     let mut duplex_circuit = DuplexCircuit::new(&circuit);
-    type UniformDistributionCircuit<'a, 'b> = UniformDistribution<DuplexCircuit<'a, 'b>>;
+    type UniformDistributionCircuit<'a, 'b> = UniformDistribution;
     let mut exceptional_set_circuit = UniformDistributionCircuit::default();
     type SCCircuit<'a, 'b> = SumCheckCircuit<
         'a,
@@ -205,7 +205,7 @@ fn circuit() {
         ProofAssigner::new((&proof_plain).into_iter().copied().collect::<Vec<_>>(), &z);
     type DuplexAssigner<'a> = DuplexPoseidon2PervushinAssigner<'a>;
     let mut duplex_assigner = DuplexAssigner::new(&z);
-    type UniformDistributionAssigner<'a> = UniformDistribution<DuplexAssigner<'a>>;
+    type UniformDistributionAssigner<'a> = UniformDistribution;
     let mut exceptional_set_assigner = UniformDistributionAssigner::default();
     type SCAssigner<'a> = SumCheckAssigner<
         'a,

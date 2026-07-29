@@ -18,11 +18,7 @@
 use crate::algebra::Zero;
 use crate::random::{Distribution, UniformGenerator, UniformIntDistribution};
 
-pub fn fill_with_weight<
-    T: Zero + Eq,
-    G: UniformGenerator<Output = u8>,
-    D: Distribution<G, Output = T>,
->(
+pub fn fill_with_weight<T: Zero + Eq, G: UniformGenerator<Output = u8>, D: Distribution<T, G>>(
     rng: &mut G,
     dst: &mut D,
     slice: &mut [T],

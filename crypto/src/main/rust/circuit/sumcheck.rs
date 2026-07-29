@@ -79,7 +79,7 @@ pub struct SumCheck<
     R: UnitalRing,
     P: MultivariatePolynomial<Coefficient = R>,
     D: Duplexer<Msg = LinearCombination<R>>,
-    E: Distribution<'a, 'b, R, D, Output = LinearCombination<R>>,
+    E: Distribution<'a, 'b, R, LinearCombination<R>, D>,
 > {
     _circuit: &'a CircuitBuilder<'b, R>,
     phantom_p: PhantomData<P>,
@@ -93,7 +93,7 @@ impl<
     R: UnitalRing + Clone + Eq,
     P: MultivariatePolynomial<Coefficient = R>,
     D: Duplexer<Msg = LinearCombination<R>>,
-    E: Distribution<'a, 'b, R, D, Output = LinearCombination<R>>,
+    E: Distribution<'a, 'b, R, LinearCombination<R>, D>,
 > SumCheck<'a, 'b, R, P, D, E>
 where
     for<'c> &'c R: RingOps<R>,

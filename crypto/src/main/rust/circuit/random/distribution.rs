@@ -19,27 +19,23 @@ use crate::algebra::UnitalSemiring;
 use crate::circuit::builder::CircuitBuilder;
 use crate::random::{UniformDistribution, UniformGenerator};
 
-pub trait Distribution<'a, 'b, R: UnitalSemiring, G> {
-    type Output;
-
+pub trait Distribution<'a, 'b, R: UnitalSemiring, Sample, Generator> {
     fn new(circuit: &'a CircuitBuilder<'b, R>) -> Self;
 
-    fn sample(&mut self, generator: &mut G) -> Self::Output;
+    fn sample(&mut self, generator: &mut Generator) -> Sample;
 
     fn reset(&mut self);
 }
 
-impl<'a, 'b, R: UnitalSemiring, G: UniformGenerator> Distribution<'a, 'b, R, G>
-    for UniformDistribution<G>
+impl<'a, 'b, R: UnitalSemiring, G: UniformGenerator> Distribution<'a, 'b, R, G::Output, G>
+    for UniformDistribution
 {
-    type Output = G::Output;
-
     fn new(_: &'a CircuitBuilder<'b, R>) -> Self {
-        Self::default()
+        Self
     }
 
     #[inline]
-    fn sample(&mut self, generator: &mut G) -> Self::Output {
+    fn sample(&mut self, generator: &mut G) -> G::Output {
         generator.generate()
     }
 

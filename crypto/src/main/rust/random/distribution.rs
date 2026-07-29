@@ -15,8 +15,6 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use core::marker::PhantomData;
-
 /// Generator of uniformly distributed values.
 pub trait UniformGenerator {
     /// The type of generated values.
@@ -37,12 +35,9 @@ pub trait UniformGenerator {
 ///
 /// It takes a generator as input and
 /// possibly caches indeterminate values between samples.
-pub trait Distribution<G> {
-    /// Sample type.
-    type Output;
-
+pub trait Distribution<Sample, Generator> {
     /// Sample a random value.
-    fn sample(&mut self, generator: &mut G) -> Self::Output;
+    fn sample(&mut self, generator: &mut Generator) -> Sample;
 
     /// Reset internal caches to make the next samples independent of
     /// prior calls to generator.
@@ -50,31 +45,22 @@ pub trait Distribution<G> {
 }
 
 /// Uniform distribution from uniform generator.
-pub struct UniformDistribution<G: UniformGenerator> {
-    phantom: PhantomData<G>,
-}
+#[derive(Default)]
+pub struct UniformDistribution;
 
-impl<G: UniformGenerator> UniformDistribution<G> {
+impl UniformDistribution {
     /// Construct the new distribution.
     pub const fn new() -> Self {
-        Self {
-            phantom: PhantomData,
-        }
+        Self
     }
+
+    /// Reset internal state.
+    pub const fn reset(&mut self) {}
 }
 
-impl<G: UniformGenerator> Default for UniformDistribution<G> {
+impl<G: UniformGenerator> Distribution<G::Output, G> for UniformDistribution {
     #[inline]
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl<G: UniformGenerator> Distribution<G> for UniformDistribution<G> {
-    type Output = G::Output;
-
-    #[inline]
-    fn sample(&mut self, generator: &mut G) -> Self::Output {
+    fn sample(&mut self, generator: &mut G) -> G::Output {
         generator.generate()
     }
 

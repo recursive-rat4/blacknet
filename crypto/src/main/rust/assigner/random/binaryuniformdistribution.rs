@@ -40,13 +40,11 @@ impl<'a, G: UniformGenerator<Output: IntegerModRing>> BinaryUniformDistribution<
     }
 }
 
-impl<'a, G: UniformGenerator<Output: IntegerModRing + Clone + Eq>> Distribution<'a, G::Output, G>
-    for BinaryUniformDistribution<'a, G>
+impl<'a, G: UniformGenerator<Output: IntegerModRing + Clone + Eq>>
+    Distribution<'a, G::Output, G::Output, G> for BinaryUniformDistribution<'a, G>
 where
     for<'b> &'b G::Output: RingOps<G::Output>,
 {
-    type Output = G::Output;
-
     fn new(assigment: &'a Assigment<G::Output>) -> Self {
         Self {
             cache: Vec::new(),
@@ -56,7 +54,7 @@ where
         }
     }
 
-    fn sample(&mut self, generator: &mut G) -> Self::Output {
+    fn sample(&mut self, generator: &mut G) -> G::Output {
         if self.have_bits == 0 {
             let gadget = generator.generate().gadget();
             self.assigment.extend_from_slice(&gadget);

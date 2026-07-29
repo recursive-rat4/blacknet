@@ -19,25 +19,21 @@ use crate::algebra::Set;
 use crate::assigner::assigment::Assigment;
 use crate::random::{UniformDistribution, UniformGenerator};
 
-pub trait Distribution<'a, S: Set, G> {
-    type Output;
-
+pub trait Distribution<'a, S: Set, Sample, Generator> {
     fn new(assigment: &'a Assigment<S>) -> Self;
 
-    fn sample(&mut self, generator: &mut G) -> Self::Output;
+    fn sample(&mut self, generator: &mut Generator) -> Sample;
 
     fn reset(&mut self);
 }
 
-impl<'a, S: Set, G: UniformGenerator> Distribution<'a, S, G> for UniformDistribution<G> {
-    type Output = G::Output;
-
+impl<'a, S: Set, G: UniformGenerator> Distribution<'a, S, G::Output, G> for UniformDistribution {
     fn new(_: &'a Assigment<S>) -> Self {
-        Self::default()
+        Self
     }
 
     #[inline]
-    fn sample(&mut self, generator: &mut G) -> Self::Output {
+    fn sample(&mut self, generator: &mut G) -> G::Output {
         generator.generate()
     }
 

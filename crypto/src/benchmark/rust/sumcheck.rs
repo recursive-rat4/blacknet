@@ -20,7 +20,7 @@ use blacknet_crypto::lm::LMField;
 use blacknet_crypto::polynomial::{
     BinarityPolynomial, EqExtension, MaskingPolynomial, MultilinearExtension,
 };
-use blacknet_crypto::random::{Distribution, UniformDistribution};
+use blacknet_crypto::random::UniformDistribution;
 use blacknet_crypto::sumcheck::SumCheck;
 use blacknet_crypto::symmetric::{DuplexPoseidon2LM, Duplexer};
 use criterion::{Criterion, Throughput, criterion_group, criterion_main};
@@ -29,7 +29,7 @@ use std::hint::black_box;
 const VARS: usize = 15;
 type Z = LMField;
 type D = DuplexPoseidon2LM;
-type E = UniformDistribution<D>;
+type E = UniformDistribution;
 
 fn make_bin() -> (BinarityPolynomial<Z>, Z) {
     let mut coefficients = Vec::<Z>::with_capacity(1 << VARS);

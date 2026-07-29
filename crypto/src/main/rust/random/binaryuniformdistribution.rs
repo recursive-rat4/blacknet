@@ -47,10 +47,10 @@ impl<G: UniformGenerator<Output: IntegerModRing>> Default for BinaryUniformDistr
     }
 }
 
-impl<G: UniformGenerator<Output: IntegerModRing>> Distribution<G> for BinaryUniformDistribution<G> {
-    type Output = G::Output;
-
-    fn sample(&mut self, generator: &mut G) -> Self::Output {
+impl<G: UniformGenerator<Output: IntegerModRing>> Distribution<G::Output, G>
+    for BinaryUniformDistribution<G>
+{
+    fn sample(&mut self, generator: &mut G) -> G::Output {
         if self.have_bits == 0 {
             self.cache = generator.generate().canonical();
             self.have_bits = Self::useful_bits();

@@ -35,16 +35,14 @@ impl<
     'b,
     Z: IntegerModRing + Clone + Eq,
     G: UniformGenerator<Output = LinearCombination<Z>>
-> Distribution<'a, 'b, Z, G> for QuartaryUniformDistribution<'a, 'b, Z, G> {
-    type Output = LinearCombination<Z>;
-
+> Distribution<'a, 'b, Z, LinearCombination<Z>, G> for QuartaryUniformDistribution<'a, 'b, Z, G> {
     fn new(circuit: &'a CircuitBuilder<'b, Z>) -> Self {
         Self {
             bud: BinaryUniformDistribution::new(circuit),
         }
     }
 
-    fn sample(&mut self, generator: &mut G) -> Self::Output {
+    fn sample(&mut self, generator: &mut G) -> LinearCombination<Z> {
         self.bud.sample(generator).double() - self.bud.sample(generator)
     }
 

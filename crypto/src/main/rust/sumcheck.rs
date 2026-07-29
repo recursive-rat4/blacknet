@@ -91,7 +91,7 @@ pub struct SumCheck<
     A: UnitalAlgebra<R>,
     P: MultivariatePolynomial<Coefficient = A, Point: From<Vec<A>>>,
     D: Duplexer,
-    E: Distribution<D, Output = A>,
+    E: Distribution<A, D>,
 > {
     phantom_r: PhantomData<R>,
     phantom_a: PhantomData<A>,
@@ -105,7 +105,7 @@ impl<
     A: UnitalAlgebra<R> + Absorb<D::Msg> + Clone + Eq + Send + Sync,
     P: MultivariatePolynomial<Coefficient = A, Point: From<Vec<A>>> + Send + Sync,
     D: Duplexer,
-    E: Distribution<D, Output = A>,
+    E: Distribution<A, D>,
 > SumCheck<R, A, P, D, E>
 where
     for<'a> &'a A: AlgebraOps<R, A>,
