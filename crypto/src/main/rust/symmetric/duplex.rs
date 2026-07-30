@@ -33,7 +33,7 @@ pub enum Phase {
 
 impl DefaultIsZeroes for Phase {}
 
-pub trait Duplexer: Sized + UniformGenerator {
+pub trait Duplexer: Sized {
     type Msg;
 
     fn reset(&mut self);
