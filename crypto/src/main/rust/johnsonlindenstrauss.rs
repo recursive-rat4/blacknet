@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{IntegerModRing, One, RingOps};
+use crate::algebra::{IntegerModRing, RingOps};
 use crate::matrix::{DenseMatrix, DenseVector};
 use crate::random::{BinaryUniformDistribution, Distribution, UniformGenerator};
 
@@ -30,7 +30,7 @@ impl<Z: IntegerModRing> JohnsonLindenstrauss<Z> {
     const K: usize = 256;
 
     pub fn random<G: UniformGenerator<Output = Z>>(generator: &mut G, n: usize) -> Self {
-        let mut dst = WeightedDistribution::<G>::new();
+        let mut dst = WeightedDistribution::<Z>::new();
         let elements = (0..Self::K * n).map(|_| dst.sample(generator)).collect();
         let map = DenseMatrix::new(Self::K, n, elements);
         Self { map }
@@ -44,32 +44,37 @@ impl<Z: IntegerModRing> JohnsonLindenstrauss<Z> {
     }
 }
 
-struct WeightedDistribution<G: UniformGenerator<Output: IntegerModRing>> {
-    bud: BinaryUniformDistribution<G>,
+struct WeightedDistribution<Z: IntegerModRing> {
+    bud: BinaryUniformDistribution<Z>,
 }
 
-impl<G: UniformGenerator<Output: IntegerModRing>> WeightedDistribution<G> {
+impl<Z: IntegerModRing> WeightedDistribution<Z> {
     pub const fn new() -> Self {
         Self {
             bud: BinaryUniformDistribution::new(),
         }
     }
+
+    pub const fn reset(&mut self) {
+        self.bud.reset()
+    }
 }
 
-impl<G: UniformGenerator<Output: IntegerModRing>> Default for WeightedDistribution<G> {
+impl<Z: IntegerModRing> Default for WeightedDistribution<Z> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<G: UniformGenerator<Output: IntegerModRing>> Distribution<G::Output, G>
-    for WeightedDistribution<G>
+impl<Z: IntegerModRing, G: UniformGenerator<Output = Z>> Distribution<Z, G>
+    for WeightedDistribution<Z>
 {
-    fn sample(&mut self, generator: &mut G) -> G::Output {
-        self.bud.sample(generator) + self.bud.sample(generator) - G::Output::ONE
+    fn sample(&mut self, generator: &mut G) -> Z {
+        self.bud.sample(generator) + self.bud.sample(generator) - Z::ONE
     }
 
+    #[inline]
     fn reset(&mut self) {
-        self.bud.reset()
+        self.reset()
     }
 }

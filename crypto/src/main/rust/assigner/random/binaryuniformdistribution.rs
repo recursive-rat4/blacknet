@@ -15,49 +15,53 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{IntegerModRing, One, RingOps};
+use crate::algebra::{IntegerModRing, RingOps};
 use crate::assigner::assigment::Assigment;
 use crate::assigner::logicgate::LogicGate;
 use crate::integer::Integer;
 use crate::random::{Distribution, UniformGenerator};
 use alloc::vec::Vec;
 
-pub struct BinaryUniformDistribution<'a, G: UniformGenerator<Output: IntegerModRing>> {
-    cache: Vec<G::Output>,
+pub struct BinaryUniformDistribution<'a, Z: IntegerModRing> {
+    cache: Vec<Z>,
     have_bits: u32,
-    logic_gate: LogicGate<'a, G::Output>,
-    assigment: &'a Assigment<G::Output>,
+    logic_gate: LogicGate<'a, Z>,
+    assigment: &'a Assigment<Z>,
 }
 
-impl<'a, G: UniformGenerator<Output: IntegerModRing>> BinaryUniformDistribution<'a, G> {
-    pub const fn new(assigment: &'a Assigment<G::Output>) -> Self {
+impl<'a, Z: IntegerModRing> BinaryUniformDistribution<'a, Z> {
+    pub const fn new(assigment: &'a Assigment<Z>) -> Self {
         Self {
             cache: Vec::new(),
             have_bits: 0,
-            logic_gate: LogicGate::<G::Output>::new(assigment),
+            logic_gate: LogicGate::new(assigment),
             assigment,
         }
     }
 
+    pub const fn reset(&mut self) {
+        self.have_bits = 0
+    }
+
     fn useful_bits() -> u32 {
-        if G::Output::MODULUS.count_ones() == 1 {
-            G::Output::BITS
+        if Z::MODULUS.count_ones() == 1 {
+            Z::BITS
         } else {
-            G::Output::BITS - 1
+            Z::BITS - 1
         }
     }
 }
 
-impl<'a, G: UniformGenerator<Output: IntegerModRing + Clone + Eq>> Distribution<G::Output, G>
-    for BinaryUniformDistribution<'a, G>
+impl<'a, Z: IntegerModRing + Clone + Eq, G: UniformGenerator<Output = Z>> Distribution<Z, G>
+    for BinaryUniformDistribution<'a, Z>
 where
-    for<'b> &'b G::Output: RingOps<G::Output>,
+    for<'b> &'b Z: RingOps<Z>,
 {
-    fn sample(&mut self, generator: &mut G) -> G::Output {
+    fn sample(&mut self, generator: &mut G) -> Z {
         if self.have_bits == 0 {
             let gadget = generator.generate().gadget();
             self.assigment.extend_from_slice(&gadget);
-            let m1_gadget = (-G::Output::ONE).gadget(); //XXX make static?
+            let m1_gadget = (-Z::ONE).gadget(); //XXX make static?
             self.logic_gate.check_less_or_equal(&gadget, &m1_gadget);
             self.cache = gadget;
             self.have_bits = Self::useful_bits();
@@ -67,7 +71,8 @@ where
         result
     }
 
+    #[inline]
     fn reset(&mut self) {
-        self.have_bits = 0
+        self.reset()
     }
 }

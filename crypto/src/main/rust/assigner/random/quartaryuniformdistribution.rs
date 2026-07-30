@@ -15,33 +15,38 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{Double, IntegerModRing, RingOps};
+use crate::algebra::{IntegerModRing, RingOps};
 use crate::assigner::assigment::Assigment;
 use crate::assigner::random::BinaryUniformDistribution;
 use crate::random::{Distribution, UniformGenerator};
 
-pub struct QuartaryUniformDistribution<'a, G: UniformGenerator<Output: IntegerModRing>> {
-    bud: BinaryUniformDistribution<'a, G>,
+pub struct QuartaryUniformDistribution<'a, Z: IntegerModRing> {
+    bud: BinaryUniformDistribution<'a, Z>,
 }
 
-impl<'a, G: UniformGenerator<Output: IntegerModRing>> QuartaryUniformDistribution<'a, G> {
-    pub const fn new(assigment: &'a Assigment<G::Output>) -> Self {
+impl<'a, Z: IntegerModRing> QuartaryUniformDistribution<'a, Z> {
+    pub const fn new(assigment: &'a Assigment<Z>) -> Self {
         Self {
-            bud: BinaryUniformDistribution::<G>::new(assigment),
+            bud: BinaryUniformDistribution::new(assigment),
         }
+    }
+
+    pub const fn reset(&mut self) {
+        self.bud.reset()
     }
 }
 
-impl<'a, G: UniformGenerator<Output: IntegerModRing + Clone + Eq>> Distribution<G::Output, G>
-    for QuartaryUniformDistribution<'a, G>
+impl<'a, Z: IntegerModRing + Clone + Eq, G: UniformGenerator<Output = Z>> Distribution<Z, G>
+    for QuartaryUniformDistribution<'a, Z>
 where
-    for<'b> &'b G::Output: RingOps<G::Output>,
+    for<'b> &'b Z: RingOps<Z>,
 {
-    fn sample(&mut self, generator: &mut G) -> G::Output {
+    fn sample(&mut self, generator: &mut G) -> Z {
         self.bud.sample(generator).double() - self.bud.sample(generator)
     }
 
+    #[inline]
     fn reset(&mut self) {
-        self.bud.reset()
+        self.reset()
     }
 }

@@ -15,35 +15,43 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{Double, IntegerModRing};
+use crate::algebra::IntegerModRing;
 use crate::random::{BinaryUniformDistribution, Distribution, UniformGenerator};
 
-pub struct QuartaryUniformDistribution<G: UniformGenerator<Output: IntegerModRing>> {
-    bud: BinaryUniformDistribution<G>,
+/// Uniform distribution over subset `{-1, 0, 1, 2}`.
+pub struct QuartaryUniformDistribution<Z: IntegerModRing> {
+    bud: BinaryUniformDistribution<Z>,
 }
 
-impl<G: UniformGenerator<Output: IntegerModRing>> QuartaryUniformDistribution<G> {
+impl<Z: IntegerModRing> QuartaryUniformDistribution<Z> {
+    /// Construct a new distribution.
     pub const fn new() -> Self {
         Self {
             bud: BinaryUniformDistribution::new(),
         }
     }
+
+    /// Reset internal state.
+    pub const fn reset(&mut self) {
+        self.bud.reset()
+    }
 }
 
-impl<G: UniformGenerator<Output: IntegerModRing>> Default for QuartaryUniformDistribution<G> {
+impl<Z: IntegerModRing> Default for QuartaryUniformDistribution<Z> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<G: UniformGenerator<Output: IntegerModRing>> Distribution<G::Output, G>
-    for QuartaryUniformDistribution<G>
+impl<Z: IntegerModRing, G: UniformGenerator<Output = Z>> Distribution<Z, G>
+    for QuartaryUniformDistribution<Z>
 {
-    fn sample(&mut self, generator: &mut G) -> G::Output {
+    fn sample(&mut self, generator: &mut G) -> Z {
         self.bud.sample(generator).double() - self.bud.sample(generator)
     }
 
+    #[inline]
     fn reset(&mut self) {
-        self.bud.reset()
+        self.reset()
     }
 }

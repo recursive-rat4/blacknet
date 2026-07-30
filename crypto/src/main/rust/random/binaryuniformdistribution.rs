@@ -19,49 +19,57 @@ use crate::algebra::IntegerModRing;
 use crate::integer::Integer;
 use crate::random::{Distribution, UniformGenerator};
 
-pub struct BinaryUniformDistribution<G: UniformGenerator<Output: IntegerModRing>> {
-    cache: <G::Output as IntegerModRing>::Int,
+/// Uniform distribution over subset `{0, 1}`.
+pub struct BinaryUniformDistribution<Z: IntegerModRing> {
+    cache: Z::Int,
     have_bits: u32,
 }
 
-impl<G: UniformGenerator<Output: IntegerModRing>> BinaryUniformDistribution<G> {
+impl<Z: IntegerModRing> BinaryUniformDistribution<Z> {
+    /// Construct a new distribution.
     pub const fn new() -> Self {
         Self {
-            cache: <G::Output as IntegerModRing>::Int::ZERO,
+            cache: Z::Int::ZERO,
             have_bits: 0,
         }
     }
 
+    /// Reset internal state.
+    pub const fn reset(&mut self) {
+        self.have_bits = 0
+    }
+
     fn useful_bits() -> u32 {
-        if G::Output::MODULUS.count_ones() == 1 {
-            G::Output::BITS
+        if Z::MODULUS.count_ones() == 1 {
+            Z::BITS
         } else {
-            G::Output::BITS - 1
+            Z::BITS - 1
         }
     }
 }
 
-impl<G: UniformGenerator<Output: IntegerModRing>> Default for BinaryUniformDistribution<G> {
+impl<Z: IntegerModRing> Default for BinaryUniformDistribution<Z> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<G: UniformGenerator<Output: IntegerModRing>> Distribution<G::Output, G>
-    for BinaryUniformDistribution<G>
+impl<Z: IntegerModRing, G: UniformGenerator<Output = Z>> Distribution<Z, G>
+    for BinaryUniformDistribution<Z>
 {
-    fn sample(&mut self, generator: &mut G) -> G::Output {
+    fn sample(&mut self, generator: &mut G) -> Z {
         if self.have_bits == 0 {
             self.cache = generator.generate().canonical();
             self.have_bits = Self::useful_bits();
         }
-        let result = self.cache & <G::Output as IntegerModRing>::Int::LIMB_ONE;
-        self.cache >>= <G::Output as IntegerModRing>::Int::LIMB_ONE;
+        let result = self.cache & Z::Int::LIMB_ONE;
+        self.cache >>= Z::Int::LIMB_ONE;
         self.have_bits -= 1;
-        G::Output::with_limb(result)
+        Z::with_limb(result)
     }
 
+    #[inline]
     fn reset(&mut self) {
-        self.have_bits = 0
+        self.reset()
     }
 }

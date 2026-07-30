@@ -48,7 +48,7 @@ impl UniformGenerator for GeneratorPlain {
 #[test]
 fn plain_reproducible() {
     let mut g = GeneratorPlain::new();
-    let mut qud = QuartaryUniformDistribution::<GeneratorPlain>::default();
+    let mut qud = QuartaryUniformDistribution::<Z>::new();
     let a: [Z; 16] = [-1, 0, 2, 1, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0].map(Z::from);
     let b: [Z; 16] = array::from_fn(|_| qud.sample(&mut g));
     assert_eq!(b, a);
@@ -81,7 +81,7 @@ fn circuit_reproducible() {
     let circuit = CircuitBuilder::<Z>::new(2);
     let scope = circuit.scope("test");
     let mut g_circuit = GeneratorCircuit::new();
-    let mut qud_circuit = Circuit::<Z, GeneratorCircuit>::new(&circuit);
+    let mut qud_circuit = Circuit::<Z>::new(&circuit);
     let _a_circuit: [LinearCombination<Z>; 16] =
         array::from_fn(|_| qud_circuit.sample(&mut g_circuit));
     drop(scope);
@@ -90,7 +90,7 @@ fn circuit_reproducible() {
     let z = r1cs.assigment();
 
     let mut g_assigner = GeneratorPlain::new();
-    let mut qud_assigner = Assigner::<GeneratorPlain>::new(&z);
+    let mut qud_assigner = Assigner::<Z>::new(&z);
     let a_assigned: [Z; 16] = array::from_fn(|_| qud_assigner.sample(&mut g_assigner));
 
     assert_eq!(a_assigned, a_plain);
