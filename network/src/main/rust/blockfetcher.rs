@@ -18,45 +18,63 @@
 use crate::coindb::CoinDB;
 use crate::connection::{Connection, ConnectionId};
 use crate::packet::{BlockAnnounce, Blocks, ConsensusFault};
+use blacknet_compat::Mode;
 use blacknet_compat::config::Network as Config;
 use blacknet_crypto::bigint::UInt256;
 use blacknet_kernel::blake2b::Hash;
 use blacknet_kernel::error::Result;
-use std::sync::Arc;
-use tokio::sync::mpsc;
+use blacknet_kernel::proofofstake::guess_initial_synchronization;
+use blacknet_time::{Milliseconds, SystemClock};
+use std::sync::{Arc, OnceLock, RwLock};
+use tokio::runtime::Runtime;
+use tokio::select;
+use tokio::sync::{mpsc, oneshot};
+use tokio::time::timeout;
+use tokio_util::sync::CancellationToken;
 
 #[expect(dead_code)]
 pub struct BlockFetcher {
-    connection_id: Option<ConnectionId>,
-    announces_receiver: mpsc::Receiver<(ConnectionId, BlockAnnounce)>,
     announces_sender: mpsc::Sender<(ConnectionId, BlockAnnounce)>,
+    request: RwLock<Option<Request>>,
     coin_db: Arc<CoinDB>,
+    requires_network: bool,
 }
 
 impl BlockFetcher {
-    pub fn new(coin_db: Arc<CoinDB>, config: &Arc<Config>) -> Self {
+    pub fn new(
+        mode: &Mode,
+        runtime: &Runtime,
+        config: &Arc<Config>,
+        coin_db: Arc<CoinDB>,
+    ) -> Arc<Self> {
         let size = config.incoming_connections as usize + config.outgoing_connections as usize;
         let (announces_sender, announces_receiver) = mpsc::channel(size);
-        Self {
-            connection_id: None,
-            announces_receiver,
+        let block_fetcher = Arc::new(Self {
             announces_sender,
             coin_db,
-        }
+            request: RwLock::new(None),
+            requires_network: mode.requires_network(),
+        });
+
+        runtime.spawn(block_fetcher.clone().implementation(announces_receiver));
+
+        block_fetcher
     }
 
-    pub const fn is_synchronizing(&self) -> bool {
-        self.connection_id.is_some()
+    pub fn is_synchronizing(&self) -> bool {
+        self.request.read().unwrap().is_some()
     }
 
     pub fn disconnected(&self, connection: &Connection) {
-        if let Some(connection_id) = self.connection_id {
-            if connection_id != connection.id() {
-                return;
-            }
+        let Some(ref request) = *self.request.read().unwrap() else {
+            return;
+        };
 
-            todo!();
+        if request.connection_id != connection.id() {
+            return;
         }
+
+        request.cancel("Connection closed");
     }
 
     pub fn offer(&self, connection: &Connection, block_announce: BlockAnnounce) {
@@ -83,16 +101,18 @@ impl BlockFetcher {
 
         connection.close();
 
-        if let Some(connection_id) = self.connection_id {
-            if connection_id != connection.id() {
-                return;
-            }
+        let Some(ref request) = *self.request.read().unwrap() else {
+            return;
+        };
 
-            todo!();
+        if request.connection_id != connection.id() {
+            return;
         }
+
+        request.cancel("Dipath longer than the rolling checkpoint");
     }
 
-    pub fn blocks(&self, connection: &Connection, _blocks: Blocks) {
+    pub fn blocks(&self, connection: &Connection, blocks: Blocks) {
         let requested_difficulty = connection.swap_requested_difficulty(UInt256::ZERO);
 
         if requested_difficulty == UInt256::ZERO {
@@ -100,6 +120,93 @@ impl BlockFetcher {
             return;
         }
 
-        todo!();
+        let mut request = self.request.write().unwrap();
+        match *request {
+            Some(ref request_ref) => {
+                if request_ref.connection_id != connection.id() {
+                    //TODO defer
+                } else {
+                    request.take().unwrap().complete(blocks);
+                }
+            }
+            None => {
+                //TODO defer
+            }
+        }
+    }
+
+    async fn implementation(
+        self: Arc<Self>,
+        mut announces_receiver: mpsc::Receiver<(ConnectionId, BlockAnnounce)>,
+    ) {
+        loop {
+            #[expect(unused_variables)]
+            let announce = announces_receiver.recv();
+            todo!();
+        }
+    }
+
+    #[expect(dead_code)]
+    fn timeout(&self) -> Milliseconds {
+        let state = self.coin_db.state().load();
+        let pos_version = state.pos_version(self.requires_network);
+        if !guess_initial_synchronization(pos_version, SystemClock::secs(), state.block_time()) {
+            Milliseconds::new(4000)
+        } else {
+            Milliseconds::new(10000)
+        }
+    }
+}
+
+#[expect(dead_code)]
+struct Request {
+    connection_id: ConnectionId,
+    timeout: Milliseconds,
+    sender: oneshot::Sender<Blocks>,
+    cancel: CancellationToken,
+    cancel_reason: OnceLock<&'static str>,
+}
+
+impl Request {
+    #[expect(dead_code)]
+    fn new(
+        connection_id: ConnectionId,
+        timeout: Milliseconds,
+    ) -> (Self, oneshot::Receiver<Blocks>) {
+        let (sender, reveiver) = oneshot::channel();
+        (
+            Self {
+                connection_id,
+                timeout,
+                sender,
+                cancel: CancellationToken::new(),
+                cancel_reason: OnceLock::new(),
+            },
+            reveiver,
+        )
+    }
+
+    fn complete(self, blocks: Blocks) {
+        let _ = self.sender.send(blocks);
+    }
+
+    fn cancel(&self, reason: &'static str) {
+        self.cancel.cancel();
+        let _ = self.cancel_reason.set(reason);
+    }
+
+    #[expect(dead_code)]
+    async fn run(&self, future: impl Future<Output = Blocks>) -> Result<Blocks, &'static str> {
+        select! {
+            _ = self.cancel.cancelled() => {
+                Err(self.cancel_reason.wait())
+            }
+            res = timeout(self.timeout.try_into().unwrap(), future) => {
+                match res {
+                    Ok(output) => Ok(output),
+                    Err(_) => Err("Request timed out"),
+                }
+            }
+        }
     }
 }

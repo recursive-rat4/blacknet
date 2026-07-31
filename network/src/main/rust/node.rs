@@ -70,7 +70,7 @@ pub struct Node {
     fjall: Arc<Fjall>,
     block_db: Arc<BlockDB>,
     coin_db: Arc<CoinDB>,
-    block_fetcher: BlockFetcher,
+    block_fetcher: Arc<BlockFetcher>,
     tx_pool: Arc<RwLock<TxPool>>,
     tx_fetcher: Arc<TxFetcher>,
     wallet_db: WalletDB,
@@ -140,7 +140,7 @@ impl Node {
             fjall,
             block_db,
             coin_db: coin_db.clone(),
-            block_fetcher: BlockFetcher::new(coin_db, config),
+            block_fetcher: BlockFetcher::new(&mode, runtime, config, coin_db),
             tx_pool: tx_pool.clone(),
             tx_fetcher: TxFetcher::new(runtime, Arc::downgrade(&tx_pool)),
             wallet_db: WalletDB::new(&mode, dirs, log_manager)?,
@@ -279,7 +279,7 @@ impl Node {
         &self.block_db
     }
 
-    pub const fn block_fetcher(&self) -> &BlockFetcher {
+    pub const fn block_fetcher(&self) -> &Arc<BlockFetcher> {
         &self.block_fetcher
     }
 

@@ -53,6 +53,7 @@ sha2.workspace = true
 sha3.workspace = true
 spdlog-rs.workspace = true
 tokio.workspace = true
+tokio-util.workspace = true
 
 [lints]
 workspace = true
