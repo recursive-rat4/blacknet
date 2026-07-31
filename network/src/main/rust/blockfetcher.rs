@@ -18,7 +18,6 @@
 use crate::coindb::CoinDB;
 use crate::connection::{Connection, ConnectionId};
 use crate::packet::{BlockAnnounce, Blocks, ConsensusFault};
-use blacknet_compat::Mode;
 use blacknet_compat::config::Network as Config;
 use blacknet_crypto::bigint::UInt256;
 use blacknet_kernel::blake2b::Hash;
@@ -32,28 +31,20 @@ use tokio::sync::{mpsc, oneshot};
 use tokio::time::timeout;
 use tokio_util::sync::CancellationToken;
 
-#[expect(dead_code)]
 pub struct BlockFetcher {
     announces_sender: mpsc::Sender<(ConnectionId, BlockAnnounce)>,
     request: RwLock<Option<Request>>,
     coin_db: Arc<CoinDB>,
-    requires_network: bool,
 }
 
 impl BlockFetcher {
-    pub fn new(
-        mode: &Mode,
-        runtime: &Runtime,
-        config: &Arc<Config>,
-        coin_db: Arc<CoinDB>,
-    ) -> Arc<Self> {
+    pub fn new(runtime: &Runtime, config: &Arc<Config>, coin_db: Arc<CoinDB>) -> Arc<Self> {
         let size = config.incoming_connections as usize + config.outgoing_connections as usize;
         let (announces_sender, announces_receiver) = mpsc::channel(size);
         let block_fetcher = Arc::new(Self {
             announces_sender,
             coin_db,
             request: RwLock::new(None),
-            requires_network: mode.requires_network(),
         });
 
         runtime.spawn(block_fetcher.clone().implementation(announces_receiver));
@@ -149,7 +140,7 @@ impl BlockFetcher {
     #[expect(dead_code)]
     fn timeout(&self) -> Milliseconds {
         let state = self.coin_db.state().load();
-        let pos_version = state.pos_version(self.requires_network);
+        let pos_version = state.pos_version();
         if !guess_initial_synchronization(pos_version, SystemClock::secs(), state.block_time()) {
             Milliseconds::new(4000)
         } else {

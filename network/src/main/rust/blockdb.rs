@@ -21,7 +21,7 @@ use crate::fjall::Fjall;
 use crate::genesis;
 use crate::rollinghashset::RollingHashSet;
 use arc_swap::ArcSwapOption;
-use blacknet_compat::{Mode, XDGDirectories, statvfs};
+use blacknet_compat::{XDGDirectories, statvfs};
 use blacknet_kernel::amount::Amount;
 use blacknet_kernel::blake2b::Hash;
 use blacknet_kernel::block::{BLOCK_VERSION, Block};
@@ -105,12 +105,10 @@ pub struct BlockDB {
     pub(super) indexes: DBView<Hash, BlockIndex>,
     pub(super) fjall: Arc<Fjall>,
     data_dir: PathBuf,
-    requires_network: bool,
 }
 
 impl BlockDB {
     pub fn new(
-        mode: &Mode,
         dirs: &XDGDirectories,
         fjall: Arc<Fjall>,
         log_manager: &LogManager,
@@ -124,7 +122,6 @@ impl BlockDB {
             indexes: DBView::new(&fjall, "indexes")?,
             fjall,
             data_dir: dirs.data().to_owned(),
-            requires_network: mode.requires_network(),
         }))
     }
 
@@ -360,7 +357,7 @@ impl BlockDB {
                 info!(self.logger, "Unknown version {}", block.version());
             }
         }
-        let pos_version = state.pos_version(self.requires_network);
+        let pos_version = state.pos_version();
         match pos_version {
             PoSVersion::V4_1 => {
                 if block.version() < 2 {

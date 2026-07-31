@@ -28,7 +28,7 @@ use blacknet_crypto::{
 use blacknet_time::Seconds;
 use core::cmp::min;
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub enum Version {
     V4,
     V4_1,

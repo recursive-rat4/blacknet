@@ -39,7 +39,7 @@ use blacknet_kernel::proofofstake::{
 use blacknet_kernel::transaction::{
     CoinTx, HashTimeLockContractId, MultiSignatureLockContractId, Transaction,
 };
-use blacknet_log::{LogManager, Logger, error};
+use blacknet_log::{LogManager, Logger, error, info};
 use blacknet_serialization::format::{from_bytes, to_bytes};
 use blacknet_time::Seconds;
 use core::cmp::{max, min};
@@ -60,7 +60,6 @@ pub struct CoinDB {
     htlcs: DBView<HashTimeLockContractId, HTLC>,
     multisigs: DBView<MultiSignatureLockContractId, Multisig>,
     undos: DBView<Hash, UndoBlock>,
-    requires_network: bool,
     block_db: Arc<BlockDB>,
 }
 
@@ -74,19 +73,30 @@ impl CoinDB {
         let db_state = DBView::new(fjall, "state")?;
         let accounts = DBView::new(fjall, "accounts")?;
 
-        let state = db_state.get(STATE_KEY).unwrap_or_else(|| {
-            State::genesis(mode, fjall, &db_state, &accounts, &block_db.indexes)
-        });
+        let state = db_state.get(STATE_KEY).map_or_else(
+            || State::genesis(mode, fjall, &db_state, &accounts, &block_db.indexes),
+            |mut state| {
+                state.requires_network = mode.requires_network();
+                state
+            },
+        );
+
+        let logger = log_manager.logger("CoinDB")?;
+        info!(
+            logger,
+            "Consensus height {} PoS {:?}",
+            state.height(),
+            state.pos_version()
+        );
 
         Ok(Arc::new(Self {
-            logger: log_manager.logger("CoinDB")?,
+            logger,
             state: ArcSwap::new(Arc::new(state)),
             db_state,
             accounts,
             htlcs: DBView::new(fjall, "htlcs")?,
             multisigs: DBView::new(fjall, "multisigs")?,
             undos: DBView::new(fjall, "undos")?,
-            requires_network: mode.requires_network(),
             block_db,
         }))
     }
@@ -238,7 +248,7 @@ impl CoinDB {
         let mut generator = coin_tx.get_account(block.generator())?;
         let height = coin_tx.height();
         let mut tx_hashes = Vec::<Hash>::with_capacity(block.raw_transactions().len());
-        let pos_version = state.pos_version(self.requires_network);
+        let pos_version = state.pos_version();
 
         verify_pos(
             pos_version,
@@ -308,6 +318,8 @@ pub struct State {
     upgraded: u16,
     fork_v2: u16,
     block_sizes: VecDeque<u32>,
+    #[serde(skip)]
+    requires_network: bool,
 }
 
 impl State {
@@ -342,6 +354,7 @@ impl State {
             upgraded: 0,
             fork_v2: 0,
             block_sizes,
+            requires_network: mode.requires_network(),
         };
 
         let block_index = BlockIndex::new(Hash::ZERO, Hash::ZERO, 0, 0, Amount::ZERO);
@@ -352,8 +365,8 @@ impl State {
         state
     }
 
-    pub const fn pos_version(&self, requires_network: bool) -> PoSVersion {
-        if requires_network {
+    pub const fn pos_version(&self) -> PoSVersion {
+        if self.requires_network {
             if self.fork_v2 == UPGRADE_THRESHOLD + 1 {
                 PoSVersion::V4_1
             } else {
@@ -484,7 +497,7 @@ impl Update {
         }
         self.state.block_sizes.push_back(self.block_size);
 
-        let pos_version = self.state.pos_version(self.coin_db.requires_network);
+        let pos_version = self.state.pos_version();
         let difficulty = next_difficulty(
             pos_version,
             self.undo.difficulty(),
@@ -518,6 +531,7 @@ impl Update {
             upgraded,
             fork_v2,
             block_sizes: self.state.block_sizes,
+            requires_network: self.state.requires_network,
         };
         let batch = &mut self.write_batch;
         self.coin_db.db_state.insert(batch, STATE_KEY, &new_state);

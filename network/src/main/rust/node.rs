@@ -110,7 +110,7 @@ impl Node {
         }
 
         let fjall = Fjall::open(dirs, config)?;
-        let block_db = BlockDB::new(&mode, dirs, fjall.clone(), log_manager)?;
+        let block_db = BlockDB::new(dirs, fjall.clone(), log_manager)?;
         let coin_db = CoinDB::new(&mode, &fjall, log_manager, block_db.clone())?;
         block_db.import(&coin_db);
 
@@ -140,7 +140,7 @@ impl Node {
             fjall,
             block_db,
             coin_db: coin_db.clone(),
-            block_fetcher: BlockFetcher::new(&mode, runtime, config, coin_db),
+            block_fetcher: BlockFetcher::new(runtime, config, coin_db),
             tx_pool: tx_pool.clone(),
             tx_fetcher: TxFetcher::new(runtime, Arc::downgrade(&tx_pool)),
             wallet_db: WalletDB::new(&mode, dirs, log_manager)?,
@@ -246,7 +246,7 @@ impl Node {
     pub fn warnings(&self, warnings: &mut Vec<String>) {
         let time_offset = self.time_offset();
         let state = self.coin_db.state().load();
-        let pos_version = state.pos_version(self.mode.requires_network());
+        let pos_version = state.pos_version();
         let time_slot = time_slot(pos_version);
 
         if time_offset <= -time_slot || time_offset >= time_slot {
@@ -266,7 +266,7 @@ impl Node {
 
     pub fn is_initial_synchronization(&self) -> bool {
         let state = self.coin_db.state().load();
-        let pos_version = state.pos_version(self.mode.requires_network());
+        let pos_version = state.pos_version();
         self.block_fetcher.is_synchronizing()
             && guess_initial_synchronization(pos_version, SystemClock::secs(), state.block_time())
     }
