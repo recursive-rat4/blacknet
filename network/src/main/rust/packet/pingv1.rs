@@ -28,6 +28,10 @@ pub struct PingV1 {
 }
 
 impl PingV1 {
+    pub const fn new(challenge: u32) -> Self {
+        Self { challenge }
+    }
+
     pub fn solve(magic: u32, challenge: u32) -> u32 {
         let mut hasher = Blake2b256::new();
         hasher.update(magic.to_be_bytes());

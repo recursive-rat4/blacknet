@@ -271,6 +271,10 @@ impl Node {
             && guess_initial_synchronization(pos_version, SystemClock::secs(), state.block_time())
     }
 
+    pub const fn config(&self) -> &Arc<Config> {
+        &self.config
+    }
+
     pub const fn fjall(&self) -> &Arc<Fjall> {
         &self.fjall
     }
@@ -425,9 +429,7 @@ impl Node {
             info!(
                 self.logger,
                 "Too many connections, dropping {}",
-                connection
-                    .remote_endpoint()
-                    .to_log(self.config.log_endpoint)
+                connection.log_name()
             );
             connection.close();
             return;
@@ -485,13 +487,7 @@ impl Node {
         let mut uid = UniformIntDistribution::<usize, FastRNG>::new(..candidates.len());
         let idx = FAST_RNG.with_borrow_mut(|rng| uid.sample(rng));
         let connection = candidates[idx];
-        info!(
-            self.logger,
-            "Evicting {}",
-            connection
-                .remote_endpoint()
-                .to_log(self.config.log_endpoint)
-        );
+        info!(self.logger, "Evicting {}", connection.log_name());
         connection.close();
         true
     }

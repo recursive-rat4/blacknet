@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2025 Pavel Vasin
+ * Copyright (c) 2018-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -30,6 +30,10 @@ pub struct Ping {
 
 impl Ping {
     pub const MIN_VERSION: u32 = 14;
+
+    pub const fn new(challenge: u32, time: Seconds) -> Self {
+        Self { challenge, time }
+    }
 
     pub const fn solve(magic: u32, challenge: u32) -> u32 {
         challenge ^ magic

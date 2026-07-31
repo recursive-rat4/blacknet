@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2025 Pavel Vasin
+ * Copyright (c) 2018-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -22,11 +22,17 @@ use blacknet_log::debug;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
-pub const MAX: usize = 1000;
-
 #[derive(Deserialize, Serialize)]
 pub struct Peers {
-    list: Box<[Endpoint]>,
+    list: Vec<Endpoint>,
+}
+
+impl Peers {
+    pub const MAX: usize = 1000;
+
+    pub const fn new(list: Vec<Endpoint>) -> Self {
+        Self { list }
+    }
 }
 
 impl Packet for Peers {
@@ -35,7 +41,7 @@ impl Packet for Peers {
     }
 
     fn handle(self, connection: &Arc<Connection>) {
-        if self.list.len() > MAX {
+        if self.list.len() > Self::MAX {
             connection.dos("Invalid Peers size");
             return;
         }

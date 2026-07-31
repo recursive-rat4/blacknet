@@ -16,14 +16,15 @@
  */
 
 use crate::endpoint::Endpoint;
-use crate::node::Node;
+use crate::node::{NETWORK_TIMEOUT, Node};
 use crate::packet::{
     BlockAnnounce, INVENTORY_SEND_MAX, INVENTORY_SEND_TIMEOUT, Inventory, PACKET_HEADER_SIZE_BYTES,
-    Packet, PacketKind,
+    Packet, PacketKind, Peers, Ping, PingV1,
 };
 use arc_swap::{ArcSwap, ArcSwapOption};
 use atomic::Atomic;
 use blacknet_crypto::bigint::UInt256;
+use blacknet_crypto::random::{Distribution, FAST_RNG, FastRNG, UniformIntDistribution};
 use blacknet_kernel::amount::Amount;
 use blacknet_kernel::blake2b::Hash;
 use blacknet_log::{Logger, debug, error, info};
@@ -32,7 +33,7 @@ use blacknet_time::{Milliseconds, Seconds, SystemClock};
 use bytemuck::NoUninit;
 use core::cmp::min;
 use core::num::NonZero;
-use std::sync::{Arc, Mutex, MutexGuard, RwLock, atomic::*};
+use std::sync::{Arc, Mutex, MutexGuard, atomic::*};
 use tokio::io::{AsyncReadExt, AsyncWriteExt, BufReader, BufWriter};
 use tokio::net::tcp::{OwnedReadHalf, OwnedWriteHalf};
 use tokio::runtime::Handle;
@@ -44,7 +45,7 @@ pub type ConnectionId = NonZero<u64>;
 
 pub struct Connection {
     logger: Logger,
-    handles: RwLock<Vec<JoinHandle<()>>>,
+    handles: Mutex<Vec<JoinHandle<()>>>,
     node: Arc<Node>,
 
     remote_endpoint: Endpoint,
@@ -90,7 +91,7 @@ impl Connection {
         (
             Arc::new(Self {
                 logger,
-                handles: RwLock::new(Vec::new()),
+                handles: Mutex::new(Vec::new()),
                 node,
                 remote_endpoint,
                 local_endpoint,
@@ -129,7 +130,9 @@ impl Connection {
         recv_channel: UnboundedReceiver<(PacketKind, Vec<u8>)>,
         runtime: &Handle,
     ) {
-        let mut handles = self.handles.write().unwrap();
+        let mut handles = self.handles.lock().unwrap();
+        handles.push(runtime.spawn(self.clone().pinger()));
+        handles.push(runtime.spawn(self.clone().whisperer()));
         handles.push(runtime.spawn(self.clone().pusher()));
         handles.push(runtime.spawn(self.clone().receiver(buf_reader)));
         handles.push(runtime.spawn(self.clone().sender(recv_channel, buf_writer)));
@@ -138,7 +141,7 @@ impl Connection {
     pub async fn join(&self) {
         loop {
             let handle = {
-                let mut handles = self.handles.write().unwrap();
+                let mut handles = self.handles.lock().unwrap();
                 if let Some(handle) = handles.pop() {
                     handle
                 } else {
@@ -221,11 +224,8 @@ impl Connection {
         self.fee_filter() <= fee
     }
 
-    #[expect(unreachable_code)]
     pub fn close(&self) {
         if !self.closed.fetch_or(true, Ordering::AcqRel) {
-            todo!("close socket");
-
             if let Ok(mut connections) = self.node().connections().write() {
                 if let Some(index) = connections
                     .iter()
@@ -241,7 +241,7 @@ impl Connection {
                 self.node().block_fetcher().disconnected(self);
             }
 
-            let handles = self.handles.read().unwrap();
+            let handles = self.handles.lock().unwrap();
             handles.iter().for_each(JoinHandle::abort);
         }
     }
@@ -422,6 +422,90 @@ impl Connection {
 
     pub fn node(&self) -> &Node {
         &self.node
+    }
+
+    pub fn log_name(&self) -> String {
+        if self.node.config().log_endpoint {
+            self.remote_endpoint.to_log(true)
+        } else {
+            format!("peer {}", self.id)
+        }
+    }
+
+    async fn pinger(self: Arc<Self>) {
+        sleep(NETWORK_TIMEOUT.try_into().unwrap()).await;
+
+        if self.is_established() {
+            let mut delay_dst =
+                UniformIntDistribution::<i64, FastRNG>::new(0..NETWORK_TIMEOUT.value());
+            let delay = FAST_RNG.with_borrow_mut(|rng| delay_dst.sample(rng));
+            let delay = Milliseconds::new(delay);
+            sleep(delay.try_into().unwrap()).await;
+            self.ping_pong().await;
+        } else {
+            self.close();
+            return;
+        }
+
+        loop {
+            let curr_time = SystemClock::millis();
+            let next_ping = self.last_packet_time() + NETWORK_TIMEOUT;
+            let d = next_ping - curr_time;
+            if d > Milliseconds::ZERO {
+                sleep(d.try_into().unwrap()).await;
+                continue;
+            } else {
+                self.ping_pong().await;
+            }
+        }
+    }
+
+    async fn ping_pong(&self) {
+        self.send_ping();
+        sleep(NETWORK_TIMEOUT.try_into().unwrap()).await;
+        if self.ping_request.load().is_none() {
+            return;
+        }
+        info!(
+            self.logger,
+            "Disconnecting {} on ping timeout",
+            self.log_name()
+        );
+        self.close();
+    }
+
+    fn send_ping(&self) {
+        let mut uid = UniformIntDistribution::<u32, FastRNG>::default();
+        let challenge = FAST_RNG.with_borrow_mut(|rng| uid.sample(rng));
+        self.set_ping_request(Some((challenge, SystemClock::millis())));
+        if self.version() >= Ping::MIN_VERSION {
+            self.send_packet(&Ping::new(challenge, SystemClock::secs()))
+        } else {
+            self.send_packet(&PingV1::new(challenge))
+        }
+    }
+
+    async fn whisperer(self: Arc<Self>) {
+        let mut delay_dst =
+            UniformIntDistribution::<i64, FastRNG>::new(10 * 60 * 1000..20 * 60 * 1000);
+        let delay = FAST_RNG.with_borrow_mut(|rng| delay_dst.sample(rng));
+        let delay = Milliseconds::new(delay);
+        sleep(delay.try_into().unwrap()).await;
+
+        delay_dst.set_range(4 * 60 * 60 * 1000..20 * 60 * 60 * 1000);
+        let mut size_dst = UniformIntDistribution::<usize, FastRNG>::new(0..=Peers::MAX);
+
+        loop {
+            let (n, delay) =
+                FAST_RNG.with_borrow_mut(|rng| (size_dst.sample(rng), delay_dst.sample(rng)));
+            let random_peers = self.node.peer_table().random(n);
+            if !random_peers.is_empty() {
+                self.send_packet(&Peers::new(random_peers))
+            }
+
+            let delay = Milliseconds::new(delay);
+            sleep(delay.try_into().unwrap()).await;
+        }
     }
 
     async fn pusher(self: Arc<Self>) {
