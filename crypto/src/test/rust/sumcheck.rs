@@ -25,10 +25,9 @@ use blacknet_crypto::pervushin::PervushinField;
 use blacknet_crypto::polynomial::{
     EqExtension, MaskingPolynomial, MultilinearExtension, MultivariatePolynomial,
 };
-use blacknet_crypto::random::UniformDistribution;
 use blacknet_crypto::sumcheck::{Error, Proof as ProofPlain, SumCheck as SumCheckPlain};
 use blacknet_crypto::symmetric::{
-    DuplexPoseidon2Pervushin as DuplexPoseidon2PervushinPlain, Duplexer,
+    DuplexPoseidon2Pervushin as DuplexPoseidon2PervushinPlain, Duplexer, UniformDistribution,
 };
 use core::assert_matches;
 

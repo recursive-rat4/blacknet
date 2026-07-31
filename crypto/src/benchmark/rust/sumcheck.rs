@@ -20,9 +20,8 @@ use blacknet_crypto::lm::LMField;
 use blacknet_crypto::polynomial::{
     BinarityPolynomial, EqExtension, MaskingPolynomial, MultilinearExtension,
 };
-use blacknet_crypto::random::UniformDistribution;
 use blacknet_crypto::sumcheck::SumCheck;
-use blacknet_crypto::symmetric::{DuplexPoseidon2LM, Duplexer};
+use blacknet_crypto::symmetric::{DuplexPoseidon2LM, Duplexer, UniformDistribution};
 use criterion::{Criterion, Throughput, criterion_group, criterion_main};
 use std::hint::black_box;
 

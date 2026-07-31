@@ -16,7 +16,7 @@
  */
 
 use crate::algebra::AdditiveGroup;
-use crate::random::UniformGenerator;
+use crate::random::{Distribution, UniformGenerator};
 use crate::symmetric::Permutation;
 use core::marker::PhantomData;
 use zeroize::{DefaultIsZeroes, Zeroize};
@@ -259,4 +259,28 @@ impl<
     fn generate(&mut self) -> Self::Output {
         self.squeeze_msg()
     }
+}
+
+/// Uniform distribution from duplexer.
+#[derive(Default)]
+pub struct UniformDistribution;
+
+impl UniformDistribution {
+    /// Construct the new distribution.
+    pub const fn new() -> Self {
+        Self
+    }
+
+    /// Reset internal state.
+    pub const fn reset(&mut self) {}
+}
+
+impl<T: Squeeze<D::Msg>, D: Duplexer> Distribution<T, D> for UniformDistribution {
+    #[inline]
+    fn sample(&mut self, generator: &mut D) -> T {
+        generator.squeeze()
+    }
+
+    #[inline]
+    fn reset(&mut self) {}
 }
