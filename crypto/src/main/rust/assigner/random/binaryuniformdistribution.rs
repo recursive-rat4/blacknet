@@ -19,6 +19,7 @@ use crate::algebra::{IntegerModRing, RingOps};
 use crate::assigner::assigment::Assigment;
 use crate::assigner::logicgate::LogicGate;
 use crate::integer::Integer;
+use crate::latticegadget::decompose_integer;
 use crate::random::{Distribution, UniformGenerator};
 use alloc::vec::Vec;
 
@@ -50,6 +51,16 @@ impl<'a, Z: IntegerModRing> BinaryUniformDistribution<'a, Z> {
             Z::BITS - 1
         }
     }
+
+    fn to_bits(integer: &Z) -> Vec<Z> {
+        decompose_integer(
+            integer,
+            Z::Int::LIMB_ONE,
+            Z::Int::LIMB_ONE,
+            Z::BITS as usize,
+        )
+        .into()
+    }
 }
 
 impl<'a, Z: IntegerModRing + Clone + Eq, G: UniformGenerator<Output = Z>> Distribution<Z, G>
@@ -59,9 +70,9 @@ where
 {
     fn sample(&mut self, generator: &mut G) -> Z {
         if self.have_bits == 0 {
-            let gadget = generator.generate().gadget();
+            let gadget = Self::to_bits(&generator.generate());
             self.assigment.extend_from_slice(&gadget);
-            let m1_gadget = (-Z::ONE).gadget(); //XXX make static?
+            let m1_gadget = Self::to_bits(&-Z::ONE); //XXX make static?
             self.logic_gate.check_less_or_equal(&gadget, &m1_gadget);
             self.cache = gadget;
             self.have_bits = Self::useful_bits();

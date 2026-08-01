@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{AlgebraOps, IntegerModRing, PolynomialRing, Tensor};
+use crate::algebra::{AlgebraOps, IntegerModRing, PolynomialRing, Tensor, UnitalAlgebra};
 use crate::integer::Integer;
 use crate::matrix::{DenseMatrix, DenseVector, IdentityMatrix};
 use alloc::vec;
@@ -46,10 +46,26 @@ fn decompose_slice<Z: IntegerModRing, R: PolynomialRing<Z> + Clone>(
     digits: usize,
 ) -> Vec<R> {
     let mut pieces = vec![R::ZERO; slice.len() * digits];
-    for (polynomial, pieces) in zip(slice.iter(), pieces.chunks_exact_mut(digits)) {
+    for (polynomial, pieces) in zip(slice, pieces.chunks_exact_mut(digits)) {
         decompose_impl(polynomial, radix_mask, radix_shift, pieces)
     }
     pieces
+}
+
+pub fn decompose_integer<Z: IntegerModRing>(
+    integer: &Z,
+    radix_mask: <Z::Int as Integer>::Limb,
+    radix_shift: <Z::Int as Integer>::Limb,
+    digits: usize,
+) -> DenseVector<Z> {
+    let mut representative = integer.canonical();
+    let mut pieces = Vec::<Z>::with_capacity(digits);
+    for _ in 0..digits {
+        let piece = Z::with_limb(representative & radix_mask);
+        pieces.push(piece);
+        representative >>= radix_shift;
+    }
+    pieces.into()
 }
 
 pub fn decompose_polynomial<Z: IntegerModRing, R: PolynomialRing<Z> + Clone>(
@@ -103,21 +119,21 @@ pub fn matrix<Z: IntegerModRing + Clone, R: PolynomialRing<Z> + Clone>(
     identity.tensor(powers)
 }
 
-pub fn vector<Z: IntegerModRing + Clone, R: PolynomialRing<Z> + Clone>(
-    polynomial: R,
+pub fn vector<Z: IntegerModRing + Clone, A: UnitalAlgebra<Z> + Clone>(
+    algebra: A,
     radix: &Z,
     digits: usize,
-) -> DenseVector<R>
+) -> DenseVector<A>
 where
-    for<'a> &'a R: AlgebraOps<Z, R>,
+    for<'a> &'a A: AlgebraOps<Z, A>,
 {
-    let mut powers = Vec::<R>::with_capacity(digits);
-    powers.push(polynomial.clone());
+    let mut powers = Vec::<A>::with_capacity(digits);
+    powers.push(algebra.clone());
     let mut power = radix.clone();
     for _ in 1..digits - 1 {
-        powers.push(&polynomial * &power);
+        powers.push(&algebra * &power);
         power *= radix;
     }
-    powers.push(polynomial * power);
+    powers.push(algebra * power);
     powers.into()
 }

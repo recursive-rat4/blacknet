@@ -61,3 +61,12 @@ fn polynomial() {
     let p = latticegadget::vector::<Z, R>(b, &Z::from(65536), 4);
     assert_eq!(d.dot(p), a * b);
 }
+
+#[test]
+fn integer() {
+    let a = Z::from(78844277);
+    let b = Z::from(-59023);
+    let d = latticegadget::decompose_integer(&a, 65535, 16, 4);
+    let p = latticegadget::vector::<Z, Z>(b, &Z::from(65536), 4);
+    assert_eq!(d.dot(p), a * b);
+}

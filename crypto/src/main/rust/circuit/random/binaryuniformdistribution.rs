@@ -19,6 +19,7 @@ use crate::algebra::IntegerModRing;
 use crate::circuit::builder::{CircuitBuilder, Constant, LinearCombination};
 use crate::circuit::logicgate::LogicGate;
 use crate::integer::Integer;
+use crate::latticegadget::decompose_integer;
 use crate::random::{Distribution, UniformGenerator};
 use alloc::vec;
 use alloc::vec::Vec;
@@ -51,6 +52,16 @@ impl<'a, 'b, Z: IntegerModRing + Clone> BinaryUniformDistribution<'a, 'b, Z> {
             Z::BITS - 1
         }
     }
+
+    fn to_bits(integer: &Z) -> Vec<Z> {
+        decompose_integer(
+            integer,
+            Z::Int::LIMB_ONE,
+            Z::Int::LIMB_ONE,
+            Z::BITS as usize,
+        )
+        .into()
+    }
 }
 
 #[rustfmt::skip]
@@ -73,7 +84,7 @@ impl<
                 p = p.double();
             }
             scope.constrain(composed, generated);
-            let m1_gadget = (-Z::ONE).gadget();
+            let m1_gadget = Self::to_bits(&-Z::ONE);
             self.logic_gate.check_less_or_equal(&self.cache, &m1_gadget);
             self.have_bits = Self::useful_bits();
         }
