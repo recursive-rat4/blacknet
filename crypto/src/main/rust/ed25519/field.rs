@@ -493,10 +493,10 @@ impl Sqrt for Field25519 {
 
     fn sqrt(self) -> Option<Self> {
         // p = 5 mod 8
-        let a = self.double();
+        let a = self.double_lazy();
         let b = a.pow_p_minus_5_eighth();
         let c = a * b.square();
-        let d = self * b * (c - Self::ONE);
+        let d = self * b * (c.sub_lazy(Self::ONE));
         if d.square() == self { Some(d) } else { None }
     }
 }
