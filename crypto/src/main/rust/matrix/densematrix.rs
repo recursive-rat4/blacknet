@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{Concat, Double, Field, Inv, One, SemifieldOps, Square, Tensor, Zero};
+use crate::algebra::{Concat, Double, Inv, One, SemifieldOps, Square, Tensor, UnitalRing, Zero};
 use crate::matrix::{DenseVector, IdentityMatrix};
 use alloc::vec;
 use alloc::vec::Vec;
@@ -119,6 +119,13 @@ impl<T> DenseMatrix<T> {
     /// The number of columns.
     pub const fn columns(&self) -> usize {
         self.columns
+    }
+
+    /// Get i-th row as mutable slice.
+    pub fn row_mut(&mut self, i: usize) -> &mut [T] {
+        let begin = i * self.columns;
+        let end = begin + self.columns;
+        &mut self.elements[begin..end]
     }
 
     /// Iterate rows.
@@ -733,33 +740,33 @@ where
     }
 }
 
-impl<F: Field + Clone + Eq> Inv for DenseMatrix<F>
+impl<R: UnitalRing + Clone> Inv for DenseMatrix<R>
 where
-    for<'a> &'a F: SemifieldOps<F>,
+    for<'a> &'a R: SemifieldOps<R>,
 {
-    type Output = Option<DenseMatrix<F>>;
+    type Output = Option<DenseMatrix<R>>;
 
     fn inv(mut self) -> Self::Output {
         if self.rows != self.columns {
             return None;
         }
         // Gauss–Jordan elimination
-        let mut a: DenseMatrix<F> = IdentityMatrix::new(self.rows).into();
+        let mut a: DenseMatrix<R> = IdentityMatrix::new(self.rows).into();
         for i in 0..self.rows {
-            let pivot = (i..self.rows).find(|&j| self[(j, i)] != F::ZERO)?;
+            let (pivot, f) = (i..self.rows).find_map(|j| {
+                let (f, is_inv) = (&self[(j, i)]).inv().into();
+                if is_inv { Some((j, f)) } else { None }
+            })?;
             if pivot != i {
                 self.swap_row(i, pivot);
                 a.swap_row(i, pivot);
             }
 
-            let f = (&self[(i, i)]).inv().expect("pivot");
-            let row = &mut self.elements[i * self.columns..(i + 1) * self.columns];
-            for element in row {
-                *element *= &f
+            for element in self.row_mut(i) {
+                *element = &f * &*element;
             }
-            let row = &mut a.elements[i * a.columns..(i + 1) * a.columns];
-            for element in row {
-                *element *= &f
+            for element in a.row_mut(i) {
+                *element = &f * &*element;
             }
 
             for j in 0..self.rows {
@@ -781,11 +788,11 @@ where
     }
 }
 
-impl<F: Field + Clone + Eq> Inv for &DenseMatrix<F>
+impl<R: UnitalRing + Clone> Inv for &DenseMatrix<R>
 where
-    for<'a> &'a F: SemifieldOps<F>,
+    for<'a> &'a R: SemifieldOps<R>,
 {
-    type Output = Option<DenseMatrix<F>>;
+    type Output = Option<DenseMatrix<R>>;
 
     fn inv(self) -> Self::Output {
         self.clone().inv()
