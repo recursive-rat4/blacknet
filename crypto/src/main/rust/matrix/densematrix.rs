@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{Concat, Double, Field, Inv, SemifieldOps, Square, Tensor, Zero};
+use crate::algebra::{Concat, Double, Field, Inv, One, SemifieldOps, Square, Tensor, Zero};
 use crate::matrix::{DenseVector, IdentityMatrix};
 use alloc::vec;
 use alloc::vec::Vec;
@@ -48,6 +48,28 @@ impl<T> DenseMatrix<T> {
         Self {
             rows,
             columns,
+            elements,
+        }
+    }
+
+    /// Construct a square Vandermonde matrix.
+    pub fn vandermonde(values: &[T]) -> Self
+    where
+        T: One + Clone + for<'a> MulAssign<&'a T>,
+    {
+        let n = values.len();
+        let mut elements = Vec::<T>::with_capacity(n * n);
+        for v in values {
+            elements.push(T::ONE);
+            let mut power = v.clone();
+            for _ in 1..n {
+                elements.push(power.clone());
+                power *= v;
+            }
+        }
+        Self {
+            rows: n,
+            columns: n,
             elements,
         }
     }

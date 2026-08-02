@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_crypto::algebra::{Concat, Double, Inv, Square, Tensor};
+use blacknet_crypto::algebra::{Concat, Double, Inv, One, Square, Tensor};
 use blacknet_crypto::matrix::{DenseMatrix, DenseVector};
 use blacknet_crypto::norm::InfinityNorm;
 use core::iter::zip;
@@ -359,4 +359,30 @@ fn swap_row() {
     assert_eq!(a, b);
     a.swap_row(2, 1);
     assert_eq!(a, c);
+}
+
+#[test]
+#[rustfmt::skip]
+fn vandermonde() {
+    let a = [];
+    let b = DenseMatrix::<R>::new(0, 0, Vec::new());
+    let c = [2].map(R::from);
+    let d = DenseMatrix::<R>::new(1, 1, vec![R::ONE]);
+    let e = [2, 3].map(R::from);
+    let f = DenseMatrix::<R>::new(2, 2, [
+        1, 2,
+        1, 3,
+    ].map(R::from).into());
+    let g = [
+        2, 3, 4,
+    ].map(R::from);
+    let h = DenseMatrix::<R>::new(3, 3, [
+        1, 2,  4,
+        1, 3,  9,
+        1, 4, 16,
+    ].map(R::from).into());
+    assert_eq!(DenseMatrix::<R>::vandermonde(&a), b);
+    assert_eq!(DenseMatrix::<R>::vandermonde(&c), d);
+    assert_eq!(DenseMatrix::<R>::vandermonde(&e), f);
+    assert_eq!(DenseMatrix::<R>::vandermonde(&g), h);
 }
