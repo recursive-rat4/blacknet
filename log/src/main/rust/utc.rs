@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -16,25 +16,23 @@
  */
 
 use chrono::{DateTime, Datelike, Timelike, Utc};
-use core::fmt::Write;
-use spdlog::error::{Error, Result};
+use core::fmt::{Error as FmtError, Write};
+use spdlog::error::Error as LogError;
 use spdlog::formatter::{Pattern, PatternContext};
 use spdlog::{Record, StringBuf};
 
-#[derive(Clone, Default)]
+#[derive(Clone, Copy, Default)]
 pub struct UTC;
 
-impl Pattern for UTC {
-    fn format(
-        &self,
-        record: &Record,
-        dest: &mut StringBuf,
-        _ctx: &mut PatternContext,
-    ) -> Result<()> {
-        let dt: DateTime<Utc> = record.time().into();
+impl UTC {
+    pub const fn new() -> Self {
+        Self
+    }
+
+    pub fn format<W: Write>(&self, dt: &DateTime<Utc>, write: &mut W) -> Result<(), FmtError> {
         let millisecond = dt.nanosecond() / 1000000;
         write!(
-            dest,
+            write,
             "{}-{:02}-{:02} {:02}:{:02}:{:02}.{:03}",
             dt.year(),
             dt.month(),
@@ -44,6 +42,17 @@ impl Pattern for UTC {
             dt.second(),
             millisecond,
         )
-        .map_err(Error::FormatRecord)
+    }
+}
+
+impl Pattern for UTC {
+    fn format(
+        &self,
+        record: &Record,
+        dest: &mut StringBuf,
+        _ctx: &mut PatternContext,
+    ) -> Result<(), LogError> {
+        self.format(&record.time().into(), dest)
+            .map_err(LogError::FormatRecord)
     }
 }

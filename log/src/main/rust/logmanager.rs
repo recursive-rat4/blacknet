@@ -122,7 +122,7 @@ impl LogManager {
     fn formatter() -> impl Formatter {
         let pattern = pattern!(
             "[{$utc}] [{logger}] [{^{level}}] {payload}{eol}",
-            {$utc} => UTC::default,
+            {$utc} => UTC::new,
         );
         PatternFormatter::new(pattern)
     }

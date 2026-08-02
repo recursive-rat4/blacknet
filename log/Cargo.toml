@@ -45,3 +45,7 @@ workspace = true
 [lib]
 doctest = false
 path = "src/main/rust/lib.rs"
+
+[[test]]
+name = "utc"
+path = "src/test/rust/utc.rs"
