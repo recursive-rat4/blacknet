@@ -15,12 +15,20 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_crypto::algebra::{Concat, Double, Inv, One, Square, Tensor};
+use blacknet_crypto::algebra::{Concat, Double, Inv, One, Square, Tensor, Zero};
 use blacknet_crypto::matrix::{DenseMatrix, DenseVector};
 use blacknet_crypto::norm::InfinityNorm;
 use core::iter::zip;
 
 type R = blacknet_crypto::pervushin::PervushinField;
+
+#[test]
+fn eq() {
+    let a = DenseMatrix::<R>::new(1, 2, vec![R::ZERO; 2]);
+    let b = DenseMatrix::<R>::new(2, 1, vec![R::ZERO; 2]);
+    assert_eq!(a, a);
+    assert_ne!(a, b);
+}
 
 #[test]
 #[rustfmt::skip]

@@ -34,7 +34,7 @@ use serde::{Deserialize, Serialize};
 /// # Safety
 ///
 /// In release builds, undefined behaviour on incompatible dimensions.
-#[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, Eq, Serialize)]
 pub struct DenseMatrix<T> {
     rows: usize,
     columns: usize,
@@ -229,6 +229,12 @@ impl<T> DenseMatrix<T> {
             columns,
             elements,
         }
+    }
+}
+
+impl<T: PartialEq> PartialEq for DenseMatrix<T> {
+    fn eq(&self, rps: &Self) -> bool {
+        self.columns == rps.columns && self.elements == rps.elements
     }
 }
 

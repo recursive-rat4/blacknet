@@ -32,7 +32,7 @@ use serde::{Deserialize, Serialize};
 /// # Safety
 ///
 /// In release builds, undefined behaviour on incompatible dimensions.
-#[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, Eq, Serialize)]
 pub struct SymmetricMatrix<T> {
     dimension: usize,
     elements: Vec<T>,
@@ -82,6 +82,12 @@ impl<T> SymmetricMatrix<T> {
 
     const fn size(dimension: usize) -> usize {
         (dimension * (dimension + 1)) >> 1
+    }
+}
+
+impl<T: PartialEq> PartialEq for SymmetricMatrix<T> {
+    fn eq(&self, rps: &Self) -> bool {
+        self.elements == rps.elements
     }
 }
 
