@@ -17,7 +17,7 @@
 
 use crate::algebra::{
     AdditiveCommutativeMagma, AdditiveSemigroup, Double, IntegerModRing, LeftZero, One, RightZero,
-    Set, Sqrt, Square, Zero, add_sub_chain, bl_double_and_add,
+    Set, Square, Zero, add_sub_chain, bl_double_and_add,
 };
 use crate::bigint::UInt256;
 use crate::branchless::BlSelect;
@@ -51,9 +51,18 @@ impl Edwards25519Affine {
 
     pub fn try_from_y(x_is_odd: bool, y: Field25519) -> Option<Self> {
         let yy = y.square();
-        let xx = ((yy - Field25519::ONE) / (E25519_D * yy + Field25519::ONE))
-            .expect("−d is not a square");
-        let x = xx.sqrt()?;
+        let u = yy - Field25519::ONE;
+        let v = E25519_D * yy + Field25519::ONE;
+        let a = (u * v).pow_p_minus_5_eighth();
+        let b = a * u;
+        let c = b.square() * v;
+        let x = if c - u == Field25519::ZERO {
+            b
+        } else if c + u == Field25519::ZERO {
+            b * Field25519::SQRT_MINUS_1
+        } else {
+            return None;
+        };
         let n_is_odd = x.canonical().is_odd();
         if x_is_odd == n_is_odd {
             Some(Self { x, y })

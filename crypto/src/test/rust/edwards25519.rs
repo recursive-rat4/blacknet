@@ -108,8 +108,15 @@ fn group_recode_affine() {
         .to_le_bytes();
     let c = A::decode(a).unwrap();
     let d = A::decode(b).unwrap();
+    let e = UInt256::from_hex("7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFE9")
+        .to_le_bytes();
+    let f = UInt256::from_hex("7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFE6")
+        .to_le_bytes();
+    let g = A::decode(e).unwrap();
+    assert_eq!(A::decode(f), None);
     assert_eq!(c.encode(), a);
     assert_eq!(d.encode(), b);
+    assert_eq!(g.encode(), e);
 }
 
 #[test]

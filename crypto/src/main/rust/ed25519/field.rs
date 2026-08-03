@@ -50,22 +50,22 @@ impl Field25519 {
         Self { n }
     }
 
-    pub(crate) fn add_lazy(self, rps: Self) -> Self {
+    pub(super) fn add_lazy(self, rps: Self) -> Self {
         let n = self.n + rps.n;
         Self { n }
     }
 
-    pub(crate) fn double_lazy(self) -> Self {
+    pub(super) fn double_lazy(self) -> Self {
         let n = self.n + self.n;
         Self { n }
     }
 
-    pub(crate) fn neg_lazy(self) -> Self {
+    pub(super) fn neg_lazy(self) -> Self {
         let n = Self::MODULUS - self.n;
         Self { n }
     }
 
-    pub(crate) fn sub_lazy(self, rps: Self) -> Self {
+    pub(super) fn sub_lazy(self, rps: Self) -> Self {
         let n = Self::MODULUS - rps.n + self.n;
         Self { n }
     }
@@ -130,7 +130,7 @@ impl Field25519 {
         self
     }
 
-    fn pow_p_minus_5_eighth(self) -> Self {
+    pub(super) fn pow_p_minus_5_eighth(self) -> Self {
         let b1 = self;
         let b10 = b1.square();
         let b100 = b10.square();
@@ -152,6 +152,9 @@ impl Field25519 {
 
     const P_MINUS_1_HALF: UInt256 =
         UInt256::from_hex("3FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF6");
+    pub(super) const SQRT_MINUS_1: Self = Self {
+        n: UInt256::from_hex("2B8324804FC1DF0B2B4D00993DFBD7A72F431806AD2FE478C4EE1B274A0EA0B0"),
+    };
 }
 
 impl From<i8> for Field25519 {
