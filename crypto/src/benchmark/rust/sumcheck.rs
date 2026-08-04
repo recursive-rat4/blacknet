@@ -21,13 +21,13 @@ use blacknet_crypto::polynomial::{
     BinarityPolynomial, EqExtension, MaskingPolynomial, MultilinearExtension,
 };
 use blacknet_crypto::sumcheck::SumCheck;
-use blacknet_crypto::symmetric::{DuplexPoseidon2LM, Duplexer, UniformDistribution};
+use blacknet_crypto::symmetric::{Blake2bDuplexer, Duplexer, UniformDistribution};
 use criterion::{Criterion, Throughput, criterion_group, criterion_main};
 use std::hint::black_box;
 
 const VARS: usize = 15;
 type Z = LMField;
-type D = DuplexPoseidon2LM;
+type D = Blake2bDuplexer;
 type E = UniformDistribution;
 
 fn make_bin() -> (BinarityPolynomial<Z>, Z) {

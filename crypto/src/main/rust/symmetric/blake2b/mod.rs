@@ -34,6 +34,8 @@ cfg_select! {
 
 mod blake2b;
 mod blake2xb;
+mod duplexer;
 
 pub use blake2b::{Blake2b, Blake2b256, Blake2b512};
 pub use blake2xb::{Blake2xb, XOFOutput};
+pub use duplexer::Blake2bDuplexer;

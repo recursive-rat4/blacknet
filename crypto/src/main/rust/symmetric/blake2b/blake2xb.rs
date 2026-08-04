@@ -16,13 +16,13 @@
  */
 
 use crate::random::UniformGenerator;
-use crate::symmetric::blake2b::Blake2b;
+use crate::symmetric::blake2b::Blake2b512;
 use zeroize::Zeroize;
 
 /// BLAKE2Xb extensible-output function.
 #[derive(Clone, Copy, Zeroize)]
 pub struct Blake2xb {
-    state: Blake2b<64>,
+    state: Blake2b512,
     xof_length: u32,
 }
 
@@ -37,7 +37,7 @@ impl Blake2xb {
     /// Construct new hasher with digest length.
     pub const fn with_length(xof_length: u32) -> Self {
         Self {
-            state: Blake2b::with_params(1, 1, 0, 0, xof_length, 0, [0; 16]),
+            state: Blake2b512::with_params(1, 1, 0, 0, xof_length, 0, [0; 16]),
             xof_length,
         }
     }
@@ -80,15 +80,8 @@ impl UniformGenerator for XOFOutput {
 
     fn generate(&mut self) -> Self::Output {
         if self.position == self.buffer.len() {
-            let mut hasher = Blake2b::<64>::with_params(
-                0,
-                0,
-                64,
-                self.node_offset,
-                self.xof_length,
-                64,
-                [0; 16],
-            );
+            let mut hasher =
+                Blake2b512::with_params(0, 0, 64, self.node_offset, self.xof_length, 64, [0; 16]);
             hasher.update(self.h0);
             self.buffer = hasher.finalize();
             self.position = 0;

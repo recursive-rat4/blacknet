@@ -27,12 +27,13 @@ use blacknet_crypto::polynomial::{
 };
 use blacknet_crypto::sumcheck::{Error, Proof as ProofPlain, SumCheck as SumCheckPlain};
 use blacknet_crypto::symmetric::{
-    DuplexPoseidon2Pervushin as DuplexPoseidon2PervushinPlain, Duplexer, UniformDistribution,
+    Blake2bDuplexer, DuplexPoseidon2Pervushin as DuplexPoseidon2PervushinPlain, Duplexer,
+    UniformDistribution,
 };
 use core::assert_matches;
 
 type Z = PervushinField;
-type D = DuplexPoseidon2PervushinPlain;
+type D = Blake2bDuplexer;
 type E = UniformDistribution;
 
 #[test]
@@ -141,8 +142,9 @@ fn mask() {
 
 #[test]
 fn circuit() {
-    type SCPlain = SumCheckPlain<Z, Z, MultilinearExtension<Z>, D, E>;
-    let mut duplex_plain = D::default();
+    type DuplexPlain = DuplexPoseidon2PervushinPlain;
+    type SCPlain = SumCheckPlain<Z, Z, MultilinearExtension<Z>, DuplexPlain, E>;
+    let mut duplex_plain = DuplexPlain::default();
     let mut exceptional_set_plain = E::default();
 
     let poly_plain = MultilinearExtension::from([7, 7, 7, 0].map(Z::from));
