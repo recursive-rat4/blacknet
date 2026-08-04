@@ -171,6 +171,20 @@ impl<T: Double<Output = T>> Double for SymmetricMatrix<T> {
     }
 }
 
+impl<T> Double for &SymmetricMatrix<T>
+where
+    for<'a> &'a T: Double<Output = T>,
+{
+    type Output = SymmetricMatrix<T>;
+
+    fn double(self) -> Self::Output {
+        Self::Output {
+            dimension: self.dimension,
+            elements: self.elements.iter().map(Double::double).collect(),
+        }
+    }
+}
+
 impl<T: for<'a> Add<&'a T, Output = T>> Add<&SymmetricMatrix<T>> for SymmetricMatrix<T> {
     type Output = Self;
 

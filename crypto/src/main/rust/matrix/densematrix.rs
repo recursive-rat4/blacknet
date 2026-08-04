@@ -308,6 +308,21 @@ impl<T: Double<Output = T>> Double for DenseMatrix<T> {
     }
 }
 
+impl<T> Double for &DenseMatrix<T>
+where
+    for<'a> &'a T: Double<Output = T>,
+{
+    type Output = DenseMatrix<T>;
+
+    fn double(self) -> Self::Output {
+        Self::Output {
+            rows: self.rows,
+            columns: self.columns,
+            elements: self.elements.iter().map(Double::double).collect(),
+        }
+    }
+}
+
 impl<T: for<'a> Add<&'a T, Output = T>> Add<&DenseMatrix<T>> for DenseMatrix<T> {
     type Output = Self;
 
@@ -539,11 +554,11 @@ where
         debug_assert!(self.columns == rps.rows);
         // Iterative algorithm
         let mut elements = Vec::<T>::with_capacity(self.rows * rps.columns);
-        for i in 0..self.rows {
+        for row in self.iter_row() {
             for j in 0..rps.columns {
                 elements.push(
-                    (0..self.columns)
-                        .map(|k| &self[(i, k)] * &rps[(k, j)])
+                    zip(row, rps.iter_row().map(|row| &row[j]))
+                        .map(|(l, r)| l * r)
                         .sum(),
                 )
             }
@@ -662,7 +677,7 @@ where
     fn mul(self, rps: &DenseVector<T>) -> Self::Output {
         debug_assert!(self.columns == rps.dimension());
         self.iter_row()
-            .map(|row| (0..self.columns).map(|j| &row[j] * &rps[j]).sum())
+            .map(|row| zip(row, rps).map(|(l, r)| l * r).sum())
             .collect()
     }
 }
@@ -713,9 +728,8 @@ where
         debug_assert!(self.dimension() == rps.rows);
         (0..rps.columns)
             .map(|j| {
-                rps.iter_row()
-                    .enumerate()
-                    .map(|(i, r)| &self[i] * &r[j])
+                zip(self, rps.iter_row().map(|row| &row[j]))
+                    .map(|(l, r)| l * r)
                     .sum()
             })
             .collect()

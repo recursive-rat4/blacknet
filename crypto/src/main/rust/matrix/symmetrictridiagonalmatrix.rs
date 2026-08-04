@@ -136,6 +136,19 @@ impl<T: Zero + Double<Output = T>> Double for SymmetricTridiagonalMatrix<T> {
     }
 }
 
+impl<T: Zero> Double for &SymmetricTridiagonalMatrix<T>
+where
+    for<'a> &'a T: Double<Output = T>,
+{
+    type Output = SymmetricTridiagonalMatrix<T>;
+
+    fn double(self) -> Self::Output {
+        Self::Output {
+            elements: self.elements.iter().map(Double::double).collect(),
+        }
+    }
+}
+
 impl<T: Zero + for<'a> Add<&'a T, Output = T>> Add<&SymmetricTridiagonalMatrix<T>>
     for SymmetricTridiagonalMatrix<T>
 {

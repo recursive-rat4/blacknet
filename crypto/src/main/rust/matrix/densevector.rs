@@ -635,9 +635,9 @@ where
         let rows = self.elements.len();
         let columns = rps.elements.len();
         let mut elements = Vec::<T>::with_capacity(rows * columns);
-        for i in 0..rows {
-            for j in 0..columns {
-                elements.push(&self.elements[i] * &rps.elements[j])
+        for l in self {
+            for r in rps {
+                elements.push(l * r)
             }
         }
         DenseMatrix::new(rows, columns, elements)
