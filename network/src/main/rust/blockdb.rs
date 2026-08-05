@@ -44,8 +44,8 @@ const MIN_DISK_SPACE: u64 = MAX_BLOCK_SIZE as u64 * 2;
 #[derive(Clone, Copy, Deserialize, Serialize)]
 pub struct BlockIndex {
     previous: Hash,
-    next: Hash,
-    next_size: u32,
+    pub(super) next: Hash,
+    pub(super) next_size: u32,
     height: u32,
     generated: Amount,
 }
@@ -101,7 +101,7 @@ pub struct BlockDB {
     cached_block: ArcSwapOption<(Hash, Box<[u8]>)>,
     cached_index: ArcSwapOption<(Hash, BlockIndex)>,
     rejects: Mutex<RollingHashSet<Hash>>,
-    blocks: DBView<Hash, Block>,
+    pub(super) blocks: DBView<Hash, Block>,
     pub(super) indexes: DBView<Hash, BlockIndex>,
     pub(super) fjall: Arc<Fjall>,
     data_dir: PathBuf,

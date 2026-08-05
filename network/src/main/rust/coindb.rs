@@ -303,14 +303,127 @@ impl CoinDB {
         Ok(tx_hashes)
     }
 
-    #[expect(unused_variables)]
-    pub fn rollback_to(&self, hash: Hash) -> Vec<Hash> {
-        todo!();
+    fn undo_block(&self) -> Hash {
+        let mut batch = self.block_db.fjall.create_write_batch();
+        let state = self.state.load();
+        let hash = state.block_hash;
+        let block_index = self
+            .block_db
+            .indexes
+            .get(hash)
+            .expect("consistent index for undo");
+        let undo = self.undos.get(hash).expect("consistent undo");
+
+        let mut block_sizes = state.block_sizes.clone();
+        block_sizes.pop_back();
+        block_sizes.push_front(undo.block_size());
+
+        let new_state = State {
+            height: state.height - 1,
+            block_hash: block_index.previous(),
+            max_block_size: max_block_size(&block_sizes),
+            block_time: undo.block_time(),
+            difficulty: undo.difficulty(),
+            cumulative_difficulty: undo.cumulative_difficulty(),
+            supply: undo.supply(),
+            nxtrng: undo.nxtrng(),
+            rolling_checkpoint: undo.rolling_checkpoint(),
+            upgraded: undo.upgraded(),
+            fork_v2: undo.fork_v2(),
+            block_sizes,
+            requires_network: state.requires_network,
+        };
+        self.db_state.insert(&mut batch, STATE_KEY, &new_state);
+        self.state.store(Arc::new(new_state));
+
+        let mut prev_index = self
+            .block_db
+            .indexes
+            .get(block_index.previous())
+            .expect("consistent index for undo");
+        prev_index.next = Hash::ZERO;
+        prev_index.next_size = 0;
+        self.block_db
+            .indexes
+            .insert(&mut batch, block_index.previous(), &prev_index);
+        self.block_db.indexes.remove(&mut batch, hash);
+
+        for (key, bytes) in undo.accounts() {
+            match bytes {
+                Some(bytes) => self.accounts.insert_bytes(&mut batch, *key, bytes),
+                None => self.accounts.remove(&mut batch, *key),
+            }
+        }
+        for (id, bytes) in undo.htlcs() {
+            match bytes {
+                Some(bytes) => self.htlcs.insert_bytes(&mut batch, *id, bytes),
+                None => self.htlcs.remove(&mut batch, *id),
+            }
+        }
+        for (id, bytes) in undo.multisigs() {
+            match bytes {
+                Some(bytes) => self.multisigs.insert_bytes(&mut batch, *id, bytes),
+                None => self.multisigs.remove(&mut batch, *id),
+            }
+        }
+        //TODO undo blobs
+
+        self.undos.remove(&mut batch, hash);
+
+        //TODO WalletDB
+
+        batch.commit().unwrap();
+
+        hash
     }
 
-    #[expect(unused_variables, clippy::needless_pass_by_value)]
-    pub fn undo_rollback(&self, rollback_to: Hash, undo_rollback: Vec<Hash>) -> Vec<Hash> {
-        todo!();
+    pub fn rollback_to(&self, hash: Hash) -> Vec<Hash> {
+        let mut hashes = Vec::new();
+        loop {
+            hashes.push(self.undo_block());
+            if self.state.load().block_hash() == hash {
+                break;
+            }
+        }
+        hashes
+    }
+
+    pub fn undo_rollback(
+        self: &Arc<CoinDB>,
+        rollback_to: Hash,
+        undo_rollback: Vec<Hash>,
+    ) -> Vec<Hash> {
+        let to_remove = if self.state.load().block_hash() != rollback_to {
+            self.rollback_to(rollback_to)
+        } else {
+            Vec::new()
+        };
+
+        for hash in undo_rollback.into_iter().rev() {
+            let Some((block, size)) = self.block_db.blocks.get_with_size(hash) else {
+                error!(self.logger, "{hash} not found");
+                return to_remove;
+            };
+
+            let batch = self.block_db.fjall.create_write_batch();
+            let mut coin_tx = Update::new(
+                self.clone(),
+                batch,
+                block.version(),
+                hash,
+                block.previous(),
+                block.time(),
+                size as u32,
+                block.generator(),
+            );
+            if let Err(err) = self.process_block_impl(&mut coin_tx, hash, &block, size as u32) {
+                error!(self.logger, "{err} block {hash}");
+                return to_remove;
+            }
+            coin_tx.commit_impl();
+        }
+
+        to_remove
     }
 }
 

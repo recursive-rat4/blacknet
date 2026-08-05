@@ -96,4 +96,44 @@ impl UndoBlock {
     pub const fn cumulative_difficulty(&self) -> UInt256 {
         self.cumulative_difficulty
     }
+
+    pub const fn supply(&self) -> Amount {
+        self.supply
+    }
+
+    pub const fn nxtrng(&self) -> Hash {
+        self.nxtrng
+    }
+
+    pub const fn rolling_checkpoint(&self) -> Hash {
+        self.rolling_checkpoint
+    }
+
+    pub const fn upgraded(&self) -> u16 {
+        self.upgraded
+    }
+
+    pub const fn block_size(&self) -> u32 {
+        self.block_size
+    }
+
+    pub fn accounts(&self) -> &[(PublicKey, Option<Box<[u8]>>)] {
+        &self.accounts
+    }
+
+    pub fn htlcs(&self) -> &[(HashTimeLockContractId, Option<Box<[u8]>>)] {
+        &self.htlcs
+    }
+
+    pub fn multisigs(&self) -> &[(MultiSignatureLockContractId, Option<Box<[u8]>>)] {
+        &self.multisigs
+    }
+
+    pub const fn fork_v2(&self) -> u16 {
+        self.fork_v2
+    }
+
+    pub fn blobs(&self) -> &[(Box<[u8]>, Option<Box<[u8]>>)] {
+        &self.blobs
+    }
 }
