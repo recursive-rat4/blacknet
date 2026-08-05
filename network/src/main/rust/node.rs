@@ -21,7 +21,7 @@ use crate::coindb::CoinDB;
 use crate::connection::{Connection, ConnectionId, State};
 use crate::endpoint::Endpoint;
 use crate::fjall::Fjall;
-use crate::packet::{PacketKind, UnfilteredInvList};
+use crate::packet::{BlockAnnounce, Packet, PacketKind, UnfilteredInvList};
 use crate::peertable::PeerTable;
 use crate::router::Router;
 use crate::staker::Staker;
@@ -29,6 +29,7 @@ use crate::txfetcher::TxFetcher;
 use crate::txpool::TxPool;
 use blacknet_compat::config::Network as Config;
 use blacknet_compat::{Mode, XDGDirectories, getuid, uname};
+use blacknet_crypto::bigint::UInt256;
 use blacknet_crypto::random::{Distribution, FAST_RNG, FastRNG, UniformIntDistribution};
 use blacknet_io::Write;
 use blacknet_io::file::replace;
@@ -138,9 +139,9 @@ impl Node {
             peer_table,
             router,
             fjall,
-            block_db,
+            block_db: block_db.clone(),
             coin_db: coin_db.clone(),
-            block_fetcher: BlockFetcher::new(runtime, config, coin_db),
+            block_fetcher: BlockFetcher::new(log_manager, runtime, config, block_db, coin_db)?,
             tx_pool: tx_pool.clone(),
             tx_fetcher: TxFetcher::new(runtime, Arc::downgrade(&tx_pool)),
             wallet_db: WalletDB::new(&mode, dirs, log_manager)?,
@@ -338,6 +339,24 @@ impl Node {
         }
     }
 
+    pub fn announce_block(
+        &self,
+        hash: Hash,
+        cumulative_difficulty: UInt256,
+        source: ConnectionId,
+    ) -> usize {
+        //TODO Staker
+        self.broadcast_packet(
+            &BlockAnnounce::new(hash, cumulative_difficulty),
+            |connection| {
+                connection.id() != source
+                    && connection.state().is_established()
+                    && connection.last_block().load().cumulative_difficulty()
+                        < cumulative_difficulty
+            },
+        )
+    }
+
     pub async fn broadcast_block(&self, hash: Hash, bytes: Vec<u8>) -> bool {
         match self.block_fetcher.staked_block(hash, bytes).await {
             Ok(n) => {
@@ -395,6 +414,24 @@ impl Node {
                 }
             }
         }
+        n
+    }
+
+    fn broadcast_packet<T: Packet, F: FnMut(&&Arc<Connection>) -> bool>(
+        &self,
+        packet: &T,
+        filter: F,
+    ) -> usize {
+        let mut n = 0;
+        self.connections
+            .read()
+            .unwrap()
+            .iter()
+            .filter(filter)
+            .for_each(|connection| {
+                connection.send_packet(packet);
+                n += 1;
+            });
         n
     }
 

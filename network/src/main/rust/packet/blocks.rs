@@ -52,6 +52,20 @@ impl Blocks {
             blocks: Default::default(),
         }
     }
+
+    pub const fn hashes(&self) -> &Vec<Hash> {
+        &self.hashes
+    }
+
+    pub const fn blocks(&self) -> &Vec<Box<[u8]>> {
+        &self.blocks
+    }
+}
+
+impl From<Blocks> for (Vec<Hash>, Vec<Box<[u8]>>) {
+    fn from(blocks: Blocks) -> Self {
+        (blocks.hashes, blocks.blocks)
+    }
 }
 
 impl Packet for Blocks {

@@ -274,6 +274,11 @@ impl Connection {
         self.requested_difficulty.load(Ordering::Acquire) != UInt256::ZERO
     }
 
+    pub fn set_requested_difficulty(&self, requested_difficulty: UInt256) {
+        self.requested_difficulty
+            .store(requested_difficulty, Ordering::AcqRel)
+    }
+
     pub fn swap_requested_difficulty(&self, requested_difficulty: UInt256) -> UInt256 {
         self.requested_difficulty
             .swap(requested_difficulty, Ordering::AcqRel)

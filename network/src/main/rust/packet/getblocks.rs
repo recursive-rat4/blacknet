@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2025 Pavel Vasin
+ * Copyright (c) 2018-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -27,6 +27,12 @@ use std::sync::Arc;
 pub struct GetBlocks {
     best: Hash,
     checkpoint: Hash,
+}
+
+impl GetBlocks {
+    pub const fn new(best: Hash, checkpoint: Hash) -> Self {
+        Self { best, checkpoint }
+    }
 }
 
 impl Packet for GetBlocks {

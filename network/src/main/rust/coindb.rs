@@ -302,6 +302,16 @@ impl CoinDB {
 
         Ok(tx_hashes)
     }
+
+    #[expect(unused_variables)]
+    pub fn rollback_to(&self, hash: Hash) -> Vec<Hash> {
+        todo!();
+    }
+
+    #[expect(unused_variables, clippy::needless_pass_by_value)]
+    pub fn undo_rollback(&self, rollback_to: Hash, undo_rollback: Vec<Hash>) -> Vec<Hash> {
+        todo!();
+    }
 }
 
 #[derive(Clone, Deserialize, Serialize)]

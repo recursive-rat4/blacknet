@@ -134,6 +134,14 @@ impl BlockDB {
         rejects.contains(&hash)
     }
 
+    pub fn remove(&self, hashes: Vec<Hash>) {
+        let mut batch = self.fjall.create_write_batch();
+        for hash in hashes {
+            self.blocks.remove(&mut batch, hash)
+        }
+        batch.commit().unwrap();
+    }
+
     pub fn contains(&self, hash: Hash) -> bool {
         self.indexes.contains(hash)
     }
