@@ -19,7 +19,7 @@ use crate::algebra::{AdditiveGroup, AdditiveGroupOps, Zero};
 use crate::matrix::{DenseMatrix, DenseVector};
 use alloc::vec;
 use alloc::vec::Vec;
-use core::iter::{Sum, repeat_n};
+use core::iter::{Sum, repeat_n, zip};
 use core::ops::{Mul, Neg};
 use serde::{Deserialize, Serialize};
 
@@ -139,12 +139,12 @@ where
         self.r_index
             .array_windows::<2>()
             .map(|&[row_start, row_end]| {
-                (row_start..row_end)
-                    .map(|idx| {
-                        let j = self.c_index[idx];
-                        &self.elements[idx] * &rps[j]
-                    })
-                    .sum()
+                zip(
+                    &self.c_index[row_start..row_end],
+                    &self.elements[row_start..row_end],
+                )
+                .map(|(&j, l)| l * &rps[j])
+                .sum()
             })
             .collect()
     }
@@ -172,10 +172,11 @@ impl<T: Zero + Clone> From<&SparseMatrix<T>> for DenseMatrix<T> {
             .array_windows::<2>()
             .enumerate()
             .for_each(|(i, &[row_start, row_end])| {
-                (row_start..row_end).for_each(|idx| {
-                    let j = sparse.c_index[idx];
-                    dense[(i, j)] = sparse.elements[idx].clone();
-                });
+                zip(
+                    &sparse.c_index[row_start..row_end],
+                    &sparse.elements[row_start..row_end],
+                )
+                .for_each(|(&j, e)| dense[(i, j)] = e.clone());
             });
         dense
     }

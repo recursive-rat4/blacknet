@@ -100,14 +100,10 @@ where
 
     fn mul(self, rps: &DenseMatrix<T>) -> Self::Output {
         debug_assert!(self.dimension == rps.rows());
-        let lps_nnz = self.index.len();
         (0..rps.columns())
             .map(|j| {
-                (0..lps_nnz)
-                    .map(|idx| {
-                        let i = self.index[idx];
-                        &self.elements[idx] * &rps[(i, j)]
-                    })
+                zip(&self.index, &self.elements)
+                    .map(|(&i, l)| l * &rps[(i, j)])
                     .sum()
             })
             .collect()
@@ -122,14 +118,10 @@ where
 
     fn mul(self, rps: &SparseVector<T>) -> Self::Output {
         debug_assert!(self.columns() == rps.dimension);
-        let rps_nnz = rps.index.len();
         self.iter_row()
             .map(|row| {
-                (0..rps_nnz)
-                    .map(|idx| {
-                        let j = rps.index[idx];
-                        &row[j] * &rps.elements[idx]
-                    })
+                zip(&rps.index, &rps.elements)
+                    .map(|(&j, r)| &row[j] * r)
                     .sum()
             })
             .collect()
@@ -159,7 +151,7 @@ impl<T: Zero + Clone + Eq> From<&DenseVector<T>> for SparseVector<T> {
 impl<T: Zero + Clone> From<&SparseVector<T>> for DenseVector<T> {
     fn from(sparse: &SparseVector<T>) -> Self {
         let mut dense = DenseVector::fill(sparse.dimension(), T::ZERO);
-        zip(sparse.index.iter(), sparse.elements.iter()).for_each(|(&i, e)| dense[i] = e.clone());
+        zip(&sparse.index, &sparse.elements).for_each(|(&i, e)| dense[i] = e.clone());
         dense
     }
 }
