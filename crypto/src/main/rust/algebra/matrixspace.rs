@@ -233,6 +233,32 @@ impl<R: Semiring + Send, const M: usize, const N: usize, const MN: usize> IntoPa
     }
 }
 
+#[cfg(feature = "rayon")]
+impl<'a, R: Semiring + Sync, const M: usize, const N: usize, const MN: usize> IntoParallelIterator
+    for &'a MatrixSpace<R, M, N, MN>
+{
+    type Item = &'a R;
+    type Iter = rayon::slice::Iter<'a, R>;
+
+    #[inline]
+    fn into_par_iter(self) -> Self::Iter {
+        (&self.elements).into_par_iter()
+    }
+}
+
+#[cfg(feature = "rayon")]
+impl<'a, R: Semiring + Send, const M: usize, const N: usize, const MN: usize> IntoParallelIterator
+    for &'a mut MatrixSpace<R, M, N, MN>
+{
+    type Item = &'a mut R;
+    type Iter = rayon::slice::IterMut<'a, R>;
+
+    #[inline]
+    fn into_par_iter(self) -> Self::Iter {
+        (&mut self.elements).into_par_iter()
+    }
+}
+
 impl<R: Semiring, const M: usize, const N: usize, const MN: usize> Add
     for MatrixSpace<R, M, N, MN>
 {

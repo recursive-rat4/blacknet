@@ -171,6 +171,28 @@ impl<R: UnitalSemiring + Send> IntoParallelIterator for UnivariatePolynomial<R> 
     }
 }
 
+#[cfg(feature = "rayon")]
+impl<'a, R: UnitalSemiring + Sync> IntoParallelIterator for &'a UnivariatePolynomial<R> {
+    type Item = &'a R;
+    type Iter = rayon::slice::Iter<'a, R>;
+
+    #[inline]
+    fn into_par_iter(self) -> Self::Iter {
+        (&self.coefficients).into_par_iter()
+    }
+}
+
+#[cfg(feature = "rayon")]
+impl<'a, R: UnitalSemiring + Send> IntoParallelIterator for &'a mut UnivariatePolynomial<R> {
+    type Item = &'a mut R;
+    type Iter = rayon::slice::IterMut<'a, R>;
+
+    #[inline]
+    fn into_par_iter(self) -> Self::Iter {
+        (&mut self.coefficients).into_par_iter()
+    }
+}
+
 impl<R: UnitalSemiring + Clone> Polynomial for UnivariatePolynomial<R>
 where
     for<'a> &'a R: SemiringOps<R>,

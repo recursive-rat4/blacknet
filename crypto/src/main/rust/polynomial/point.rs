@@ -162,6 +162,28 @@ impl<S: Send> IntoParallelIterator for Point<S> {
     }
 }
 
+#[cfg(feature = "rayon")]
+impl<'a, S: Sync> IntoParallelIterator for &'a Point<S> {
+    type Item = &'a S;
+    type Iter = rayon::slice::Iter<'a, S>;
+
+    #[inline]
+    fn into_par_iter(self) -> Self::Iter {
+        (&self.coordinates).into_par_iter()
+    }
+}
+
+#[cfg(feature = "rayon")]
+impl<'a, S: Send> IntoParallelIterator for &'a mut Point<S> {
+    type Item = &'a mut S;
+    type Iter = rayon::slice::IterMut<'a, S>;
+
+    #[inline]
+    fn into_par_iter(self) -> Self::Iter {
+        (&mut self.coordinates).into_par_iter()
+    }
+}
+
 impl<S> Concat for Point<S> {
     type Output = Self;
 

@@ -218,6 +218,28 @@ impl<R: Semiring + Send, const N: usize> IntoParallelIterator for FreeModule<R, 
     }
 }
 
+#[cfg(feature = "rayon")]
+impl<'a, R: Semiring + Sync, const N: usize> IntoParallelIterator for &'a FreeModule<R, N> {
+    type Item = &'a R;
+    type Iter = rayon::slice::Iter<'a, R>;
+
+    #[inline]
+    fn into_par_iter(self) -> Self::Iter {
+        (&self.components).into_par_iter()
+    }
+}
+
+#[cfg(feature = "rayon")]
+impl<'a, R: Semiring + Send, const N: usize> IntoParallelIterator for &'a mut FreeModule<R, N> {
+    type Item = &'a mut R;
+    type Iter = rayon::slice::IterMut<'a, R>;
+
+    #[inline]
+    fn into_par_iter(self) -> Self::Iter {
+        (&mut self.components).into_par_iter()
+    }
+}
+
 impl<R: Semiring, const N: usize> Add for FreeModule<R, N> {
     type Output = Self;
 

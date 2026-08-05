@@ -200,6 +200,32 @@ impl<Z: Twiddles<M> + Send, const M: usize, const N: usize> IntoParallelIterator
     }
 }
 
+#[cfg(feature = "rayon")]
+impl<'a, Z: Twiddles<M> + Sync, const M: usize, const N: usize> IntoParallelIterator
+    for &'a NTTRing<Z, M, N>
+{
+    type Item = &'a Z;
+    type Iter = rayon::slice::Iter<'a, Z>;
+
+    #[inline]
+    fn into_par_iter(self) -> Self::Iter {
+        (&self.spectrum).into_par_iter()
+    }
+}
+
+#[cfg(feature = "rayon")]
+impl<'a, Z: Twiddles<M> + Send, const M: usize, const N: usize> IntoParallelIterator
+    for &'a mut NTTRing<Z, M, N>
+{
+    type Item = &'a mut Z;
+    type Iter = rayon::slice::IterMut<'a, Z>;
+
+    #[inline]
+    fn into_par_iter(self) -> Self::Iter {
+        (&mut self.spectrum).into_par_iter()
+    }
+}
+
 impl<Z: Twiddles<M>, const M: usize, const N: usize> Add for NTTRing<Z, M, N> {
     type Output = Self;
 

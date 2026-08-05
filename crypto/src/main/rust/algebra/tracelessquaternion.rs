@@ -184,6 +184,28 @@ impl<R: UnitalRing + Send> IntoParallelIterator for TracelessQuaternion<R> {
     }
 }
 
+#[cfg(feature = "rayon")]
+impl<'a, R: UnitalRing + Sync> IntoParallelIterator for &'a TracelessQuaternion<R> {
+    type Item = &'a R;
+    type Iter = rayon::slice::Iter<'a, R>;
+
+    #[inline]
+    fn into_par_iter(self) -> Self::Iter {
+        (&self.coefficients).into_par_iter()
+    }
+}
+
+#[cfg(feature = "rayon")]
+impl<'a, R: UnitalRing + Send> IntoParallelIterator for &'a mut TracelessQuaternion<R> {
+    type Item = &'a mut R;
+    type Iter = rayon::slice::IterMut<'a, R>;
+
+    #[inline]
+    fn into_par_iter(self) -> Self::Iter {
+        (&mut self.coefficients).into_par_iter()
+    }
+}
+
 impl<R: UnitalRing> Add for TracelessQuaternion<R> {
     type Output = Self;
 

@@ -249,6 +249,28 @@ impl<T: Send> IntoParallelIterator for DenseVector<T> {
     }
 }
 
+#[cfg(feature = "rayon")]
+impl<'a, T: Sync> IntoParallelIterator for &'a DenseVector<T> {
+    type Item = &'a T;
+    type Iter = rayon::slice::Iter<'a, T>;
+
+    #[inline]
+    fn into_par_iter(self) -> Self::Iter {
+        (&self.elements).into_par_iter()
+    }
+}
+
+#[cfg(feature = "rayon")]
+impl<'a, T: Send> IntoParallelIterator for &'a mut DenseVector<T> {
+    type Item = &'a mut T;
+    type Iter = rayon::slice::IterMut<'a, T>;
+
+    #[inline]
+    fn into_par_iter(self) -> Self::Iter {
+        (&mut self.elements).into_par_iter()
+    }
+}
+
 impl<T: Add<Output = T>> Add for DenseVector<T> {
     type Output = Self;
 

@@ -251,6 +251,32 @@ impl<R: UnitalSemiring + Send, const N: usize, C: Convolution<R, N>> IntoParalle
     }
 }
 
+#[cfg(feature = "rayon")]
+impl<'a, R: UnitalSemiring + Sync, const N: usize, C: Convolution<R, N>> IntoParallelIterator
+    for &'a UnivariateRing<R, N, C>
+{
+    type Item = &'a R;
+    type Iter = rayon::slice::Iter<'a, R>;
+
+    #[inline]
+    fn into_par_iter(self) -> Self::Iter {
+        (&self.coefficients).into_par_iter()
+    }
+}
+
+#[cfg(feature = "rayon")]
+impl<'a, R: UnitalSemiring + Send, const N: usize, C: Convolution<R, N>> IntoParallelIterator
+    for &'a mut UnivariateRing<R, N, C>
+{
+    type Item = &'a mut R;
+    type Iter = rayon::slice::IterMut<'a, R>;
+
+    #[inline]
+    fn into_par_iter(self) -> Self::Iter {
+        (&mut self.coefficients).into_par_iter()
+    }
+}
+
 impl<R: UnitalSemiring, const N: usize, C: Convolution<R, N>> Add for UnivariateRing<R, N, C> {
     type Output = Self;
 
