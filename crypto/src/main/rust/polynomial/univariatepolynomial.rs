@@ -202,13 +202,13 @@ where
 
     fn point(&self, point: &R) -> R {
         // Horner method
-        if self.coefficients.is_empty() {
+        let mut coefficients = self.coefficients.iter().rev();
+        let Some(mut accum) = coefficients.next().cloned() else {
             return R::ZERO;
-        }
-        let mut accum = self.coefficients[self.coefficients.len() - 1].clone();
-        for i in (0..self.coefficients.len() - 1).rev() {
+        };
+        for coefficient in coefficients {
             accum *= point;
-            accum += &self.coefficients[i];
+            accum += coefficient;
         }
         accum
     }

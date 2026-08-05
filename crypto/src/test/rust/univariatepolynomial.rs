@@ -70,12 +70,13 @@ fn evaluate() {
     let c = UnivariatePolynomial::from([2, 3].map(R::from));
     let d = UnivariatePolynomial::from([2].map(R::from));
     let e = UnivariatePolynomial::<R>::default();
+    let p = R::from(4);
 
-    assert_eq!(a.point(&R::from(4)), R::from(398));
-    assert_eq!(b.point(&R::from(4)), R::from(78));
-    assert_eq!(c.point(&R::from(4)), R::from(14));
-    assert_eq!(d.point(&R::from(4)), R::from(2));
-    assert_eq!(e.point(&R::from(4)), R::ZERO);
+    assert_eq!(a.point(&p), R::from(398));
+    assert_eq!(b.point(&p), R::from(78));
+    assert_eq!(c.point(&p), R::from(14));
+    assert_eq!(d.point(&p), R::from(2));
+    assert_eq!(e.point(&p), R::ZERO);
 
     assert_eq!(a.at_0_plus_1(), R::from(16));
     assert_eq!(b.at_0_plus_1(), R::from(11));

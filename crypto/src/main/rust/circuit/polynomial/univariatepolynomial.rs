@@ -71,16 +71,16 @@ impl<'a, 'b, R: UnitalSemiring + Clone + Eq> Polynomial for UnivariatePolynomial
     type Point = LinearCombination<R>;
 
     fn point(&self, point: &LinearCombination<R>) -> LinearCombination<R> {
-        if self.coefficients.is_empty() {
-            return LinearCombination::new();
-        }
         let scope = self.circuit.scope("UnivariatePolynomial::point");
         // Horner method
-        let mut accum = self.coefficients[self.coefficients.len() - 1].clone();
-        for i in (0..self.coefficients.len() - 1).rev() {
+        let mut coefficients = self.coefficients.iter().rev();
+        let Some(mut accum) = coefficients.next().cloned() else {
+            return LinearCombination::new();
+        };
+        for coefficient in coefficients {
             let ap = scope.auxiliary();
             scope.constrain(accum * point, ap);
-            accum = ap + &self.coefficients[i];
+            accum = ap + coefficient;
         }
         accum
     }

@@ -73,14 +73,14 @@ impl<'a, R: UnitalSemiring + Clone> Polynomial for UnivariatePolynomial<'a, R> {
 
     fn point(&self, point: &R) -> R {
         // Horner method
-        if self.coefficients.is_empty() {
+        let mut coefficients = self.coefficients.iter().rev();
+        let Some(mut accum) = coefficients.next().cloned() else {
             return R::ZERO;
-        }
-        let mut accum = self.coefficients[self.coefficients.len() - 1].clone();
-        for i in (0..self.coefficients.len() - 1).rev() {
+        };
+        for coefficient in coefficients {
             let ap = accum * point;
             self.assigment.push(ap.clone());
-            accum = ap + &self.coefficients[i];
+            accum = ap + coefficient;
         }
         accum
     }
