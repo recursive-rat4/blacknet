@@ -15,9 +15,6 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#![allow(clippy::suspicious_arithmetic_impl)]
-#![allow(clippy::suspicious_op_assign_impl)]
-
 use crate::algebra::{
     AdditiveCommutativeMagma, AdditiveSemigroup, BalancedRepresentative, Double, IntegerModRing,
     Inv, LeftOne, LeftZero, MultiplicativeCommutativeMagma, MultiplicativeSemigroup, One, RightOne,
@@ -44,8 +41,16 @@ impl Debug for GF2 {
 }
 
 impl From<bool> for GF2 {
+    #[inline]
     fn from(n: bool) -> Self {
         Self { n }
+    }
+}
+
+impl From<GF2> for bool {
+    #[inline]
+    fn from(element: GF2) -> Self {
+        element.n
     }
 }
 

@@ -220,6 +220,10 @@ name = "r1cs"
 path = "src/test/rust/r1cs.rs"
 
 [[test]]
+name = "rijndaelfield"
+path = "src/test/rust/rijndaelfield.rs"
+
+[[test]]
 name = "scalar25519"
 path = "src/test/rust/scalar25519.rs"
 
