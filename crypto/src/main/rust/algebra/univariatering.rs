@@ -19,7 +19,7 @@ use crate::algebra::{
     AdditiveCommutativeMagma, AdditiveSemigroup, Algebra, CommutativeSemiring, Conjugate, Double,
     FreeModule, IntegerModRing, Inv, LeftOne, LeftZero, MultiplicativeCommutativeMagma,
     MultiplicativeSemigroup, One, PolynomialRing, PowerOfTwoCyclotomicRing, RightOne, RightZero,
-    RingOps, Semimodule, SemiringOps, Set, Square, UnitalAlgebra, UnitalRing, UnitalSemiring, Zero,
+    RingOps, Semimodule, SemiringOps, Set, Square, UnitalRing, UnitalSemiring, Zero,
 };
 use crate::branchless::BlOption;
 use crate::convolution::{Convolution, Negacyclic};
@@ -670,11 +670,6 @@ impl<R: UnitalSemiring + Clone, const N: usize, C: Convolution<R, N>> Semimodule
 }
 
 impl<R: UnitalRing + Clone, const N: usize, C: Convolution<R, N>> Algebra<R>
-    for UnivariateRing<R, N, C>
-{
-}
-
-impl<R: UnitalRing + Clone, const N: usize, C: Convolution<R, N>> UnitalAlgebra<R>
     for UnivariateRing<R, N, C>
 {
 }

@@ -18,7 +18,7 @@
 use crate::algebra::{
     AdditiveCommutativeMagma, AdditiveSemigroup, Algebra, Commutator, Double, FreeModule, LeftOne,
     LeftZero, MultiplicativeSemigroup, One, RightOne, RightZero, Ring, RingOps, Semimodule,
-    Semiring, SemiringOps, Set, Square, UnitalAlgebra, UnitalRing, UnitalSemiring, Zero,
+    Semiring, SemiringOps, Set, Square, UnitalSemiring, Zero,
 };
 use crate::symmetric::{Absorb, Duplexer, Squeeze};
 use core::array;
@@ -875,13 +875,6 @@ impl<R: Semiring + Clone, const M: usize, const N: usize, const MN: usize> Semim
 
 impl<R: Ring + Copy, const N: usize, const NN: usize> Algebra<R> for MatrixSpace<R, N, N, NN> where
     for<'a> &'a R: RingOps<R>
-{
-}
-
-impl<R: UnitalRing + Copy, const N: usize, const NN: usize> UnitalAlgebra<R>
-    for MatrixSpace<R, N, N, NN>
-where
-    for<'a> &'a R: RingOps<R>,
 {
 }
 

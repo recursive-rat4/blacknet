@@ -18,7 +18,7 @@
 use crate::algebra::{
     AdditiveCommutativeMagma, AdditiveSemigroup, Algebra, CommutativeRing, Commutator, Conjugate,
     Double, FreeModule, Inv, LeftOne, LeftZero, MultiplicativeSemigroup, One, RightOne, RightZero,
-    RingOps, Semimodule, Set, Square, TracelessQuaternion, UnitalAlgebra, UnitalRing, Zero,
+    RingOps, Semimodule, Set, Square, TracelessQuaternion, UnitalRing, Zero,
 };
 use crate::branchless::BlOption;
 use crate::symmetric::{Absorb, Duplexer, Squeeze};
@@ -683,11 +683,6 @@ impl<R: UnitalRing + CommutativeRing> MultiplicativeSemigroup for QuaternionAlge
 impl<R: UnitalRing + Clone> Semimodule<R> for QuaternionAlgebra<R> {}
 
 impl<R: UnitalRing + CommutativeRing + Clone> Algebra<R> for QuaternionAlgebra<R> where
-    for<'a> &'a R: RingOps<R>
-{
-}
-
-impl<R: UnitalRing + CommutativeRing + Clone> UnitalAlgebra<R> for QuaternionAlgebra<R> where
     for<'a> &'a R: RingOps<R>
 {
 }

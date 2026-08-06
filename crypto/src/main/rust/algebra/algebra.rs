@@ -53,8 +53,11 @@ pub trait UnitalAlgebra<R: UnitalRing>
 {
 }
 
-/// Any unital ring is a unital algebra over itself.
-impl<R: UnitalRing> UnitalAlgebra<R> for R {}
+#[rustfmt::skip]
+impl<
+    R: UnitalRing,
+    A: Algebra<R> + UnitalRing
+> UnitalAlgebra<R> for A {}
 
 /// A marker for algebras with commutative multiplication.
 #[rustfmt::skip]

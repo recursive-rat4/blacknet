@@ -18,7 +18,7 @@
 use crate::algebra::{
     AdditiveCommutativeMagma, AdditiveSemigroup, Algebra, DivisionAlgebra, Double, Inv, LeftOne,
     LeftZero, MultiplicativeCommutativeMagma, MultiplicativeSemigroup, One, RightOne, RightZero,
-    Semifield, Semimodule, Set, Square, UnitalAlgebra, Zero, square_and_multiply,
+    Semifield, Semimodule, Set, Square, Zero, square_and_multiply,
 };
 use crate::branchless::{BlAssign, BlEq, BlOption, BlSelect};
 use crate::gf2::GF2;
@@ -469,8 +469,6 @@ impl Semifield for RijndaelField {}
 impl Semimodule<GF2> for RijndaelField {}
 
 impl Algebra<GF2> for RijndaelField {}
-
-impl UnitalAlgebra<GF2> for RijndaelField {}
 
 impl DivisionAlgebra<GF2> for RijndaelField {}
 

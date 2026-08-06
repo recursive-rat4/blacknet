@@ -20,8 +20,7 @@
 use crate::algebra::{
     AdditiveCommutativeMagma, AdditiveSemigroup, Algebra, Conjugate, DivisionRingOps, Double,
     FreeModule, Inv, LeftOne, LeftZero, MultiplicativeCommutativeMagma, MultiplicativeSemigroup,
-    One, RightOne, RightZero, RingOps, Semimodule, Set, Square, UnitalAlgebra, UnivariateRing,
-    Zero, batched_inv,
+    One, RightOne, RightZero, RingOps, Semimodule, Set, Square, UnivariateRing, Zero, batched_inv,
 };
 use crate::branchless::BlOption;
 use crate::convolution::{Convolution, Negacyclic};
@@ -706,11 +705,6 @@ impl<Z: Twiddles<M>, const M: usize, const N: usize> MultiplicativeSemigroup for
 impl<Z: Twiddles<M> + Clone, const M: usize, const N: usize> Semimodule<Z> for NTTRing<Z, M, N> {}
 
 impl<Z: Twiddles<M> + Clone, const M: usize, const N: usize> Algebra<Z> for NTTRing<Z, M, N> where
-    for<'a> &'a Z: RingOps<Z>
-{
-}
-
-impl<Z: Twiddles<M> + Clone, const M: usize, const N: usize> UnitalAlgebra<Z> for NTTRing<Z, M, N> where
     for<'a> &'a Z: RingOps<Z>
 {
 }
