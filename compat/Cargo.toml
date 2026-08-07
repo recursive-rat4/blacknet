@@ -47,3 +47,7 @@ workspace = true
 [lib]
 doctest = false
 path = "src/main/rust/lib.rs"
+
+[[test]]
+name = "config"
+path = "src/test/rust/config.rs"

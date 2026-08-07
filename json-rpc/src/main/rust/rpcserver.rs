@@ -42,7 +42,7 @@ pub async fn rpc_server(
         )
         .merge(v2::routes())
         .with_state(node);
-    let addr = format!("{}:{}", config.host, config.port);
+    let addr = format!("{}:{}", config.bind.host, config.bind.port);
     match TcpListener::bind(&addr).await {
         Ok(listener) => {
             info!(logger, "Serving RPC at {addr}");

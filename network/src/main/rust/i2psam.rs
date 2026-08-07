@@ -237,7 +237,7 @@ impl SAM {
         log_manager: &LogManager,
         config: Arc<Config>,
     ) -> Result<Self, Error> {
-        let endpoint = match Endpoint::parse(&config.i2p_sam_host, config.i2p_sam_port) {
+        let endpoint = match Endpoint::parse(&config.i2p_sam.host, config.i2p_sam.port) {
             Some(endpoint) => endpoint,
             None => return Err("Can't parse config.i2p_sam_host".into()),
         };

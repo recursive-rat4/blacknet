@@ -47,7 +47,7 @@ impl TorController {
         log_manager: &LogManager,
         config: Arc<Config>,
     ) -> Result<Self> {
-        let endpoint = match Endpoint::parse(&config.tor_control_host, config.tor_control_port) {
+        let endpoint = match Endpoint::parse(&config.tor_control.host, config.tor_control.port) {
             Some(endpoint) => endpoint,
             None => return Err("Can't parse config.tor_control_host".into()),
         };
