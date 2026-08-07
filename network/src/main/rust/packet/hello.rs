@@ -38,6 +38,12 @@ pub struct Hello {
 }
 
 impl Hello {
+    pub fn new() -> Self {
+        Self {
+            data: HashMap::new(),
+        }
+    }
+
     pub fn magic(&self) -> Option<u32> {
         if let Some(bytes) = self.data.get(&MAGIC) {
             from_bytes::<u32>(bytes, false).ok()
@@ -158,7 +164,7 @@ impl Packet for Hello {
                     connection.close();
                     return;
                 }
-                if let Err(err) = send_handshake(connection) {
+                if let Err(err) = send_hello(connection) {
                     error!(connection.logger(), "Send handshake error: {err}");
                     connection.close();
                     return;
@@ -209,23 +215,22 @@ impl Packet for Hello {
     }
 }
 
-fn send_handshake(connection: &Connection) -> Result<(), SerializationError> {
+fn send_hello(connection: &Connection) -> Result<(), SerializationError> {
+    let state = connection.state();
     let node = connection.node();
 
-    let mut hello = Hello::default();
+    let mut hello = Hello::new();
     hello.set_magic(node.mode().network_magic())?;
     hello.set_version(PROTOCOL_VERSION)?;
-    if !connection.remote_endpoint().is_permissionless()
-        && connection.state() == State::OutgoingWaiting
-    {
+    if !connection.remote_endpoint().is_permissionless() && state == State::OutgoingWaiting {
         hello.set_nonce(node.nonce())?;
     }
-    hello.set_agent(if connection.state() == State::ProberWaiting {
+    hello.set_agent(if state == State::ProberWaiting {
         node.prober_agent_string()
     } else {
         node.agent_string()
     })?;
-    hello.set_fee_filter(if connection.state() == State::ProberWaiting {
+    hello.set_fee_filter(if state == State::ProberWaiting {
         Amount::MAX
     } else {
         let tx_pool = node.tx_pool().read().unwrap();
@@ -233,7 +238,7 @@ fn send_handshake(connection: &Connection) -> Result<(), SerializationError> {
     })?;
     connection.send_packet(&hello);
 
-    if connection.state() != State::ProberWaiting {
+    if state != State::ProberWaiting {
         let state = node.coin_db().state().load();
         let block_announce = BlockAnnounce::new(state.block_hash(), state.cumulative_difficulty());
         connection.send_packet(&block_announce);
