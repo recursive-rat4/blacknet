@@ -70,7 +70,7 @@ impl<Z: IntegerModRing, G: UniformGenerator<Output = Z>> Distribution<Z, G>
     for WeightedDistribution<Z>
 {
     fn sample(&mut self, generator: &mut G) -> Z {
-        self.bud.sample(generator) + self.bud.sample(generator) - Z::ONE
+        self.bud.sample(generator) - self.bud.sample(generator)
     }
 
     #[inline]
