@@ -81,5 +81,8 @@ pub trait DivisionAlgebra<R: DivisionRing>
 {
 }
 
-/// Any division ring is a division algebra over itself.
-impl<R: DivisionRing> DivisionAlgebra<R> for R {}
+#[rustfmt::skip]
+impl<
+    R: DivisionRing,
+    A: Algebra<R> + DivisionRing
+> DivisionAlgebra<R> for A {}

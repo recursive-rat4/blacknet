@@ -16,10 +16,9 @@
  */
 
 use crate::algebra::{
-    AdditiveCommutativeMagma, AdditiveSemigroup, BalancedRepresentative, DivisionAlgebra, Double,
-    IntegerModRing, Inv, LeftOne, LeftZero, MultiplicativeCommutativeMagma,
-    MultiplicativeSemigroup, One, RightOne, RightZero, Semifield, Set, Sqrt, Square,
-    UnivariateRing, Zero,
+    AdditiveCommutativeMagma, AdditiveSemigroup, BalancedRepresentative, Double, IntegerModRing,
+    Inv, LeftOne, LeftZero, MultiplicativeCommutativeMagma, MultiplicativeSemigroup, One, RightOne,
+    RightZero, Semifield, Set, Sqrt, Square, UnivariateRing, Zero,
 };
 use crate::branchless::{BlAbs, BlAssign, BlOption};
 use crate::convolution::Negacyclic;
@@ -623,5 +622,3 @@ impl Div<&Self> for PervushinField2 {
 }
 
 impl Semifield for PervushinField2 {}
-
-impl DivisionAlgebra<PervushinField> for PervushinField2 {}
