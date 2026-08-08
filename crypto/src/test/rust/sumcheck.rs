@@ -174,17 +174,16 @@ fn circuit() {
         poly_plain.variables(),
         poly_plain.degree(),
     );
-    type DuplexCircuit<'a, 'b> = TestDuplexCircuit;
+    type DuplexCircuit<'a> = TestDuplexCircuit;
     let mut duplex_circuit = DuplexCircuit::new(&circuit);
-    type UniformDistributionCircuit<'a, 'b> = UniformDistribution;
+    type UniformDistributionCircuit<'a> = UniformDistribution;
     let mut exceptional_set_circuit = UniformDistributionCircuit::default();
-    type SCCircuit<'a, 'b> = SumCheckCircuit<
+    type SCCircuit<'a> = SumCheckCircuit<
         'a,
-        'b,
         Z,
         MultilinearExtension<Z>,
-        DuplexCircuit<'a, 'b>,
-        UniformDistributionCircuit<'a, 'b>,
+        DuplexCircuit<'a>,
+        UniformDistributionCircuit<'a>,
     >;
     let sumcheck_circuit = SCCircuit::new(&circuit);
     sumcheck_circuit.verify_early_stopping(
@@ -259,8 +258,8 @@ struct TestDuplexCircuit {
     x: LinearCombination<Z>,
 }
 
-impl<'a, 'b> TestDuplexCircuit {
-    fn new(_: &'a CircuitBuilder<'b, Z>) -> Self {
+impl<'a> TestDuplexCircuit {
+    fn new(_: &'a CircuitBuilder<Z>) -> Self {
         Self {
             x: Self::ONE.into(),
         }

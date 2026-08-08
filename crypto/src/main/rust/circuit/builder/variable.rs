@@ -55,9 +55,9 @@ impl<R: UnitalSemiring> Variable<R> {
     pub(super) const CONSTANT: Self = Self::new(VariableKind::Constant, 0);
 }
 
-impl<'a, R: UnitalSemiring + 'a> Expression<'a, R> for Variable<R> {
-    fn span(&self) -> LinearSpan<R> {
-        vec![(*self).into()].into()
+impl<R: UnitalSemiring> Expression<R> for Variable<R> {
+    fn span(self) -> LinearSpan<R> {
+        vec![self.into()].into()
     }
 
     fn degree(&self) -> usize {

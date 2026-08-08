@@ -23,13 +23,13 @@ use alloc::vec::Vec;
 use core::iter::zip;
 use core::ops::{Add, AddAssign};
 
-pub struct UnivariatePolynomial<'a, 'b, R: UnitalSemiring> {
-    circuit: &'a CircuitBuilder<'b, R>,
+pub struct UnivariatePolynomial<'a, R: UnitalSemiring> {
+    circuit: &'a CircuitBuilder<R>,
     coefficients: Vec<LinearCombination<R>>,
 }
 
-impl<'a, 'b, R: UnitalSemiring + Clone> UnivariatePolynomial<'a, 'b, R> {
-    pub fn allocate(circuit: &'a CircuitBuilder<'b, R>, kind: VariableKind, len: usize) -> Self {
+impl<'a, R: UnitalSemiring + Clone> UnivariatePolynomial<'a, R> {
+    pub fn allocate(circuit: &'a CircuitBuilder<R>, kind: VariableKind, len: usize) -> Self {
         let scope = circuit.scope("UnivariatePolynomial::allocate");
         Self {
             circuit,
@@ -38,7 +38,7 @@ impl<'a, 'b, R: UnitalSemiring + Clone> UnivariatePolynomial<'a, 'b, R> {
     }
 
     pub const fn new(
-        circuit: &'a CircuitBuilder<'b, R>,
+        circuit: &'a CircuitBuilder<R>,
         coefficients: Vec<LinearCombination<R>>,
     ) -> Self {
         Self {
@@ -66,7 +66,7 @@ impl<'a, 'b, R: UnitalSemiring + Clone> UnivariatePolynomial<'a, 'b, R> {
     }
 }
 
-impl<'a, 'b, R: UnitalSemiring + Clone + Eq> Polynomial for UnivariatePolynomial<'a, 'b, R> {
+impl<'a, R: UnitalSemiring + Clone + Eq> Polynomial for UnivariatePolynomial<'a, R> {
     type Coefficient = LinearCombination<R>;
     type Point = LinearCombination<R>;
 
@@ -86,7 +86,7 @@ impl<'a, 'b, R: UnitalSemiring + Clone + Eq> Polynomial for UnivariatePolynomial
     }
 }
 
-impl<'a, 'b, R: UnitalSemiring> Add for UnivariatePolynomial<'a, 'b, R> {
+impl<'a, R: UnitalSemiring> Add for UnivariatePolynomial<'a, R> {
     type Output = Self;
 
     fn add(self, rps: Self) -> Self::Output {
@@ -100,22 +100,20 @@ impl<'a, 'b, R: UnitalSemiring> Add for UnivariatePolynomial<'a, 'b, R> {
     }
 }
 
-impl<'a, 'b, R: UnitalSemiring> AddAssign for UnivariatePolynomial<'a, 'b, R> {
+impl<'a, R: UnitalSemiring> AddAssign for UnivariatePolynomial<'a, R> {
     fn add_assign(&mut self, rps: Self) {
         debug_assert_eq!(self.coefficients.len(), rps.coefficients.len());
         zip(self.coefficients.iter_mut(), rps.coefficients).for_each(|(l, r)| *l += r);
     }
 }
 
-impl<'a, 'b, R: UnitalSemiring> Absorb<LinearCombination<R>> for UnivariatePolynomial<'a, 'b, R> {
+impl<'a, R: UnitalSemiring> Absorb<LinearCombination<R>> for UnivariatePolynomial<'a, R> {
     fn absorb_into<D: Duplexer<Msg = LinearCombination<R>>>(self, duplex: &mut D) {
         duplex.absorb_iter(self.coefficients)
     }
 }
 
-impl<'a, 'b, R: UnitalSemiring + Clone> Absorb<LinearCombination<R>>
-    for &UnivariatePolynomial<'a, 'b, R>
-{
+impl<'a, R: UnitalSemiring + Clone> Absorb<LinearCombination<R>> for &UnivariatePolynomial<'a, R> {
     fn absorb_into<D: Duplexer<Msg = LinearCombination<R>>>(self, duplex: &mut D) {
         duplex.absorb_iter(self.coefficients.iter().cloned())
     }

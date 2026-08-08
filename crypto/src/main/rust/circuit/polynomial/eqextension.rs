@@ -22,14 +22,14 @@ use alloc::vec;
 use alloc::vec::Vec;
 use core::iter::zip;
 
-pub struct EqExtension<'a, 'b, R: UnitalRing> {
-    circuit: &'a CircuitBuilder<'b, R>,
+pub struct EqExtension<'a, R: UnitalRing> {
+    circuit: &'a CircuitBuilder<R>,
     coefficients: Vec<LinearCombination<R>>,
 }
 
-impl<'a, 'b, R: UnitalRing + Clone + Eq> EqExtension<'a, 'b, R> {
+impl<'a, R: UnitalRing + Clone + Eq> EqExtension<'a, R> {
     pub const fn new(
-        circuit: &'a CircuitBuilder<'b, R>,
+        circuit: &'a CircuitBuilder<R>,
         coefficients: Vec<LinearCombination<R>>,
     ) -> Self {
         Self {
@@ -38,11 +38,7 @@ impl<'a, 'b, R: UnitalRing + Clone + Eq> EqExtension<'a, 'b, R> {
         }
     }
 
-    pub fn allocate(
-        circuit: &'a CircuitBuilder<'b, R>,
-        kind: VariableKind,
-        variables: usize,
-    ) -> Self {
+    pub fn allocate(circuit: &'a CircuitBuilder<R>, kind: VariableKind, variables: usize) -> Self {
         let scope = circuit.scope("EqExtension::allocate");
         Self {
             circuit,

@@ -39,9 +39,9 @@ impl<R: UnitalSemiring> LinearTerm<R> {
     }
 }
 
-impl<'a, R: UnitalSemiring + Clone + Eq + 'a> Expression<'a, R> for LinearTerm<R> {
-    fn span(&self) -> LinearSpan<R> {
-        vec![self.clone().into()].into()
+impl<R: UnitalSemiring + Eq> Expression<R> for LinearTerm<R> {
+    fn span(self) -> LinearSpan<R> {
+        vec![self.into()].into()
     }
 
     fn degree(&self) -> usize {

@@ -24,14 +24,14 @@ use crate::symmetric::Duplexer;
 use alloc::vec::Vec;
 use core::marker::PhantomData;
 
-pub struct Proof<'a, 'b, R: UnitalRing> {
-    circuit: &'a CircuitBuilder<'b, R>,
+pub struct Proof<'a, R: UnitalRing> {
+    circuit: &'a CircuitBuilder<R>,
     claims: Vec<LinearCombination<R>>,
 }
 
-impl<'a, 'b, R: UnitalRing + Clone + Eq> Proof<'a, 'b, R> {
+impl<'a, R: UnitalRing + Clone + Eq> Proof<'a, R> {
     pub fn allocate(
-        circuit: &'a CircuitBuilder<'b, R>,
+        circuit: &'a CircuitBuilder<R>,
         kind: VariableKind,
         variables: usize,
         degree: usize,
@@ -45,10 +45,7 @@ impl<'a, 'b, R: UnitalRing + Clone + Eq> Proof<'a, 'b, R> {
         }
     }
 
-    pub const fn new(
-        circuit: &'a CircuitBuilder<'b, R>,
-        claims: Vec<LinearCombination<R>>,
-    ) -> Self {
+    pub const fn new(circuit: &'a CircuitBuilder<R>, claims: Vec<LinearCombination<R>>) -> Self {
         Self { circuit, claims }
     }
 
@@ -57,7 +54,7 @@ impl<'a, 'b, R: UnitalRing + Clone + Eq> Proof<'a, 'b, R> {
         index: usize,
         degree: usize,
         sum: &LinearCombination<R>,
-    ) -> UnivariatePolynomial<'a, 'b, R>
+    ) -> UnivariatePolynomial<'a, R>
     where
         for<'c> &'c R: RingOps<R>,
     {
@@ -75,13 +72,12 @@ impl<'a, 'b, R: UnitalRing + Clone + Eq> Proof<'a, 'b, R> {
 
 pub struct SumCheck<
     'a,
-    'b,
     R: UnitalRing,
     P: MultivariatePolynomial<Coefficient = R>,
     D: Duplexer<Msg = LinearCombination<R>>,
     E: Distribution<LinearCombination<R>, D>,
 > {
-    _circuit: &'a CircuitBuilder<'b, R>,
+    _circuit: &'a CircuitBuilder<R>,
     phantom_p: PhantomData<P>,
     phantom_d: PhantomData<D>,
     phantom_e: PhantomData<E>,
@@ -89,16 +85,15 @@ pub struct SumCheck<
 
 impl<
     'a,
-    'b,
     R: UnitalRing + Clone + Eq,
     P: MultivariatePolynomial<Coefficient = R>,
     D: Duplexer<Msg = LinearCombination<R>>,
     E: Distribution<LinearCombination<R>, D>,
-> SumCheck<'a, 'b, R, P, D, E>
+> SumCheck<'a, R, P, D, E>
 where
-    for<'c> &'c R: RingOps<R>,
+    for<'b> &'b R: RingOps<R>,
 {
-    pub const fn new(circuit: &'a CircuitBuilder<'b, R>) -> Self {
+    pub const fn new(circuit: &'a CircuitBuilder<R>) -> Self {
         Self {
             _circuit: circuit,
             phantom_p: PhantomData,
@@ -111,7 +106,7 @@ where
         &self,
         polynomial: &P,
         mut sum: LinearCombination<R>,
-        proof: &Proof<'a, 'b, R>,
+        proof: &Proof<'a, R>,
         duplex: &mut D,
         exceptional_set: &mut E,
     ) -> (Point<R>, LinearCombination<R>) {

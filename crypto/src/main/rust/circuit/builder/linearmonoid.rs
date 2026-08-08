@@ -28,9 +28,9 @@ pub struct LinearMonoid<R: UnitalSemiring> {
     pub(super) factors: VecDeque<LinearCombination<R>>,
 }
 
-impl<'a, R: UnitalSemiring + Clone + Eq + 'a> Expression<'a, R> for LinearMonoid<R> {
-    fn span(&self) -> LinearSpan<R> {
-        self.factors.clone().into()
+impl<R: UnitalSemiring + Eq> Expression<R> for LinearMonoid<R> {
+    fn span(self) -> LinearSpan<R> {
+        self.factors.into()
     }
 
     fn degree(&self) -> usize {

@@ -21,15 +21,15 @@ use crate::gf2::GF2;
 use core::array;
 
 /// Arithmetic gates over GF(2)-algebra.
-pub struct ArithmeticGate<'a, 'b, A: UnitalAlgebra<GF2>> {
-    circuit: &'a CircuitBuilder<'b, A>,
+pub struct ArithmeticGate<'a, A: UnitalAlgebra<GF2>> {
+    circuit: &'a CircuitBuilder<A>,
 }
 
-impl<'a, 'b, A: UnitalAlgebra<GF2> + Clone + Eq> ArithmeticGate<'a, 'b, A>
+impl<'a, A: UnitalAlgebra<GF2> + Clone + Eq> ArithmeticGate<'a, A>
 where
-    for<'c> &'c A: AlgebraOps<GF2, A>,
+    for<'b> &'b A: AlgebraOps<GF2, A>,
 {
-    pub const fn new(circuit: &'a CircuitBuilder<'b, A>) -> Self {
+    pub const fn new(circuit: &'a CircuitBuilder<A>) -> Self {
         Self { circuit }
     }
 

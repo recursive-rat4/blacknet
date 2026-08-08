@@ -21,17 +21,17 @@ use crate::circuit::builder::{CircuitBuilder, Constant, LinearCombination};
 use alloc::vec::Vec;
 
 /// Logic gates over a unital ring.
-pub struct LogicGate<'a, 'b, R: UnitalRing> {
-    circuit: &'a CircuitBuilder<'b, R>,
+pub struct LogicGate<'a, R: UnitalRing> {
+    circuit: &'a CircuitBuilder<R>,
 }
 
-impl<'a, 'b, R: UnitalRing> LogicGate<'a, 'b, R> {
-    pub const fn new(circuit: &'a CircuitBuilder<'b, R>) -> Self {
+impl<'a, R: UnitalRing> LogicGate<'a, R> {
+    pub const fn new(circuit: &'a CircuitBuilder<R>) -> Self {
         Self { circuit }
     }
 }
 
-impl<'a, 'b, R: UnitalRing + Clone + Eq> LogicGate<'a, 'b, R> {
+impl<'a, R: UnitalRing + Clone + Eq> LogicGate<'a, R> {
     /// Constrain that `a` is a Boolean value.
     pub fn check_range(&self, a: &LinearCombination<R>) {
         let scope = self.circuit.scope("LogicGate::check_range");

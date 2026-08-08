@@ -66,7 +66,7 @@ impl PermutationCircuit<Z> for TestPermutation {
     }
 }
 
-type TruncCircuit<'a, 'b> = Circuit<'a, 'b, Z, 2, 4, TestPermutation>;
+type TruncCircuit<'a> = Circuit<'a, Z, 2, 4, TestPermutation>;
 
 impl PermutationAssigner<Z> for TestPermutation {
     type Domain = [Z; 4];

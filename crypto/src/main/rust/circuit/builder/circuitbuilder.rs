@@ -23,7 +23,6 @@ use crate::circuit::builder::{
 use crate::customizableconstraintsystem::CustomizableConstraintSystem;
 use crate::matrix::SparseMatrixBuilder;
 use crate::r1cs::R1CS;
-use alloc::boxed::Box;
 use alloc::vec;
 use alloc::vec::Vec;
 use core::cell::{Cell, RefCell};
@@ -32,31 +31,31 @@ use core::fmt::{Display, Formatter, Result};
 use core::iter::zip;
 
 /// An expression to be constrained.
-pub trait Expression<'a, R: UnitalSemiring + 'a>: 'a {
-    fn span(&self) -> LinearSpan<R>;
+pub trait Expression<R: UnitalSemiring> {
+    fn span(self) -> LinearSpan<R>;
     fn degree(&self) -> usize;
 }
 
 /// An equivalence constraint.
-pub struct Constraint<'a, R: UnitalSemiring> {
-    lps: Box<dyn Expression<'a, R>>,
-    rps: Box<dyn Expression<'a, R>>,
+pub struct Constraint<R: UnitalSemiring> {
+    lps: LinearSpan<R>,
+    rps: LinearSpan<R>,
 }
 
 /// The builder.
-pub struct CircuitBuilder<'a, R: UnitalSemiring> {
+pub struct CircuitBuilder<R: UnitalSemiring> {
     degree: usize,
     public_inputs: Cell<usize>,
     public_outputs: Cell<usize>,
     private_inputs: Cell<usize>,
     private_outputs: Cell<usize>,
     auxiliaries: Cell<usize>,
-    constraints: RefCell<Vec<Constraint<'a, R>>>,
+    constraints: RefCell<Vec<Constraint<R>>>,
     scopes: RefCell<Tree<ScopeInfo>>,
     current_scope: Cell<NodeId>,
 }
 
-impl<'a, R: UnitalSemiring> CircuitBuilder<'a, R> {
+impl<R: UnitalSemiring> CircuitBuilder<R> {
     /// Construct a new builder with a maximum `degree` of constraints.
     pub fn new(degree: usize) -> Self {
         let (tree, root) = Tree::with_root(ScopeInfo::root());
@@ -93,7 +92,7 @@ impl<'a, R: UnitalSemiring> CircuitBuilder<'a, R> {
     }
 
     /// Enter a new scope.
-    pub fn scope<'b>(&'b self, name: &'static str) -> Scope<'b, 'a, R> {
+    pub fn scope(&self, name: &'static str) -> Scope<'_, R> {
         let mut scopes = self.scopes.borrow_mut();
         let info = ScopeInfo::new(name);
         self.current_scope
@@ -138,22 +137,22 @@ impl<'a, R: UnitalSemiring> CircuitBuilder<'a, R> {
         Variable::new(kind, n)
     }
 
-    fn constrain(&self, constraint: Constraint<'a, R>) {
+    fn constrain(&self, constraint: Constraint<R>) {
         let mut scopes = self.scopes.borrow_mut();
         let scope = scopes.get_mut(self.current_scope.get()).expect("Scope");
 
         assert!(
-            self.degree >= constraint.lps.degree(),
-            "In scope {} constraint left degree {} is higher than circuit degree {}",
+            self.degree >= constraint.lps.dimension(),
+            "In scope {} constraint left dimension {} is higher than circuit degree {}",
             scope.name,
-            constraint.lps.degree(),
+            constraint.lps.dimension(),
             self.degree
         );
         assert!(
-            self.degree >= constraint.rps.degree(),
-            "In scope {} constraint right degree {} is higher than circuit degree {}",
+            self.degree >= constraint.rps.dimension(),
+            "In scope {} constraint right dimension {} is higher than circuit degree {}",
             scope.name,
-            constraint.rps.degree(),
+            constraint.rps.dimension(),
             self.degree
         );
 
@@ -191,7 +190,7 @@ impl<'a, R: UnitalSemiring> CircuitBuilder<'a, R> {
     }
 }
 
-impl<'a, R: UnitalSemiring + Clone + Eq> CircuitBuilder<'a, R> {
+impl<R: UnitalSemiring + Clone + Eq> CircuitBuilder<R> {
     fn put(&self, m: &mut SparseMatrixBuilder<R>, lc: &LinearCombination<R>) {
         for (variable, coefficient) in &lc.terms {
             let column: usize = match variable.kind {
@@ -215,13 +214,13 @@ impl<'a, R: UnitalSemiring + Clone + Eq> CircuitBuilder<'a, R> {
     pub fn r1cs(self) -> R1CS<R> {
         let (constraints_num, variables_num) = (self.constraints(), self.variables());
         let constraints = self.constraints.take();
-        let (lps_degree, rps_degree) = constraints
+        let (lps_dimension, rps_dimension) = constraints
             .iter()
-            .map(|c| (c.lps.degree(), c.rps.degree()))
+            .map(|c| (c.lps.dimension(), c.rps.dimension()))
             .fold((0, 0), |acc, x| (max(acc.0, x.0), max(acc.1, x.1)));
         assert!(
-            lps_degree <= 2 && rps_degree <= 1,
-            "Shape [{lps_degree}, {rps_degree}] is not compatible with [2, 1]"
+            lps_dimension <= 2 && rps_dimension <= 1,
+            "Shape [{lps_dimension}, {rps_dimension}] is not compatible with [2, 1]"
         );
         let mut a = SparseMatrixBuilder::<R>::new(constraints_num, variables_num);
         let mut b = SparseMatrixBuilder::<R>::new(constraints_num, variables_num);
@@ -229,7 +228,7 @@ impl<'a, R: UnitalSemiring + Clone + Eq> CircuitBuilder<'a, R> {
 
         self.lay_out();
         for constraint in constraints {
-            let (lps_span, rps_span) = (constraint.lps.span(), constraint.rps.span());
+            let (lps_span, rps_span) = (constraint.lps, constraint.rps);
             match lps_span.dimension() {
                 2 => {
                     self.put(&mut a, &lps_span[0]);
@@ -260,26 +259,26 @@ impl<'a, R: UnitalSemiring + Clone + Eq> CircuitBuilder<'a, R> {
     }
 }
 
-impl<'a, R: UnitalRing + Clone + Eq> CircuitBuilder<'a, R> {
+impl<R: UnitalRing + Clone + Eq> CircuitBuilder<R> {
     /// Compile to CCS.
     pub fn ccs(self) -> CustomizableConstraintSystem<R> {
         let (constraints_num, variables_num) = (self.constraints(), self.variables());
         let constraints = self.constraints.take();
-        let (lps_degree, rps_degree) = constraints
+        let (lps_dimension, rps_dimension) = constraints
             .iter()
-            .map(|c| (c.lps.degree(), c.rps.degree()))
+            .map(|c| (c.lps.dimension(), c.rps.dimension()))
             .fold((0, 0), |acc, x| (max(acc.0, x.0), max(acc.1, x.1)));
         let (mut lps_matrices, mut rps_matrices) = (Vec::new(), Vec::new());
-        lps_matrices.resize_with(lps_degree, || {
+        lps_matrices.resize_with(lps_dimension, || {
             SparseMatrixBuilder::<R>::new(constraints_num, variables_num)
         });
-        rps_matrices.resize_with(rps_degree, || {
+        rps_matrices.resize_with(rps_dimension, || {
             SparseMatrixBuilder::<R>::new(constraints_num, variables_num)
         });
 
         self.lay_out();
         for constraint in constraints {
-            let (lps_span, rps_span) = (constraint.lps.span(), constraint.rps.span());
+            let (lps_span, rps_span) = (constraint.lps, constraint.rps);
             for (matrix, lc) in zip(&mut lps_matrices, &lps_span) {
                 self.put(matrix, lc)
             }
@@ -294,7 +293,7 @@ impl<'a, R: UnitalRing + Clone + Eq> CircuitBuilder<'a, R> {
             }
         }
 
-        let mut matrices = Vec::with_capacity(lps_degree + rps_degree);
+        let mut matrices = Vec::with_capacity(lps_dimension + rps_dimension);
         lps_matrices
             .into_iter()
             .for_each(|b| matrices.push(b.build()));
@@ -310,7 +309,7 @@ impl<'a, R: UnitalRing + Clone + Eq> CircuitBuilder<'a, R> {
     }
 }
 
-impl<'a, R: UnitalSemiring> Display for CircuitBuilder<'a, R> {
+impl<R: UnitalSemiring> Display for CircuitBuilder<R> {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         write!(
             f,
@@ -324,20 +323,20 @@ impl<'a, R: UnitalSemiring> Display for CircuitBuilder<'a, R> {
 }
 
 /// A named scope to allocate variables and constrain expressions.
-pub struct Scope<'a, 'b, R: UnitalSemiring> {
-    builder: &'a CircuitBuilder<'b, R>,
+pub struct Scope<'a, R: UnitalSemiring> {
+    builder: &'a CircuitBuilder<R>,
 }
 
-impl<'a, 'b, R: UnitalSemiring> Scope<'a, 'b, R> {
+impl<'a, R: UnitalSemiring> Scope<'a, R> {
     /// Build a constraint `lps == rps`.
     ///
     /// # Panics
     ///
     /// If constraint degree is higher than circuit degree.
-    pub fn constrain<LPS: Expression<'b, R>, RPS: Expression<'b, R>>(&self, lps: LPS, rps: RPS) {
+    pub fn constrain<LPS: Expression<R>, RPS: Expression<R>>(&self, lps: LPS, rps: RPS) {
         self.builder.constrain(Constraint {
-            lps: Box::new(lps),
-            rps: Box::new(rps),
+            lps: lps.span(),
+            rps: rps.span(),
         })
     }
 
@@ -382,7 +381,7 @@ impl<'a, 'b, R: UnitalSemiring> Scope<'a, 'b, R> {
     }
 }
 
-impl<'a, 'b, R: UnitalSemiring> Drop for Scope<'a, 'b, R> {
+impl<'a, R: UnitalSemiring> Drop for Scope<'a, R> {
     fn drop(&mut self) {
         let scopes = self.builder.scopes.borrow();
         self.builder

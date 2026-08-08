@@ -38,9 +38,9 @@ impl<R: UnitalSemiring> Constant<R> {
     }
 }
 
-impl<'a, R: UnitalSemiring + Clone + 'a> Expression<'a, R> for Constant<R> {
-    fn span(&self) -> LinearSpan<R> {
-        vec![self.clone().into()].into()
+impl<R: UnitalSemiring> Expression<R> for Constant<R> {
+    fn span(self) -> LinearSpan<R> {
+        vec![self.into()].into()
     }
 
     fn degree(&self) -> usize {

@@ -55,9 +55,9 @@ impl<R: UnitalSemiring> LinearCombination<R> {
     pub const ZERO: Self = Self::new();
 }
 
-impl<'a, R: UnitalSemiring + Clone + Eq + 'a> Expression<'a, R> for LinearCombination<R> {
-    fn span(&self) -> LinearSpan<R> {
-        vec![self.clone()].into()
+impl<R: UnitalSemiring + Eq> Expression<R> for LinearCombination<R> {
+    fn span(self) -> LinearSpan<R> {
+        vec![self].into()
     }
 
     fn degree(&self) -> usize {

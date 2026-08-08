@@ -20,12 +20,12 @@ use crate::circuit::builder::{CircuitBuilder, LinearCombination};
 use crate::circuit::random::BinaryUniformDistribution;
 use crate::random::{Distribution, UniformGenerator};
 
-pub struct QuartaryUniformDistribution<'a, 'b, Z: IntegerModRing> {
-    bud: BinaryUniformDistribution<'a, 'b, Z>,
+pub struct QuartaryUniformDistribution<'a, Z: IntegerModRing> {
+    bud: BinaryUniformDistribution<'a, Z>,
 }
 
-impl<'a, 'b, Z: IntegerModRing + Clone> QuartaryUniformDistribution<'a, 'b, Z> {
-    pub fn new(circuit: &'a CircuitBuilder<'b, Z>) -> Self {
+impl<'a, Z: IntegerModRing + Clone> QuartaryUniformDistribution<'a, Z> {
+    pub fn new(circuit: &'a CircuitBuilder<Z>) -> Self {
         Self {
             bud: BinaryUniformDistribution::new(circuit),
         }
@@ -39,10 +39,9 @@ impl<'a, 'b, Z: IntegerModRing + Clone> QuartaryUniformDistribution<'a, 'b, Z> {
 #[rustfmt::skip]
 impl<
     'a,
-    'b,
     Z: IntegerModRing + Clone + Eq,
     G: UniformGenerator<Output = LinearCombination<Z>>
-> Distribution<LinearCombination<Z>, G> for QuartaryUniformDistribution<'a, 'b, Z> {
+> Distribution<LinearCombination<Z>, G> for QuartaryUniformDistribution<'a, Z> {
     fn sample(&mut self, generator: &mut G) -> LinearCombination<Z> {
         self.bud.sample(generator).double() - self.bud.sample(generator)
     }

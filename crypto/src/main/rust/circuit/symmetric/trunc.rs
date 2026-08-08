@@ -22,26 +22,24 @@ use core::marker::PhantomData;
 
 pub struct Trunc<
     'a,
-    'b,
     G: UnitalSemiring + AdditiveGroup,
     const RANK: usize,
     const WIDTH: usize,
     P: Permutation<G, Domain = [LinearCombination<G>; WIDTH]>,
 > {
-    circuit: &'a CircuitBuilder<'b, G>,
+    circuit: &'a CircuitBuilder<G>,
     phantom: PhantomData<P>,
 }
 
 impl<
     'a,
-    'b,
     G: UnitalSemiring + AdditiveGroup,
     const RANK: usize,
     const WIDTH: usize,
     P: Permutation<G, Domain = [LinearCombination<G>; WIDTH]>,
-> Trunc<'a, 'b, G, RANK, WIDTH, P>
+> Trunc<'a, G, RANK, WIDTH, P>
 {
-    pub const fn new(circuit: &'a CircuitBuilder<'b, G>) -> Self {
+    pub const fn new(circuit: &'a CircuitBuilder<G>) -> Self {
         const {
             assert!(RANK * 2 == WIDTH);
         }
@@ -54,12 +52,11 @@ impl<
 
 impl<
     'a,
-    'b,
     G: UnitalSemiring + AdditiveGroup + Clone,
     const RANK: usize,
     const WIDTH: usize,
     P: Permutation<G, Domain = [LinearCombination<G>; WIDTH]>,
-> CompressionFunction for Trunc<'a, 'b, G, RANK, WIDTH, P>
+> CompressionFunction for Trunc<'a, G, RANK, WIDTH, P>
 {
     type Hash = [LinearCombination<G>; RANK];
 
