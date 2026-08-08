@@ -15,21 +15,20 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use blacknet_crypto::algebra::{Double, One};
+use blacknet_crypto::assigner::assigment::Assigment;
 use blacknet_crypto::assigner::sumcheck::{Proof as ProofAssigner, SumCheck as SumCheckAssigner};
-use blacknet_crypto::assigner::symmetric::DuplexPoseidon2Pervushin as DuplexPoseidon2PervushinAssigner;
-use blacknet_crypto::circuit::builder::{CircuitBuilder, VariableKind};
+use blacknet_crypto::circuit::builder::{
+    CircuitBuilder, Constant, LinearCombination, VariableKind,
+};
 use blacknet_crypto::circuit::sumcheck::{Proof as ProofCircuit, SumCheck as SumCheckCircuit};
-use blacknet_crypto::circuit::symmetric::DuplexPoseidon2Pervushin as DuplexPoseidon2PervushinCircuit;
 use blacknet_crypto::constraintsystem::ConstraintSystem;
 use blacknet_crypto::pervushin::PervushinField;
 use blacknet_crypto::polynomial::{
     EqExtension, MaskingPolynomial, MultilinearExtension, MultivariatePolynomial,
 };
 use blacknet_crypto::sumcheck::{Error, Proof as ProofPlain, SumCheck as SumCheckPlain};
-use blacknet_crypto::symmetric::{
-    Blake2bDuplexer, DuplexPoseidon2Pervushin as DuplexPoseidon2PervushinPlain, Duplexer,
-    UniformDistribution,
-};
+use blacknet_crypto::symmetric::{Blake2bDuplexer, Duplexer, UniformDistribution};
 use core::assert_matches;
 
 type Z = PervushinField;
@@ -142,9 +141,9 @@ fn mask() {
 
 #[test]
 fn circuit() {
-    type DuplexPlain = DuplexPoseidon2PervushinPlain;
+    type DuplexPlain = TestDuplexPlain;
     type SCPlain = SumCheckPlain<Z, Z, MultilinearExtension<Z>, DuplexPlain, E>;
-    let mut duplex_plain = DuplexPlain::default();
+    let mut duplex_plain = DuplexPlain::new();
     let mut exceptional_set_plain = E::default();
 
     let poly_plain = MultilinearExtension::from([7, 7, 7, 0].map(Z::from));
@@ -175,7 +174,7 @@ fn circuit() {
         poly_plain.variables(),
         poly_plain.degree(),
     );
-    type DuplexCircuit<'a, 'b> = DuplexPoseidon2PervushinCircuit<'a, 'b>;
+    type DuplexCircuit<'a, 'b> = TestDuplexCircuit;
     let mut duplex_circuit = DuplexCircuit::new(&circuit);
     type UniformDistributionCircuit<'a, 'b> = UniformDistribution;
     let mut exceptional_set_circuit = UniformDistributionCircuit::default();
@@ -204,7 +203,7 @@ fn circuit() {
 
     let proof_assigner =
         ProofAssigner::new((&proof_plain).into_iter().copied().collect::<Vec<_>>(), &z);
-    type DuplexAssigner<'a> = DuplexPoseidon2PervushinAssigner<'a>;
+    type DuplexAssigner<'a> = TestDuplexAssigner;
     let mut duplex_assigner = DuplexAssigner::new(&z);
     type UniformDistributionAssigner<'a> = UniformDistribution;
     let mut exceptional_set_assigner = UniformDistributionAssigner::default();
@@ -227,4 +226,89 @@ fn circuit() {
     assert_eq!(point_assigned, point_plain);
     assert_eq!(state_assigned, state_plain);
     assert_matches!(r1cs.is_satisfied(&z.finish()), Ok(()));
+}
+
+struct TestDuplexPlain {
+    x: Z,
+}
+
+impl TestDuplexPlain {
+    const fn new() -> Self {
+        Self { x: Z::ONE }
+    }
+}
+
+impl Duplexer for TestDuplexPlain {
+    type Msg = Z;
+
+    fn reset(&mut self) {
+        self.x = Z::ONE
+    }
+
+    fn absorb_msg(&mut self, e: Self::Msg) {
+        self.x = self.x.double() + e
+    }
+
+    fn squeeze_msg(&mut self) -> Self::Msg {
+        self.x += Z::ONE;
+        self.x
+    }
+}
+
+struct TestDuplexCircuit {
+    x: LinearCombination<Z>,
+}
+
+impl<'a, 'b> TestDuplexCircuit {
+    fn new(_: &'a CircuitBuilder<'b, Z>) -> Self {
+        Self {
+            x: Self::ONE.into(),
+        }
+    }
+
+    const ONE: Constant<Z> = Constant::<Z>::ONE;
+}
+
+impl Duplexer for TestDuplexCircuit {
+    type Msg = LinearCombination<Z>;
+
+    fn reset(&mut self) {
+        self.x = Self::ONE.into()
+    }
+
+    fn absorb_msg(&mut self, e: Self::Msg) {
+        self.x = (&self.x).double() + e
+    }
+
+    fn squeeze_msg(&mut self) -> Self::Msg {
+        self.x += Self::ONE;
+        self.x.clone()
+    }
+}
+
+struct TestDuplexAssigner {
+    x: Z,
+}
+
+impl<'a> TestDuplexAssigner {
+    const fn new(_: &'a Assigment<Z>) -> Self {
+        Self { x: Z::ONE }
+    }
+}
+
+impl Duplexer for TestDuplexAssigner {
+    type Msg = Z;
+
+    fn reset(&mut self) {
+        self.x = Z::ONE
+    }
+
+    fn absorb_msg(&mut self, e: Self::Msg) {
+        self.x = self.x.double() + e
+    }
+
+    fn squeeze_msg(&mut self) -> Self::Msg {
+        self.x += Z::ONE;
+        self.x
+    }
 }

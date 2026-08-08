@@ -15,12 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_crypto::{
-    algebra::Zero,
-    lm::LMField,
-    pervushin::PervushinField,
-    symmetric::{Blake2b256, MerkleTree, TruncPoseidon2LM, TruncPoseidon2Pervushin},
-};
+use blacknet_crypto::symmetric::{Blake2b256, MerkleTree};
 use criterion::{Criterion, criterion_group, criterion_main};
 use std::hint::black_box;
 
@@ -34,18 +29,6 @@ fn criterion_benchmark(crit: &mut Criterion) {
     let branch = black_box([hash; H]);
     grp.bench_function("Blake2b256", |bench| {
         bench.iter(|| MerkleTree::<Blake2b256>::compute_root(index, hash, &branch))
-    });
-
-    let hash = black_box([LMField::ZERO; 4]);
-    let branch = black_box([hash; H]);
-    grp.bench_function("Poseidon2LM", |bench| {
-        bench.iter(|| MerkleTree::<TruncPoseidon2LM>::compute_root(index, hash, &branch))
-    });
-
-    let hash = black_box([PervushinField::ZERO; 4]);
-    let branch = black_box([hash; H]);
-    grp.bench_function("Poseidon2Pervushin", |bench| {
-        bench.iter(|| MerkleTree::<TruncPoseidon2Pervushin>::compute_root(index, hash, &branch))
     });
 
     grp.finish();

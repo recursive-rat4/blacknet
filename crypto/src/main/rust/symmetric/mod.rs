@@ -23,9 +23,6 @@ mod compressionfunction;
 mod duplex;
 mod merkletree;
 mod permutation;
-mod poseidon2;
-mod poseidon2lm;
-mod poseidon2pervushin;
 mod trunc;
 
 pub use blake2b::{Blake2b256, Blake2b512, Blake2bDuplexer, Blake2xb};
@@ -34,9 +31,4 @@ pub use compressionfunction::CompressionFunction;
 pub use duplex::{Absorb, Duplex, Duplexer, Phase, Squeeze, SqueezeWithSize, UniformDistribution};
 pub use merkletree::MerkleTree;
 pub use permutation::Permutation;
-pub use poseidon2::{Poseidon2Params, Poseidon2Plain};
-pub use poseidon2lm::{DuplexPoseidon2LM, Poseidon2LM8, Poseidon2LM12, TruncPoseidon2LM};
-pub use poseidon2pervushin::{
-    DuplexPoseidon2Pervushin, Poseidon2Pervushin8, Poseidon2Pervushin12, TruncPoseidon2Pervushin,
-};
 pub use trunc::Trunc;
