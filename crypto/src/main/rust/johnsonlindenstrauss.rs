@@ -17,7 +17,7 @@
 
 use crate::algebra::{IntegerModRing, RingOps};
 use crate::matrix::{DenseMatrix, DenseVector};
-use crate::random::{BinaryUniformDistribution, Distribution, UniformGenerator};
+use crate::random::{Distribution, UniformGenerator};
 
 /// A modular Johnson–Lindenstrauss variant.
 ///
@@ -29,8 +29,8 @@ pub struct JohnsonLindenstrauss<Z: IntegerModRing> {
 impl<Z: IntegerModRing> JohnsonLindenstrauss<Z> {
     const K: usize = 256;
 
-    pub fn random<G: UniformGenerator<Output = Z>>(generator: &mut G, n: usize) -> Self {
-        let mut dst = WeightedDistribution::<Z>::new();
+    pub fn random<G: UniformGenerator<Output = u8>>(generator: &mut G, n: usize) -> Self {
+        let mut dst = WeightedDistribution::new();
         let elements = (0..Self::K * n).map(|_| dst.sample(generator)).collect();
         let map = DenseMatrix::new(Self::K, n, elements);
         Self { map }
@@ -44,33 +44,49 @@ impl<Z: IntegerModRing> JohnsonLindenstrauss<Z> {
     }
 }
 
-struct WeightedDistribution<Z: IntegerModRing> {
-    bud: BinaryUniformDistribution<Z>,
+struct WeightedDistribution {
+    cache: u8,
+    have_bits: u32,
 }
 
-impl<Z: IntegerModRing> WeightedDistribution<Z> {
+impl WeightedDistribution {
     pub const fn new() -> Self {
         Self {
-            bud: BinaryUniformDistribution::new(),
+            cache: 0,
+            have_bits: 0,
         }
     }
 
     pub const fn reset(&mut self) {
-        self.bud.reset()
+        self.have_bits = 0
     }
 }
 
-impl<Z: IntegerModRing> Default for WeightedDistribution<Z> {
+impl Default for WeightedDistribution {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<Z: IntegerModRing, G: UniformGenerator<Output = Z>> Distribution<Z, G>
-    for WeightedDistribution<Z>
+impl<Z: IntegerModRing, G: UniformGenerator<Output = u8>> Distribution<Z, G>
+    for WeightedDistribution
 {
     fn sample(&mut self, generator: &mut G) -> Z {
-        self.bud.sample(generator) - self.bud.sample(generator)
+        if self.have_bits == 0 {
+            self.cache = generator.generate();
+            self.have_bits = u8::BITS;
+        }
+        let a = (self.cache & 1) != 0;
+        self.cache >>= 1;
+        let b = (self.cache & 1) != 0;
+        self.cache >>= 1;
+        self.have_bits -= 2;
+        match (a, b) {
+            (false, false) => Z::ZERO,
+            (false, true) => -Z::ONE,
+            (true, false) => Z::ONE,
+            (true, true) => Z::ZERO,
+        }
     }
 
     #[inline]
