@@ -21,7 +21,9 @@
 #![allow(clippy::suspicious_op_assign_impl)]
 
 mod gf2;
+mod ghash;
 mod rijndael;
 
 pub use gf2::GF2;
+pub use ghash::GHashField;
 pub use rijndael::RijndaelField;

@@ -137,44 +137,50 @@ impl Neg for &GF2 {
 impl Sub for GF2 {
     type Output = Self;
 
+    #[inline]
     fn sub(self, rps: Self) -> Self::Output {
-        Self { n: self.n ^ rps.n }
+        self + rps
     }
 }
 
 impl Sub<&Self> for GF2 {
     type Output = Self;
 
+    #[inline]
     fn sub(self, rps: &Self) -> Self::Output {
-        Self { n: self.n ^ rps.n }
+        self + rps
     }
 }
 
 impl Sub<GF2> for &GF2 {
     type Output = GF2;
 
+    #[inline]
     fn sub(self, rps: GF2) -> Self::Output {
-        Self::Output { n: self.n ^ rps.n }
+        self + rps
     }
 }
 
 impl<'a> Sub<&'a GF2> for &GF2 {
     type Output = GF2;
 
+    #[inline]
     fn sub(self, rps: &'a GF2) -> Self::Output {
-        Self::Output { n: self.n ^ rps.n }
+        self + rps
     }
 }
 
 impl SubAssign for GF2 {
+    #[inline]
     fn sub_assign(&mut self, rps: Self) {
-        self.n ^= rps.n
+        *self += rps
     }
 }
 
 impl SubAssign<&Self> for GF2 {
+    #[inline]
     fn sub_assign(&mut self, rps: &Self) {
-        self.n ^= rps.n
+        *self += rps
     }
 }
 

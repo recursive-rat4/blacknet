@@ -22,6 +22,7 @@ use crate::algebra::{
 };
 use crate::branchless::{BlAssign, BlEq, BlOption, BlSelect};
 use crate::gf2::GF2;
+use crate::symmetric::{Absorb, Duplexer, Squeeze};
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
 use core::ops::{Add, AddAssign, Div, Mul, MulAssign, Neg, Sub, SubAssign};
@@ -150,48 +151,50 @@ impl Neg for &RijndaelField {
 impl Sub for RijndaelField {
     type Output = Self;
 
+    #[inline]
     fn sub(self, rps: Self) -> Self::Output {
-        let coefficients = self.coefficients ^ rps.coefficients;
-        Self { coefficients }
+        self + rps
     }
 }
 
 impl Sub<&Self> for RijndaelField {
     type Output = Self;
 
+    #[inline]
     fn sub(self, rps: &Self) -> Self::Output {
-        let coefficients = self.coefficients ^ rps.coefficients;
-        Self { coefficients }
+        self + rps
     }
 }
 
 impl Sub<RijndaelField> for &RijndaelField {
     type Output = RijndaelField;
 
+    #[inline]
     fn sub(self, rps: RijndaelField) -> Self::Output {
-        let coefficients = self.coefficients ^ rps.coefficients;
-        Self::Output { coefficients }
+        self + rps
     }
 }
 
 impl<'a> Sub<&'a RijndaelField> for &RijndaelField {
     type Output = RijndaelField;
 
+    #[inline]
     fn sub(self, rps: &'a RijndaelField) -> Self::Output {
-        let coefficients = self.coefficients ^ rps.coefficients;
-        Self::Output { coefficients }
+        self + rps
     }
 }
 
 impl SubAssign for RijndaelField {
+    #[inline]
     fn sub_assign(&mut self, rps: Self) {
-        self.coefficients ^= rps.coefficients
+        *self += rps
     }
 }
 
 impl SubAssign<&Self> for RijndaelField {
+    #[inline]
     fn sub_assign(&mut self, rps: &Self) {
-        self.coefficients ^= rps.coefficients
+        *self += rps
     }
 }
 
@@ -528,6 +531,19 @@ impl BlEq for RijndaelField {
     }
 }
 
+impl Absorb<u8> for RijndaelField {
+    fn absorb_into<D: Duplexer<Msg = u8>>(self, duplex: &mut D) {
+        duplex.absorb_msg(self.coefficients)
+    }
+}
+
+impl Squeeze<u8> for RijndaelField {
+    fn squeeze_from<D: Duplexer<Msg = u8>>(duplex: &mut D) -> Self {
+        let coefficients = duplex.squeeze_msg();
+        Self { coefficients }
+    }
+}
+
 impl DefaultIsZeroes for RijndaelField {}
 
 #[inline(always)]
@@ -540,11 +556,10 @@ fn clmul(a: u8, b: u8) -> u16 {
                 #[cfg(target_arch = "x86_64")]
                 use core::arch::x86_64::*;
 
-                let c: u128 = core::mem::transmute(_mm_clmulepi64_si128(
-                    _mm_cvtsi32_si128(a as i32),
-                    _mm_cvtsi32_si128(b as i32),
-                    0,
-                ));
+                let a = _mm_cvtsi32_si128(a as i32);
+                let b = _mm_cvtsi32_si128(b as i32);
+                let c = _mm_clmulepi64_si128(a, b, 0);
+                let c: u128 = core::mem::transmute(c);
                 c as u16
             }
         }
@@ -573,11 +588,9 @@ fn clsqr(a: u8) -> u16 {
                 #[cfg(target_arch = "x86_64")]
                 use core::arch::x86_64::*;
 
-                let c: u128 = core::mem::transmute(_mm_clmulepi64_si128(
-                    _mm_cvtsi32_si128(a as i32),
-                    _mm_cvtsi32_si128(a as i32),
-                    0,
-                ));
+                let a = _mm_cvtsi32_si128(a as i32);
+                let c = _mm_clmulepi64_si128(a, a, 0);
+                let c: u128 = core::mem::transmute(c);
                 c as u16
             }
         }
