@@ -18,7 +18,7 @@
 use crate::algebra::{LeftZero, RightZero, Zero};
 use crate::bigint::UInt256;
 use core::borrow::BorrowMut;
-use core::ops::{Add, BitAnd, BitOrAssign, Shl, ShrAssign, Sub};
+use core::ops::{Add, BitAnd, Shl, ShrAssign, Sub};
 
 #[rustfmt::skip]
 pub trait Integer
@@ -28,7 +28,6 @@ pub trait Integer
     + Ord
     + BitAnd<Self, Output = Self>
     + BitAnd<Self::Limb, Output = Self::Limb>
-    + BitOrAssign<Self>
     + Shl<u32, Output = Self>
     + ShrAssign<Self::Limb>
     + ShrAssign<u32>
@@ -59,11 +58,7 @@ pub trait Integer
     const ZERO: Self;
     const ONE: Self;
 
-    fn is_odd(self) -> bool;
-
     const LIMB_ONE: Self::Limb;
-    const LIMB_TWO: Self::Limb;
-    const LIMB_THREE: Self::Limb;
 }
 
 pub trait SignedInteger: Integer {}
@@ -114,14 +109,7 @@ macro_rules! impl_integer {
                 const ZERO: Self = 0;
                 const ONE: Self = 1;
 
-                #[inline]
-                fn is_odd(self) -> bool {
-                    self & 1 == 1
-                }
-
                 const LIMB_ONE: Self::Limb = 1;
-                const LIMB_TWO: Self::Limb = 2;
-                const LIMB_THREE: Self::Limb = 3;
             }
 
             impl UnsignedInteger for $x {}
@@ -168,14 +156,7 @@ macro_rules! impl_integer {
                 const ZERO: Self = 0;
                 const ONE: Self = 1;
 
-                #[inline]
-                fn is_odd(self) -> bool {
-                    self & 1 == 1
-                }
-
                 const LIMB_ONE: Self::Limb = 1;
-                const LIMB_TWO: Self::Limb = 2;
-                const LIMB_THREE: Self::Limb = 3;
             }
 
             impl SignedInteger for $y {}
@@ -229,14 +210,7 @@ impl Integer for UInt256 {
     const ZERO: Self = Self::ZERO;
     const ONE: Self = Self::ONE;
 
-    #[inline]
-    fn is_odd(self) -> bool {
-        self.is_odd()
-    }
-
     const LIMB_ONE: Self::Limb = 1;
-    const LIMB_TWO: Self::Limb = 2;
-    const LIMB_THREE: Self::Limb = 3;
 }
 
 impl UnsignedInteger for UInt256 {}
