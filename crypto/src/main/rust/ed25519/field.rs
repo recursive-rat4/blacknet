@@ -158,18 +158,21 @@ impl Field25519 {
 }
 
 impl From<i8> for Field25519 {
+    #[inline]
     fn from(n: i8) -> Self {
         Self::from(n as i64)
     }
 }
 
 impl From<i16> for Field25519 {
+    #[inline]
     fn from(n: i16) -> Self {
         Self::from(n as i64)
     }
 }
 
 impl From<i32> for Field25519 {
+    #[inline]
     fn from(n: i32) -> Self {
         Self::from(n as i64)
     }
@@ -186,26 +189,30 @@ impl From<i64> for Field25519 {
 }
 
 impl From<u8> for Field25519 {
+    #[inline]
     fn from(n: u8) -> Self {
-        Self::from(n as u64)
+        Self::with_limb(n as u64)
     }
 }
 
 impl From<u16> for Field25519 {
+    #[inline]
     fn from(n: u16) -> Self {
-        Self::from(n as u64)
+        Self::with_limb(n as u64)
     }
 }
 
 impl From<u32> for Field25519 {
+    #[inline]
     fn from(n: u32) -> Self {
-        Self::from(n as u64)
+        Self::with_limb(n as u64)
     }
 }
 
 impl From<u64> for Field25519 {
+    #[inline]
     fn from(n: u64) -> Self {
-        Self { n: n.into() }
+        Self::with_limb(n)
     }
 }
 
@@ -597,6 +604,7 @@ impl IntegerModRing for Field25519 {
 impl BlSelect for Field25519 {
     type Output = Self;
 
+    #[inline]
     fn bl_select(self, rps: Self, condition: bool) -> Self {
         let n = self.n.bl_select(rps.n, condition);
         Self { n }
@@ -606,6 +614,7 @@ impl BlSelect for Field25519 {
 impl BlSelect<&Self> for Field25519 {
     type Output = Self;
 
+    #[inline]
     fn bl_select(self, rps: &Self, condition: bool) -> Self {
         let n = self.n.bl_select(&rps.n, condition);
         Self { n }
@@ -615,6 +624,7 @@ impl BlSelect<&Self> for Field25519 {
 impl BlSelect<Field25519> for &Field25519 {
     type Output = Field25519;
 
+    #[inline]
     fn bl_select(self, rps: Field25519, condition: bool) -> Self::Output {
         let n = (&self.n).bl_select(rps.n, condition);
         Self::Output { n }
@@ -624,6 +634,7 @@ impl BlSelect<Field25519> for &Field25519 {
 impl BlSelect for &Field25519 {
     type Output = Field25519;
 
+    #[inline]
     fn bl_select(self, rps: Self, condition: bool) -> Self::Output {
         let n = (&self.n).bl_select(&rps.n, condition);
         Self::Output { n }
@@ -631,6 +642,7 @@ impl BlSelect for &Field25519 {
 }
 
 impl BlSwap for Field25519 {
+    #[inline]
     fn bl_swap(&mut self, rps: &mut Self, condition: bool) {
         self.n.bl_swap(&mut rps.n, condition)
     }

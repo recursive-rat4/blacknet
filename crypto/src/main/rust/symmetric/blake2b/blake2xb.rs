@@ -61,6 +61,7 @@ impl Blake2xb {
 }
 
 impl Default for Blake2xb {
+    #[inline]
     fn default() -> Self {
         Self::new()
     }
