@@ -60,10 +60,6 @@ name = "ajtaicommitment"
 path = "src/test/rust/ajtaicommitment.rs"
 
 [[test]]
-name = "arithmeticgate"
-path = "src/test/rust/arithmeticgate.rs"
-
-[[test]]
 name = "bigint"
 path = "src/test/rust/bigint.rs"
 
@@ -262,6 +258,10 @@ path = "src/test/rust/uniformintdistribution.rs"
 [[test]]
 name = "univariatepolynomial"
 path = "src/test/rust/univariatepolynomial.rs"
+
+[[test]]
+name = "uint"
+path = "src/test/rust/uint.rs"
 
 [[test]]
 name = "uring"

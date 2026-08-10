@@ -16,11 +16,10 @@
  */
 
 use blacknet_crypto::algebra::IntegerModRing;
-use blacknet_crypto::assigner::arithmeticgate::ArithmeticGate as Assigner;
-use blacknet_crypto::circuit::arithmeticgate::ArithmeticGate as Circuit;
-use blacknet_crypto::circuit::builder::{CircuitBuilder, LinearCombination};
+use blacknet_crypto::assigner::uint::UInt as Assigner;
+use blacknet_crypto::circuit::builder::{CircuitBuilder, VariableKind};
+use blacknet_crypto::circuit::uint::UInt as Circuit;
 use blacknet_crypto::constraintsystem::ConstraintSystem;
-use core::array;
 use core::assert_matches;
 use core::iter::zip;
 
@@ -33,13 +32,12 @@ fn wrapping_add() {
     let c = [0, 0, 0, 1, 0, 0, 0, 1].map(Z::with_int);
 
     let circuit = CircuitBuilder::<Z>::new(2);
-    let arithmetic_gate_circuit = Circuit::<Z>::new(&circuit);
     let scope = circuit.scope("test");
-    let a_lc: [LinearCombination<Z>; 8] = array::from_fn(|_| scope.public_input().into());
-    let b_lc: [LinearCombination<Z>; 8] = array::from_fn(|_| scope.public_input().into());
-    let c_lc: [LinearCombination<Z>; 8] = array::from_fn(|_| scope.public_input().into());
-    let c_circuit = arithmetic_gate_circuit.wrapping_add(&a_lc, &b_lc);
-    for (l, r) in zip(c_circuit, c_lc) {
+    let a_input = Circuit::<Z, 8>::allocate(&circuit, VariableKind::PublicInput);
+    let b_input = Circuit::<Z, 8>::allocate(&circuit, VariableKind::PublicInput);
+    let c_input = Circuit::<Z, 8>::allocate(&circuit, VariableKind::PublicInput);
+    let c_output = a_input.wrapping_add(&b_input);
+    for (l, r) in zip(c_output, c_input) {
         scope.constrain(l, r);
     }
     drop(scope);
@@ -50,8 +48,9 @@ fn wrapping_add() {
     z.extend(b);
     z.extend(c);
 
-    let assigner = Assigner::<Z>::new(&z);
-    assigner.wrapping_add(&a, &b);
+    let a_assigner = Assigner::<Z, 8>::new(a, &z);
+    let b_assigner = Assigner::<Z, 8>::new(b, &z);
+    a_assigner.wrapping_add(&b_assigner);
 
     assert_matches!(r1cs.is_satisfied(&z.finish()), Ok(()));
 }
@@ -63,12 +62,11 @@ fn rotate_right() {
     let c = [0, 1, 0, 0, 0, 0, 0, 1].map(Z::with_int);
 
     let circuit = CircuitBuilder::<Z>::new(2);
-    let arithmetic_gate_circuit = Circuit::<Z>::new(&circuit);
     let scope = circuit.scope("test");
-    let a_lc: [LinearCombination<Z>; 8] = array::from_fn(|_| scope.public_input().into());
-    let c_lc: [LinearCombination<Z>; 8] = array::from_fn(|_| scope.public_input().into());
-    let c_circuit = arithmetic_gate_circuit.rotate_right(&a_lc, b);
-    for (l, r) in zip(c_circuit, c_lc) {
+    let a_input = Circuit::<Z, 8>::allocate(&circuit, VariableKind::PublicInput);
+    let c_input = Circuit::<Z, 8>::allocate(&circuit, VariableKind::PublicInput);
+    let c_output = a_input.rotate_right(b);
+    for (l, r) in zip(c_output, c_input) {
         scope.constrain(l, r);
     }
     drop(scope);
@@ -78,8 +76,8 @@ fn rotate_right() {
     z.extend(a);
     z.extend(c);
 
-    let assigner = Assigner::<Z>::new(&z);
-    assigner.rotate_right(&a, b);
+    let a_assigner = Assigner::<Z, 8>::new(a, &z);
+    a_assigner.rotate_right(b);
 
     assert_matches!(r1cs.is_satisfied(&z.finish()), Ok(()));
 }
@@ -91,13 +89,12 @@ fn bitxor() {
     let c = [0, 1, 1, 0].map(Z::with_int);
 
     let circuit = CircuitBuilder::<Z>::new(2);
-    let arithmetic_gate_circuit = Circuit::<Z>::new(&circuit);
     let scope = circuit.scope("test");
-    let a_lc: [LinearCombination<Z>; 4] = array::from_fn(|_| scope.public_input().into());
-    let b_lc: [LinearCombination<Z>; 4] = array::from_fn(|_| scope.public_input().into());
-    let c_lc: [LinearCombination<Z>; 4] = array::from_fn(|_| scope.public_input().into());
-    let c_circuit = arithmetic_gate_circuit.bitxor(&a_lc, &b_lc);
-    for (l, r) in zip(c_circuit, c_lc) {
+    let a_input = Circuit::<Z, 4>::allocate(&circuit, VariableKind::PublicInput);
+    let b_input = Circuit::<Z, 4>::allocate(&circuit, VariableKind::PublicInput);
+    let c_input = Circuit::<Z, 4>::allocate(&circuit, VariableKind::PublicInput);
+    let c_output = a_input.bitxor(&b_input);
+    for (l, r) in zip(c_output, c_input) {
         scope.constrain(l, r);
     }
     drop(scope);
@@ -108,8 +105,9 @@ fn bitxor() {
     z.extend(b);
     z.extend(c);
 
-    let assigner = Assigner::<Z>::new(&z);
-    assigner.bitxor(&a, &b);
+    let a_assigner = Assigner::<Z, 4>::new(a, &z);
+    let b_assigner = Assigner::<Z, 4>::new(b, &z);
+    a_assigner.bitxor(&b_assigner);
 
     assert_matches!(r1cs.is_satisfied(&z.finish()), Ok(()));
 }

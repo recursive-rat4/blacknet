@@ -17,10 +17,10 @@
 
 //! Variable assigners for proof systems.
 
-pub mod arithmeticgate;
 pub mod assigment;
 pub mod logicgate;
 pub mod polynomial;
 pub mod random;
 pub mod sumcheck;
 pub mod symmetric;
+pub mod uint;
