@@ -16,7 +16,7 @@
  */
 
 use blacknet_crypto::algebra::One;
-use blacknet_crypto::circuit::builder::{CircuitBuilder, Constant};
+use blacknet_crypto::circuit::builder::{CircuitBuilder, Constant, VariableKind};
 use blacknet_crypto::constraintsystem::ConstraintSystem;
 use blacknet_crypto::customizableconstraintsystem::CustomizableConstraintSystem;
 use blacknet_crypto::matrix::{DenseMatrix, DenseVector, SparseMatrix};
@@ -346,4 +346,19 @@ fn cubism() {
 
     let z = DenseVector::from([1, 2, 3, 5, 8].map(R::from));
     assert_matches!(ccs.is_satisfied(&z), Ok(()));
+}
+
+#[test]
+fn varietism() {
+    let circuit = CircuitBuilder::<R>::with_shape([0, 0]);
+    let scope = circuit.scope("varietism");
+    let a = scope.public();
+    let b = scope.public();
+    let c = scope.private();
+    let d = scope.auxiliary();
+    assert!(a < b);
+    assert!(a < c);
+    assert!(a < d);
+    assert_eq!(b.number(), 1);
+    assert_eq!(b.kind(), VariableKind::Public);
 }

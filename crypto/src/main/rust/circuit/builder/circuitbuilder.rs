@@ -214,11 +214,11 @@ impl<R: UnitalSemiring + Clone + Eq> CircuitBuilder<R> {
 
     fn put(&self, m: &mut SparseMatrixBuilder<R>, lc: LinearCombination<R>) {
         for (variable, coefficient) in lc.terms {
-            let column: usize = match variable.kind {
+            let column: usize = match variable.kind() {
                 VariableKind::Constant => 0,
-                VariableKind::Public => self.public_offset.get() + variable.number,
-                VariableKind::Private => self.private_offset.get() + variable.number,
-                VariableKind::Auxiliary => self.auxiliary_offset.get() + variable.number,
+                VariableKind::Public => self.public_offset.get() + variable.number(),
+                VariableKind::Private => self.private_offset.get() + variable.number(),
+                VariableKind::Auxiliary => self.auxiliary_offset.get() + variable.number(),
             };
             m.column(column, coefficient.value);
         }

@@ -21,12 +21,13 @@ use crate::circuit::builder::{
 };
 use alloc::vec;
 use core::cmp::Ordering;
-use core::fmt::{Debug, Formatter, Result};
+use core::fmt::{Debug, Display, Formatter, Result};
 use core::marker::PhantomData;
 use core::ops::{Add, Mul, Neg, Sub};
 
 /// Kind of variables in assigment.
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
+#[repr(u8)]
 pub enum VariableKind {
     /// Before public.
     Constant,
@@ -40,18 +41,27 @@ pub enum VariableKind {
 
 /// An allocated variable.
 pub struct Variable<R: UnitalSemiring> {
-    pub(super) kind: VariableKind,
-    pub(super) number: usize,
+    data: u32,
     phantom: PhantomData<R>,
 }
 
 impl<R: UnitalSemiring> Variable<R> {
     pub(super) const fn new(kind: VariableKind, number: usize) -> Self {
+        let data = (kind as u32) << 30 | number as u32;
         Self {
-            kind,
-            number,
+            data,
             phantom: PhantomData,
         }
+    }
+
+    /// The kind of variable.
+    pub const fn kind(&self) -> VariableKind {
+        unsafe { core::mem::transmute((self.data >> 30) as u8) }
+    }
+
+    /// The number of variable within its kind.
+    pub const fn number(&self) -> usize {
+        (self.data & 0x3FFFFFFF) as usize
     }
 
     pub(super) const CONSTANT: Self = Self::new(VariableKind::Constant, 0);
@@ -78,15 +88,23 @@ impl<R: UnitalSemiring> Copy for Variable<R> {}
 impl<R: UnitalSemiring> Debug for Variable<R> {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         f.debug_struct("Variable")
-            .field("kind", &self.kind)
-            .field("number", &self.number)
+            .field("data", &format_args!("{:08X}", self.data))
+            .finish()
+    }
+}
+
+impl<R: UnitalSemiring> Display for Variable<R> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        f.debug_struct("Variable")
+            .field("kind", &self.kind())
+            .field("number", &self.number())
             .finish()
     }
 }
 
 impl<R: UnitalSemiring> PartialEq for Variable<R> {
     fn eq(&self, rps: &Self) -> bool {
-        self.kind == rps.kind && self.number == rps.number
+        self.data.eq(&rps.data)
     }
 }
 
@@ -94,11 +112,7 @@ impl<R: UnitalSemiring> Eq for Variable<R> {}
 
 impl<R: UnitalSemiring> Ord for Variable<R> {
     fn cmp(&self, rps: &Self) -> Ordering {
-        match self.kind.cmp(&rps.kind) {
-            Ordering::Equal => self.number.cmp(&rps.number),
-            Ordering::Greater => Ordering::Greater,
-            Ordering::Less => Ordering::Less,
-        }
+        self.data.cmp(&rps.data)
     }
 }
 
