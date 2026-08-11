@@ -78,15 +78,16 @@ impl UniformGenerator for GeneratorCircuit {
 fn circuit_reproducible() {
     let a_plain: [Z; 16] = [0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0].map(Z::from);
 
-    let circuit = CircuitBuilder::<Z>::new(2);
+    let circuit = CircuitBuilder::<Z>::r1cs();
     let scope = circuit.scope("test");
     let mut g_circuit = GeneratorCircuit::new();
     let mut bud_circuit = Circuit::<Z>::new(&circuit);
+    circuit.lay_out();
     let _a_circuit: [LinearCombination<Z>; 16] =
         array::from_fn(|_| bud_circuit.sample(&mut g_circuit));
     drop(scope);
 
-    let r1cs = circuit.r1cs();
+    let r1cs = circuit.to_r1cs();
     let z = r1cs.assigment();
 
     let mut g_assigner = GeneratorPlain::new();

@@ -152,7 +152,7 @@ where
 
 impl<T: Zero + Clone + Eq> From<&DenseMatrix<T>> for SparseMatrix<T> {
     fn from(dense: &DenseMatrix<T>) -> Self {
-        let mut builder = SparseMatrixBuilder::<T>::new(dense.rows(), dense.columns());
+        let mut builder = SparseMatrixBuilder::<T>::with_dim(dense.rows(), dense.columns());
         for i in 0..dense.rows() {
             for j in 0..dense.columns() {
                 let e = &dense[(i, j)];
@@ -193,7 +193,17 @@ pub struct SparseMatrixBuilder<T: Zero> {
 
 impl<T: Zero> SparseMatrixBuilder<T> {
     /// Construct a new builder.
-    pub fn new(rows: usize, columns: usize) -> Self {
+    pub fn new() -> Self {
+        Self {
+            columns: 0,
+            r_index: vec![0],
+            c_index: Vec::new(),
+            elements: Vec::new(),
+        }
+    }
+
+    /// Construct a new builder.
+    pub fn with_dim(rows: usize, columns: usize) -> Self {
         let mut r_index = Vec::<usize>::with_capacity(rows + 1);
         r_index.push(0);
         Self {
@@ -202,6 +212,11 @@ impl<T: Zero> SparseMatrixBuilder<T> {
             c_index: Vec::new(),
             elements: Vec::new(),
         }
+    }
+
+    /// Set the number of columns.
+    pub const fn columns(&mut self, columns: usize) {
+        self.columns = columns;
     }
 
     /// Push a next column of current row.
@@ -244,5 +259,11 @@ impl<T: Zero + Eq> SparseMatrixBuilder<T> {
         if *element != T::ZERO {
             unsafe { self.column_unchecked(column, element.clone()) };
         }
+    }
+}
+
+impl<T: Zero> Default for SparseMatrixBuilder<T> {
+    fn default() -> Self {
+        Self::new()
     }
 }

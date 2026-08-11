@@ -128,15 +128,15 @@ fn circuit_point() {
     let x_plain = Point::<R>::from([7, 11, 13].map(R::from));
     let y_plain = eq_plain.point(&x_plain);
 
-    let circuit = CircuitBuilder::<R>::new(2);
+    let circuit = CircuitBuilder::<R>::r1cs();
     let scope = circuit.scope("test");
-    let eq_circuit = Circuit::allocate(&circuit, VariableKind::PublicInput, eq_plain.variables());
-    let x_circuit =
-        PointCircuit::allocate(&circuit, VariableKind::PublicInput, x_plain.dimension());
+    let eq_circuit = Circuit::allocate(&circuit, VariableKind::Public, eq_plain.variables());
+    let x_circuit = PointCircuit::allocate(&circuit, VariableKind::Public, x_plain.dimension());
+    circuit.lay_out();
     let _y_circuit = eq_circuit.point(&x_circuit);
     drop(scope);
 
-    let r1cs = circuit.r1cs();
+    let r1cs = circuit.to_r1cs();
     let z = r1cs.assigment();
     z.extend(coefficients_plain);
     z.extend_from_slice(&x_plain);
@@ -154,13 +154,14 @@ fn circuit_hypercube() {
     let eq_plain = EqExtension::<R>::from(coefficients_plain);
     let y_plain = eq_plain.hypercube();
 
-    let circuit = CircuitBuilder::<R>::new(2);
+    let circuit = CircuitBuilder::<R>::r1cs();
     let scope = circuit.scope("test");
-    let eq_circuit = Circuit::allocate(&circuit, VariableKind::PublicInput, eq_plain.variables());
+    let eq_circuit = Circuit::allocate(&circuit, VariableKind::Public, eq_plain.variables());
+    circuit.lay_out();
     let _y_circuit = eq_circuit.hypercube();
     drop(scope);
 
-    let r1cs = circuit.r1cs();
+    let r1cs = circuit.to_r1cs();
     let z = r1cs.assigment();
     z.extend(coefficients_plain);
 

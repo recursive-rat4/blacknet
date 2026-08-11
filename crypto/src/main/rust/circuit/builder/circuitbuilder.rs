@@ -21,12 +21,11 @@ use crate::circuit::builder::{
     tree::{NodeId, Tree},
 };
 use crate::customizableconstraintsystem::CustomizableConstraintSystem;
-use crate::matrix::SparseMatrixBuilder;
+use crate::matrix::{SparseMatrix, SparseMatrixBuilder};
 use crate::r1cs::R1CS;
 use alloc::vec;
 use alloc::vec::Vec;
 use core::cell::{Cell, RefCell};
-use core::cmp::max;
 use core::fmt::{Display, Formatter, Result};
 use core::iter::zip;
 
@@ -44,51 +43,62 @@ pub struct Constraint<R: UnitalSemiring> {
 
 /// The builder.
 pub struct CircuitBuilder<R: UnitalSemiring> {
-    degree: usize,
+    shape: [usize; 2],
     public_inputs: Cell<usize>,
-    public_outputs: Cell<usize>,
+    public_offset: Cell<usize>,
     private_inputs: Cell<usize>,
-    private_outputs: Cell<usize>,
+    private_offset: Cell<usize>,
     auxiliaries: Cell<usize>,
-    constraints: RefCell<Vec<Constraint<R>>>,
+    auxiliary_offset: Cell<usize>,
+    laid_out: Cell<bool>,
+    constraints: Cell<usize>,
+    lps_matrices: RefCell<Vec<SparseMatrixBuilder<R>>>,
+    rps_matrices: RefCell<Vec<SparseMatrixBuilder<R>>>,
     scopes: RefCell<Tree<ScopeInfo>>,
     current_scope: Cell<NodeId>,
 }
 
 impl<R: UnitalSemiring> CircuitBuilder<R> {
-    /// Construct a new builder with a maximum `degree` of constraints.
-    pub fn new(degree: usize) -> Self {
+    /// Construct a new builder with R1CS shape.
+    pub fn r1cs() -> Self {
+        Self::with_shape([2, 1])
+    }
+
+    /// Construct a new builder.
+    pub fn with_shape(shape: [usize; 2]) -> Self {
+        let lps_matrices = (0..shape[0]).map(|_| SparseMatrixBuilder::new()).collect();
+        let rps_matrices = (0..shape[1]).map(|_| SparseMatrixBuilder::new()).collect();
         let (tree, root) = Tree::with_root(ScopeInfo::root());
         Self {
-            degree,
+            shape,
             public_inputs: Cell::new(0),
-            public_outputs: Cell::new(0),
+            public_offset: Cell::new(0),
             private_inputs: Cell::new(0),
-            private_outputs: Cell::new(0),
+            private_offset: Cell::new(0),
             auxiliaries: Cell::new(0),
-            constraints: RefCell::new(Vec::new()),
+            auxiliary_offset: Cell::new(0),
+            laid_out: Cell::new(false),
+            constraints: Cell::new(0),
+            lps_matrices: RefCell::new(lps_matrices),
+            rps_matrices: RefCell::new(rps_matrices),
             scopes: RefCell::new(tree),
             current_scope: Cell::new(root),
         }
     }
 
-    /// Maximum degree of constraints.
-    pub const fn degree(&self) -> usize {
-        self.degree
+    /// Shape of circuit.
+    pub const fn shape(&self) -> &[usize; 2] {
+        &self.shape
     }
 
     /// Number of constraints.
-    pub fn constraints(&self) -> usize {
-        self.constraints.borrow().len()
+    pub const fn constraints(&self) -> usize {
+        self.constraints.get()
     }
 
     /// Number of variables.
     pub const fn variables(&self) -> usize {
-        1 + self.public_inputs.get()
-            + self.public_outputs.get()
-            + self.private_inputs.get()
-            + self.private_outputs.get()
-            + self.auxiliaries.get()
+        1 + self.public_inputs.get() + self.private_inputs.get() + self.auxiliaries.get()
     }
 
     /// Enter a new scope.
@@ -107,24 +117,16 @@ impl<R: UnitalSemiring> CircuitBuilder<R> {
         scope.variables += 1;
 
         let n = match kind {
-            VariableKind::PublicInput => {
+            VariableKind::Public => {
+                assert!(!self.laid_out.get(), "Inputs are already laid out");
                 let n = self.public_inputs.get();
                 self.public_inputs.update(|n| n + 1);
                 n
             }
-            VariableKind::PublicOutput => {
-                let n = self.public_outputs.get();
-                self.public_outputs.update(|n| n + 1);
-                n
-            }
-            VariableKind::PrivateInput => {
+            VariableKind::Private => {
+                assert!(!self.laid_out.get(), "Inputs are already laid out");
                 let n = self.private_inputs.get();
                 self.private_inputs.update(|n| n + 1);
-                n
-            }
-            VariableKind::PrivateOutput => {
-                let n = self.private_outputs.get();
-                self.private_outputs.update(|n| n + 1);
                 n
             }
             VariableKind::Auxiliary => {
@@ -137,71 +139,88 @@ impl<R: UnitalSemiring> CircuitBuilder<R> {
         Variable::new(kind, n)
     }
 
-    fn constrain(&self, constraint: Constraint<R>) {
-        let mut scopes = self.scopes.borrow_mut();
-        let scope = scopes.get_mut(self.current_scope.get()).expect("Scope");
-
-        assert!(
-            self.degree >= constraint.lps.dimension(),
-            "In scope {} constraint left dimension {} is higher than circuit degree {}",
-            scope.name,
-            constraint.lps.dimension(),
-            self.degree
-        );
-        assert!(
-            self.degree >= constraint.rps.dimension(),
-            "In scope {} constraint right dimension {} is higher than circuit degree {}",
-            scope.name,
-            constraint.rps.dimension(),
-            self.degree
-        );
-
-        scope.constraints += 1;
-        let mut constraints = self.constraints.borrow_mut();
-        constraints.push(constraint)
-    }
-
     fn pad(&self, m: &mut SparseMatrixBuilder<R>) {
         unsafe { m.column_unchecked(0, R::ONE) };
         m.row();
     }
 
-    fn lay_out(&self) {
+    /// Lay out input variables.
+    ///
+    /// After this new inputs can't be allocated unless auxiliary.
+    /// This is required before constraining.
+    pub fn lay_out(&self) {
+        assert!(!self.laid_out.get(), "Inputs are already laid out");
+
         let mut n;
         let mut offset = 1;
 
         n = self.public_inputs.get();
-        self.public_inputs.set(offset);
-        offset += n;
-
-        n = self.public_outputs.get();
-        self.public_outputs.set(offset);
+        self.public_offset.set(offset);
         offset += n;
 
         n = self.private_inputs.get();
-        self.private_inputs.set(offset);
+        self.private_offset.set(offset);
         offset += n;
 
-        n = self.private_outputs.get();
-        self.private_outputs.set(offset);
-        offset += n;
+        self.auxiliary_offset.set(offset);
 
-        self.auxiliaries.set(offset);
+        self.laid_out.set(true)
     }
 }
 
 impl<R: UnitalSemiring + Clone + Eq> CircuitBuilder<R> {
-    fn put(&self, m: &mut SparseMatrixBuilder<R>, lc: &LinearCombination<R>) {
-        for (variable, coefficient) in &lc.terms {
+    fn constrain(&self, constraint: Constraint<R>) {
+        assert!(self.laid_out.get(), "Inputs are not laid out yet");
+
+        let mut scopes = self.scopes.borrow_mut();
+        let scope = scopes.get_mut(self.current_scope.get()).expect("Scope");
+
+        assert!(
+            self.shape[0] >= constraint.lps.dimension(),
+            "In scope {} constraint left dimension {} is higher than circuit {}",
+            scope.name,
+            constraint.lps.dimension(),
+            self.shape[0]
+        );
+        assert!(
+            self.shape[1] >= constraint.rps.dimension(),
+            "In scope {} constraint right dimension {} is higher than circuit {}",
+            scope.name,
+            constraint.rps.dimension(),
+            self.shape[1]
+        );
+
+        let (lps_span, rps_span) = (constraint.lps, constraint.rps);
+        let mut lps_matrices = self.lps_matrices.borrow_mut();
+        let (lps_put, lps_pad) = lps_matrices.split_at_mut(lps_span.dimension());
+        for (matrix, lc) in zip(lps_put, lps_span) {
+            self.put(matrix, lc)
+        }
+        for matrix in lps_pad {
+            self.pad(matrix)
+        }
+        let mut rps_matrices = self.rps_matrices.borrow_mut();
+        let (rps_put, rps_pad) = rps_matrices.split_at_mut(rps_span.dimension());
+        for (matrix, lc) in zip(rps_put, rps_span) {
+            self.put(matrix, lc)
+        }
+        for matrix in rps_pad {
+            self.pad(matrix)
+        }
+
+        scope.constraints += 1;
+        self.constraints.update(|n| n + 1);
+    }
+
+    fn put(&self, m: &mut SparseMatrixBuilder<R>, lc: LinearCombination<R>) {
+        for (variable, coefficient) in lc.terms {
             let column: usize = match variable.kind {
                 VariableKind::Constant => 0,
-                VariableKind::PublicInput => self.public_inputs.get() + variable.number,
-                VariableKind::PublicOutput => self.public_outputs.get() + variable.number,
-                VariableKind::PrivateInput => self.private_inputs.get() + variable.number,
-                VariableKind::PrivateOutput => self.private_outputs.get() + variable.number,
-                VariableKind::Auxiliary => self.auxiliaries.get() + variable.number,
+                VariableKind::Public => self.public_offset.get() + variable.number,
+                VariableKind::Private => self.private_offset.get() + variable.number,
+                VariableKind::Auxiliary => self.auxiliary_offset.get() + variable.number,
             };
-            m.column_ref(column, &coefficient.value);
+            m.column(column, coefficient.value);
         }
         m.row();
     }
@@ -211,49 +230,23 @@ impl<R: UnitalSemiring + Clone + Eq> CircuitBuilder<R> {
     /// # Panics
     ///
     /// If the shape is not compatible.
-    pub fn r1cs(self) -> R1CS<R> {
-        let (constraints_num, variables_num) = (self.constraints(), self.variables());
-        let constraints = self.constraints.take();
-        let (lps_dimension, rps_dimension) = constraints
-            .iter()
-            .map(|c| (c.lps.dimension(), c.rps.dimension()))
-            .fold((0, 0), |acc, x| (max(acc.0, x.0), max(acc.1, x.1)));
+    pub fn to_r1cs(self) -> R1CS<R> {
         assert!(
-            lps_dimension <= 2 && rps_dimension <= 1,
-            "Shape [{lps_dimension}, {rps_dimension}] is not compatible with [2, 1]"
+            self.shape == [2, 1],
+            "Shape {:?} is not compatible with [2, 1]",
+            self.shape,
         );
-        let mut a = SparseMatrixBuilder::<R>::new(constraints_num, variables_num);
-        let mut b = SparseMatrixBuilder::<R>::new(constraints_num, variables_num);
-        let mut c = SparseMatrixBuilder::<R>::new(constraints_num, variables_num);
 
-        self.lay_out();
-        for constraint in constraints {
-            let (lps_span, rps_span) = (constraint.lps, constraint.rps);
-            match lps_span.dimension() {
-                2 => {
-                    self.put(&mut a, &lps_span[0]);
-                    self.put(&mut b, &lps_span[1]);
-                }
-                1 => {
-                    self.put(&mut a, &lps_span[0]);
-                    self.pad(&mut b);
-                }
-                0 => {
-                    self.pad(&mut a);
-                    self.pad(&mut b);
-                }
-                _ => unreachable!(),
-            }
-            match rps_span.dimension() {
-                1 => {
-                    self.put(&mut c, &rps_span[0]);
-                }
-                0 => {
-                    self.pad(&mut c);
-                }
-                _ => unreachable!(),
-            }
-        }
+        let variables = self.variables();
+
+        let mut lps_matrices = self.lps_matrices.take().into_iter();
+        let mut rps_matrices = self.rps_matrices.take().into_iter();
+        let mut a = lps_matrices.next().unwrap();
+        let mut b = lps_matrices.next().unwrap();
+        let mut c = rps_matrices.next().unwrap();
+        a.columns(variables);
+        b.columns(variables);
+        c.columns(variables);
 
         R1CS::new(a.build(), b.build(), c.build())
     }
@@ -261,45 +254,18 @@ impl<R: UnitalSemiring + Clone + Eq> CircuitBuilder<R> {
 
 impl<R: UnitalRing + Clone + Eq> CircuitBuilder<R> {
     /// Compile to CCS.
-    pub fn ccs(self) -> CustomizableConstraintSystem<R> {
-        let (constraints_num, variables_num) = (self.constraints(), self.variables());
-        let constraints = self.constraints.take();
-        let (lps_dimension, rps_dimension) = constraints
-            .iter()
-            .map(|c| (c.lps.dimension(), c.rps.dimension()))
-            .fold((0, 0), |acc, x| (max(acc.0, x.0), max(acc.1, x.1)));
-        let (mut lps_matrices, mut rps_matrices) = (Vec::new(), Vec::new());
-        lps_matrices.resize_with(lps_dimension, || {
-            SparseMatrixBuilder::<R>::new(constraints_num, variables_num)
-        });
-        rps_matrices.resize_with(rps_dimension, || {
-            SparseMatrixBuilder::<R>::new(constraints_num, variables_num)
-        });
+    pub fn to_ccs(self) -> CustomizableConstraintSystem<R> {
+        let variables = self.variables();
 
-        self.lay_out();
-        for constraint in constraints {
-            let (lps_span, rps_span) = (constraint.lps, constraint.rps);
-            for (matrix, lc) in zip(&mut lps_matrices, &lps_span) {
-                self.put(matrix, lc)
-            }
-            for matrix in lps_matrices.iter_mut().skip(lps_span.dimension()) {
-                self.pad(matrix)
-            }
-            for (matrix, lc) in zip(&mut rps_matrices, &rps_span) {
-                self.put(matrix, lc)
-            }
-            for matrix in rps_matrices.iter_mut().skip(rps_span.dimension()) {
-                self.pad(matrix)
-            }
-        }
-
-        let mut matrices = Vec::with_capacity(lps_dimension + rps_dimension);
-        lps_matrices
-            .into_iter()
-            .for_each(|b| matrices.push(b.build()));
-        rps_matrices
-            .into_iter()
-            .for_each(|b| matrices.push(b.build()));
+        let lps_matrices = self.lps_matrices.take().into_iter();
+        let rps_matrices = self.rps_matrices.take().into_iter();
+        let matrices: Vec<SparseMatrix<R>> = lps_matrices
+            .chain(rps_matrices)
+            .map(|mut builder| {
+                builder.columns(variables);
+                builder.build()
+            })
+            .collect();
 
         let multisets = vec![(0..matrices.len() - 1).collect(), vec![matrices.len() - 1]];
 
@@ -313,8 +279,8 @@ impl<R: UnitalSemiring> Display for CircuitBuilder<R> {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         write!(
             f,
-            "Circuit degree {} constraints {} variables {}\n{}",
-            self.degree,
+            "Circuit shape {:?} constraints {} variables {}\n{}",
+            self.shape,
             self.constraints(),
             self.variables(),
             self.scopes.borrow()
@@ -333,35 +299,26 @@ impl<'a, R: UnitalSemiring> Scope<'a, R> {
     /// # Panics
     ///
     /// If constraint degree is higher than circuit degree.
-    pub fn constrain<LPS: Expression<R>, RPS: Expression<R>>(&self, lps: LPS, rps: RPS) {
+    pub fn constrain<LPS: Expression<R>, RPS: Expression<R>>(&self, lps: LPS, rps: RPS)
+    where
+        R: Clone + Eq,
+    {
         self.builder.constrain(Constraint {
             lps: lps.span(),
             rps: rps.span(),
         })
     }
 
-    /// Allocate [PublicInput][crate::circuit::builder::VariableKind::PublicInput] variable.
+    /// Allocate [Public][crate::circuit::builder::VariableKind::Public] variable.
     #[must_use = "Circuit variable should be constrained"]
-    pub fn public_input(&self) -> Variable<R> {
-        self.builder.allocate(VariableKind::PublicInput)
+    pub fn public(&self) -> Variable<R> {
+        self.builder.allocate(VariableKind::Public)
     }
 
-    /// Allocate [PublicOutput][crate::circuit::builder::VariableKind::PublicOutput] variable.
+    /// Allocate [Private][crate::circuit::builder::VariableKind::Private] variable.
     #[must_use = "Circuit variable should be constrained"]
-    pub fn public_output(&self) -> Variable<R> {
-        self.builder.allocate(VariableKind::PublicOutput)
-    }
-
-    /// Allocate [PrivateInput][crate::circuit::builder::VariableKind::PrivateInput] variable.
-    #[must_use = "Circuit variable should be constrained"]
-    pub fn private_input(&self) -> Variable<R> {
-        self.builder.allocate(VariableKind::PrivateInput)
-    }
-
-    /// Allocate [PrivateOutput][crate::circuit::builder::VariableKind::PrivateOutput] variable.
-    #[must_use = "Circuit variable should be constrained"]
-    pub fn private_output(&self) -> Variable<R> {
-        self.builder.allocate(VariableKind::PrivateOutput)
+    pub fn private(&self) -> Variable<R> {
+        self.builder.allocate(VariableKind::Private)
     }
 
     /// Allocate [Auxiliary][crate::circuit::builder::VariableKind::Auxiliary] variable.

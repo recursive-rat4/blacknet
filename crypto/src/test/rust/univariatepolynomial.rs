@@ -121,14 +121,15 @@ fn circuit_evaluate() {
     let x_plain = R::from(7);
     let y_plain = p_plain.point(&x_plain);
 
-    let circuit = CircuitBuilder::<R>::new(2);
+    let circuit = CircuitBuilder::<R>::r1cs();
     let scope = circuit.scope("test");
-    let p_circuit = Circuit::<R>::allocate(&circuit, VariableKind::PublicInput, p_plain.len());
-    let x_circuit = scope.public_input();
+    let p_circuit = Circuit::<R>::allocate(&circuit, VariableKind::Public, p_plain.len());
+    let x_circuit = scope.public();
+    circuit.lay_out();
     let _y_circuit = p_circuit.point(&x_circuit.into());
     drop(scope);
 
-    let r1cs = circuit.r1cs();
+    let r1cs = circuit.to_r1cs();
     let z = r1cs.assigment();
     z.extend_from_slice(&p_plain);
     z.push(x_plain);

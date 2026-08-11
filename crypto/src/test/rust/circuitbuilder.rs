@@ -27,13 +27,14 @@ type R = blacknet_crypto::uring::U32Ring;
 
 #[test]
 fn scopelism() {
-    let circuit = CircuitBuilder::<R>::new(1);
+    let circuit = CircuitBuilder::<R>::with_shape([1, 1]);
     {
         let scope = circuit.scope("scopelism");
-        let a = scope.public_input();
+        let a = scope.public();
         {
             let scope = circuit.scope("comparatism");
-            let b = scope.public_output();
+            let b = scope.private();
+            circuit.lay_out();
             {
                 let scope = circuit.scope("additivism");
                 scope.constrain(a, b);
@@ -45,10 +46,10 @@ fn scopelism() {
         }
         {
             let scope = circuit.scope("expressionism");
-            let c = scope.private_input();
+            let c = scope.auxiliary();
             let d = {
                 let scope = circuit.scope("cubism");
-                scope.private_output()
+                scope.auxiliary()
             };
             {
                 let scope = circuit.scope("algebraism");
@@ -58,7 +59,7 @@ fn scopelism() {
     }
     assert_eq!(
         circuit.to_string(),
-        "Circuit degree 1 constraints 3 variables 5
+        "Circuit shape [1, 1] constraints 3 variables 5
 Root 0x1
 └──scopelism 0x1
    ├──comparatism 0x1
@@ -100,13 +101,14 @@ fn comparatism() {
         SparseMatrix::from(&cm),
     );
 
-    let circuit = CircuitBuilder::<R>::new(1);
+    let circuit = CircuitBuilder::<R>::r1cs();
 
     let scope = circuit.scope("equalism");
     let c = Constant::new(R::from(4));
-    let x = scope.public_input();
-    let y = scope.public_output();
-    let w = scope.private_input();
+    let x = scope.public();
+    let y = scope.public();
+    let w = scope.private();
+    circuit.lay_out();
 
     scope.constrain(x, w);
     scope.constrain(w, y);
@@ -114,7 +116,7 @@ fn comparatism() {
     scope.constrain(c, w);
 
     drop(scope);
-    assert_eq!(circuit.r1cs(), r1cs);
+    assert_eq!(circuit.to_r1cs(), r1cs);
 
     let z = DenseVector::from([1, 4, 4, 4].map(R::from));
     assert_matches!(r1cs.is_satisfied(&z), Ok(()));
@@ -152,13 +154,14 @@ fn additivism() {
         SparseMatrix::from(&cm),
     );
 
-    let circuit = CircuitBuilder::<R>::new(1);
+    let circuit = CircuitBuilder::<R>::r1cs();
 
     let scope = circuit.scope("additivism");
     let c = Constant::new(R::from(4));
-    let x = scope.public_input();
-    let y = scope.public_input();
-    let w = scope.private_output();
+    let x = scope.public();
+    let y = scope.public();
+    let w = scope.private();
+    circuit.lay_out();
 
     scope.constrain(w + w, x);
     scope.constrain(y + y, w);
@@ -167,7 +170,7 @@ fn additivism() {
     scope.constrain(c + w, x);
 
     drop(scope);
-    assert_eq!(circuit.r1cs(), r1cs);
+    assert_eq!(circuit.to_r1cs(), r1cs);
 
     let z = DenseVector::from([1, 8, 2, 4].map(R::from));
     assert_matches!(r1cs.is_satisfied(&z), Ok(()));
@@ -205,13 +208,14 @@ fn multiplism() {
         SparseMatrix::from(&cm),
     );
 
-    let circuit = CircuitBuilder::<R>::new(2);
+    let circuit = CircuitBuilder::<R>::r1cs();
 
     let scope = circuit.scope("multiplism");
     let c = Constant::new(R::from(4));
-    let x = scope.public_output();
-    let y = scope.public_output();
-    let w = scope.private_input();
+    let x = scope.public();
+    let y = scope.public();
+    let w = scope.private();
+    circuit.lay_out();
 
     scope.constrain(w * w, x);
     scope.constrain(y * y, w);
@@ -220,7 +224,7 @@ fn multiplism() {
     scope.constrain(c * w, x);
 
     drop(scope);
-    assert_eq!(circuit.r1cs(), r1cs);
+    assert_eq!(circuit.to_r1cs(), r1cs);
 
     let z = DenseVector::from([1, 16, 2, 4].map(R::from));
     assert_matches!(r1cs.is_satisfied(&z), Ok(()));
@@ -267,17 +271,18 @@ fn expressionism() {
         SparseMatrix::from(&cm),
     );
 
-    let circuit = CircuitBuilder::<R>::new(2);
+    let circuit = CircuitBuilder::<R>::r1cs();
 
     let scope = circuit.scope("expressionism");
     let a = Constant::new(R::from(160));
     let b = Constant::new(R::from(2));
     let c = Constant::new(R::from(4));
     let d = Constant::new(R::from(24));
-    let x = scope.public_input();
-    let y = scope.public_input();
-    let z = scope.public_input();
-    let w = scope.private_input();
+    let x = scope.public();
+    let y = scope.public();
+    let z = scope.public();
+    let w = scope.private();
+    circuit.lay_out();
 
     scope.constrain((x + y) * (z + w), a);
     scope.constrain(z * z, x * c);
@@ -289,7 +294,7 @@ fn expressionism() {
     scope.constrain(b * (x + c), w);
 
     drop(scope);
-    assert_eq!(circuit.r1cs(), r1cs);
+    assert_eq!(circuit.to_r1cs(), r1cs);
 
     let z = DenseVector::from([1, 4, 4, 4, 16].map(R::from));
     assert_matches!(r1cs.is_satisfied(&z), Ok(()));
@@ -323,20 +328,21 @@ fn cubism() {
         [R::ONE, -R::ONE].into(),
     );
 
-    let circuit = CircuitBuilder::<R>::new(3);
+    let circuit = CircuitBuilder::<R>::with_shape([3, 1]);
 
     let scope = circuit.scope("cubism");
     let c = Constant::new(R::from(350));
-    let x = scope.public_input();
-    let y = scope.public_input();
-    let z = scope.public_input();
+    let x = scope.public();
+    let y = scope.public();
+    let z = scope.public();
     let w = scope.auxiliary();
+    circuit.lay_out();
 
     scope.constrain(x * x * x, w);
     scope.constrain((x + y) * (x + z) * (x + w), c);
 
     drop(scope);
-    assert_eq!(circuit.ccs(), ccs);
+    assert_eq!(circuit.to_ccs(), ccs);
 
     let z = DenseVector::from([1, 2, 3, 5, 8].map(R::from));
     assert_matches!(ccs.is_satisfied(&z), Ok(()));

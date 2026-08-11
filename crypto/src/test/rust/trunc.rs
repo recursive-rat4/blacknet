@@ -87,17 +87,18 @@ fn circuit() {
     let b_plain: [Z; 2] = [13, 14].map(Z::from);
     let c_plain: [Z; 2] = [72, 75].map(Z::from);
 
-    let circuit = CircuitBuilder::<Z>::new(2);
+    let circuit = CircuitBuilder::<Z>::r1cs();
     let scope = circuit.scope("test");
     let trunc_circuit = TruncCircuit::new(&circuit);
-    let a_circuit: [LinearCombination<Z>; 2] = array::from_fn(|_| scope.public_input().into());
-    let b_circuit: [LinearCombination<Z>; 2] = array::from_fn(|_| scope.public_input().into());
+    let a_circuit: [LinearCombination<Z>; 2] = array::from_fn(|_| scope.public().into());
+    let b_circuit: [LinearCombination<Z>; 2] = array::from_fn(|_| scope.public().into());
+    circuit.lay_out();
     let c_circuit = trunc_circuit.compress(&a_circuit, &b_circuit);
     scope.constrain(c_circuit[0].clone(), Constant::new(c_plain[0]));
     scope.constrain(c_circuit[1].clone(), Constant::new(c_plain[1]));
     drop(scope);
 
-    let r1cs = circuit.r1cs();
+    let r1cs = circuit.to_r1cs();
     let z = r1cs.assigment();
     z.extend(a_plain);
     z.extend(b_plain);

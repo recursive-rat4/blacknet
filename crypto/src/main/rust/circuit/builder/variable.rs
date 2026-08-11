@@ -25,14 +25,16 @@ use core::fmt::{Debug, Formatter, Result};
 use core::marker::PhantomData;
 use core::ops::{Add, Mul, Neg, Sub};
 
-/// Layout of variables in assigment.
+/// Kind of variables in assigment.
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub enum VariableKind {
+    /// Before public.
     Constant,
-    PublicInput,
-    PublicOutput,
-    PrivateInput,
-    PrivateOutput,
+    /// Public input.
+    Public,
+    /// Secret input.
+    Private,
+    /// After private.
     Auxiliary,
 }
 

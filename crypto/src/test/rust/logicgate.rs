@@ -16,10 +16,10 @@
  */
 
 use blacknet_crypto::assigner::logicgate::LogicGate as Assigner;
-use blacknet_crypto::circuit::builder::CircuitBuilder;
+use blacknet_crypto::circuit::builder::{CircuitBuilder, Variable};
 use blacknet_crypto::circuit::logicgate::LogicGate as Circuit;
 use blacknet_crypto::constraintsystem::ConstraintSystem;
-use core::assert_matches;
+use core::{array, assert_matches};
 
 type R = blacknet_crypto::uring::U32Ring;
 
@@ -32,18 +32,19 @@ fn xor() {
         [1, 1, 0].map(R::from).into(),
     ];
 
-    let circuit = CircuitBuilder::<R>::new(2);
+    let circuit = CircuitBuilder::<R>::r1cs();
+    let scope = circuit.scope("test");
     let logic_gate_circuit = Circuit::<R>::new(&circuit);
-    for _ in 0..truth.len() {
-        let scope = circuit.scope("test");
-        let a_var = scope.public_input();
-        let b_var = scope.public_input();
-        let c_var = scope.public_input();
-        let c_circuit = logic_gate_circuit.xor(&a_var.into(), &b_var.into());
-        scope.constrain(c_circuit, c_var);
+    let inputs: [(Variable<R>, Variable<R>, Variable<R>); 4] =
+        array::from_fn(|_| (scope.public(), scope.public(), scope.public()));
+    circuit.lay_out();
+    for (a, b, c) in inputs {
+        let c_circuit = logic_gate_circuit.xor(&a.into(), &b.into());
+        scope.constrain(c_circuit, c);
     }
+    drop(scope);
 
-    let r1cs = circuit.r1cs();
+    let r1cs = circuit.to_r1cs();
     let z = r1cs.assigment();
     for (a, b, c) in truth {
         z.push(a);
@@ -68,18 +69,19 @@ fn and() {
         [1, 1, 1].map(R::from).into(),
     ];
 
-    let circuit = CircuitBuilder::<R>::new(2);
+    let circuit = CircuitBuilder::<R>::r1cs();
+    let scope = circuit.scope("test");
     let logic_gate_circuit = Circuit::<R>::new(&circuit);
-    for _ in 0..truth.len() {
-        let scope = circuit.scope("test");
-        let a_var = scope.public_input();
-        let b_var = scope.public_input();
-        let c_var = scope.public_input();
-        let c_circuit = logic_gate_circuit.and(&a_var.into(), &b_var.into());
-        scope.constrain(c_circuit, c_var);
+    let inputs: [(Variable<R>, Variable<R>, Variable<R>); 4] =
+        array::from_fn(|_| (scope.public(), scope.public(), scope.public()));
+    circuit.lay_out();
+    for (a, b, c) in inputs {
+        let c_circuit = logic_gate_circuit.and(&a.into(), &b.into());
+        scope.constrain(c_circuit, c);
     }
+    drop(scope);
 
-    let r1cs = circuit.r1cs();
+    let r1cs = circuit.to_r1cs();
     let z = r1cs.assigment();
     for (a, b, c) in truth {
         z.push(a);
@@ -104,18 +106,19 @@ fn or() {
         [1, 1, 1].map(R::from).into(),
     ];
 
-    let circuit = CircuitBuilder::<R>::new(2);
+    let circuit = CircuitBuilder::<R>::r1cs();
+    let scope = circuit.scope("test");
     let logic_gate_circuit = Circuit::<R>::new(&circuit);
-    for _ in 0..truth.len() {
-        let scope = circuit.scope("test");
-        let a_var = scope.public_input();
-        let b_var = scope.public_input();
-        let c_var = scope.public_input();
-        let c_circuit = logic_gate_circuit.or(&a_var.into(), &b_var.into());
-        scope.constrain(c_circuit, c_var);
+    let inputs: [(Variable<R>, Variable<R>, Variable<R>); 4] =
+        array::from_fn(|_| (scope.public(), scope.public(), scope.public()));
+    circuit.lay_out();
+    for (a, b, c) in inputs {
+        let c_circuit = logic_gate_circuit.or(&a.into(), &b.into());
+        scope.constrain(c_circuit, c);
     }
+    drop(scope);
 
-    let r1cs = circuit.r1cs();
+    let r1cs = circuit.to_r1cs();
     let z = r1cs.assigment();
     for (a, b, c) in truth {
         z.push(a);
@@ -139,17 +142,19 @@ fn not() {
         [1, 0].map(R::from).into(),
     ];
 
-    let circuit = CircuitBuilder::<R>::new(2);
+    let circuit = CircuitBuilder::<R>::r1cs();
+    let scope = circuit.scope("test");
     let logic_gate_circuit = Circuit::<R>::new(&circuit);
-    for _ in 0..truth.len() {
-        let scope = circuit.scope("test");
-        let a_var = scope.public_input();
-        let b_var = scope.public_input();
-        let b_circuit = logic_gate_circuit.not(&a_var.into());
-        scope.constrain(b_circuit, b_var);
+    let inputs: [(Variable<R>, Variable<R>); 2] =
+        array::from_fn(|_| (scope.public(), scope.public()));
+    circuit.lay_out();
+    for (a, b) in inputs {
+        let b_circuit = logic_gate_circuit.not(&a.into());
+        scope.constrain(b_circuit, b);
     }
+    drop(scope);
 
-    let r1cs = circuit.r1cs();
+    let r1cs = circuit.to_r1cs();
     let z = r1cs.assigment();
     for (a, b) in truth {
         z.push(a);
@@ -169,17 +174,18 @@ fn check_less_or_equal() {
     let a = [0, 1, 0, 0].map(R::from);
     let b = [0, 0, 1, 0].map(R::from);
 
-    let circuit = CircuitBuilder::<R>::new(2);
+    let circuit = CircuitBuilder::<R>::r1cs();
     let logic_gate_circuit = Circuit::<R>::new(&circuit);
     let scope = circuit.scope("test");
     let a_circuit = (0..a.len())
-        .map(|_| scope.public_input())
+        .map(|_| scope.public())
         .map(From::from)
         .collect::<Vec<_>>();
+    circuit.lay_out();
     logic_gate_circuit.check_less_or_equal(&a_circuit, &b);
     drop(scope);
 
-    let r1cs = circuit.r1cs();
+    let r1cs = circuit.to_r1cs();
     let z = r1cs.assigment();
     z.extend(a);
 

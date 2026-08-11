@@ -31,18 +31,19 @@ fn wrapping_add() {
     let b = [1, 1, 0, 0, 0, 0, 1, 0].map(Z::with_int);
     let c = [0, 0, 0, 1, 0, 0, 0, 1].map(Z::with_int);
 
-    let circuit = CircuitBuilder::<Z>::new(2);
+    let circuit = CircuitBuilder::<Z>::r1cs();
     let scope = circuit.scope("test");
-    let a_input = Circuit::<Z, 8>::allocate(&circuit, VariableKind::PublicInput);
-    let b_input = Circuit::<Z, 8>::allocate(&circuit, VariableKind::PublicInput);
-    let c_input = Circuit::<Z, 8>::allocate(&circuit, VariableKind::PublicInput);
+    let a_input = Circuit::<Z, 8>::allocate(&circuit, VariableKind::Public);
+    let b_input = Circuit::<Z, 8>::allocate(&circuit, VariableKind::Public);
+    let c_input = Circuit::<Z, 8>::allocate(&circuit, VariableKind::Public);
+    circuit.lay_out();
     let c_output = a_input.wrapping_add(&b_input);
     for (l, r) in zip(c_output, c_input) {
         scope.constrain(l, r);
     }
     drop(scope);
 
-    let r1cs = circuit.r1cs();
+    let r1cs = circuit.to_r1cs();
     let z = r1cs.assigment();
     z.extend(a);
     z.extend(b);
@@ -61,17 +62,18 @@ fn rotate_right() {
     let b = 17;
     let c = [0, 1, 0, 0, 0, 0, 0, 1].map(Z::with_int);
 
-    let circuit = CircuitBuilder::<Z>::new(2);
+    let circuit = CircuitBuilder::<Z>::r1cs();
     let scope = circuit.scope("test");
-    let a_input = Circuit::<Z, 8>::allocate(&circuit, VariableKind::PublicInput);
-    let c_input = Circuit::<Z, 8>::allocate(&circuit, VariableKind::PublicInput);
+    let a_input = Circuit::<Z, 8>::allocate(&circuit, VariableKind::Public);
+    let c_input = Circuit::<Z, 8>::allocate(&circuit, VariableKind::Public);
+    circuit.lay_out();
     let c_output = a_input.rotate_right(b);
     for (l, r) in zip(c_output, c_input) {
         scope.constrain(l, r);
     }
     drop(scope);
 
-    let r1cs = circuit.r1cs();
+    let r1cs = circuit.to_r1cs();
     let z = r1cs.assigment();
     z.extend(a);
     z.extend(c);
@@ -88,18 +90,19 @@ fn bitxor() {
     let b = [0, 1, 0, 1].map(Z::with_int);
     let c = [0, 1, 1, 0].map(Z::with_int);
 
-    let circuit = CircuitBuilder::<Z>::new(2);
+    let circuit = CircuitBuilder::<Z>::r1cs();
     let scope = circuit.scope("test");
-    let a_input = Circuit::<Z, 4>::allocate(&circuit, VariableKind::PublicInput);
-    let b_input = Circuit::<Z, 4>::allocate(&circuit, VariableKind::PublicInput);
-    let c_input = Circuit::<Z, 4>::allocate(&circuit, VariableKind::PublicInput);
+    let a_input = Circuit::<Z, 4>::allocate(&circuit, VariableKind::Public);
+    let b_input = Circuit::<Z, 4>::allocate(&circuit, VariableKind::Public);
+    let c_input = Circuit::<Z, 4>::allocate(&circuit, VariableKind::Public);
+    circuit.lay_out();
     let c_output = a_input.bitxor(&b_input);
     for (l, r) in zip(c_output, c_input) {
         scope.constrain(l, r);
     }
     drop(scope);
 
-    let r1cs = circuit.r1cs();
+    let r1cs = circuit.to_r1cs();
     let z = r1cs.assigment();
     z.extend(a);
     z.extend(b);

@@ -165,12 +165,12 @@ fn circuit() {
     )
     .unwrap();
 
-    let circuit = CircuitBuilder::<Z>::new(2);
+    let circuit = CircuitBuilder::<Z>::r1cs();
     let scope = circuit.scope("test");
-    let sum_circuit = scope.public_input();
+    let sum_circuit = scope.public();
     let proof_circuit = ProofCircuit::allocate(
         &circuit,
-        VariableKind::PublicInput,
+        VariableKind::Public,
         poly_plain.variables(),
         poly_plain.degree(),
     );
@@ -186,6 +186,7 @@ fn circuit() {
         UniformDistributionCircuit<'a>,
     >;
     let sumcheck_circuit = SCCircuit::new(&circuit);
+    circuit.lay_out();
     sumcheck_circuit.verify_early_stopping(
         &poly_plain,
         sum_circuit.into(),
@@ -195,7 +196,7 @@ fn circuit() {
     );
     drop(scope);
 
-    let r1cs = circuit.r1cs();
+    let r1cs = circuit.to_r1cs();
     let z = r1cs.assigment();
     z.push(sum_plain);
     z.extend((&proof_plain).into_iter().copied());
