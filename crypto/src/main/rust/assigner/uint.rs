@@ -33,6 +33,13 @@ where
         Self { bits, assigment }
     }
 
+    pub const fn zero(assigment: &'a Assigment<A>) -> Self {
+        Self {
+            bits: [A::ZERO; N],
+            assigment,
+        }
+    }
+
     pub fn wrapping_add(&self, rps: &Self) -> Self {
         let mut bits = [A::ZERO; N];
         if N == 0 {
@@ -77,3 +84,8 @@ where
         }
     }
 }
+
+pub type UInt8<'a, A> = UInt<'a, A, 8>;
+pub type UInt16<'a, A> = UInt<'a, A, 16>;
+pub type UInt32<'a, A> = UInt<'a, A, 32>;
+pub type UInt64<'a, A> = UInt<'a, A, 64>;

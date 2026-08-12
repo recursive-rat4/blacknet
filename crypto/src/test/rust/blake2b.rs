@@ -18,6 +18,7 @@
 use blacknet_crypto::random::UniformGenerator;
 use blacknet_crypto::symmetric::{Blake2b256, Blake2b512, Blake2xb};
 use core::array;
+use core::assert_matches;
 
 #[test]
 fn hash() {
@@ -71,4 +72,43 @@ fn xof() {
     let mut xof = hasher.finalize_xof();
     let generated: [u8; 128] = array::from_fn(|_| xof.generate());
     assert_eq!(hash1024, generated);
+}
+
+#[test]
+#[ignore]
+fn circuit() {
+    use blacknet_crypto::algebra::One;
+    use blacknet_crypto::assigner::symmetric::blake2b::Blake2b as Assigner;
+    use blacknet_crypto::circuit::builder::{CircuitBuilder, VariableKind};
+    use blacknet_crypto::circuit::symmetric::blake2b::Blake2b as Circuit;
+    use blacknet_crypto::constraintsystem::ConstraintSystem;
+    type Z = blacknet_crypto::gf2::GF2;
+    type UInt64Assigner<'a> = blacknet_crypto::assigner::uint::UInt64<'a, Z>;
+    type UInt64Circuit<'a> = blacknet_crypto::circuit::uint::UInt64<'a, Z>;
+
+    let state_plain = [[Z::ONE; 64]; 16];
+    let input_plain = [[Z::ONE; 64]; 16];
+
+    let circuit = CircuitBuilder::<Z>::r1cs();
+    let scope = circuit.scope("test");
+    let mut state_circuit: [UInt64Circuit; 16] =
+        array::from_fn(|_| UInt64Circuit::allocate(&circuit, VariableKind::Public));
+    let input_circuit: [UInt64Circuit; 16] =
+        array::from_fn(|_| UInt64Circuit::allocate(&circuit, VariableKind::Public));
+    let mut output_circuit: [UInt64Circuit; 8] = array::from_fn(|_| UInt64Circuit::zero(&circuit));
+    circuit.lay_out();
+    Circuit::<Z>::compress(&mut output_circuit, &mut state_circuit, &input_circuit);
+    drop(scope);
+
+    let r1cs = circuit.to_r1cs();
+    let z = r1cs.assigment();
+    z.extend(state_plain.into_iter().flatten());
+    z.extend(input_plain.into_iter().flatten());
+
+    let mut state_assigner = state_plain.map(|i| UInt64Assigner::new(i, &z));
+    let input_assigner = input_plain.map(|i| UInt64Assigner::new(i, &z));
+    let mut output_assigner: [UInt64Assigner; 8] = array::from_fn(|_| UInt64Assigner::zero(&z));
+    Assigner::<Z>::compress(&mut output_assigner, &mut state_assigner, &input_assigner);
+
+    assert_matches!(r1cs.is_satisfied(&z.finish()), Ok(()));
 }
