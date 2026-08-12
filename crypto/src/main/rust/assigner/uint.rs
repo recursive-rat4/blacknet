@@ -41,13 +41,16 @@ where
                 assigment: self.assigment,
             };
         }
-        let mut c = [A::ZERO; N];
+        let mut c = A::ZERO;
+        #[allow(clippy::needless_range_loop)]
         for i in 0..N - 1 {
-            let acbc = (&self.bits[i] + &c[i]) * (&rps.bits[i] + &c[i]);
-            self.assigment.push(acbc.clone());
-            (bits[i], c[i + 1]) = (&self.bits[i] + &rps.bits[i] + &c[i], &c[i] + acbc);
+            let ac = &self.bits[i] + &c;
+            let ac_bc = &ac * (&rps.bits[i] + &c);
+            self.assigment.push(ac_bc.clone());
+            bits[i] = ac + &rps.bits[i];
+            c += ac_bc;
         }
-        bits[N - 1] = &self.bits[N - 1] + &rps.bits[N - 1] + &c[N - 1];
+        bits[N - 1] = &self.bits[N - 1] + &rps.bits[N - 1] + c;
         Self {
             bits,
             assigment: self.assigment,
