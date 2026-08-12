@@ -15,8 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::Double;
-use crate::algebra::UnitalRing;
+use crate::algebra::{Double, RingOps, UnitalRing};
 use crate::circuit::builder::{CircuitBuilder, Constant, LinearCombination};
 use alloc::vec::Vec;
 
@@ -31,7 +30,10 @@ impl<'a, R: UnitalRing> LogicGate<'a, R> {
     }
 }
 
-impl<'a, R: UnitalRing + Clone + Eq> LogicGate<'a, R> {
+impl<'a, R: UnitalRing + Clone + Eq> LogicGate<'a, R>
+where
+    for<'b> &'b R: RingOps<R>,
+{
     /// Constrain that `a` is a Boolean value.
     pub fn check_range(&self, a: &LinearCombination<R>) {
         let scope = self.circuit.scope("LogicGate::check_range");

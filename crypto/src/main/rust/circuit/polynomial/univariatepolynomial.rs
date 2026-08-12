@@ -49,7 +49,7 @@ impl<'a, R: UnitalSemiring + Clone> UnivariatePolynomial<'a, R> {
 
     pub fn at_0_plus_1(&self) -> LinearCombination<R>
     where
-        for<'c> &'c R: SemiringOps<R>,
+        for<'b> &'b R: SemiringOps<R>,
     {
         match self.coefficients.len() {
             0 => LinearCombination::new(),
@@ -86,7 +86,10 @@ impl<'a, R: UnitalSemiring + Clone + Eq> Polynomial for UnivariatePolynomial<'a,
     }
 }
 
-impl<'a, R: UnitalSemiring> Add for UnivariatePolynomial<'a, R> {
+impl<'a, R: UnitalSemiring + Clone> Add for UnivariatePolynomial<'a, R>
+where
+    for<'b> &'b R: SemiringOps<R>,
+{
     type Output = Self;
 
     fn add(self, rps: Self) -> Self::Output {
@@ -100,7 +103,10 @@ impl<'a, R: UnitalSemiring> Add for UnivariatePolynomial<'a, R> {
     }
 }
 
-impl<'a, R: UnitalSemiring> AddAssign for UnivariatePolynomial<'a, R> {
+impl<'a, R: UnitalSemiring + Clone> AddAssign for UnivariatePolynomial<'a, R>
+where
+    for<'b> &'b R: SemiringOps<R>,
+{
     fn add_assign(&mut self, rps: Self) {
         debug_assert_eq!(self.coefficients.len(), rps.coefficients.len());
         zip(self.coefficients.iter_mut(), rps.coefficients).for_each(|(l, r)| *l += r);

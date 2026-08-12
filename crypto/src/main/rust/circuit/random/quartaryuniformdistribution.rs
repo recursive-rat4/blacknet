@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{Double, IntegerModRing};
+use crate::algebra::{Double, IntegerModRing, RingOps};
 use crate::circuit::builder::{CircuitBuilder, LinearCombination};
 use crate::circuit::random::BinaryUniformDistribution;
 use crate::random::{Distribution, UniformGenerator};
@@ -41,7 +41,10 @@ impl<
     'a,
     Z: IntegerModRing + Clone + Eq,
     G: UniformGenerator<Output = LinearCombination<Z>>
-> Distribution<LinearCombination<Z>, G> for QuartaryUniformDistribution<'a, Z> {
+> Distribution<LinearCombination<Z>, G> for QuartaryUniformDistribution<'a, Z>
+where
+    for<'b> &'b Z: RingOps<Z>,
+{
     fn sample(&mut self, generator: &mut G) -> LinearCombination<Z> {
         self.bud.sample(generator).double() - self.bud.sample(generator)
     }

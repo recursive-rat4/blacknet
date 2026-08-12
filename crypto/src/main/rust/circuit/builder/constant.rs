@@ -535,11 +535,10 @@ where
 {
     type Output = LinearCombination<R>;
 
-    fn mul(self, mut rps: LinearCombination<R>) -> Self::Output {
-        for coefficient in rps.terms.values_mut() {
-            *coefficient = self * &*coefficient
+    fn mul(self, rps: LinearCombination<R>) -> Self::Output {
+        LinearCombination::<R> {
+            terms: rps.terms.into_iter().map(|r| self * r).collect(),
         }
-        rps
     }
 }
 

@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{AdditiveGroup, UnitalSemiring};
+use crate::algebra::{AdditiveGroup, RingOps, UnitalSemiring};
 use crate::circuit::builder::{CircuitBuilder, LinearCombination};
 use crate::circuit::symmetric::{CompressionFunction, Permutation};
 use core::marker::PhantomData;
@@ -57,6 +57,8 @@ impl<
     const WIDTH: usize,
     P: Permutation<G, Domain = [LinearCombination<G>; WIDTH]>,
 > CompressionFunction for Trunc<'a, G, RANK, WIDTH, P>
+where
+    for<'b> &'b G: RingOps<G>,
 {
     type Hash = [LinearCombination<G>; RANK];
 

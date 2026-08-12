@@ -87,7 +87,7 @@ impl<R: UnitalSemiring> CircuitBuilder<R> {
     }
 
     /// Shape of circuit.
-    pub const fn shape(&self) -> &[usize; 2] {
+    pub const fn shape(&self) -> &[usize] {
         &self.shape
     }
 
@@ -213,14 +213,14 @@ impl<R: UnitalSemiring + Clone + Eq> CircuitBuilder<R> {
     }
 
     fn put(&self, m: &mut SparseMatrixBuilder<R>, lc: LinearCombination<R>) {
-        for (variable, coefficient) in lc.terms {
-            let column: usize = match variable.kind() {
+        for term in lc.terms {
+            let column: usize = match term.variable.kind() {
                 VariableKind::Constant => 0,
-                VariableKind::Public => self.public_offset.get() + variable.number(),
-                VariableKind::Private => self.private_offset.get() + variable.number(),
-                VariableKind::Auxiliary => self.auxiliary_offset.get() + variable.number(),
+                VariableKind::Public => self.public_offset.get() + term.variable.number(),
+                VariableKind::Private => self.private_offset.get() + term.variable.number(),
+                VariableKind::Auxiliary => self.auxiliary_offset.get() + term.variable.number(),
             };
-            m.column(column, coefficient.value);
+            m.column(column, term.coefficient.value);
         }
         m.row();
     }

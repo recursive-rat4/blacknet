@@ -20,23 +20,22 @@ use crate::circuit::builder::{
     Constant, Expression, LinearMonoid, LinearSpan, LinearTerm, Variable,
 };
 use crate::symmetric::{Absorb, Duplexer, Squeeze};
-use alloc::collections::BTreeMap;
 use alloc::vec;
+use alloc::vec::Vec;
+use core::cmp::Ordering;
 use core::iter::Sum;
 use core::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
 /// Linear combination is a sum of linear terms.
 #[derive(Clone, Default)]
 pub struct LinearCombination<R: UnitalSemiring> {
-    pub(super) terms: BTreeMap<Variable<R>, Constant<R>>,
+    pub(super) terms: Vec<LinearTerm<R>>,
 }
 
 impl<R: UnitalSemiring> LinearCombination<R> {
     /// Construct an empty linear combination.
     pub const fn new() -> Self {
-        Self {
-            terms: BTreeMap::new(),
-        }
+        Self { terms: Vec::new() }
     }
 
     /// Remove all terms.
@@ -53,6 +52,63 @@ impl<R: UnitalSemiring> LinearCombination<R> {
 
     /// Empty linear combination.
     pub const ZERO: Self = Self::new();
+
+    /// Remove terms with zero coefficient.
+    pub fn reduce(&mut self)
+    where
+        R: Eq,
+    {
+        self.terms.retain(|term| term.coefficient != Constant::ZERO)
+    }
+
+    fn insert(&mut self, term: LinearTerm<R>) {
+        match self
+            .terms
+            .binary_search_by_key(&term.variable, |term| term.variable)
+        {
+            Ok(idx) => self.terms[idx].coefficient += term.coefficient,
+            Err(idx) => self.terms.insert(idx, term),
+        }
+    }
+
+    fn merge(&self, rps: &Self) -> Self
+    where
+        R: Clone,
+        for<'a> &'a R: SemiringOps<R>,
+    {
+        let mut terms = Vec::with_capacity(self.terms.len() + rps.terms.len());
+
+        let (mut i, mut j) = (0, 0);
+        while i < self.terms.len() && j < rps.terms.len() {
+            let (l, r) = (&self.terms[i], &rps.terms[j]);
+
+            match l.variable.cmp(&r.variable) {
+                Ordering::Less => {
+                    terms.push(l.clone());
+                    i += 1;
+                }
+                Ordering::Greater => {
+                    terms.push(r.clone());
+                    j += 1;
+                }
+                Ordering::Equal => {
+                    let coefficient = &l.coefficient + &r.coefficient;
+                    let term = LinearTerm::new(l.variable, coefficient);
+                    terms.push(term);
+                    i += 1;
+                    j += 1;
+                }
+            }
+        }
+
+        if i < self.terms.len() {
+            terms.extend_from_slice(&self.terms[i..]);
+        } else if j < rps.terms.len() {
+            terms.extend_from_slice(&rps.terms[j..]);
+        }
+
+        Self { terms }
+    }
 }
 
 impl<R: UnitalSemiring + Eq> Expression<R> for LinearCombination<R> {
@@ -63,8 +119,8 @@ impl<R: UnitalSemiring + Eq> Expression<R> for LinearCombination<R> {
     fn degree(&self) -> usize {
         if self
             .terms
-            .values()
-            .any(|coefficient| *coefficient != Constant::ZERO)
+            .iter()
+            .any(|term| term.coefficient != Constant::ZERO)
         {
             1
         } else {
@@ -75,24 +131,21 @@ impl<R: UnitalSemiring + Eq> Expression<R> for LinearCombination<R> {
 
 impl<R: UnitalSemiring> From<Constant<R>> for LinearCombination<R> {
     fn from(constant: Constant<R>) -> Self {
-        Self {
-            terms: [(Variable::CONSTANT, constant)].into(),
-        }
+        let term = LinearTerm::new(Variable::CONSTANT, constant);
+        Self::from(term)
     }
 }
 
 impl<R: UnitalSemiring> From<Variable<R>> for LinearCombination<R> {
     fn from(variable: Variable<R>) -> Self {
-        Self {
-            terms: [(variable, Constant::ONE)].into(),
-        }
+        let term = LinearTerm::new(variable, Constant::ONE);
+        Self::from(term)
     }
 }
 
 impl<R: UnitalSemiring> From<LinearTerm<R>> for LinearCombination<R> {
     fn from(term: LinearTerm<R>) -> Self {
-        let mut terms = BTreeMap::new();
-        terms.insert(term.variable, term.coefficient);
+        let terms = vec![term];
         Self { terms }
     }
 }
@@ -106,21 +159,23 @@ impl<R: UnitalSemiring> Add<LinearTerm<R>> for LinearCombination<R> {
     }
 }
 
+impl<R: UnitalSemiring + Clone> Add<&LinearTerm<R>> for LinearCombination<R> {
+    type Output = LinearCombination<R>;
+
+    fn add(self, rps: &LinearTerm<R>) -> Self::Output {
+        self + rps.clone()
+    }
+}
+
 impl<R: UnitalSemiring> AddAssign<LinearTerm<R>> for LinearCombination<R> {
     fn add_assign(&mut self, rps: LinearTerm<R>) {
-        self.terms
-            .entry(rps.variable)
-            .and_modify(|value| *value += &rps.coefficient)
-            .or_insert(rps.coefficient);
+        self.insert(rps)
     }
 }
 
 impl<R: UnitalSemiring + Clone> AddAssign<&LinearTerm<R>> for LinearCombination<R> {
     fn add_assign(&mut self, rps: &LinearTerm<R>) {
-        self.terms
-            .entry(rps.variable)
-            .and_modify(|value| *value += &rps.coefficient)
-            .or_insert_with(|| rps.coefficient.clone());
+        *self += rps.clone()
     }
 }
 
@@ -128,9 +183,7 @@ impl<R: UnitalSemiring + Clone> Add<LinearTerm<R>> for &LinearCombination<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: LinearTerm<R>) -> Self::Output {
-        let mut lps = self.clone();
-        lps += rps;
-        lps
+        self.clone() + rps
     }
 }
 
@@ -146,9 +199,8 @@ impl<R: UnitalSemiring> Add<Constant<R>> for LinearCombination<R> {
 impl<R: UnitalSemiring + Clone> Add<&Constant<R>> for LinearCombination<R> {
     type Output = Self;
 
-    fn add(mut self, rps: &Constant<R>) -> Self::Output {
-        self += rps;
-        self
+    fn add(self, rps: &Constant<R>) -> Self::Output {
+        self + rps.clone()
     }
 }
 
@@ -160,7 +212,7 @@ impl<R: UnitalSemiring> AddAssign<Constant<R>> for LinearCombination<R> {
 
 impl<R: UnitalSemiring + Clone> AddAssign<&Constant<R>> for LinearCombination<R> {
     fn add_assign(&mut self, rps: &Constant<R>) {
-        *self += LinearTerm::new(Variable::CONSTANT, rps.clone())
+        *self += rps.clone()
     }
 }
 
@@ -176,7 +228,7 @@ impl<R: UnitalSemiring + Clone> Add<&Constant<R>> for &LinearCombination<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: &Constant<R>) -> Self::Output {
-        self.clone() + rps
+        self.clone() + rps.clone()
     }
 }
 
@@ -197,7 +249,7 @@ impl<R: UnitalSemiring> AddAssign<Variable<R>> for LinearCombination<R> {
 
 impl<R: UnitalSemiring> AddAssign<&Variable<R>> for LinearCombination<R> {
     fn add_assign(&mut self, rps: &Variable<R>) {
-        *self += LinearTerm::new(*rps, Constant::ONE)
+        *self += *rps
     }
 }
 
@@ -209,53 +261,65 @@ impl<R: UnitalSemiring + Clone> Add<Variable<R>> for &LinearCombination<R> {
     }
 }
 
-impl<R: UnitalSemiring> Add for LinearCombination<R> {
+impl<R: UnitalSemiring + Clone> Add for LinearCombination<R>
+where
+    for<'a> &'a R: SemiringOps<R>,
+{
     type Output = Self;
 
-    fn add(mut self, rps: Self) -> Self::Output {
-        self += rps;
-        self
+    fn add(self, rps: Self) -> Self::Output {
+        &self + &rps
     }
 }
 
-impl<R: UnitalSemiring> AddAssign for LinearCombination<R> {
+impl<R: UnitalSemiring + Clone> AddAssign for LinearCombination<R>
+where
+    for<'a> &'a R: SemiringOps<R>,
+{
     fn add_assign(&mut self, rps: Self) {
-        for (variable, coefficient) in rps.terms {
-            *self += LinearTerm::new(variable, coefficient)
-        }
+        *self += &rps
     }
 }
 
-impl<R: UnitalSemiring + Clone> Add<&Self> for LinearCombination<R> {
+impl<R: UnitalSemiring + Clone> Add<&Self> for LinearCombination<R>
+where
+    for<'a> &'a R: SemiringOps<R>,
+{
     type Output = Self;
 
-    fn add(mut self, rps: &Self) -> Self::Output {
-        self += rps;
-        self
+    fn add(self, rps: &Self) -> Self::Output {
+        &self + rps
     }
 }
 
-impl<R: UnitalSemiring + Clone> AddAssign<&Self> for LinearCombination<R> {
+impl<R: UnitalSemiring + Clone> AddAssign<&Self> for LinearCombination<R>
+where
+    for<'a> &'a R: SemiringOps<R>,
+{
     fn add_assign(&mut self, rps: &Self) {
-        for (&variable, coefficient) in &rps.terms {
-            *self += LinearTerm::new(variable, coefficient.clone())
-        }
+        *self = &*self + rps
     }
 }
 
-impl<R: UnitalSemiring + Clone> Add<LinearCombination<R>> for &LinearCombination<R> {
+impl<R: UnitalSemiring + Clone> Add<LinearCombination<R>> for &LinearCombination<R>
+where
+    for<'a> &'a R: SemiringOps<R>,
+{
     type Output = LinearCombination<R>;
 
     fn add(self, rps: LinearCombination<R>) -> Self::Output {
-        self.clone() + rps
+        self + &rps
     }
 }
 
-impl<R: UnitalSemiring + Clone> Add for &LinearCombination<R> {
+impl<R: UnitalSemiring + Clone> Add for &LinearCombination<R>
+where
+    for<'a> &'a R: SemiringOps<R>,
+{
     type Output = LinearCombination<R>;
 
     fn add(self, rps: Self) -> Self::Output {
-        self.clone() + rps
+        self.merge(rps)
     }
 }
 
@@ -264,11 +328,7 @@ impl<R: UnitalSemiring> Double for LinearCombination<R> {
 
     fn double(self) -> Self::Output {
         Self {
-            terms: self
-                .terms
-                .into_iter()
-                .map(|(var, val)| (var, val.double()))
-                .collect(),
+            terms: self.terms.into_iter().map(Double::double).collect(),
         }
     }
 }
@@ -281,11 +341,7 @@ where
 
     fn double(self) -> Self::Output {
         LinearCombination::<R> {
-            terms: self
-                .terms
-                .iter()
-                .map(|(&var, val)| (var, val.double()))
-                .collect(),
+            terms: self.terms.iter().map(Double::double).collect(),
         }
     }
 }
@@ -295,11 +351,7 @@ impl<R: UnitalRing> Neg for LinearCombination<R> {
 
     fn neg(self) -> Self::Output {
         LinearCombination::<R> {
-            terms: self
-                .terms
-                .into_iter()
-                .map(|(var, val)| (var, -val))
-                .collect(),
+            terms: self.terms.into_iter().map(Neg::neg).collect(),
         }
     }
 }
@@ -311,11 +363,9 @@ where
     type Output = LinearCombination<R>;
 
     fn neg(self) -> Self::Output {
-        let mut lc = LinearCombination::new();
-        for (&variable, coefficient) in &self.terms {
-            lc += LinearTerm::new(variable, -coefficient);
+        LinearCombination::<R> {
+            terms: self.terms.iter().map(Neg::neg).collect(),
         }
-        lc
     }
 }
 
@@ -330,10 +380,16 @@ impl<R: UnitalRing> Sub<LinearTerm<R>> for LinearCombination<R> {
 
 impl<R: UnitalRing> SubAssign<LinearTerm<R>> for LinearCombination<R> {
     fn sub_assign(&mut self, rps: LinearTerm<R>) {
-        self.terms
-            .entry(rps.variable)
-            .and_modify(|value| *value -= &rps.coefficient)
-            .or_insert(-rps.coefficient);
+        self.insert(-rps)
+    }
+}
+
+impl<R: UnitalRing> SubAssign<&LinearTerm<R>> for LinearCombination<R>
+where
+    for<'a> &'a R: RingOps<R>,
+{
+    fn sub_assign(&mut self, rps: &LinearTerm<R>) {
+        self.insert(-rps)
     }
 }
 
@@ -341,9 +397,7 @@ impl<R: UnitalRing + Clone> Sub<LinearTerm<R>> for &LinearCombination<R> {
     type Output = LinearCombination<R>;
 
     fn sub(self, rps: LinearTerm<R>) -> Self::Output {
-        let mut lps = self.clone();
-        lps -= rps;
-        lps
+        self.clone() - rps
     }
 }
 
@@ -359,9 +413,8 @@ impl<R: UnitalRing> Sub<Constant<R>> for LinearCombination<R> {
 impl<R: UnitalRing + Clone> Sub<&Constant<R>> for LinearCombination<R> {
     type Output = Self;
 
-    fn sub(mut self, rps: &Constant<R>) -> Self::Output {
-        self -= rps;
-        self
+    fn sub(self, rps: &Constant<R>) -> Self::Output {
+        self - rps.clone()
     }
 }
 
@@ -373,7 +426,7 @@ impl<R: UnitalRing> SubAssign<Constant<R>> for LinearCombination<R> {
 
 impl<R: UnitalRing + Clone> SubAssign<&Constant<R>> for LinearCombination<R> {
     fn sub_assign(&mut self, rps: &Constant<R>) {
-        *self -= LinearTerm::new(Variable::CONSTANT, rps.clone())
+        *self -= rps.clone()
     }
 }
 
@@ -389,7 +442,7 @@ impl<R: UnitalRing + Clone> Sub<&Constant<R>> for &LinearCombination<R> {
     type Output = LinearCombination<R>;
 
     fn sub(self, rps: &Constant<R>) -> Self::Output {
-        self.clone() - rps
+        self.clone() - rps.clone()
     }
 }
 
@@ -416,51 +469,54 @@ impl<R: UnitalRing + Clone> Sub<Variable<R>> for &LinearCombination<R> {
     }
 }
 
-impl<R: UnitalRing> Sub for LinearCombination<R> {
-    type Output = Self;
-
-    fn sub(mut self, rps: Self) -> Self::Output {
-        self -= rps;
-        self
-    }
-}
-
-impl<R: UnitalRing> SubAssign for LinearCombination<R> {
-    fn sub_assign(&mut self, rps: Self) {
-        for (variable, coefficient) in rps.terms {
-            *self -= LinearTerm::new(variable, coefficient)
-        }
-    }
-}
-
-impl<R: UnitalRing> Sub<&Self> for LinearCombination<R>
+impl<R: UnitalRing + Clone> Sub for LinearCombination<R>
 where
     for<'a> &'a R: RingOps<R>,
 {
     type Output = Self;
 
-    fn sub(mut self, rps: &Self) -> Self::Output {
-        self -= rps;
-        self
+    fn sub(self, rps: Self) -> Self::Output {
+        self.merge(&-rps)
     }
 }
 
-impl<R: UnitalRing> SubAssign<&Self> for LinearCombination<R>
+impl<R: UnitalRing + Clone> SubAssign for LinearCombination<R>
+where
+    for<'a> &'a R: RingOps<R>,
+{
+    fn sub_assign(&mut self, rps: Self) {
+        *self = &*self - rps
+    }
+}
+
+impl<R: UnitalRing + Clone> Sub<&Self> for LinearCombination<R>
+where
+    for<'a> &'a R: RingOps<R>,
+{
+    type Output = Self;
+
+    fn sub(self, rps: &Self) -> Self::Output {
+        self.merge(&-rps)
+    }
+}
+
+impl<R: UnitalRing + Clone> SubAssign<&Self> for LinearCombination<R>
 where
     for<'a> &'a R: RingOps<R>,
 {
     fn sub_assign(&mut self, rps: &Self) {
-        for (&variable, coefficient) in &rps.terms {
-            *self += LinearTerm::new(variable, -coefficient)
-        }
+        *self = &*self - rps
     }
 }
 
-impl<R: UnitalRing + Clone> Sub<LinearCombination<R>> for &LinearCombination<R> {
+impl<R: UnitalRing + Clone> Sub<LinearCombination<R>> for &LinearCombination<R>
+where
+    for<'a> &'a R: RingOps<R>,
+{
     type Output = LinearCombination<R>;
 
     fn sub(self, rps: LinearCombination<R>) -> Self::Output {
-        self.clone() - rps
+        self.merge(&-rps)
     }
 }
 
@@ -471,7 +527,7 @@ where
     type Output = LinearCombination<R>;
 
     fn sub(self, rps: Self) -> Self::Output {
-        self.clone() - rps
+        self.merge(&-rps)
     }
 }
 
@@ -517,8 +573,8 @@ impl<R: UnitalSemiring> MulAssign<Constant<R>> for LinearCombination<R> {
 
 impl<R: UnitalSemiring> MulAssign<&Constant<R>> for LinearCombination<R> {
     fn mul_assign(&mut self, rps: &Constant<R>) {
-        for coefficient in self.terms.values_mut() {
-            *coefficient *= rps
+        for term in self.terms.iter_mut() {
+            *term *= rps
         }
     }
 }
@@ -541,11 +597,9 @@ where
     type Output = LinearCombination<R>;
 
     fn mul(self, rps: &Constant<R>) -> Self::Output {
-        let mut lc = LinearCombination::new();
-        for (&variable, coefficient) in &self.terms {
-            lc += LinearTerm::new(variable, coefficient * rps);
+        LinearCombination::<R> {
+            terms: self.terms.iter().map(|term| term * rps).collect(),
         }
-        lc
     }
 }
 
@@ -647,63 +701,73 @@ impl<R: UnitalSemiring + Clone> Mul<&LinearMonoid<R>> for &LinearCombination<R> 
     }
 }
 
-impl<R: UnitalSemiring> Sum<LinearTerm<R>> for LinearCombination<R> {
-    fn sum<I: Iterator<Item = LinearTerm<R>>>(iter: I) -> Self {
-        let mut lc = Self::new();
-        for i in iter {
-            lc += i
-        }
-        lc
+impl<R: UnitalSemiring + Clone> Sum<LinearTerm<R>> for LinearCombination<R>
+where
+    for<'a> &'a R: SemiringOps<R>,
+{
+    fn sum<I: Iterator<Item = LinearTerm<R>>>(mut iter: I) -> Self {
+        let first = match iter.next() {
+            Some(i) => LinearCombination::from(i),
+            None => return Self::ZERO,
+        };
+        iter.fold(first, |lps, rps| lps + rps)
     }
 }
 
-impl<'a, R: UnitalSemiring + Clone> Sum<&'a LinearTerm<R>> for LinearCombination<R> {
-    fn sum<I: Iterator<Item = &'a LinearTerm<R>>>(iter: I) -> Self {
-        let mut lc = Self::new();
-        for i in iter {
-            lc += i
-        }
-        lc
+impl<'a, R: UnitalSemiring + Clone> Sum<&'a LinearTerm<R>> for LinearCombination<R>
+where
+    for<'b> &'b R: SemiringOps<R>,
+{
+    fn sum<I: Iterator<Item = &'a LinearTerm<R>>>(mut iter: I) -> Self {
+        let first = match iter.next() {
+            Some(i) => LinearCombination::from(i.clone()),
+            None => return Self::ZERO,
+        };
+        iter.fold(first, |lps, rps| lps + rps)
     }
 }
 
-impl<R: UnitalSemiring> Sum<Variable<R>> for LinearCombination<R> {
-    fn sum<I: Iterator<Item = Variable<R>>>(iter: I) -> Self {
-        let mut lc = Self::new();
-        for i in iter {
-            lc += i
-        }
-        lc
+impl<R: UnitalSemiring + Clone> Sum<Variable<R>> for LinearCombination<R>
+where
+    for<'a> &'a R: SemiringOps<R>,
+{
+    fn sum<I: Iterator<Item = Variable<R>>>(mut iter: I) -> Self {
+        let first = match iter.next() {
+            Some(i) => LinearCombination::from(i),
+            None => return Self::ZERO,
+        };
+        iter.fold(first, |lps, rps| lps + rps)
     }
 }
 
-impl<'a, R: UnitalSemiring> Sum<&'a Variable<R>> for LinearCombination<R> {
+impl<'a, R: UnitalSemiring + Clone> Sum<&'a Variable<R>> for LinearCombination<R>
+where
+    for<'b> &'b R: SemiringOps<R>,
+{
     fn sum<I: Iterator<Item = &'a Variable<R>>>(iter: I) -> Self {
-        let mut lc = Self::new();
-        for i in iter {
-            lc += i
-        }
-        lc
+        iter.copied().sum()
     }
 }
 
-impl<R: UnitalSemiring> Sum for LinearCombination<R> {
+impl<R: UnitalSemiring + Clone> Sum for LinearCombination<R>
+where
+    for<'a> &'a R: SemiringOps<R>,
+{
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
-        let mut lc = Self::new();
-        for i in iter {
-            lc += i
-        }
-        lc
+        iter.reduce(|lps, rps| lps + rps).unwrap_or(Self::ZERO)
     }
 }
 
-impl<'a, R: UnitalSemiring + Clone> Sum<&'a Self> for LinearCombination<R> {
-    fn sum<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
-        let mut lc = Self::new();
-        for i in iter {
-            lc += i
-        }
-        lc
+impl<'a, R: UnitalSemiring + Clone> Sum<&'a Self> for LinearCombination<R>
+where
+    for<'b> &'b R: SemiringOps<R>,
+{
+    fn sum<I: Iterator<Item = &'a Self>>(mut iter: I) -> Self {
+        let first = match iter.next() {
+            Some(i) => i.clone(),
+            None => return Self::ZERO,
+        };
+        iter.fold(first, |lps, rps| lps + rps)
     }
 }
 

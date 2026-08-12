@@ -56,7 +56,7 @@ impl<'a, R: UnitalRing + Clone + Eq> Proof<'a, R> {
         sum: &LinearCombination<R>,
     ) -> UnivariatePolynomial<'a, R>
     where
-        for<'c> &'c R: RingOps<R>,
+        for<'b> &'b R: RingOps<R>,
     {
         let claim = &self.claims[index * degree..(index + 1) * degree];
         let mut coefficients = Vec::<LinearCombination<R>>::with_capacity(degree + 1);

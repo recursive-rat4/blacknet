@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::IntegerModRing;
+use crate::algebra::{IntegerModRing, RingOps};
 use crate::circuit::builder::{CircuitBuilder, Constant, LinearCombination};
 use crate::circuit::logicgate::LogicGate;
 use crate::integer::Integer;
@@ -69,17 +69,20 @@ impl<
     'a,
     Z: IntegerModRing + Clone + Eq,
     G: UniformGenerator<Output = LinearCombination<Z>>
-> Distribution<LinearCombination<Z>, G> for BinaryUniformDistribution<'a, Z> {
+> Distribution<LinearCombination<Z>, G> for BinaryUniformDistribution<'a, Z>
+where
+    for<'b> &'b Z: RingOps<Z>,
+{
     fn sample(&mut self, generator: &mut G) -> LinearCombination<Z> {
         if self.have_bits == 0 {
             let scope = self.circuit.scope("BinaryUniformDistribution::sample");
             let generated = generator.generate();
             let mut p = Z::ONE;
-            let mut composed = LinearCombination::new();
+            let mut composed = LinearCombination::<Z>::new();
             for i in 0..Z::BITS {
                 let digit = scope.auxiliary();
                 self.cache[i as usize] = digit.into();
-                composed += digit * Constant::new(p.clone());
+                composed += digit * Constant::<Z>::new(p.clone());
                 p = p.double();
             }
             scope.constrain(composed, generated);
