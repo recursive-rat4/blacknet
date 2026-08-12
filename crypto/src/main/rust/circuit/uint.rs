@@ -58,13 +58,16 @@ where
             };
         }
         let scope = self.circuit.scope("UInt::wrapping_add");
-        let mut c = [LinearCombination::ZERO; N];
+        let mut c = LinearCombination::ZERO;
+        #[allow(clippy::needless_range_loop)]
         for i in 0..N - 1 {
-            let acbc = scope.auxiliary();
-            scope.constrain((&self.bits[i] + &c[i]) * (&rps.bits[i] + &c[i]), acbc);
-            (bits[i], c[i + 1]) = (&self.bits[i] + &rps.bits[i] + &c[i], &c[i] + acbc);
+            let ac = &self.bits[i] + &c;
+            let ac_bc = scope.auxiliary();
+            scope.constrain(&ac * (&rps.bits[i] + &c), ac_bc);
+            bits[i] = ac + &rps.bits[i];
+            c += ac_bc;
         }
-        bits[N - 1] = &self.bits[N - 1] + &rps.bits[N - 1] + &c[N - 1];
+        bits[N - 1] = &self.bits[N - 1] + &rps.bits[N - 1] + c;
         Self {
             circuit: self.circuit,
             bits,
