@@ -19,40 +19,41 @@ use core::cmp::min;
 use core::mem::{transmute, transmute_copy};
 use zeroize::DefaultIsZeroes;
 
-pub type Word = u32;
 pub const KEY_SIZE: usize = 32;
 const IV_SIZE: usize = 12;
 pub const BLOCK_SIZE: usize = 64;
-pub const L: usize = 16;
-const SIGMA: [Word; 4] = [0x61707865, 0x3320646E, 0x79622D32, 0x6B206574];
+pub const BLOCK_LEN: usize = 16;
+const SIGMA: [u32; 4] = [0x61707865, 0x3320646E, 0x79622D32, 0x6B206574];
 
 /// ChaCha stream cipher. <https://cr.yp.to/chacha/chacha-20080128.pdf>
 #[derive(Clone, Copy, Default)]
 pub struct ChaCha<const ROUNDS: usize> {
-    input: [Word; L],
+    input: [u32; BLOCK_LEN],
 }
 
 impl<const ROUNDS: usize> ChaCha<ROUNDS> {
     pub fn new(key: &[u8; KEY_SIZE], iv: &[u8; IV_SIZE]) -> Self {
-        let mut chacha = Self { input: [0; L] };
+        let mut chacha = Self {
+            input: [0; BLOCK_LEN],
+        };
         chacha.reset(key, iv);
         chacha
     }
 
     pub fn reset(&mut self, key: &[u8; KEY_SIZE], iv: &[u8; IV_SIZE]) {
         self.input[..SIGMA.len()].copy_from_slice(&SIGMA);
-        let key: [Word; 8] = unsafe { transmute_copy(key) };
-        self.input[SIGMA.len()..12].copy_from_slice(&key.map(Word::from_le));
+        let key: [u32; 8] = unsafe { transmute_copy(key) };
+        self.input[SIGMA.len()..12].copy_from_slice(&key.map(u32::from_le));
         self.input[12] = 0;
-        let iv: [Word; 3] = unsafe { transmute_copy(iv) };
-        self.input[13..].copy_from_slice(&iv.map(Word::from_le));
+        let iv: [u32; 3] = unsafe { transmute_copy(iv) };
+        self.input[13..].copy_from_slice(&iv.map(u32::from_le));
     }
 
-    pub const fn counter(&self) -> Word {
+    pub const fn counter(&self) -> u32 {
         self.input[12]
     }
 
-    pub const fn seek(&mut self, counter: Word) {
+    pub const fn seek(&mut self, counter: u32) {
         self.input[12] = counter
     }
 
@@ -66,7 +67,7 @@ impl<const ROUNDS: usize> ChaCha<ROUNDS> {
         self.crypt(plain_text, cipher_text)
     }
 
-    const fn quarter(state: &mut [Word; L], a: usize, b: usize, c: usize, d: usize) {
+    const fn quarter(state: &mut [u32; BLOCK_LEN], a: usize, b: usize, c: usize, d: usize) {
         state[a] = state[a].wrapping_add(state[b]);
         state[d] ^= state[a];
         state[d] = state[d].rotate_left(16);
@@ -81,7 +82,7 @@ impl<const ROUNDS: usize> ChaCha<ROUNDS> {
         state[b] = state[b].rotate_left(7);
     }
 
-    pub fn keystream(&mut self, output: &mut [Word; L]) {
+    pub fn keystream(&mut self, output: &mut [u32; BLOCK_LEN]) {
         const {
             assert!(ROUNDS & 1 == 0);
         };
@@ -97,7 +98,7 @@ impl<const ROUNDS: usize> ChaCha<ROUNDS> {
             Self::quarter(&mut state, 2, 7, 8, 13);
             Self::quarter(&mut state, 3, 4, 9, 14);
         }
-        for i in 0..L {
+        for i in 0..BLOCK_LEN {
             output[i] = state[i].wrapping_add(self.input[i]);
         }
         self.input[12] = self.input[12].wrapping_add(1);
@@ -106,11 +107,11 @@ impl<const ROUNDS: usize> ChaCha<ROUNDS> {
     fn crypt(&mut self, y: &mut [u8], x: &[u8]) {
         let mut offset: usize = 0;
         let mut remain: usize = x.len();
-        let mut state = [0 as Word; L];
+        let mut state = [0u32; BLOCK_LEN];
         while remain != 0 {
             self.keystream(&mut state);
             let process = min(remain, BLOCK_SIZE);
-            let bytes: [u8; BLOCK_SIZE] = unsafe { transmute(state.map(Word::to_le_bytes)) };
+            let bytes: [u8; BLOCK_SIZE] = unsafe { transmute(state.map(u32::to_le_bytes)) };
             for i in 0..process {
                 y[offset + i] = x[offset + i] ^ bytes[i]
             }

@@ -16,7 +16,7 @@
  */
 
 use crate::random::UniformGenerator;
-use crate::symmetric::chacha::{BLOCK_SIZE, ChaCha, KEY_SIZE, L, Word};
+use crate::symmetric::chacha::{BLOCK_LEN, BLOCK_SIZE, ChaCha, KEY_SIZE};
 use core::mem::transmute;
 
 pub const SEED_SIZE: usize = KEY_SIZE;
@@ -62,9 +62,9 @@ impl<const ROUNDS: usize> ChaChaDRG<ROUNDS> {
     }
 
     fn keystream(chacha: &mut ChaCha<ROUNDS>, buffer: &mut [u8; BLOCK_SIZE]) {
-        let mut scratch = [0 as Word; L];
+        let mut scratch = [0u32; BLOCK_LEN];
         chacha.keystream(&mut scratch);
-        let scratch: [u8; BLOCK_SIZE] = unsafe { transmute(scratch) };
+        let scratch: [u8; BLOCK_SIZE] = unsafe { transmute(scratch.map(u32::to_le_bytes)) };
         buffer.copy_from_slice(&scratch);
     }
 }
