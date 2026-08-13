@@ -658,35 +658,47 @@ fn clmul(a: [u64; 2], b: [u64; 2]) -> [u64; 4] {
 #[inline(always)]
 fn clsqr(a: [u64; 2]) -> [u64; 4] {
     cfg_select! {
-        target_feature = "pclmulqdq" => {
+        target_feature = "bmi2" => {
             unsafe {
                 #[cfg(target_arch = "x86")]
                 use core::arch::x86::*;
                 #[cfg(target_arch = "x86_64")]
                 use core::arch::x86_64::*;
 
-                let a = _mm_loadu_si128(a.as_ptr() as *const __m128i);
-                let cl = _mm_clmulepi64_si128(a, a, 0);
-                let ch = _mm_clmulepi64_si128(a, a, 17);
-                core::mem::transmute([cl, ch])
+                let [al, ah] = a;
+                let [ll, lh, hl, hh] = [
+                    al & 0xFFFFFFFF, al >> 32,
+                    ah & 0xFFFFFFFF, ah >> 32,
+                ];
+                let ll = _pdep_u64(ll, 0x5555555555555555);
+                let lh = _pdep_u64(lh, 0x5555555555555555);
+                let hl = _pdep_u64(hl, 0x5555555555555555);
+                let hh = _pdep_u64(hh, 0x5555555555555555);
+                [ll, lh, hl, hh]
             }
         }
         _ => {
-            let mut a = a;
-            let mut c = [0; 4];
-            for i in 0..2 {
-                for j in 0..32 {
-                    let b = a[i] & 1;
-                    c[i * 2] |= b << (j << 1);
-                    a[i] >>= 1;
-                }
-                for j in 0..32 {
-                    let b = a[i] & 1;
-                    c[i * 2 + 1] |= b << (j << 1);
-                    a[i] >>= 1;
-                }
+            const fn clsqr32(a: u32) -> u64 {
+                let mut c = a as u64;
+                c = (c | c << 32) & 0x00000000FFFFFFFF;
+                c = (c | c << 16) & 0x0000FFFF0000FFFF;
+                c = (c | c <<  8) & 0x00FF00FF00FF00FF;
+                c = (c | c <<  4) & 0x0F0F0F0F0F0F0F0F;
+                c = (c | c <<  2) & 0x3333333333333333;
+                c = (c | c <<  1) & 0x5555555555555555;
+                c
             }
-            c
+
+            let [al, ah] = a;
+            let [ll, lh, hl, hh] = [
+                al as u32, (al >> 32) as u32,
+                ah as u32, (ah >> 32) as u32,
+            ];
+            let ll = clsqr32(ll);
+            let lh = clsqr32(lh);
+            let hl = clsqr32(hl);
+            let hh = clsqr32(hh);
+            [ll, lh, hl, hh]
         }
     }
 }

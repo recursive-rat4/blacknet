@@ -581,27 +581,23 @@ fn clmul(a: u8, b: u8) -> u16 {
 #[inline(always)]
 fn clsqr(a: u8) -> u16 {
     cfg_select! {
-        target_feature = "pclmulqdq" => {
+        target_feature = "bmi2" => {
             unsafe {
                 #[cfg(target_arch = "x86")]
                 use core::arch::x86::*;
                 #[cfg(target_arch = "x86_64")]
                 use core::arch::x86_64::*;
 
-                let a = _mm_cvtsi32_si128(a as i32);
-                let c = _mm_clmulepi64_si128(a, a, 0);
-                let c: u128 = core::mem::transmute(c);
+                let a = a as u32;
+                let c = _pdep_u32(a, 0x5555);
                 c as u16
             }
         }
         _ => {
-            let mut a = a as u16;
-            let mut c = 0;
-            for i in 0..u8::BITS {
-                let b = a & 1;
-                c |= b << (i << 1);
-                a >>= 1;
-            }
+            let mut c = a as u16;
+            c = (c | c << 4) & 0x0F0F;
+            c = (c | c << 2) & 0x3333;
+            c = (c | c << 1) & 0x5555;
             c
         }
     }
