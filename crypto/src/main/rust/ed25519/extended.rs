@@ -99,6 +99,12 @@ impl From<Edwards25519Extended> for Edwards25519Affine {
     }
 }
 
+impl From<Edwards25519Extended> for (Field25519, Field25519, Field25519, Field25519) {
+    fn from(point: Edwards25519Extended) -> Self {
+        (point.x, point.y, point.z, point.t)
+    }
+}
+
 impl Debug for Edwards25519Extended {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         write!(

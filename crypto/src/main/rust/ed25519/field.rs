@@ -96,7 +96,7 @@ impl Field25519 {
         Self::reduce_256(n)
     }
 
-    fn halve(self) -> Self {
+    pub(super) fn halve(self) -> Self {
         let mut n = self.n;
         n.bl_assign(n + Self::MODULUS, n.is_odd());
         n >>= 1;

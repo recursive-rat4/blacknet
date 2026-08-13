@@ -16,6 +16,7 @@
  */
 
 mod affine;
+mod duif;
 mod edwards25519;
 mod extended;
 mod field;
@@ -25,6 +26,7 @@ mod scalar;
 use edwards25519::{E25519_D, E25519_D_TWICE, is_on_curve25519};
 
 pub use affine::Edwards25519Affine;
+pub use duif::Edwards25519Duif;
 pub use extended::Edwards25519Extended;
 pub use field::Field25519;
 pub use projective::Edwards25519Projective;
