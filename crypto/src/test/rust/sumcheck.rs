@@ -26,6 +26,7 @@ use blacknet_crypto::constraintsystem::ConstraintSystem;
 use blacknet_crypto::pervushin::PervushinField;
 use blacknet_crypto::polynomial::{
     EqExtension, MaskingPolynomial, MultilinearExtension, MultivariatePolynomial,
+    interpolation::Interpolator,
 };
 use blacknet_crypto::sumcheck::{Error, Proof as ProofPlain, SumCheck as SumCheckPlain};
 use blacknet_crypto::symmetric::{Blake2bDuplexer, Duplexer, UniformDistribution};
@@ -37,6 +38,7 @@ type E = UniformDistribution;
 
 #[test]
 fn mle() {
+    let interpolator = Interpolator::<Z>::degree_1().unwrap();
     type SC = SumCheckPlain<Z, Z, MultilinearExtension<Z>, D, E>;
     let mut duplex = D::default();
     let mut exceptional_set = E::default();
@@ -46,7 +48,13 @@ fn mle() {
     let s1 = Z::from(21);
     let s2 = Z::from(28);
 
-    let proof = SC::prove(p1.clone(), s1, &mut duplex, &mut exceptional_set);
+    let proof = SC::prove(
+        p1.clone(),
+        s1,
+        &mut duplex,
+        &mut exceptional_set,
+        &interpolator,
+    );
     duplex.reset();
     exceptional_set.reset();
 
@@ -83,6 +91,7 @@ fn mle() {
 
 #[test]
 fn eq() {
+    let interpolator = Interpolator::<Z>::degree_1().unwrap();
     type SC = SumCheckPlain<Z, Z, EqExtension<Z>, D, E>;
     let mut duplex = D::default();
     let mut exceptional_set = E::default();
@@ -91,7 +100,13 @@ fn eq() {
     let s1 = Z::from(1);
     let s2 = Z::from(2);
 
-    let proof = SC::prove(p1.clone(), s1, &mut duplex, &mut exceptional_set);
+    let proof = SC::prove(
+        p1.clone(),
+        s1,
+        &mut duplex,
+        &mut exceptional_set,
+        &interpolator,
+    );
     duplex.reset();
     exceptional_set.reset();
 
@@ -112,6 +127,7 @@ fn eq() {
 
 #[test]
 fn mask() {
+    let interpolator = Interpolator::<Z>::degree_2().unwrap();
     type SC = SumCheckPlain<Z, Z, MaskingPolynomial<Z>, D, E>;
     let mut duplex = D::default();
     let mut exceptional_set = E::default();
@@ -120,7 +136,13 @@ fn mask() {
     let s1 = Z::from(116);
     let s2 = Z::from(120);
 
-    let proof = SC::prove(p1.clone(), s1, &mut duplex, &mut exceptional_set);
+    let proof = SC::prove(
+        p1.clone(),
+        s1,
+        &mut duplex,
+        &mut exceptional_set,
+        &interpolator,
+    );
     duplex.reset();
     exceptional_set.reset();
 
@@ -143,6 +165,7 @@ fn mask() {
 fn circuit() {
     type DuplexPlain = TestDuplexPlain;
     type SCPlain = SumCheckPlain<Z, Z, MultilinearExtension<Z>, DuplexPlain, E>;
+    let interpolator = Interpolator::<Z>::degree_1().unwrap();
     let mut duplex_plain = DuplexPlain::new();
     let mut exceptional_set_plain = E::default();
 
@@ -153,6 +176,7 @@ fn circuit() {
         sum_plain,
         &mut duplex_plain,
         &mut exceptional_set_plain,
+        &interpolator,
     );
     duplex_plain.reset();
     exceptional_set_plain.reset();

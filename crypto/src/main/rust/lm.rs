@@ -24,7 +24,6 @@ use crate::branchless::{BlAbs, BlAssign, BlOption};
 use crate::convolution::{Binomial, Convolution, Negacyclic};
 use crate::gcd::gcd_inner;
 use crate::integer::Integer;
-use crate::polynomial::interpolation::InterpolationConsts;
 use crate::symmetric::{Absorb, Duplexer, Squeeze};
 use core::array;
 use core::fmt::{Debug, Formatter, Result};
@@ -478,51 +477,6 @@ impl IntegerModRing for LMField {
 
     const BITS: u32 = 61;
     const MODULUS: Self::Modulus = 1152921504606847009;
-}
-
-impl InterpolationConsts for LMField {
-    const INV2: Self = Self {
-        n: 576460752303423505,
-    };
-    const INV3: Self = Self {
-        n: 768614336404564673,
-    };
-    const INV4: Self = Self {
-        n: 864691128455135257,
-    };
-    const INV6: Self = Self {
-        n: 960767920505705841,
-    };
-    const INV12: Self = Self {
-        n: 1056844712556276425,
-    };
-    const INV20: Self = Self {
-        n: 634106827533765855,
-    };
-    const INV24: Self = Self {
-        n: 1104883108581561717,
-    };
-    const INV30: Self = Self {
-        n: 422737885022510570,
-    };
-    const INV120: Self = Self {
-        n: 682145223559051147,
-    };
-    const INV3_MUL2: Self = Self {
-        n: 384307168202282337,
-    };
-    const INV4_MUL5: Self = Self {
-        n: 864691128455135258,
-    };
-    const INV12_MUL5: Self = Self {
-        n: 672537544353994089,
-    };
-    const INV12_MUL7: Self = Self {
-        n: 480383960252852921,
-    };
-    const INV24_MUL7: Self = Self {
-        n: 816652732429849965,
-    };
 }
 
 impl BalancedRepresentative for LMField {

@@ -24,7 +24,6 @@ use crate::branchless::{BlAbs, BlAssign, BlOption};
 use crate::convolution::Negacyclic;
 use crate::gcd::gcd_inner;
 use crate::integer::Integer;
-use crate::polynomial::interpolation::InterpolationConsts;
 use crate::symmetric::{Absorb, Duplexer, Squeeze};
 use core::array;
 use core::fmt::{Debug, Formatter, Result};
@@ -495,51 +494,6 @@ impl IntegerModRing for PervushinField {
 
     const BITS: u32 = 61;
     const MODULUS: Self::Modulus = 2305843009213693951;
-}
-
-impl InterpolationConsts for PervushinField {
-    const INV2: Self = Self {
-        n: -1152921504606846975,
-    };
-    const INV3: Self = Self {
-        n: -768614336404564650,
-    };
-    const INV4: Self = Self {
-        n: 576460752303423488,
-    };
-    const INV6: Self = Self {
-        n: -384307168202282325,
-    };
-    const INV12: Self = Self {
-        n: 960767920505705813,
-    };
-    const INV20: Self = Self {
-        n: 1037629354146162278,
-    };
-    const INV24: Self = Self {
-        n: -672537544353994069,
-    };
-    const INV30: Self = Self {
-        n: -76861433640456465,
-    };
-    const INV120: Self = Self {
-        n: -595676110713537604,
-    };
-    const INV3_MUL2: Self = Self {
-        n: 768614336404564651,
-    };
-    const INV4_MUL5: Self = Self {
-        n: 576460752303423489,
-    };
-    const INV12_MUL5: Self = Self {
-        n: 192153584101141163,
-    };
-    const INV12_MUL7: Self = Self {
-        n: -192153584101141162,
-    };
-    const INV24_MUL7: Self = Self {
-        n: -96076792050570581,
-    };
 }
 
 impl BalancedRepresentative for PervushinField {
