@@ -16,27 +16,9 @@
  */
 
 use blacknet_crypto::algebra::Tensor;
-use blacknet_crypto::matrix::{DenseMatrix, IdentityMatrix};
+use blacknet_crypto::matrix::{DenseMatrix, IdentityMatrix, ScalarMatrix};
 
 type R = blacknet_crypto::uring::U32Ring;
-
-#[test]
-#[rustfmt::skip]
-fn cmp() {
-    let a = IdentityMatrix::new(2);
-    let b = DenseMatrix::<R>::new(2, 2, [
-        1, 0,
-        0, 1,
-    ].map(R::from).into());
-    let c = DenseMatrix::<R>::new(2, 2, [
-        1, 0,
-        0, 2,
-    ].map(R::from).into());
-    assert_eq!(a, b);
-    assert_eq!(b, a);
-    assert_ne!(a, c);
-    assert_ne!(c, a);
-}
 
 #[test]
 #[rustfmt::skip]
@@ -46,12 +28,7 @@ fn tensor() {
         5, 6,
         8, 9,
     ].map(R::from).into());
-    let c = DenseMatrix::<R>::new(4, 4, [
-         5, 6, 0, 0,
-         8, 9, 0, 0,
-         0, 0, 5, 6,
-         0, 0, 8, 9,
-    ].map(R::from).into());
+    let c = ScalarMatrix::<DenseMatrix<R>>::new(2, b.clone());
     assert_eq!(a.tensor(b), c);
 }
 
@@ -59,7 +36,8 @@ fn tensor() {
 fn trace() {
     let a = IdentityMatrix::new(4);
     let b = R::from(4);
-    assert_eq!(a.trace::<R>(), b);
+    let c: R = a.trace();
+    assert_eq!(c, b);
 }
 
 #[test]

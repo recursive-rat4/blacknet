@@ -17,7 +17,7 @@
 
 use crate::algebra::{AlgebraOps, IntegerModRing, PolynomialRing, Tensor, UnitalAlgebra};
 use crate::integer::Integer;
-use crate::matrix::{DenseMatrix, DenseVector, IdentityMatrix};
+use crate::matrix::{DenseMatrix, DenseVector, IdentityMatrix, ScalarMatrix};
 use alloc::vec;
 use alloc::vec::Vec;
 use core::iter::zip;
@@ -103,7 +103,7 @@ pub fn matrix<Z: IntegerModRing + Clone, R: PolynomialRing<Z> + Clone>(
     radix: &Z,
     m: usize,
     n: usize,
-) -> DenseMatrix<R> {
+) -> ScalarMatrix<DenseMatrix<R>> {
     debug_assert!(n >= 2);
     let mut powers = Vec::<R>::with_capacity(n);
     powers.push(R::ONE);

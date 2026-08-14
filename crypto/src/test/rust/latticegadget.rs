@@ -38,7 +38,7 @@ fn matrix() {
             R::from([4295098374, 0].map(Z::with_int)),
      ].into());
     let g = latticegadget::matrix::<Z, R>(&Z::from(65536), 2, 4);
-    assert_eq!(&a * g.transpose(), b);
+    assert_eq!(&a * &g.transpose(), b);
     let c = latticegadget::decompose_matrix(&b, 65535, 16, 4);
     assert_eq!(c, a);
 }

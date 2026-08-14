@@ -224,6 +224,10 @@ name = "scalar25519"
 path = "src/test/rust/scalar25519.rs"
 
 [[test]]
+name = "scalarmatrix"
+path = "src/test/rust/scalarmatrix.rs"
+
+[[test]]
 name = "sparsematrix"
 path = "src/test/rust/sparsematrix.rs"
 

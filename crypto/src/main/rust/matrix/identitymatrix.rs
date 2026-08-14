@@ -16,7 +16,7 @@
  */
 
 use crate::algebra::{One, Tensor, Zero};
-use crate::matrix::DenseMatrix;
+use crate::matrix::{DenseMatrix, ScalarMatrix};
 use alloc::vec;
 use core::iter::Sum;
 use serde::{Deserialize, Serialize};
@@ -43,32 +43,8 @@ impl IdentityMatrix {
         self.dimension
     }
 
-    pub fn trace<T: One + Zero + Sum<T>>(&self) -> T {
+    pub fn trace<T: One + Sum<T>>(&self) -> T {
         (0..self.dimension).map(|_| T::ONE).sum()
-    }
-}
-
-impl<T: One + Zero + PartialEq> PartialEq<DenseMatrix<T>> for IdentityMatrix {
-    #[inline]
-    fn eq(&self, rps: &DenseMatrix<T>) -> bool {
-        *rps == *self
-    }
-}
-
-impl<T: One + Zero + PartialEq> PartialEq<IdentityMatrix> for DenseMatrix<T> {
-    fn eq(&self, rps: &IdentityMatrix) -> bool {
-        if self.rows() != rps.dimension || self.columns() != rps.dimension {
-            return false;
-        }
-        for i in 0..self.rows() {
-            for j in 0..self.columns() {
-                let e = &self[(i, j)];
-                if (i != j && *e != T::ZERO) || (i == j && *e != T::ONE) {
-                    return false;
-                }
-            }
-        }
-        true
     }
 }
 
@@ -83,46 +59,38 @@ impl<T: One + Zero + Clone> From<IdentityMatrix> for DenseMatrix<T> {
     }
 }
 
-impl<T: One + Zero + Clone> Tensor<DenseMatrix<T>> for IdentityMatrix {
-    type Output = DenseMatrix<T>;
+impl<T> Tensor<DenseMatrix<T>> for IdentityMatrix {
+    type Output = ScalarMatrix<DenseMatrix<T>>;
 
     #[inline]
     fn tensor(self, rps: DenseMatrix<T>) -> Self::Output {
-        self.tensor(&rps)
+        ScalarMatrix::new(self.dimension, rps)
     }
 }
 
-impl<T: One + Zero + Clone> Tensor<&DenseMatrix<T>> for IdentityMatrix {
-    type Output = DenseMatrix<T>;
+impl<T: Clone> Tensor<&DenseMatrix<T>> for IdentityMatrix {
+    type Output = ScalarMatrix<DenseMatrix<T>>;
 
+    #[inline]
     fn tensor(self, rps: &DenseMatrix<T>) -> Self::Output {
-        let rows = self.rows() * rps.rows();
-        let columns = self.columns() * rps.columns();
-        let mut elements = vec![T::ZERO; rows * columns];
-        for i in 0..self.rows() {
-            for (j, row) in rps.iter_row().enumerate() {
-                let offset = (i * rps.rows() + j) * columns + i * rps.columns();
-                elements[offset..offset + rps.columns()].clone_from_slice(row)
-            }
-        }
-        DenseMatrix::new(rows, columns, elements)
+        self.tensor(rps.clone())
     }
 }
 
-impl<T: One + Zero + Clone> Tensor<DenseMatrix<T>> for &IdentityMatrix {
-    type Output = DenseMatrix<T>;
+impl<T> Tensor<DenseMatrix<T>> for &IdentityMatrix {
+    type Output = ScalarMatrix<DenseMatrix<T>>;
 
     #[inline]
     fn tensor(self, rps: DenseMatrix<T>) -> Self::Output {
-        (*self).tensor(&rps)
-    }
-}
-
-impl<T: One + Zero + Clone> Tensor<&DenseMatrix<T>> for &IdentityMatrix {
-    type Output = DenseMatrix<T>;
-
-    #[inline]
-    fn tensor(self, rps: &DenseMatrix<T>) -> Self::Output {
         (*self).tensor(rps)
+    }
+}
+
+impl<T: Clone> Tensor<&DenseMatrix<T>> for &IdentityMatrix {
+    type Output = ScalarMatrix<DenseMatrix<T>>;
+
+    #[inline]
+    fn tensor(self, rps: &DenseMatrix<T>) -> Self::Output {
+        (*self).tensor(rps.clone())
     }
 }
