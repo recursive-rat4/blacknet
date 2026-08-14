@@ -28,7 +28,7 @@ use serde::{Deserialize, Serialize};
 use zeroize::DefaultIsZeroes;
 
 macro_rules! impl_uring {
-    ( $($x:tt, $int:ty, $sint:ty, $long:ty, $bits:literal, $modulus:literal),+ ) => {
+    ( $($x:tt, $int:ty, $sint:ty, $long:ty, $modulus:literal),+ ) => {
         $(
             #[doc = concat!(stringify!($int), " as ring.")]
             #[derive(Clone, Copy, Default, Deserialize, Eq, PartialEq, Serialize)]
@@ -343,7 +343,7 @@ macro_rules! impl_uring {
                     self.balanced().bl_unsigned_abs()
                 }
 
-                const BITS: u32 = $bits;
+                const BITS: u32 = <$int>::BITS;
                 const MODULUS: $long = $modulus;
             }
 
@@ -423,24 +423,20 @@ impl_uring!(
     u8,
     i8,
     u16,
-    8,
     256,
     U16Ring,
     u16,
     i16,
     u32,
-    16,
     65536,
     U32Ring,
     u32,
     i32,
     u64,
-    32,
     4294967296,
     U64Ring,
     u64,
     i64,
     u128,
-    64,
     18446744073709551616
 );
