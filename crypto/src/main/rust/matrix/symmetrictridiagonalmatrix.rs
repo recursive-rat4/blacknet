@@ -23,14 +23,6 @@ use core::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 use serde::{Deserialize, Serialize};
 
 /// A matrix that is both symmetric and tridiagonal.
-///
-/// # Panics
-///
-/// In debug builds, panic on incompatible dimensions.
-///
-/// # Safety
-///
-/// In release builds, undefined behaviour on incompatible dimensions.
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 pub struct SymmetricTridiagonalMatrix<T: Zero> {
     elements: Vec<T>,

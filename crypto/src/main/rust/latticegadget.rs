@@ -115,7 +115,7 @@ pub fn matrix<Z: IntegerModRing + Clone, R: PolynomialRing<Z> + Clone>(
     }
 
     let powers = DenseMatrix::<R>::new(1, n, powers);
-    let identity = IdentityMatrix::<R>::new(m);
+    let identity = IdentityMatrix::new(m);
     identity.tensor(powers)
 }
 

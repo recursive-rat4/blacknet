@@ -33,14 +33,6 @@ use serde::{Deserialize, Serialize};
 /// A row (column) vector is a `1 × n` (`m × 1`) matrix.
 ///
 /// Multiplication is defined as the Hadamard product.
-///
-/// # Panics
-///
-/// In debug builds, panic on incompatible dimensions.
-///
-/// # Safety
-///
-/// In release builds, undefined behaviour on incompatible dimensions.
 #[derive(Clone, Default, Deserialize, Eq, PartialEq, Serialize)]
 pub struct DenseVector<T> {
     elements: Vec<T>,

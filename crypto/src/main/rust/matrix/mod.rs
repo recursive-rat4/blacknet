@@ -16,6 +16,14 @@
  */
 
 //! Matrix is a rectangular array of mathematical objects as entries.
+//!
+//! # Panics
+//!
+//! In debug builds, panic on incompatible dimensions.
+//!
+//! # Safety
+//!
+//! In release builds, undefined behaviour on incompatible dimensions.
 
 mod densematrix;
 mod densevector;

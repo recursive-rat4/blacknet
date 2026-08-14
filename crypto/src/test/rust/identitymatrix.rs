@@ -23,7 +23,7 @@ type R = blacknet_crypto::uring::U32Ring;
 #[test]
 #[rustfmt::skip]
 fn cmp() {
-    let a = IdentityMatrix::<R>::new(2);
+    let a = IdentityMatrix::new(2);
     let b = DenseMatrix::<R>::new(2, 2, [
         1, 0,
         0, 1,
@@ -41,7 +41,7 @@ fn cmp() {
 #[test]
 #[rustfmt::skip]
 fn tensor() {
-    let a = IdentityMatrix::<R>::new(2);
+    let a = IdentityMatrix::new(2);
     let b = DenseMatrix::<R>::new(2, 2, [
         5, 6,
         8, 9,
@@ -57,15 +57,15 @@ fn tensor() {
 
 #[test]
 fn trace() {
-    let a = IdentityMatrix::<R>::new(4);
+    let a = IdentityMatrix::new(4);
     let b = R::from(4);
-    assert_eq!(a.trace(), b);
+    assert_eq!(a.trace::<R>(), b);
 }
 
 #[test]
 #[rustfmt::skip]
 fn into() {
-    let a = IdentityMatrix::<R>::new(3);
+    let a = IdentityMatrix::new(3);
     let b = DenseMatrix::<R>::new(3, 3, [
         1, 0, 0,
         0, 1, 0,

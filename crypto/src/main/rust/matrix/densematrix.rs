@@ -26,14 +26,6 @@ use rayon::slice::ParallelSlice;
 use serde::{Deserialize, Serialize};
 
 /// A matrix in the row-major order.
-///
-/// # Panics
-///
-/// In debug builds, panic on incompatible dimensions.
-///
-/// # Safety
-///
-/// In release builds, undefined behaviour on incompatible dimensions.
 #[derive(Clone, Debug, Default, Deserialize, Eq, Serialize)]
 pub struct DenseMatrix<T> {
     rows: usize,

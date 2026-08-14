@@ -24,14 +24,6 @@ use core::ops::{Add, AddAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAs
 use serde::{Deserialize, Serialize};
 
 /// A square matrix that is equal to its transpose.
-///
-/// # Panics
-///
-/// In debug builds, panic on incompatible dimensions.
-///
-/// # Safety
-///
-/// In release builds, undefined behaviour on incompatible dimensions.
 #[derive(Clone, Debug, Default, Deserialize, Eq, Serialize)]
 pub struct SymmetricMatrix<T> {
     dimension: usize,
