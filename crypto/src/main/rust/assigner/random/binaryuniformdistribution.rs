@@ -53,13 +53,7 @@ impl<'a, Z: IntegerModRing> BinaryUniformDistribution<'a, Z> {
     }
 
     fn to_bits(integer: &Z) -> Vec<Z> {
-        decompose_integer(
-            integer,
-            Z::Int::LIMB_ONE,
-            Z::Int::LIMB_ONE,
-            Z::BITS as usize,
-        )
-        .into()
+        decompose_integer(integer, Z::Int::LIMB_ONE, Z::Int::LIMB_ONE, Z::BITS).into()
     }
 }
 

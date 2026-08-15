@@ -33,7 +33,7 @@ impl<R: UnitalSemiring + Eq> Expression<R> for LinearMonoid<R> {
         self.factors.into()
     }
 
-    fn degree(&self) -> usize {
+    fn degree(&self) -> u32 {
         self.factors.iter().map(Expression::degree).sum()
     }
 }

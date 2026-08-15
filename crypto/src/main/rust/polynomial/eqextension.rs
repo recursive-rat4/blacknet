@@ -120,7 +120,7 @@ where
     type Point = Point<R>;
 
     fn point(&self, point: &Point<R>) -> R {
-        debug_assert_eq!(self.coefficients.len(), point.dimension());
+        debug_assert_eq!(self.coefficients.len(), point.dimension() as usize);
         &self.z
             * zip(&self.coefficients, point)
                 .map(|(c, p)| (c * p).double() - c - p + R::ONE)
@@ -141,12 +141,12 @@ where
         self.z_with_var::<VAL>()
     }
 
-    fn degree(&self) -> usize {
+    fn degree(&self) -> u32 {
         1
     }
 
-    fn variables(&self) -> usize {
-        self.coefficients.len()
+    fn variables(&self) -> u32 {
+        self.coefficients.len() as u32
     }
 }
 

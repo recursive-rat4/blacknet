@@ -44,7 +44,7 @@ impl<R: UnitalSemiring + Eq> Expression<R> for LinearTerm<R> {
         vec![self.into()].into()
     }
 
-    fn degree(&self) -> usize {
+    fn degree(&self) -> u32 {
         if self.coefficient != Constant::ZERO {
             1
         } else {

@@ -27,12 +27,12 @@ use alloc::vec;
 use alloc::vec::Vec;
 use core::cell::{Cell, RefCell};
 use core::fmt::{Display, Formatter, Result};
-use core::iter::zip;
+use core::iter::{repeat_with, zip};
 
 /// An expression to be constrained.
 pub trait Expression<R: UnitalSemiring> {
     fn span(self) -> LinearSpan<R>;
-    fn degree(&self) -> usize;
+    fn degree(&self) -> u32;
 }
 
 /// An equivalence constraint.
@@ -43,15 +43,15 @@ pub struct Constraint<R: UnitalSemiring> {
 
 /// The builder.
 pub struct CircuitBuilder<R: UnitalSemiring> {
-    shape: [usize; 2],
-    public_inputs: Cell<usize>,
-    public_offset: Cell<usize>,
-    private_inputs: Cell<usize>,
-    private_offset: Cell<usize>,
-    auxiliaries: Cell<usize>,
-    auxiliary_offset: Cell<usize>,
+    shape: [u32; 2],
+    public_inputs: Cell<u32>,
+    public_offset: Cell<u32>,
+    private_inputs: Cell<u32>,
+    private_offset: Cell<u32>,
+    auxiliaries: Cell<u32>,
+    auxiliary_offset: Cell<u32>,
     laid_out: Cell<bool>,
-    constraints: Cell<usize>,
+    constraints: Cell<u32>,
     lps_matrices: RefCell<Vec<SparseMatrixBuilder<R>>>,
     rps_matrices: RefCell<Vec<SparseMatrixBuilder<R>>>,
     scopes: RefCell<Tree<ScopeInfo>>,
@@ -65,9 +65,13 @@ impl<R: UnitalSemiring> CircuitBuilder<R> {
     }
 
     /// Construct a new builder.
-    pub fn with_shape(shape: [usize; 2]) -> Self {
-        let lps_matrices = (0..shape[0]).map(|_| SparseMatrixBuilder::new()).collect();
-        let rps_matrices = (0..shape[1]).map(|_| SparseMatrixBuilder::new()).collect();
+    pub fn with_shape(shape: [u32; 2]) -> Self {
+        let lps_matrices = repeat_with(|| SparseMatrixBuilder::new())
+            .take(shape[0] as usize)
+            .collect();
+        let rps_matrices = repeat_with(|| SparseMatrixBuilder::new())
+            .take(shape[1] as usize)
+            .collect();
         let (tree, root) = Tree::with_root(ScopeInfo::root());
         Self {
             shape,
@@ -87,17 +91,17 @@ impl<R: UnitalSemiring> CircuitBuilder<R> {
     }
 
     /// Shape of circuit.
-    pub const fn shape(&self) -> &[usize] {
+    pub const fn shape(&self) -> &[u32] {
         &self.shape
     }
 
     /// Number of constraints.
-    pub const fn constraints(&self) -> usize {
+    pub const fn constraints(&self) -> u32 {
         self.constraints.get()
     }
 
     /// Number of variables.
-    pub const fn variables(&self) -> usize {
+    pub const fn variables(&self) -> u32 {
         1 + self.public_inputs.get() + self.private_inputs.get() + self.auxiliaries.get()
     }
 
@@ -192,7 +196,7 @@ impl<R: UnitalSemiring + Clone + Eq> CircuitBuilder<R> {
 
         let (lps_span, rps_span) = (constraint.lps, constraint.rps);
         let mut lps_matrices = self.lps_matrices.borrow_mut();
-        let (lps_put, lps_pad) = lps_matrices.split_at_mut(lps_span.dimension());
+        let (lps_put, lps_pad) = lps_matrices.split_at_mut(lps_span.dimension() as usize);
         for (matrix, lc) in zip(lps_put, lps_span) {
             self.put(matrix, lc)
         }
@@ -200,7 +204,7 @@ impl<R: UnitalSemiring + Clone + Eq> CircuitBuilder<R> {
             self.pad(matrix)
         }
         let mut rps_matrices = self.rps_matrices.borrow_mut();
-        let (rps_put, rps_pad) = rps_matrices.split_at_mut(rps_span.dimension());
+        let (rps_put, rps_pad) = rps_matrices.split_at_mut(rps_span.dimension() as usize);
         for (matrix, lc) in zip(rps_put, rps_span) {
             self.put(matrix, lc)
         }
@@ -214,7 +218,7 @@ impl<R: UnitalSemiring + Clone + Eq> CircuitBuilder<R> {
 
     fn put(&self, m: &mut SparseMatrixBuilder<R>, lc: LinearCombination<R>) {
         for term in lc.terms {
-            let column: usize = match term.variable.kind() {
+            let column: u32 = match term.variable.kind() {
                 VariableKind::Constant => 0,
                 VariableKind::Public => self.public_offset.get() + term.variable.number(),
                 VariableKind::Private => self.private_offset.get() + term.variable.number(),
@@ -352,8 +356,8 @@ impl<'a, R: UnitalSemiring> Drop for Scope<'a, R> {
 
 struct ScopeInfo {
     name: &'static str,
-    constraints: usize,
-    variables: usize,
+    constraints: u32,
+    variables: u32,
 }
 
 impl ScopeInfo {

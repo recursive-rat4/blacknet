@@ -25,9 +25,9 @@ pub struct Assigment<S: Set> {
 }
 
 impl<S: Set> Assigment<S> {
-    pub fn new(variables: usize) -> Self {
+    pub fn new(variables: u32) -> Self {
         Self {
-            assigment: RefCell::new(Vec::with_capacity(variables)),
+            assigment: RefCell::new(Vec::with_capacity(variables as usize)),
         }
     }
 

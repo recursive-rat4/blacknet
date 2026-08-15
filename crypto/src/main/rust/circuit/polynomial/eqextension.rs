@@ -20,7 +20,7 @@ use crate::circuit::builder::{CircuitBuilder, Constant, LinearCombination, Varia
 use crate::circuit::polynomial::Point;
 use alloc::vec;
 use alloc::vec::Vec;
-use core::iter::zip;
+use core::iter::{repeat_with, zip};
 
 pub struct EqExtension<'a, R: UnitalRing> {
     circuit: &'a CircuitBuilder<R>,
@@ -38,12 +38,12 @@ impl<'a, R: UnitalRing + Clone + Eq> EqExtension<'a, R> {
         }
     }
 
-    pub fn allocate(circuit: &'a CircuitBuilder<R>, kind: VariableKind, variables: usize) -> Self {
+    pub fn allocate(circuit: &'a CircuitBuilder<R>, kind: VariableKind, variables: u32) -> Self {
         let scope = circuit.scope("EqExtension::allocate");
         Self {
             circuit,
-            coefficients: (0..variables)
-                .map(|_| scope.variable(kind).into())
+            coefficients: repeat_with(|| scope.variable(kind).into())
+                .take(variables as usize)
                 .collect(),
         }
     }

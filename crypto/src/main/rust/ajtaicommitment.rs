@@ -20,6 +20,7 @@ use crate::commitmentscheme::CommitmentScheme;
 use crate::matrix::{DenseMatrix, DenseVector};
 use crate::norm::{EuclideanNorm, InfinityNorm, L2, LInf, NormBound};
 use crate::random::UniformGenerator;
+use core::iter::repeat_with;
 use core::ops::Mul;
 
 // https://www.cs.sjsu.edu/faculty/pollett/masters/Semesters/Spring21/michaela/files/Ajtai96.pdf
@@ -42,26 +43,24 @@ impl<R: UnitalRing, Lp, Length> AjtaiCommitment<R, Lp, Length> {
     }
 
     /// Short Integer Solution
-    pub fn sis(
-        g: &mut impl UniformGenerator<Output = R>,
-        rows: usize,
-        columns: usize,
-    ) -> DenseMatrix<R>
+    pub fn sis(g: &mut impl UniformGenerator<Output = R>, rows: u32, columns: u32) -> DenseMatrix<R>
     where
         R: IntegerModRing,
     {
         DenseMatrix::<R>::new(
             rows,
             columns,
-            (0..rows * columns).map(|_| g.generate()).collect(),
+            repeat_with(|| g.generate())
+                .take(rows as usize * columns as usize)
+                .collect(),
         )
     }
 
     /// Module Short Integer Solution
     pub fn msis<Z: IntegerModRing>(
         g: &mut impl UniformGenerator<Output = R>,
-        rows: usize,
-        columns: usize,
+        rows: u32,
+        columns: u32,
     ) -> DenseMatrix<R>
     where
         R: PolynomialRing<Z>,
@@ -69,7 +68,9 @@ impl<R: UnitalRing, Lp, Length> AjtaiCommitment<R, Lp, Length> {
         DenseMatrix::<R>::new(
             rows,
             columns,
-            (0..rows * columns).map(|_| g.generate()).collect(),
+            repeat_with(|| g.generate())
+                .take(rows as usize * columns as usize)
+                .collect(),
         )
     }
 }

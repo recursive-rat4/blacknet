@@ -18,6 +18,7 @@
 use crate::algebra::{IntegerModRing, RingOps};
 use crate::matrix::{DenseMatrix, DenseVector};
 use crate::random::{Distribution, UniformGenerator};
+use core::iter::repeat_with;
 
 /// A modular Johnson–Lindenstrauss variant.
 ///
@@ -27,11 +28,13 @@ pub struct JohnsonLindenstrauss<Z: IntegerModRing> {
 }
 
 impl<Z: IntegerModRing> JohnsonLindenstrauss<Z> {
-    const K: usize = 256;
+    const K: u32 = 256;
 
-    pub fn random<G: UniformGenerator<Output = u8>>(generator: &mut G, n: usize) -> Self {
+    pub fn random<G: UniformGenerator<Output = u8>>(generator: &mut G, n: u32) -> Self {
         let mut dst = WeightedDistribution::new();
-        let elements = (0..Self::K * n).map(|_| dst.sample(generator)).collect();
+        let elements = repeat_with(|| dst.sample(generator))
+            .take(Self::K as usize * n as usize)
+            .collect();
         let map = DenseMatrix::new(Self::K, n, elements);
         Self { map }
     }

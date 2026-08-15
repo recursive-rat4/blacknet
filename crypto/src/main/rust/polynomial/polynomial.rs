@@ -37,9 +37,9 @@ pub trait MultivariatePolynomial: Polynomial {
     fn sum_with_var<const VAL: i8>(&self) -> Self::Coefficient;
 
     /// The individual degree.
-    fn degree(&self) -> usize;
+    fn degree(&self) -> u32;
     /// The number of indeterminates.
-    fn variables(&self) -> usize;
+    fn variables(&self) -> u32;
 }
 
 /// A polynomial in certain basis.

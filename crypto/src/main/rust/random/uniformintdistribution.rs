@@ -24,7 +24,7 @@ use core::ops::{Bound, RangeBounds};
 pub struct UniformIntDistribution<I: Integer, G: UniformGenerator<Output = u8>> {
     min: I,
     length: I::CastUnsigned,
-    length_bytes: usize,
+    length_bytes: u32,
     mask: I::CastUnsigned,
     phantom: PhantomData<G>,
 }
@@ -69,8 +69,8 @@ impl<I: Integer, G: UniformGenerator<Output = u8>> UniformIntDistribution<I, G> 
         I::CastUnsigned::BITS - length.leading_zeros()
     }
 
-    const fn length_bytes(length_bits: u32) -> usize {
-        (length_bits.next_multiple_of(8) >> 3) as usize
+    const fn length_bytes(length_bits: u32) -> u32 {
+        length_bits.next_multiple_of(8) >> 3
     }
 
     #[inline]
@@ -85,7 +85,7 @@ impl<I: Integer, G: UniformGenerator<Output = u8>> UniformIntDistribution<I, G> 
 
     fn next(&self, generator: &mut G) -> I::CastUnsigned {
         let mut bytes = <I::CastUnsigned as Integer>::Bytes::default();
-        generator.fill(&mut bytes.borrow_mut()[..self.length_bytes]);
+        generator.fill(&mut bytes.borrow_mut()[..self.length_bytes as usize]);
         let int = I::CastUnsigned::from_le_bytes(bytes);
         int & self.mask
     }

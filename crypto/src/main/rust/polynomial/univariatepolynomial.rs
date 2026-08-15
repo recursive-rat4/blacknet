@@ -114,19 +114,19 @@ impl<R: UnitalSemiring> DerefMut for UnivariatePolynomial<R> {
     }
 }
 
-impl<R: UnitalSemiring> Index<usize> for UnivariatePolynomial<R> {
+impl<R: UnitalSemiring> Index<u32> for UnivariatePolynomial<R> {
     type Output = R;
 
     #[inline]
-    fn index(&self, index: usize) -> &Self::Output {
-        &self.coefficients[index]
+    fn index(&self, index: u32) -> &Self::Output {
+        &self.coefficients[index as usize]
     }
 }
 
-impl<R: UnitalSemiring> IndexMut<usize> for UnivariatePolynomial<R> {
+impl<R: UnitalSemiring> IndexMut<u32> for UnivariatePolynomial<R> {
     #[inline]
-    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
-        &mut self.coefficients[index]
+    fn index_mut(&mut self, index: u32) -> &mut Self::Output {
+        &mut self.coefficients[index as usize]
     }
 }
 

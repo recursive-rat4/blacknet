@@ -34,13 +34,15 @@ impl<'a, R: UnitalRing> Proof<'a, R> {
         Self { claims, assigment }
     }
 
-    pub fn recover(&self, index: usize, degree: usize, sum: &R) -> UnivariatePolynomial<'a, R>
+    pub fn recover(&self, index: u32, degree: u32, sum: &R) -> UnivariatePolynomial<'a, R>
     where
         R: Clone,
         for<'b> &'b R: RingOps<R>,
     {
-        let claim = &self.claims[index * degree..(index + 1) * degree];
-        let mut coefficients = Vec::<R>::with_capacity(degree + 1);
+        let begin = index as usize * degree as usize;
+        let end = begin + degree as usize;
+        let claim = &self.claims[begin..end];
+        let mut coefficients = Vec::<R>::with_capacity(degree as usize + 1);
         coefficients.push(claim[0].clone());
         coefficients.push(sum - (&claim[0]).double());
         for coefficient in claim.iter().skip(1) {
@@ -92,7 +94,7 @@ impl<
     where
         for<'b> &'b R: RingOps<R>,
     {
-        let mut coordinates = Vec::<R>::with_capacity(polynomial.variables());
+        let mut coordinates = Vec::<R>::with_capacity(polynomial.variables() as usize);
         for i in 0..polynomial.variables() {
             let claim = proof.recover(i, polynomial.degree(), &sum);
             duplex.absorb(&claim);

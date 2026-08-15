@@ -28,8 +28,8 @@ pub struct LinearSpan<R: UnitalSemiring> {
 }
 
 impl<R: UnitalSemiring> LinearSpan<R> {
-    pub const fn dimension(&self) -> usize {
-        self.vectors.len()
+    pub const fn dimension(&self) -> u32 {
+        self.vectors.len() as u32
     }
 }
 
@@ -70,11 +70,11 @@ impl<R: UnitalSemiring> Deref for LinearSpan<R> {
     }
 }
 
-impl<R: UnitalSemiring> Index<usize> for LinearSpan<R> {
+impl<R: UnitalSemiring> Index<u32> for LinearSpan<R> {
     type Output = LinearCombination<R>;
 
-    fn index(&self, dimension: usize) -> &Self::Output {
-        &self.vectors[dimension]
+    fn index(&self, dimension: u32) -> &Self::Output {
+        &self.vectors[dimension as usize]
     }
 }
 

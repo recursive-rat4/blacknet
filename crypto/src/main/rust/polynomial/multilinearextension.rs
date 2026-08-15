@@ -202,19 +202,19 @@ impl<R: UnitalRing> DerefMut for MultilinearExtension<R> {
     }
 }
 
-impl<R: UnitalRing> Index<usize> for MultilinearExtension<R> {
+impl<R: UnitalRing> Index<u32> for MultilinearExtension<R> {
     type Output = R;
 
     #[inline]
-    fn index(&self, index: usize) -> &Self::Output {
-        &self.coefficients[index]
+    fn index(&self, index: u32) -> &Self::Output {
+        &self.coefficients[index as usize]
     }
 }
 
-impl<R: UnitalRing> IndexMut<usize> for MultilinearExtension<R> {
+impl<R: UnitalRing> IndexMut<u32> for MultilinearExtension<R> {
     #[inline]
-    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
-        &mut self.coefficients[index]
+    fn index_mut(&mut self, index: u32) -> &mut Self::Output {
+        &mut self.coefficients[index as usize]
     }
 }
 
@@ -312,12 +312,12 @@ where
         }
     }
 
-    fn degree(&self) -> usize {
+    fn degree(&self) -> u32 {
         1
     }
 
-    fn variables(&self) -> usize {
-        self.coefficients.len().trailing_zeros() as usize
+    fn variables(&self) -> u32 {
+        self.coefficients.len().trailing_zeros()
     }
 }
 
@@ -338,7 +338,7 @@ where
 {
     fn tensor_basis(&self, point: &Point<R>) -> (DenseVector<R>, DenseVector<R>) {
         debug_assert_eq!(self.coefficients.len(), 1 << point.dimension());
-        let (left, right) = point.split_at(point.dimension() >> 1);
+        let (left, right) = point.split_at(point.dimension() as usize >> 1);
         (
             EqExtension::<R>::basis(left).into(),
             EqExtension::<R>::basis(right).into(),

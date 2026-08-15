@@ -55,12 +55,12 @@ impl<R: UnitalRing + Clone> Interpolator<R>
 where
     for<'a> &'a R: SemifieldOps<R>,
 {
-    pub fn sequential(start: R, length: usize) -> Option<Self> {
+    pub fn sequential(start: R, length: u32) -> Option<Self> {
         debug_assert!(length >= 1);
-        let mut xs = Vec::<R>::with_capacity(length);
+        let mut xs = Vec::<R>::with_capacity(length as usize);
         xs.push(start);
         for i in 1..length {
-            xs.push(&xs[i - 1] + R::ONE);
+            xs.push(&xs[i as usize - 1] + R::ONE);
         }
         Self::with_xs(&xs)
     }

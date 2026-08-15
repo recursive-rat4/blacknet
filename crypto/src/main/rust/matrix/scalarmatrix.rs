@@ -26,13 +26,13 @@ use serde::{Deserialize, Serialize};
 /// A `n × n` matrix with equal entries on the leading diagonal and empty otherwise..
 #[derive(Clone, Copy, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 pub struct ScalarMatrix<T> {
-    dimension: usize,
+    dimension: u32,
     scalar: T,
 }
 
 impl<T> ScalarMatrix<T> {
     /// Construct a new matrix.
-    pub const fn new(dimension: usize, scalar: T) -> Self {
+    pub const fn new(dimension: u32, scalar: T) -> Self {
         Self { dimension, scalar }
     }
 
@@ -44,12 +44,12 @@ impl<T> ScalarMatrix<T> {
     }
 
     /// A number of rows.
-    pub const fn rows(&self) -> usize {
+    pub const fn rows(&self) -> u32 {
         self.dimension
     }
 
     /// A number of columns.
-    pub const fn columns(&self) -> usize {
+    pub const fn columns(&self) -> u32 {
         self.dimension
     }
 
@@ -57,7 +57,7 @@ impl<T> ScalarMatrix<T> {
     where
         T: for<'a> Sum<&'a T>,
     {
-        repeat_n(&self.scalar, self.dimension).sum()
+        repeat_n(&self.scalar, self.dimension as usize).sum()
     }
 }
 
@@ -70,7 +70,7 @@ impl<T: Clone> ScalarMatrix<DenseMatrix<T>> {
     }
 }
 
-impl<T> From<ScalarMatrix<T>> for (usize, T) {
+impl<T> From<ScalarMatrix<T>> for (u32, T) {
     fn from(matrix: ScalarMatrix<T>) -> Self {
         (matrix.dimension, matrix.scalar)
     }
@@ -78,12 +78,12 @@ impl<T> From<ScalarMatrix<T>> for (usize, T) {
 
 impl<T: Zero + Clone> From<&ScalarMatrix<T>> for DenseMatrix<T> {
     fn from(matrix: &ScalarMatrix<T>) -> Self {
-        let n = matrix.dimension;
+        let n = matrix.dimension as usize;
         let mut elements = vec![T::ZERO; n * n];
         for i in 0..n {
             elements[i * n + i] = matrix.scalar.clone();
         }
-        Self::new(n, n, elements)
+        Self::new(n as u32, n as u32, elements)
     }
 }
 
@@ -97,14 +97,14 @@ where
         debug_assert!(self.columns() == rps.dimension * rps.scalar.rows());
         let rps_columns = rps.dimension * rps.scalar.columns();
         // Iterative algorithm
-        let mut elements = Vec::<T>::with_capacity(self.rows() * rps_columns);
+        let mut elements = Vec::<T>::with_capacity(self.rows() as usize * rps_columns as usize);
         for row in self.iter_row() {
             for i in 0..rps.dimension {
                 for j in 0..rps.scalar.columns() {
                     elements.push(
                         zip(
-                            row.iter().skip(i * rps.scalar.rows()),
-                            rps.scalar.iter_row().map(|row| &row[j]),
+                            row.iter().skip(i as usize * rps.scalar.rows() as usize),
+                            rps.scalar.iter_row().map(|row| &row[j as usize]),
                         )
                         .map(|(l, r)| l * r)
                         .sum(),
@@ -124,8 +124,8 @@ where
 
     fn mul(self, rps: &DenseVector<T>) -> Self::Output {
         debug_assert!(self.dimension * self.scalar.columns() == rps.dimension());
-        let lps = repeat_n(&self.scalar, self.dimension);
-        let rps = rps.chunks_exact(self.scalar.columns());
+        let lps = repeat_n(&self.scalar, self.dimension as usize);
+        let rps = rps.chunks_exact(self.scalar.columns() as usize);
         zip(lps, rps)
             .flat_map(|(lps, rps)| {
                 lps.iter_row()

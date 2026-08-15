@@ -26,13 +26,13 @@ use blacknet_crypto::symmetric::{Blake2bDuplexer, Duplexer, UniformDistribution}
 use criterion::{Criterion, Throughput, criterion_group, criterion_main};
 use std::hint::black_box;
 
-const VARS: usize = 15;
+const VARS: u32 = 15;
 type Z = LMField;
 type D = Blake2bDuplexer;
 type E = UniformDistribution;
 
 fn make_bin() -> (BinarityPolynomial<Z>, Z) {
-    let mut coefficients = Vec::<Z>::with_capacity(1 << VARS);
+    let mut coefficients = Vec::<Z>::with_capacity(1 << VARS as usize);
     (0..1 << VARS).for_each(|i| {
         coefficients.push(if i & 1 == 1 { Z::ONE } else { Z::ZERO });
     });
@@ -41,7 +41,7 @@ fn make_bin() -> (BinarityPolynomial<Z>, Z) {
 
 fn make_eq() -> (EqExtension<Z>, Z) {
     let mut i = Z::ONE;
-    let mut coefficients = Vec::<Z>::with_capacity(VARS);
+    let mut coefficients = Vec::<Z>::with_capacity(VARS as usize);
     (0..VARS).for_each(|_| {
         coefficients.push(i);
         i += Z::ONE;
@@ -50,8 +50,8 @@ fn make_eq() -> (EqExtension<Z>, Z) {
 }
 
 fn make_mask() -> (MaskingPolynomial<Z>, Z) {
-    let degree = 2;
-    let len = 1 + degree * VARS;
+    let degree = 2u32;
+    let len = 1 + degree as usize * VARS as usize;
     let mut i = Z::ONE;
     let mut coefficients = Vec::<Z>::with_capacity(len);
     (0..len).for_each(|_| {
@@ -66,7 +66,7 @@ fn make_mask() -> (MaskingPolynomial<Z>, Z) {
 fn make_mle() -> (MultilinearExtension<Z>, Z) {
     let mut i = Z::ZERO;
     let mut sum = Z::ZERO;
-    let mut coefficients = Vec::<Z>::with_capacity(1 << VARS);
+    let mut coefficients = Vec::<Z>::with_capacity(1 << VARS as usize);
     (0..1 << VARS).for_each(|_| {
         coefficients.push(i);
         sum += i;

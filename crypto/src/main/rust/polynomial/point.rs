@@ -34,8 +34,8 @@ impl<S> Point<S> {
         Self { coordinates }
     }
 
-    pub const fn dimension(&self) -> usize {
-        self.coordinates.len()
+    pub const fn dimension(&self) -> u32 {
+        self.coordinates.len() as u32
     }
 
     pub const fn coordinates(&self) -> &Vec<S> {
@@ -115,19 +115,19 @@ impl<S> DerefMut for Point<S> {
     }
 }
 
-impl<S> Index<usize> for Point<S> {
+impl<S> Index<u32> for Point<S> {
     type Output = S;
 
     #[inline]
-    fn index(&self, index: usize) -> &Self::Output {
-        &self.coordinates[index]
+    fn index(&self, index: u32) -> &Self::Output {
+        &self.coordinates[index as usize]
     }
 }
 
-impl<S> IndexMut<usize> for Point<S> {
+impl<S> IndexMut<u32> for Point<S> {
     #[inline]
-    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
-        &mut self.coordinates[index]
+    fn index_mut(&mut self, index: u32) -> &mut Self::Output {
+        &mut self.coordinates[index as usize]
     }
 }
 
@@ -209,7 +209,8 @@ impl<S: Clone> Concat<Point<S>> for &Point<S> {
     type Output = Point<S>;
 
     fn concat(self, rps: Point<S>) -> Self::Output {
-        let mut coordinates = Vec::<S>::with_capacity(self.dimension() + rps.dimension());
+        let mut coordinates =
+            Vec::<S>::with_capacity(self.dimension() as usize + rps.dimension() as usize);
         let mut rps = rps.coordinates;
         coordinates.extend_from_slice(&self.coordinates);
         coordinates.append(&mut rps);
@@ -221,7 +222,8 @@ impl<S: Clone> Concat for &Point<S> {
     type Output = Point<S>;
 
     fn concat(self, rps: Self) -> Self::Output {
-        let mut coordinates = Vec::<S>::with_capacity(self.dimension() + rps.dimension());
+        let mut coordinates =
+            Vec::<S>::with_capacity(self.dimension() as usize + rps.dimension() as usize);
         coordinates.extend_from_slice(&self.coordinates);
         coordinates.extend_from_slice(&rps.coordinates);
         Self::Output { coordinates }

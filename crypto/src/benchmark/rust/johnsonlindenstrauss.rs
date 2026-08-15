@@ -23,7 +23,7 @@ use std::hint::black_box;
 type Z = blacknet_crypto::lm::LMField;
 type DRG = blacknet_crypto::symmetric::Blake2bDuplexer;
 
-const N: usize = 1024;
+const N: u32 = 1024;
 
 fn criterion_benchmark(crit: &mut Criterion) {
     let mut grp = crit.benchmark_group("JohnsonLindenstrauss");

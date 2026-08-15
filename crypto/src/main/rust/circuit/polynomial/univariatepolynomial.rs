@@ -20,7 +20,7 @@ use crate::circuit::builder::{CircuitBuilder, LinearCombination, VariableKind};
 use crate::polynomial::Polynomial;
 use crate::symmetric::{Absorb, Duplexer};
 use alloc::vec::Vec;
-use core::iter::zip;
+use core::iter::{repeat_with, zip};
 use core::ops::{Add, AddAssign};
 
 pub struct UnivariatePolynomial<'a, R: UnitalSemiring> {
@@ -29,11 +29,13 @@ pub struct UnivariatePolynomial<'a, R: UnitalSemiring> {
 }
 
 impl<'a, R: UnitalSemiring + Clone> UnivariatePolynomial<'a, R> {
-    pub fn allocate(circuit: &'a CircuitBuilder<R>, kind: VariableKind, len: usize) -> Self {
+    pub fn allocate(circuit: &'a CircuitBuilder<R>, kind: VariableKind, len: u32) -> Self {
         let scope = circuit.scope("UnivariatePolynomial::allocate");
         Self {
             circuit,
-            coefficients: (0..len).map(|_| scope.variable(kind).into()).collect(),
+            coefficients: repeat_with(|| scope.variable(kind).into())
+                .take(len as usize)
+                .collect(),
         }
     }
 

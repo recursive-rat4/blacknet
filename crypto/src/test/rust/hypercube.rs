@@ -23,7 +23,7 @@ type R = blacknet_crypto::uring::U32Ring;
 #[test]
 fn index() {
     let hypercube = Hypercube::<R>::new(4);
-    let indices: [usize; 16] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
+    let indices: [u32; 16] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
     let iter = hypercube.iter_index();
     assert_eq!(iter.len(), indices.len());
     zip(iter, indices).for_each(|(a, b)| assert_eq!(a, b));
@@ -51,7 +51,7 @@ fn vertex() {
 fn order2() {
     let hypercube = Hypercube::<R>::new(3);
     #[rustfmt::skip]
-    let indices: [(usize, usize); 8] = [
+    let indices: [(u32, u32); 8] = [
         (0, 0), (0, 1),
         (1, 0), (1, 1),
         (2, 0), (2, 1),

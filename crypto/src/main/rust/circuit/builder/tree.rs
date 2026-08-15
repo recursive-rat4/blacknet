@@ -20,7 +20,7 @@ use alloc::string::String;
 use alloc::vec;
 use alloc::vec::Vec;
 
-pub type NodeId = usize;
+pub type NodeId = u32;
 
 const ROOT_ID: NodeId = 0;
 
@@ -63,12 +63,12 @@ impl<T> Tree<T> {
     }
 
     pub fn ascendant(&self, id: NodeId) -> Option<NodeId> {
-        self.nodes.get(id).map(|node| node.ascendant)?
+        self.nodes.get(id as usize).map(|node| node.ascendant)?
     }
 
     pub fn descend(&mut self, id: NodeId, item: T) -> Option<NodeId> {
-        let new_id = self.nodes.len();
-        let ascendant = self.nodes.get_mut(id)?;
+        let new_id = self.nodes.len() as u32;
+        let ascendant = self.nodes.get_mut(id as usize)?;
         let node = Node::leaf(id, item);
         ascendant.descendants.push(new_id);
         self.nodes.push(node);
@@ -76,7 +76,7 @@ impl<T> Tree<T> {
     }
 
     pub fn get_mut(&mut self, id: NodeId) -> Option<&mut T> {
-        self.nodes.get_mut(id).map(|node| &mut node.item)
+        self.nodes.get_mut(id as usize).map(|node| &mut node.item)
     }
 }
 
@@ -85,7 +85,7 @@ impl<T: Display> Display for Tree<T> {
         let mut stack = vec![(ROOT_ID, String::new(), String::new())];
 
         while let Some((id, prefix, postfix)) = stack.pop() {
-            let node = self.nodes.get(id).expect("Node");
+            let node = self.nodes.get(id as usize).expect("Node");
             writeln!(f, "{prefix}{}", node.item)?;
 
             if let Some(&last) = node.descendants.last() {

@@ -27,14 +27,14 @@ use core::iter::zip;
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct MaskingPolynomial<R: UnitalRing> {
     coefficients: Vec<R>,
-    degree: usize,
-    variables: usize,
+    degree: u32,
+    variables: u32,
 }
 
 impl<R: UnitalRing> MaskingPolynomial<R> {
     /// Construct a new polynomial.
-    pub const fn new(coefficients: Vec<R>, degree: usize, variables: usize) -> Self {
-        debug_assert!(1 + degree * variables == coefficients.len());
+    pub const fn new(coefficients: Vec<R>, degree: u32, variables: u32) -> Self {
+        debug_assert!(1 + degree as usize * variables as usize == coefficients.len());
         Self {
             coefficients,
             degree,
@@ -72,7 +72,7 @@ where
     }
 }
 
-impl<R: UnitalRing> From<MaskingPolynomial<R>> for (Vec<R>, usize, usize) {
+impl<R: UnitalRing> From<MaskingPolynomial<R>> for (Vec<R>, u32, u32) {
     fn from(polynomial: MaskingPolynomial<R>) -> Self {
         (
             polynomial.coefficients,
@@ -97,7 +97,9 @@ where
     type Point = Point<R>;
 
     fn point(&self, point: &Point<R>) -> R {
-        let univariates = self.coefficients[1..].chunks_exact(self.degree).rev();
+        let univariates = self.coefficients[1..]
+            .chunks_exact(self.degree as usize)
+            .rev();
         &self.coefficients[0]
             + zip(univariates, point)
                 .map(|(univariate, coordinate)| Self::eval(univariate, coordinate))
@@ -111,7 +113,7 @@ where
 {
     fn bind(&mut self, value: &R) {
         self.variables -= 1;
-        let new_len = self.coefficients.len() - self.degree;
+        let new_len = self.coefficients.len() - self.degree as usize;
         let univariate = &self.coefficients[new_len..];
         let sigma = Self::eval(univariate, value);
         self.coefficients[0] += sigma;
@@ -119,7 +121,7 @@ where
     }
 
     fn sum_with_var<const VAL: i8>(&self) -> R {
-        let len = self.coefficients.len() - self.degree;
+        let len = self.coefficients.len() - self.degree as usize;
         let univariate = &self.coefficients[len..];
 
         let sigma = match VAL {
@@ -200,11 +202,11 @@ where
         k * (sigma.double() + sigmas)
     }
 
-    fn degree(&self) -> usize {
+    fn degree(&self) -> u32 {
         self.degree
     }
 
-    fn variables(&self) -> usize {
+    fn variables(&self) -> u32 {
         self.variables
     }
 }

@@ -25,13 +25,13 @@ use serde::{Deserialize, Serialize};
 /// A sparse vector.
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 pub struct SparseVector<T: Zero> {
-    dimension: usize,
+    dimension: u32,
     index: Vec<u32>,
     elements: Vec<T>,
 }
 
 impl<T: Zero> SparseVector<T> {
-    pub const fn new(dimension: usize, index: Vec<u32>, elements: Vec<T>) -> Self {
+    pub const fn new(dimension: u32, index: Vec<u32>, elements: Vec<T>) -> Self {
         Self {
             dimension,
             index,
@@ -47,7 +47,7 @@ impl<T: Zero> SparseVector<T> {
         }
     }
 
-    pub const fn dimension(&self) -> usize {
+    pub const fn dimension(&self) -> u32 {
         self.dimension
     }
 }
@@ -104,7 +104,7 @@ where
         (0..rps.columns())
             .map(|j| {
                 zip(&self.index, &self.elements)
-                    .map(|(&i, l)| l * &rps[(i as usize, j)])
+                    .map(|(&i, l)| l * &rps[(i, j)])
                     .sum()
             })
             .collect()
@@ -137,7 +137,7 @@ impl<T: Zero + Clone + Eq> From<&DenseVector<T>> for SparseVector<T> {
         for i in 0..dimension {
             let e = &dense[i];
             if *e != T::ZERO {
-                index.push(i as u32);
+                index.push(i);
                 elements.push(e.clone());
             }
         }
@@ -152,7 +152,7 @@ impl<T: Zero + Clone + Eq> From<&DenseVector<T>> for SparseVector<T> {
 impl<T: Zero + Clone> From<&SparseVector<T>> for DenseVector<T> {
     fn from(sparse: &SparseVector<T>) -> Self {
         let mut dense = DenseVector::fill(sparse.dimension(), T::ZERO);
-        zip(&sparse.index, &sparse.elements).for_each(|(&i, e)| dense[i as usize] = e.clone());
+        zip(&sparse.index, &sparse.elements).for_each(|(&i, e)| dense[i] = e.clone());
         dense
     }
 }
@@ -163,9 +163,9 @@ impl<T: Zero> Concat for SparseVector<T> {
     fn concat(self, mut rps: Self) -> Self::Output {
         let dimension = self.dimension + rps.dimension;
         let mut index = self.index;
-        index.reserve(rps.dimension);
+        index.reserve(rps.dimension as usize);
         for i in rps.index {
-            index.push(self.dimension as u32 + i)
+            index.push(self.dimension + i)
         }
         let mut elements = self.elements;
         elements.append(&mut rps.elements);
@@ -183,9 +183,9 @@ impl<T: Zero + Clone> Concat<&Self> for SparseVector<T> {
     fn concat(self, rps: &Self) -> Self::Output {
         let dimension = self.dimension + rps.dimension;
         let mut index = self.index;
-        index.reserve(rps.dimension);
+        index.reserve(rps.dimension as usize);
         for i in &rps.index {
-            index.push(self.dimension as u32 + i)
+            index.push(self.dimension + i)
         }
         let mut elements = self.elements;
         elements.extend_from_slice(&rps.elements);
@@ -206,7 +206,7 @@ impl<T: Zero + Clone> Concat<SparseVector<T>> for &SparseVector<T> {
         let mut index = Vec::with_capacity(nnz);
         index.extend_from_slice(&self.index);
         for i in rps.index {
-            index.push(self.dimension as u32 + i)
+            index.push(self.dimension + i)
         }
         let mut elements = Vec::<T>::with_capacity(nnz);
         elements.extend_from_slice(&self.elements);
@@ -228,7 +228,7 @@ impl<T: Zero + Clone> Concat for &SparseVector<T> {
         let mut index = Vec::with_capacity(nnz);
         index.extend_from_slice(&self.index);
         for i in &rps.index {
-            index.push(self.dimension as u32 + i)
+            index.push(self.dimension + i)
         }
         let mut elements = Vec::<T>::with_capacity(nnz);
         elements.extend_from_slice(&self.elements);

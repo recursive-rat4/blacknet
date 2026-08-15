@@ -45,11 +45,11 @@ impl<R: UnitalSemiring> CustomizableConstraintSystem<R> {
         }
     }
 
-    fn variables(&self) -> usize {
+    fn variables(&self) -> u32 {
         self.matrices
             .first()
             .map(SparseMatrix::columns)
-            .expect("Valid CCS")
+            .unwrap_or(0)
     }
 
     pub fn assigment(&self) -> Assigment<R> {
@@ -77,22 +77,15 @@ where
 {
     type Assigment = DenseVector<R>;
 
-    fn degree(&self) -> usize {
-        self.multisets
-            .iter()
-            .map(Vec::len)
-            .max()
-            .expect("Valid CCS")
+    fn degree(&self) -> u32 {
+        self.multisets.iter().map(Vec::len).max().unwrap_or(0) as u32
     }
 
-    fn constraints(&self) -> usize {
-        self.matrices
-            .first()
-            .map(SparseMatrix::rows)
-            .expect("Valid CCS")
+    fn constraints(&self) -> u32 {
+        self.matrices.first().map(SparseMatrix::rows).unwrap_or(0)
     }
 
-    fn variables(&self) -> usize {
+    fn variables(&self) -> u32 {
         self.variables()
     }
 
@@ -111,7 +104,7 @@ where
             sigma += circle;
         }
         match sigma.into_iter().enumerate().find(|(_, e)| *e != R::ZERO) {
-            Some((i, e)) => Err(Error::Mismatch(i, e, R::ZERO)),
+            Some((i, e)) => Err(Error::Mismatch(i as u32, e, R::ZERO)),
             None => Ok(()),
         }
     }

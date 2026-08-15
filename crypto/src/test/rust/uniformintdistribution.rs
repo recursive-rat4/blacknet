@@ -35,7 +35,7 @@ impl UniformGenerator for TestGenerator {
     fn generate(&mut self) -> Self::Output {
         let result = self.i;
         self.i = self.i.wrapping_add(1);
-        result.into()
+        result
     }
 }
 

@@ -130,7 +130,7 @@ where
     }
 }
 
-pub const fn bit_reversal(mut number: usize, bits: usize) -> usize {
+pub const fn bit_reversal(mut number: u32, bits: u32) -> u32 {
     let mut reversed = 0;
     let mut i = 0;
     while i < bits {

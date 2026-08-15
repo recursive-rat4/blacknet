@@ -26,13 +26,13 @@ use serde::{Deserialize, Serialize};
 /// A square matrix that is equal to its transpose.
 #[derive(Clone, Debug, Default, Deserialize, Eq, Serialize)]
 pub struct SymmetricMatrix<T> {
-    dimension: usize,
+    dimension: u32,
     elements: Vec<T>,
 }
 
 impl<T> SymmetricMatrix<T> {
     /// Construct a new matrix given the lower triangular entries.
-    pub const fn new(dimension: usize, elements: Vec<T>) -> Self {
+    pub const fn new(dimension: u32, elements: Vec<T>) -> Self {
         debug_assert!(Self::size(dimension) == elements.len());
         Self {
             dimension,
@@ -41,7 +41,7 @@ impl<T> SymmetricMatrix<T> {
     }
 
     /// Fill a new `n × n` matrix with a single `element`.
-    pub fn fill(dimension: usize, element: T) -> Self
+    pub fn fill(dimension: u32, element: T) -> Self
     where
         T: Clone,
     {
@@ -52,12 +52,12 @@ impl<T> SymmetricMatrix<T> {
     }
 
     /// The number of rows.
-    pub const fn rows(&self) -> usize {
+    pub const fn rows(&self) -> u32 {
         self.dimension
     }
 
     /// The number of columns.
-    pub const fn columns(&self) -> usize {
+    pub const fn columns(&self) -> u32 {
         self.dimension
     }
 
@@ -72,8 +72,8 @@ impl<T> SymmetricMatrix<T> {
         self
     }
 
-    const fn size(dimension: usize) -> usize {
-        (dimension * (dimension + 1)) >> 1
+    const fn size(dimension: u32) -> usize {
+        (dimension as usize * (dimension as usize + 1)) >> 1
     }
 }
 
@@ -85,7 +85,8 @@ impl<T: PartialEq> PartialEq for SymmetricMatrix<T> {
 
 impl<T: Clone> From<&SymmetricMatrix<T>> for DenseMatrix<T> {
     fn from(symmetric: &SymmetricMatrix<T>) -> Self {
-        let mut elements = Vec::<T>::with_capacity(symmetric.rows() * symmetric.columns());
+        let mut elements =
+            Vec::<T>::with_capacity(symmetric.rows() as usize * symmetric.columns() as usize);
         for i in 0..symmetric.rows() {
             for j in 0..symmetric.columns() {
                 elements.push(symmetric[(i, j)].clone());
@@ -109,25 +110,25 @@ impl<T> AsMut<[T]> for SymmetricMatrix<T> {
     }
 }
 
-impl<T> Index<(usize, usize)> for SymmetricMatrix<T> {
+impl<T> Index<(u32, u32)> for SymmetricMatrix<T> {
     type Output = T;
 
     #[inline]
-    fn index(&self, (mut i, mut j): (usize, usize)) -> &Self::Output {
+    fn index(&self, (mut i, mut j): (u32, u32)) -> &Self::Output {
         if j > i {
             (i, j) = (j, i);
         }
-        &self.elements[Self::size(i) + j]
+        &self.elements[Self::size(i) + j as usize]
     }
 }
 
-impl<T> IndexMut<(usize, usize)> for SymmetricMatrix<T> {
+impl<T> IndexMut<(u32, u32)> for SymmetricMatrix<T> {
     #[inline]
-    fn index_mut(&mut self, (mut i, mut j): (usize, usize)) -> &mut Self::Output {
+    fn index_mut(&mut self, (mut i, mut j): (u32, u32)) -> &mut Self::Output {
         if j > i {
             (i, j) = (j, i);
         }
-        &mut self.elements[Self::size(i) + j]
+        &mut self.elements[Self::size(i) + j as usize]
     }
 }
 

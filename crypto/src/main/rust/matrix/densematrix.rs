@@ -28,15 +28,15 @@ use serde::{Deserialize, Serialize};
 /// A matrix in the row-major order.
 #[derive(Clone, Debug, Default, Deserialize, Eq, Serialize)]
 pub struct DenseMatrix<T> {
-    rows: usize,
-    columns: usize,
+    rows: u32,
+    columns: u32,
     elements: Vec<T>,
 }
 
 impl<T> DenseMatrix<T> {
     /// Construct a new matrix.
-    pub const fn new(rows: usize, columns: usize, elements: Vec<T>) -> Self {
-        debug_assert!(rows * columns == elements.len());
+    pub const fn new(rows: u32, columns: u32, elements: Vec<T>) -> Self {
+        debug_assert!(rows as usize * columns as usize == elements.len());
         Self {
             rows,
             columns,
@@ -60,21 +60,21 @@ impl<T> DenseMatrix<T> {
             }
         }
         Self {
-            rows: n,
-            columns: n,
+            rows: n as u32,
+            columns: n as u32,
             elements,
         }
     }
 
     /// Fill a new `m × n` matrix with a single `element`.
-    pub fn fill(rows: usize, columns: usize, element: T) -> Self
+    pub fn fill(rows: u32, columns: u32, element: T) -> Self
     where
         T: Clone,
     {
         Self {
             rows,
             columns,
-            elements: vec![element; rows * columns],
+            elements: vec![element; rows as usize * columns as usize],
         }
     }
 
@@ -84,7 +84,8 @@ impl<T> DenseMatrix<T> {
     {
         let m = self.rows.next_power_of_two() - self.rows;
         let n = self.columns.next_power_of_two() - self.columns;
-        let mut elements = Vec::<T>::with_capacity((self.rows + m) * (self.columns + n));
+        let mut elements =
+            Vec::<T>::with_capacity((self.rows + m) as usize * (self.columns + n) as usize);
         for i in 0..self.rows {
             for j in 0..self.columns {
                 elements.push(self[(i, j)].clone())
@@ -104,25 +105,25 @@ impl<T> DenseMatrix<T> {
     }
 
     /// The number of rows.
-    pub const fn rows(&self) -> usize {
+    pub const fn rows(&self) -> u32 {
         self.rows
     }
 
     /// The number of columns.
-    pub const fn columns(&self) -> usize {
+    pub const fn columns(&self) -> u32 {
         self.columns
     }
 
     /// Get i-th row as mutable slice.
-    pub fn row_mut(&mut self, i: usize) -> &mut [T] {
-        let begin = i * self.columns;
-        let end = begin + self.columns;
+    pub fn row_mut(&mut self, i: u32) -> &mut [T] {
+        let begin = i as usize * self.columns as usize;
+        let end = begin + self.columns as usize;
         &mut self.elements[begin..end]
     }
 
     /// Iterate rows.
     pub fn iter_row(&self) -> core::slice::ChunksExact<'_, T> {
-        self.elements.chunks_exact(self.columns)
+        self.elements.chunks_exact(self.columns as usize)
     }
 
     /// Iterate rows.
@@ -131,18 +132,20 @@ impl<T> DenseMatrix<T> {
     where
         T: Sync,
     {
-        self.elements.par_chunks_exact(self.columns)
+        self.elements.par_chunks_exact(self.columns as usize)
     }
 
     /// Swap two rows.
-    pub fn swap_row(&mut self, mut i: usize, mut j: usize) {
+    pub fn swap_row(&mut self, mut i: u32, mut j: u32) {
         if i > j {
             (i, j) = (j, i);
         }
-        let (_, right) = self.elements.split_at_mut(i * self.columns);
-        let (ith, right) = right.split_at_mut(self.columns);
-        let (_, right) = right.split_at_mut((j - i - 1) * self.columns);
-        let (jth, _) = right.split_at_mut(self.columns);
+        let (_, right) = self
+            .elements
+            .split_at_mut(i as usize * self.columns as usize);
+        let (ith, right) = right.split_at_mut(self.columns as usize);
+        let (_, right) = right.split_at_mut((j - i - 1) as usize * self.columns as usize);
+        let (jth, _) = right.split_at_mut(self.columns as usize);
         ith.swap_with_slice(jth);
     }
 
@@ -185,7 +188,7 @@ impl<T> DenseMatrix<T> {
         debug_assert!(self.rows == rps.rows);
         let rows = self.rows;
         let columns = self.columns * rps.columns;
-        let mut elements = Vec::<T>::with_capacity(rows * columns);
+        let mut elements = Vec::<T>::with_capacity(rows as usize * columns as usize);
         for (left, right) in zip(self.iter_row(), rps.iter_row()) {
             for l in left {
                 for r in right {
@@ -208,7 +211,7 @@ impl<T> DenseMatrix<T> {
         debug_assert!(self.columns == rps.columns);
         let rows = self.rows * rps.rows;
         let columns = self.columns;
-        let mut elements = Vec::<T>::with_capacity(rows * columns);
+        let mut elements = Vec::<T>::with_capacity(rows as usize * columns as usize);
         for left in self.iter_row() {
             for right in rps.iter_row() {
                 for (l, r) in zip(left, right) {
@@ -230,7 +233,7 @@ impl<T: PartialEq> PartialEq for DenseMatrix<T> {
     }
 }
 
-impl<T> From<DenseMatrix<T>> for (usize, usize, Vec<T>) {
+impl<T> From<DenseMatrix<T>> for (u32, u32, Vec<T>) {
     fn from(matrix: DenseMatrix<T>) -> Self {
         (matrix.rows, matrix.columns, matrix.elements)
     }
@@ -250,19 +253,19 @@ impl<T> AsMut<[T]> for DenseMatrix<T> {
     }
 }
 
-impl<T> Index<(usize, usize)> for DenseMatrix<T> {
+impl<T> Index<(u32, u32)> for DenseMatrix<T> {
     type Output = T;
 
     #[inline]
-    fn index(&self, (i, j): (usize, usize)) -> &Self::Output {
-        &self.elements[i * self.columns + j]
+    fn index(&self, (i, j): (u32, u32)) -> &Self::Output {
+        &self.elements[i as usize * self.columns as usize + j as usize]
     }
 }
 
-impl<T> IndexMut<(usize, usize)> for DenseMatrix<T> {
+impl<T> IndexMut<(u32, u32)> for DenseMatrix<T> {
     #[inline]
-    fn index_mut(&mut self, (i, j): (usize, usize)) -> &mut Self::Output {
-        &mut self.elements[i * self.columns + j]
+    fn index_mut(&mut self, (i, j): (u32, u32)) -> &mut Self::Output {
+        &mut self.elements[i as usize * self.columns as usize + j as usize]
     }
 }
 
@@ -545,11 +548,11 @@ where
     fn mul(self, rps: &DenseMatrix<T>) -> Self::Output {
         debug_assert!(self.columns == rps.rows);
         // Iterative algorithm
-        let mut elements = Vec::<T>::with_capacity(self.rows * rps.columns);
+        let mut elements = Vec::<T>::with_capacity(self.rows as usize * rps.columns as usize);
         for row in self.iter_row() {
             for j in 0..rps.columns {
                 elements.push(
-                    zip(row, rps.iter_row().map(|row| &row[j]))
+                    zip(row, rps.iter_row().map(|row| &row[j as usize]))
                         .map(|(l, r)| l * r)
                         .sum(),
                 )
@@ -720,7 +723,7 @@ where
         debug_assert!(self.dimension() == rps.rows);
         (0..rps.columns)
             .map(|j| {
-                zip(self, rps.iter_row().map(|row| &row[j]))
+                zip(self, rps.iter_row().map(|row| &row[j as usize]))
                     .map(|(l, r)| l * r)
                     .sum()
             })
@@ -857,7 +860,7 @@ where
         // Kronecker product
         let rows = self.rows * rps.rows;
         let columns = self.columns * rps.columns;
-        let mut elements = Vec::<T>::with_capacity(rows * columns);
+        let mut elements = Vec::<T>::with_capacity(rows as usize * columns as usize);
         for left in self.iter_row() {
             for right in rps.iter_row() {
                 for l in left {
@@ -909,7 +912,7 @@ impl<T: Clone> Concat for &DenseMatrix<T> {
         debug_assert!(self.rows == rps.rows);
         let rows = self.rows;
         let columns = self.columns + rps.columns;
-        let mut elements = Vec::<T>::with_capacity(rows * columns);
+        let mut elements = Vec::<T>::with_capacity(rows as usize * columns as usize);
         zip(self.iter_row(), rps.iter_row()).for_each(|(l, r)| {
             elements.extend_from_slice(l);
             elements.extend_from_slice(r);

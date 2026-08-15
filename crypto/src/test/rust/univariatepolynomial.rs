@@ -123,7 +123,7 @@ fn circuit_evaluate() {
 
     let circuit = CircuitBuilder::<R>::r1cs();
     let scope = circuit.scope("test");
-    let p_circuit = Circuit::<R>::allocate(&circuit, VariableKind::Public, p_plain.len());
+    let p_circuit = Circuit::<R>::allocate(&circuit, VariableKind::Public, p_plain.len() as u32);
     let x_circuit = scope.public();
     circuit.lay_out();
     let _y_circuit = p_circuit.point(&x_circuit.into());

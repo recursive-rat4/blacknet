@@ -22,6 +22,7 @@ use crate::polynomial::{MultivariatePolynomial, Polynomial};
 use crate::random::Distribution;
 use crate::symmetric::Duplexer;
 use alloc::vec::Vec;
+use core::iter::repeat_with;
 use core::marker::PhantomData;
 
 pub struct Proof<'a, R: UnitalRing> {
@@ -33,14 +34,14 @@ impl<'a, R: UnitalRing + Clone + Eq> Proof<'a, R> {
     pub fn allocate(
         circuit: &'a CircuitBuilder<R>,
         kind: VariableKind,
-        variables: usize,
-        degree: usize,
+        variables: u32,
+        degree: u32,
     ) -> Self {
         let scope = circuit.scope("Proof::allocate");
         Self {
             circuit,
-            claims: (0..degree * variables)
-                .map(|_| scope.variable(kind).into())
+            claims: repeat_with(|| scope.variable(kind).into())
+                .take(degree as usize * variables as usize)
                 .collect(),
         }
     }
@@ -51,15 +52,17 @@ impl<'a, R: UnitalRing + Clone + Eq> Proof<'a, R> {
 
     pub fn recover(
         &self,
-        index: usize,
-        degree: usize,
+        index: u32,
+        degree: u32,
         sum: &LinearCombination<R>,
     ) -> UnivariatePolynomial<'a, R>
     where
         for<'b> &'b R: RingOps<R>,
     {
-        let claim = &self.claims[index * degree..(index + 1) * degree];
-        let mut coefficients = Vec::<LinearCombination<R>>::with_capacity(degree + 1);
+        let begin = index as usize * degree as usize;
+        let end = begin + degree as usize;
+        let claim = &self.claims[begin..end];
+        let mut coefficients = Vec::<LinearCombination<R>>::with_capacity(degree as usize + 1);
         coefficients.push(claim[0].clone());
         coefficients.push(sum - (&claim[0]).double());
         for coefficient in claim.iter().skip(1) {
@@ -110,7 +113,7 @@ where
         duplex: &mut D,
         exceptional_set: &mut E,
     ) -> (Point<R>, LinearCombination<R>) {
-        let mut coordinates = Vec::<LinearCombination<R>>::with_capacity(polynomial.variables());
+        let mut coordinates = Vec::with_capacity(polynomial.variables() as usize);
         for i in 0..polynomial.variables() {
             let claim = proof.recover(i, polynomial.degree(), &sum);
             duplex.absorb(&claim);

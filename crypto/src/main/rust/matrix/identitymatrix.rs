@@ -24,22 +24,22 @@ use serde::{Deserialize, Serialize};
 /// The `n × n` matrix with ones on the leading diagonal and zeros otherwise.
 #[derive(Clone, Copy, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 pub struct IdentityMatrix {
-    dimension: usize,
+    dimension: u32,
 }
 
 impl IdentityMatrix {
     /// Construct a new matrix.
-    pub const fn new(dimension: usize) -> Self {
+    pub const fn new(dimension: u32) -> Self {
         Self { dimension }
     }
 
     /// The number of rows.
-    pub const fn rows(&self) -> usize {
+    pub const fn rows(&self) -> u32 {
         self.dimension
     }
 
     /// The number of columns.
-    pub const fn columns(&self) -> usize {
+    pub const fn columns(&self) -> u32 {
         self.dimension
     }
 
@@ -50,12 +50,12 @@ impl IdentityMatrix {
 
 impl<T: One + Zero + Clone> From<IdentityMatrix> for DenseMatrix<T> {
     fn from(matrix: IdentityMatrix) -> Self {
-        let n = matrix.dimension;
+        let n = matrix.dimension as usize;
         let mut elements = vec![T::ZERO; n * n];
         for i in 0..n {
             elements[i * n + i] = T::ONE;
         }
-        Self::new(n, n, elements)
+        Self::new(n as u32, n as u32, elements)
     }
 }
 

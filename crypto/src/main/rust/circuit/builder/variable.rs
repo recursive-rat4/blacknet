@@ -46,8 +46,8 @@ pub struct Variable<R: UnitalSemiring> {
 }
 
 impl<R: UnitalSemiring> Variable<R> {
-    pub(super) const fn new(kind: VariableKind, number: usize) -> Self {
-        let data = (kind as u32) << 30 | number as u32;
+    pub(super) const fn new(kind: VariableKind, number: u32) -> Self {
+        let data = (kind as u32) << 30 | number;
         Self {
             data,
             phantom: PhantomData,
@@ -60,8 +60,8 @@ impl<R: UnitalSemiring> Variable<R> {
     }
 
     /// The number of variable within its kind.
-    pub const fn number(&self) -> usize {
-        (self.data & 0x3FFFFFFF) as usize
+    pub const fn number(&self) -> u32 {
+        self.data & 0x3FFFFFFF
     }
 
     pub(super) const CONSTANT: Self = Self::new(VariableKind::Constant, 0);
@@ -72,7 +72,7 @@ impl<R: UnitalSemiring> Expression<R> for Variable<R> {
         vec![self.into()].into()
     }
 
-    fn degree(&self) -> usize {
+    fn degree(&self) -> u32 {
         1
     }
 }

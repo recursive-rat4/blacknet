@@ -45,9 +45,7 @@ impl<R: UnitalSemiring> LinearCombination<R> {
 
     /// Construct a new linear combination given some terms.
     pub fn with_terms<const N: usize>(terms: [LinearTerm<R>; N]) -> Self {
-        let mut lc = Self::new();
-        terms.into_iter().for_each(|term| lc += term);
-        lc
+        terms.into_iter().sum()
     }
 
     /// Empty linear combination.
@@ -116,7 +114,7 @@ impl<R: UnitalSemiring + Eq> Expression<R> for LinearCombination<R> {
         vec![self].into()
     }
 
-    fn degree(&self) -> usize {
+    fn degree(&self) -> u32 {
         if self
             .terms
             .iter()
@@ -701,10 +699,7 @@ impl<R: UnitalSemiring + Clone> Mul<&LinearMonoid<R>> for &LinearCombination<R> 
     }
 }
 
-impl<R: UnitalSemiring + Clone> Sum<LinearTerm<R>> for LinearCombination<R>
-where
-    for<'a> &'a R: SemiringOps<R>,
-{
+impl<R: UnitalSemiring> Sum<LinearTerm<R>> for LinearCombination<R> {
     fn sum<I: Iterator<Item = LinearTerm<R>>>(mut iter: I) -> Self {
         let first = match iter.next() {
             Some(i) => LinearCombination::from(i),
@@ -727,10 +722,7 @@ where
     }
 }
 
-impl<R: UnitalSemiring + Clone> Sum<Variable<R>> for LinearCombination<R>
-where
-    for<'a> &'a R: SemiringOps<R>,
-{
+impl<R: UnitalSemiring> Sum<Variable<R>> for LinearCombination<R> {
     fn sum<I: Iterator<Item = Variable<R>>>(mut iter: I) -> Self {
         let first = match iter.next() {
             Some(i) => LinearCombination::from(i),

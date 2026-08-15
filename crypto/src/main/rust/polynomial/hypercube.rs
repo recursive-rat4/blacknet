@@ -24,14 +24,14 @@ use core::ops::Range;
 
 /// An n-dimensional unit hypercube with a vertex at the origin in the coordinate system.
 pub struct Hypercube<R: UnitalSemiring> {
-    dimension: usize,
-    vertices: usize,
+    dimension: u32,
+    vertices: u32,
     phantom: PhantomData<R>,
 }
 
 impl<R: UnitalSemiring> Hypercube<R> {
     /// Construct a new hypercube.
-    pub const fn new(dimension: usize) -> Self {
+    pub const fn new(dimension: u32) -> Self {
         Self {
             dimension,
             vertices: 1 << dimension,
@@ -40,16 +40,14 @@ impl<R: UnitalSemiring> Hypercube<R> {
     }
 
     /// Iterate indices of vertices.
-    pub const fn iter_index(&self) -> Range<usize> {
+    pub const fn iter_index(&self) -> Range<u32> {
         0..self.vertices
     }
 
     /// Iterate vertices.
-    pub fn iter_vertex<Vertex: From<Vec<R>>>(
-        &self,
-    ) -> Map<Range<usize>, impl FnMut(usize) -> Vertex> {
+    pub fn iter_vertex<Vertex: From<Vec<R>>>(&self) -> Map<Range<u32>, impl FnMut(u32) -> Vertex> {
         (0..self.vertices).map(move |index| {
-            let mut coordinates = Vec::<R>::with_capacity(self.dimension);
+            let mut coordinates = Vec::<R>::with_capacity(self.dimension as usize);
             let mut s = self.vertices;
             for _ in 0..self.dimension {
                 s >>= 1;
@@ -66,9 +64,9 @@ impl<R: UnitalSemiring> Hypercube<R> {
     /// Iterate indices of vertices as order 2 tensor.
     pub fn iter_order2(
         &self,
-        rows: usize,
-        columns: usize,
-    ) -> Map<Range<usize>, impl FnMut(usize) -> (usize, usize)> {
+        rows: u32,
+        columns: u32,
+    ) -> Map<Range<u32>, impl FnMut(u32) -> (u32, u32)> {
         debug_assert!(rows * columns == self.vertices);
         (0..self.vertices).map(move |index| (index / columns, index % columns))
     }

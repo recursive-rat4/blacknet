@@ -28,7 +28,7 @@ use serde::{Deserialize, Serialize};
 /// <https://arxiv.org/abs/2404.06047>
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct SparseMatrix<T: Zero> {
-    columns: usize,
+    columns: u32,
     r_index: Vec<u32>,
     c_index: Vec<u32>,
     elements: Vec<T>,
@@ -39,7 +39,7 @@ impl<T: Zero> SparseMatrix<T> {
     /// # Safety
     /// Arguments must be valid, and in particular `elements` doesn't contain zeroes.
     pub const unsafe fn new(
-        columns: usize,
+        columns: u32,
         r_index: Vec<u32>,
         c_index: Vec<u32>,
         elements: Vec<T>,
@@ -57,19 +57,23 @@ impl<T: Zero> SparseMatrix<T> {
         let e = *self.r_index.last().expect("Not empty row index");
         Self {
             columns: self.columns.next_power_of_two(),
-            r_index: self.r_index.into_iter().chain(repeat_n(e, n)).collect(),
+            r_index: self
+                .r_index
+                .into_iter()
+                .chain(repeat_n(e, n as usize))
+                .collect(),
             c_index: self.c_index,
             elements: self.elements,
         }
     }
 
     /// The number of rows.
-    pub const fn rows(&self) -> usize {
-        self.r_index.len() - 1
+    pub const fn rows(&self) -> u32 {
+        (self.r_index.len() - 1) as u32
     }
 
     /// The number of columns.
-    pub const fn columns(&self) -> usize {
+    pub const fn columns(&self) -> u32 {
         self.columns
     }
 }
@@ -144,7 +148,7 @@ where
                     &self.c_index[row_start..row_end],
                     &self.elements[row_start..row_end],
                 )
-                .map(|(&j, l)| l * &rps[j as usize])
+                .map(|(&j, l)| l * &rps[j])
                 .sum()
             })
             .collect()
@@ -178,7 +182,7 @@ impl<T: Zero + Clone> From<&SparseMatrix<T>> for DenseMatrix<T> {
                     &sparse.c_index[row_start..row_end],
                     &sparse.elements[row_start..row_end],
                 )
-                .for_each(|(&j, e)| dense[(i, j as usize)] = e.clone());
+                .for_each(|(&j, e)| dense[(i as u32, j)] = e.clone());
             });
         dense
     }
@@ -187,7 +191,7 @@ impl<T: Zero + Clone> From<&SparseMatrix<T>> for DenseMatrix<T> {
 /// Sparse matrix builder accepts entries in the row-major order.
 /// Known to be zero entries may be skipped.
 pub struct SparseMatrixBuilder<T: Zero> {
-    columns: usize,
+    columns: u32,
     r_index: Vec<u32>,
     c_index: Vec<u32>,
     elements: Vec<T>,
@@ -205,8 +209,8 @@ impl<T: Zero> SparseMatrixBuilder<T> {
     }
 
     /// Construct a new builder.
-    pub fn with_dim(rows: usize, columns: usize) -> Self {
-        let mut r_index = Vec::with_capacity(rows + 1);
+    pub fn with_dim(rows: u32, columns: u32) -> Self {
+        let mut r_index = Vec::with_capacity(rows as usize + 1);
         r_index.push(0);
         Self {
             columns,
@@ -217,15 +221,15 @@ impl<T: Zero> SparseMatrixBuilder<T> {
     }
 
     /// Set the number of columns.
-    pub const fn columns(&mut self, columns: usize) {
+    pub const fn columns(&mut self, columns: u32) {
         self.columns = columns;
     }
 
     /// Push a next column of current row.
     /// # Safety
     /// `element` is not zero.
-    pub unsafe fn column_unchecked(&mut self, column: usize, element: T) {
-        self.c_index.push(column as u32);
+    pub unsafe fn column_unchecked(&mut self, column: u32, element: T) {
+        self.c_index.push(column);
         self.elements.push(element);
     }
 
@@ -247,14 +251,14 @@ impl<T: Zero> SparseMatrixBuilder<T> {
 
 impl<T: Zero + Eq> SparseMatrixBuilder<T> {
     /// Push a next column of current row.
-    pub fn column(&mut self, column: usize, element: T) {
+    pub fn column(&mut self, column: u32, element: T) {
         if element != T::ZERO {
             unsafe { self.column_unchecked(column, element) };
         }
     }
 
     /// Push a next column of current row.
-    pub fn column_ref(&mut self, column: usize, element: &T)
+    pub fn column_ref(&mut self, column: u32, element: &T)
     where
         T: Clone,
     {

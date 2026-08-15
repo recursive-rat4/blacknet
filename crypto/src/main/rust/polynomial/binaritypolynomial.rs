@@ -93,11 +93,11 @@ where
         t.into_iter().sum()
     }
 
-    fn degree(&self) -> usize {
+    fn degree(&self) -> u32 {
         2
     }
 
-    fn variables(&self) -> usize {
+    fn variables(&self) -> u32 {
         self.coefficients.variables()
     }
 }

@@ -36,36 +36,36 @@ impl<T: Zero> SymmetricTridiagonalMatrix<T> {
     }
 
     /// The number of rows.
-    pub const fn rows(&self) -> usize {
-        (self.elements.len() + 1) >> 1
+    pub const fn rows(&self) -> u32 {
+        ((self.elements.len() + 1) >> 1) as u32
     }
 
     /// The number of columns.
-    pub const fn columns(&self) -> usize {
-        (self.elements.len() + 1) >> 1
+    pub const fn columns(&self) -> u32 {
+        ((self.elements.len() + 1) >> 1) as u32
     }
 
     pub fn trace(&self) -> T
     where
         T: for<'a> Sum<&'a T>,
     {
-        self.elements[0..self.columns()].iter().sum()
+        self.elements[0..self.columns() as usize].iter().sum()
     }
 
     pub const fn transpose(&self) -> &Self {
         self
     }
 
-    fn index(&self, i: usize, j: usize) -> T
+    fn index(&self, i: u32, j: u32) -> T
     where
         T: Clone,
     {
         if i == j {
-            self.elements[i].clone()
+            self.elements[i as usize].clone()
         } else if i == j + 1 {
-            self.elements[self.columns() + j].clone()
+            self.elements[self.columns() as usize + j as usize].clone()
         } else if j == i + 1 {
-            self.elements[self.columns() + i].clone()
+            self.elements[self.columns() as usize + i as usize].clone()
         } else {
             T::ZERO
         }
@@ -74,7 +74,7 @@ impl<T: Zero> SymmetricTridiagonalMatrix<T> {
 
 impl<T: Zero + Clone> From<&SymmetricTridiagonalMatrix<T>> for DenseMatrix<T> {
     fn from(stm: &SymmetricTridiagonalMatrix<T>) -> Self {
-        let mut elements = Vec::<T>::with_capacity(stm.rows() * stm.columns());
+        let mut elements = Vec::<T>::with_capacity(stm.rows() as usize * stm.columns() as usize);
         for i in 0..stm.rows() {
             for j in 0..stm.columns() {
                 elements.push(stm.index(i, j))

@@ -43,7 +43,7 @@ impl<R: UnitalSemiring> Expression<R> for Constant<R> {
         vec![self.into()].into()
     }
 
-    fn degree(&self) -> usize {
+    fn degree(&self) -> u32 {
         0
     }
 }

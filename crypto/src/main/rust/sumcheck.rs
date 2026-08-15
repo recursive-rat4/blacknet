@@ -34,8 +34,8 @@ pub struct Proof<R: UnitalRing> {
 }
 
 impl<R: UnitalRing> Proof<R> {
-    pub fn new(degree: usize, variables: usize) -> Self {
-        let n = degree * variables;
+    pub fn new(degree: u32, variables: u32) -> Self {
+        let n = degree as usize * variables as usize;
         Self {
             claims: Vec::with_capacity(n),
         }
@@ -55,13 +55,15 @@ impl<R: UnitalRing> Proof<R> {
         self.claims.extend(claim)
     }
 
-    pub fn recover(&self, index: usize, degree: usize, sum: &R) -> UnivariatePolynomial<R>
+    pub fn recover(&self, index: u32, degree: u32, sum: &R) -> UnivariatePolynomial<R>
     where
         R: Clone,
         for<'a> &'a R: RingOps<R>,
     {
-        let claim = &self.claims[index * degree..(index + 1) * degree];
-        let mut coefficients = Vec::<R>::with_capacity(degree + 1);
+        let begin = index as usize * degree as usize;
+        let end = begin + degree as usize;
+        let claim = &self.claims[begin..end];
+        let mut coefficients = Vec::<R>::with_capacity(degree as usize + 1);
         coefficients.push(claim[0].clone());
         coefficients.push(sum - (&claim[0]).double());
         for coefficient in claim.iter().skip(1) {
@@ -71,8 +73,8 @@ impl<R: UnitalRing> Proof<R> {
         coefficients.into()
     }
 
-    pub const fn length(&self) -> usize {
-        self.claims.len()
+    pub const fn length(&self) -> u32 {
+        self.claims.len() as u32
     }
 }
 
@@ -156,7 +158,7 @@ where
         if proof.length() != expected_length {
             return Err(Error::Length(proof.length(), expected_length));
         }
-        let mut coordinates = Vec::<A>::with_capacity(polynomial.variables());
+        let mut coordinates = Vec::<A>::with_capacity(polynomial.variables() as usize);
         for i in 0..polynomial.variables() {
             let claim = proof.recover(i, polynomial.degree(), &sum);
             debug_assert!(claim.at_0_plus_1() == sum);
@@ -213,7 +215,7 @@ where
 
 #[derive(Debug)]
 pub enum Error<R: UnitalRing> {
-    Length(usize, usize),
+    Length(u32, u32),
     PolynomialIdentity(R, R),
 }
 

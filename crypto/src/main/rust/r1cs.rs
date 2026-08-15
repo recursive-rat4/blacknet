@@ -37,7 +37,7 @@ impl<R: UnitalSemiring> R1CS<R> {
         Self { a, b, c }
     }
 
-    const fn variables(&self) -> usize {
+    const fn variables(&self) -> u32 {
         self.a.columns()
     }
 
@@ -67,15 +67,15 @@ where
 {
     type Assigment = DenseVector<R>;
 
-    fn degree(&self) -> usize {
+    fn degree(&self) -> u32 {
         2
     }
 
-    fn constraints(&self) -> usize {
+    fn constraints(&self) -> u32 {
         self.a.rows()
     }
 
-    fn variables(&self) -> usize {
+    fn variables(&self) -> u32 {
         self.variables()
     }
 
@@ -85,7 +85,7 @@ where
         }
         let (az, bz, cz) = self.linearize(z);
         match zip(az * bz, cz).enumerate().find(|(_, (a, e))| a != e) {
-            Some((i, (a, e))) => Err(Error::Mismatch(i, a, e)),
+            Some((i, (a, e))) => Err(Error::Mismatch(i as u32, a, e)),
             None => Ok(()),
         }
     }

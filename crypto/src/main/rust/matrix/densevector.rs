@@ -45,12 +45,12 @@ impl<T> DenseVector<T> {
     }
 
     /// Fill a new `n`-dimensional vector with a single `element`.
-    pub fn fill(n: usize, element: T) -> Self
+    pub fn fill(n: u32, element: T) -> Self
     where
         T: Clone,
     {
         Self {
-            elements: vec![element; n],
+            elements: vec![element; n as usize],
         }
     }
 
@@ -70,17 +70,17 @@ impl<T> DenseVector<T> {
     }
 
     /// The number of dimensions.
-    pub const fn dimension(&self) -> usize {
-        self.elements.len()
+    pub const fn dimension(&self) -> u32 {
+        self.elements.len() as u32
     }
 
     /// The `n`-dimensional multiplicative identity.
-    pub fn identity(n: usize) -> Self
+    pub fn identity(n: u32) -> Self
     where
         T: One + Clone,
     {
         Self {
-            elements: vec![T::ONE; n],
+            elements: vec![T::ONE; n as usize],
         }
     }
 }
@@ -165,19 +165,19 @@ impl<T> DerefMut for DenseVector<T> {
     }
 }
 
-impl<T> Index<usize> for DenseVector<T> {
+impl<T> Index<u32> for DenseVector<T> {
     type Output = T;
 
     #[inline]
-    fn index(&self, index: usize) -> &Self::Output {
-        &self.elements[index]
+    fn index(&self, index: u32) -> &Self::Output {
+        &self.elements[index as usize]
     }
 }
 
-impl<T> IndexMut<usize> for DenseVector<T> {
+impl<T> IndexMut<u32> for DenseVector<T> {
     #[inline]
-    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
-        &mut self.elements[index]
+    fn index_mut(&mut self, index: u32) -> &mut Self::Output {
+        &mut self.elements[index as usize]
     }
 }
 
@@ -654,7 +654,7 @@ where
                 elements.push(l * r)
             }
         }
-        DenseMatrix::new(rows, columns, elements)
+        DenseMatrix::new(rows as u32, columns as u32, elements)
     }
 }
 

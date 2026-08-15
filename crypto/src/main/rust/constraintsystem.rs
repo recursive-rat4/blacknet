@@ -21,17 +21,17 @@ use core::fmt;
 pub trait ConstraintSystem<S: Set> {
     type Assigment;
 
-    fn degree(&self) -> usize;
-    fn constraints(&self) -> usize;
-    fn variables(&self) -> usize;
+    fn degree(&self) -> u32;
+    fn constraints(&self) -> u32;
+    fn variables(&self) -> u32;
 
     fn is_satisfied(&self, z: &Self::Assigment) -> Result<S>;
 }
 
 #[derive(Debug)]
 pub enum Error<S: Set> {
-    Length(usize, usize),
-    Mismatch(usize, S, S),
+    Length(u32, u32),
+    Mismatch(u32, S, S),
 }
 
 impl<S: Set> fmt::Display for Error<S> {

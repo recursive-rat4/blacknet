@@ -144,7 +144,7 @@ fn module() {
     let a = FreeModule::from([71, 72, 73, 74].map(R::from));
     let mle = MultilinearExtension::from_iter(a);
     zip(hc.iter_index(), hc.iter_vertex())
-        .for_each(|(index, b)| assert_eq!(mle.point(&b), a[index]));
+        .for_each(|(index, b)| assert_eq!(mle.point(&b), a[index as usize]));
 }
 
 #[test]

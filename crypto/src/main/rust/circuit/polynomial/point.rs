@@ -19,6 +19,7 @@ use crate::algebra::UnitalSemiring;
 use crate::circuit::builder::{CircuitBuilder, LinearCombination, VariableKind};
 use alloc::borrow::{Borrow, BorrowMut};
 use alloc::vec::Vec;
+use core::iter::repeat_with;
 use core::ops::{Deref, DerefMut, Index, IndexMut};
 
 pub struct Point<S: UnitalSemiring> {
@@ -30,17 +31,17 @@ impl<S: UnitalSemiring> Point<S> {
         Self { coordinates }
     }
 
-    pub fn allocate(circuit: &CircuitBuilder<S>, kind: VariableKind, dimension: usize) -> Self {
+    pub fn allocate(circuit: &CircuitBuilder<S>, kind: VariableKind, dimension: u32) -> Self {
         let scope = circuit.scope("Point::allocate");
         Self {
-            coordinates: (0..dimension)
-                .map(|_| scope.variable(kind).into())
+            coordinates: repeat_with(|| scope.variable(kind).into())
+                .take(dimension as usize)
                 .collect(),
         }
     }
 
-    pub const fn dimension(&self) -> usize {
-        self.coordinates.len()
+    pub const fn dimension(&self) -> u32 {
+        self.coordinates.len() as u32
     }
 
     pub const fn coordinates(&self) -> &Vec<LinearCombination<S>> {
@@ -114,19 +115,19 @@ impl<S: UnitalSemiring> DerefMut for Point<S> {
     }
 }
 
-impl<S: UnitalSemiring> Index<usize> for Point<S> {
+impl<S: UnitalSemiring> Index<u32> for Point<S> {
     type Output = LinearCombination<S>;
 
     #[inline]
-    fn index(&self, index: usize) -> &Self::Output {
-        &self.coordinates[index]
+    fn index(&self, index: u32) -> &Self::Output {
+        &self.coordinates[index as usize]
     }
 }
 
-impl<S: UnitalSemiring> IndexMut<usize> for Point<S> {
+impl<S: UnitalSemiring> IndexMut<u32> for Point<S> {
     #[inline]
-    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
-        &mut self.coordinates[index]
+    fn index_mut(&mut self, index: u32) -> &mut Self::Output {
+        &mut self.coordinates[index as usize]
     }
 }
 
