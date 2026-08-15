@@ -29,8 +29,8 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct SparseMatrix<T: Zero> {
     columns: usize,
-    r_index: Vec<usize>,
-    c_index: Vec<usize>,
+    r_index: Vec<u32>,
+    c_index: Vec<u32>,
     elements: Vec<T>,
 }
 
@@ -40,8 +40,8 @@ impl<T: Zero> SparseMatrix<T> {
     /// Arguments must be valid, and in particular `elements` doesn't contain zeroes.
     pub const unsafe fn new(
         columns: usize,
-        r_index: Vec<usize>,
-        c_index: Vec<usize>,
+        r_index: Vec<u32>,
+        c_index: Vec<u32>,
         elements: Vec<T>,
     ) -> Self {
         Self {
@@ -54,7 +54,7 @@ impl<T: Zero> SparseMatrix<T> {
 
     pub fn pad_to_power_of_two(self) -> Self {
         let n = self.rows().next_power_of_two() - self.rows();
-        let e = *self.r_index.last().expect("Not empty matrix");
+        let e = *self.r_index.last().expect("Not empty row index");
         Self {
             columns: self.columns.next_power_of_two(),
             r_index: self.r_index.into_iter().chain(repeat_n(e, n)).collect(),
@@ -139,11 +139,12 @@ where
         self.r_index
             .array_windows::<2>()
             .map(|&[row_start, row_end]| {
+                let [row_start, row_end] = [row_start as usize, row_end as usize];
                 zip(
                     &self.c_index[row_start..row_end],
                     &self.elements[row_start..row_end],
                 )
-                .map(|(&j, l)| l * &rps[j])
+                .map(|(&j, l)| l * &rps[j as usize])
                 .sum()
             })
             .collect()
@@ -172,11 +173,12 @@ impl<T: Zero + Clone> From<&SparseMatrix<T>> for DenseMatrix<T> {
             .array_windows::<2>()
             .enumerate()
             .for_each(|(i, &[row_start, row_end])| {
+                let [row_start, row_end] = [row_start as usize, row_end as usize];
                 zip(
                     &sparse.c_index[row_start..row_end],
                     &sparse.elements[row_start..row_end],
                 )
-                .for_each(|(&j, e)| dense[(i, j)] = e.clone());
+                .for_each(|(&j, e)| dense[(i, j as usize)] = e.clone());
             });
         dense
     }
@@ -186,8 +188,8 @@ impl<T: Zero + Clone> From<&SparseMatrix<T>> for DenseMatrix<T> {
 /// Known to be zero entries may be skipped.
 pub struct SparseMatrixBuilder<T: Zero> {
     columns: usize,
-    r_index: Vec<usize>,
-    c_index: Vec<usize>,
+    r_index: Vec<u32>,
+    c_index: Vec<u32>,
     elements: Vec<T>,
 }
 
@@ -204,7 +206,7 @@ impl<T: Zero> SparseMatrixBuilder<T> {
 
     /// Construct a new builder.
     pub fn with_dim(rows: usize, columns: usize) -> Self {
-        let mut r_index = Vec::<usize>::with_capacity(rows + 1);
+        let mut r_index = Vec::with_capacity(rows + 1);
         r_index.push(0);
         Self {
             columns,
@@ -223,13 +225,13 @@ impl<T: Zero> SparseMatrixBuilder<T> {
     /// # Safety
     /// `element` is not zero.
     pub unsafe fn column_unchecked(&mut self, column: usize, element: T) {
-        self.c_index.push(column);
+        self.c_index.push(column as u32);
         self.elements.push(element);
     }
 
     /// Finish current row.
     pub fn row(&mut self) {
-        self.r_index.push(self.elements.len());
+        self.r_index.push(self.elements.len() as u32);
     }
 
     /// Build the matrix.

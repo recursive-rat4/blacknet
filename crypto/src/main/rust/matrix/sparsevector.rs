@@ -22,15 +22,16 @@ use core::iter::{Sum, zip};
 use core::ops::{Mul, Neg};
 use serde::{Deserialize, Serialize};
 
+/// A sparse vector.
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 pub struct SparseVector<T: Zero> {
     dimension: usize,
-    index: Vec<usize>,
+    index: Vec<u32>,
     elements: Vec<T>,
 }
 
 impl<T: Zero> SparseVector<T> {
-    pub const fn new(dimension: usize, index: Vec<usize>, elements: Vec<T>) -> Self {
+    pub const fn new(dimension: usize, index: Vec<u32>, elements: Vec<T>) -> Self {
         Self {
             dimension,
             index,
@@ -103,7 +104,7 @@ where
         (0..rps.columns())
             .map(|j| {
                 zip(&self.index, &self.elements)
-                    .map(|(&i, l)| l * &rps[(i, j)])
+                    .map(|(&i, l)| l * &rps[(i as usize, j)])
                     .sum()
             })
             .collect()
@@ -121,7 +122,7 @@ where
         self.iter_row()
             .map(|row| {
                 zip(&rps.index, &rps.elements)
-                    .map(|(&j, r)| &row[j] * r)
+                    .map(|(&j, r)| &row[j as usize] * r)
                     .sum()
             })
             .collect()
@@ -131,12 +132,12 @@ where
 impl<T: Zero + Clone + Eq> From<&DenseVector<T>> for SparseVector<T> {
     fn from(dense: &DenseVector<T>) -> Self {
         let dimension = dense.dimension();
-        let mut index = Vec::<usize>::new();
+        let mut index = Vec::new();
         let mut elements = Vec::<T>::new();
         for i in 0..dimension {
             let e = &dense[i];
             if *e != T::ZERO {
-                index.push(i);
+                index.push(i as u32);
                 elements.push(e.clone());
             }
         }
@@ -151,7 +152,7 @@ impl<T: Zero + Clone + Eq> From<&DenseVector<T>> for SparseVector<T> {
 impl<T: Zero + Clone> From<&SparseVector<T>> for DenseVector<T> {
     fn from(sparse: &SparseVector<T>) -> Self {
         let mut dense = DenseVector::fill(sparse.dimension(), T::ZERO);
-        zip(&sparse.index, &sparse.elements).for_each(|(&i, e)| dense[i] = e.clone());
+        zip(&sparse.index, &sparse.elements).for_each(|(&i, e)| dense[i as usize] = e.clone());
         dense
     }
 }
@@ -164,7 +165,7 @@ impl<T: Zero> Concat for SparseVector<T> {
         let mut index = self.index;
         index.reserve(rps.dimension);
         for i in rps.index {
-            index.push(self.dimension + i)
+            index.push(self.dimension as u32 + i)
         }
         let mut elements = self.elements;
         elements.append(&mut rps.elements);
@@ -184,7 +185,7 @@ impl<T: Zero + Clone> Concat<&Self> for SparseVector<T> {
         let mut index = self.index;
         index.reserve(rps.dimension);
         for i in &rps.index {
-            index.push(self.dimension + i)
+            index.push(self.dimension as u32 + i)
         }
         let mut elements = self.elements;
         elements.extend_from_slice(&rps.elements);
@@ -202,10 +203,10 @@ impl<T: Zero + Clone> Concat<SparseVector<T>> for &SparseVector<T> {
     fn concat(self, mut rps: SparseVector<T>) -> Self::Output {
         let dimension = self.dimension + rps.dimension;
         let nnz = self.index.len() + rps.index.len();
-        let mut index = Vec::<usize>::with_capacity(nnz);
+        let mut index = Vec::with_capacity(nnz);
         index.extend_from_slice(&self.index);
         for i in rps.index {
-            index.push(self.dimension + i)
+            index.push(self.dimension as u32 + i)
         }
         let mut elements = Vec::<T>::with_capacity(nnz);
         elements.extend_from_slice(&self.elements);
@@ -224,10 +225,10 @@ impl<T: Zero + Clone> Concat for &SparseVector<T> {
     fn concat(self, rps: Self) -> Self::Output {
         let dimension = self.dimension + rps.dimension;
         let nnz = self.index.len() + rps.index.len();
-        let mut index = Vec::<usize>::with_capacity(nnz);
+        let mut index = Vec::with_capacity(nnz);
         index.extend_from_slice(&self.index);
         for i in &rps.index {
-            index.push(self.dimension + i)
+            index.push(self.dimension as u32 + i)
         }
         let mut elements = Vec::<T>::with_capacity(nnz);
         elements.extend_from_slice(&self.elements);

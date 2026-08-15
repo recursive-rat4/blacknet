@@ -28,14 +28,14 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct CustomizableConstraintSystem<R: UnitalSemiring> {
     matrices: Vec<SparseMatrix<R>>,
-    multisets: Vec<Vec<usize>>,
+    multisets: Vec<Vec<u32>>,
     constants: Vec<R>,
 }
 
 impl<R: UnitalSemiring> CustomizableConstraintSystem<R> {
     pub const fn new(
         matrices: Vec<SparseMatrix<R>>,
-        multisets: Vec<Vec<usize>>,
+        multisets: Vec<Vec<u32>>,
         constants: Vec<R>,
     ) -> Self {
         Self {
@@ -106,7 +106,7 @@ where
         for (i, c) in self.constants.iter().enumerate() {
             let mut circle = DenseVector::fill(constraints, c.clone());
             for &j in &self.multisets[i] {
-                circle *= &self.matrices[j] * z;
+                circle *= &self.matrices[j as usize] * z;
             }
             sigma += circle;
         }

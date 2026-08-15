@@ -267,7 +267,10 @@ impl<R: UnitalRing + Clone + Eq> CircuitBuilder<R> {
             })
             .collect();
 
-        let multisets = vec![(0..matrices.len() - 1).collect(), vec![matrices.len() - 1]];
+        let multisets = vec![
+            (0..matrices.len() as u32 - 1).collect(),
+            vec![matrices.len() as u32 - 1],
+        ];
 
         let constants = vec![R::ONE, -R::ONE];
 
