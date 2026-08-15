@@ -38,13 +38,13 @@ where
         x: usize,
         y: usize,
     ) {
-        state[a] = state[a].wrapping_add(&state[b]).wrapping_add(&input[x]);
+        state[a] = state[a].fused_add(&state[b], &input[x]);
         state[d] = state[d].bitxor(&state[a]);
         state[d] = state[d].rotate_right(32);
         state[c] = state[c].wrapping_add(&state[d]);
         state[b] = state[b].bitxor(&state[c]);
         state[b] = state[b].rotate_right(24);
-        state[a] = state[a].wrapping_add(&state[b]).wrapping_add(&input[y]);
+        state[a] = state[a].fused_add(&state[b], &input[y]);
         state[d] = state[d].bitxor(&state[a]);
         state[d] = state[d].rotate_right(16);
         state[c] = state[c].wrapping_add(&state[d]);

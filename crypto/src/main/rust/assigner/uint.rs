@@ -40,6 +40,37 @@ where
         }
     }
 
+    pub fn fused_add(&self, add1: &Self, add2: &Self) -> Self {
+        if N == 0 {
+            return Self {
+                bits: [A::ZERO; N],
+                assigment: self.assigment,
+            };
+        }
+        let ac: [A; N] = array::from_fn(|i| &self.bits[i] + &add2.bits[i]);
+        let mut bits: [A; N] = array::from_fn(|i| &ac[i] + &add1.bits[i]);
+        let mut carry = [A::ZERO; N];
+        #[allow(clippy::needless_range_loop)]
+        for i in 0..N - 1 {
+            let ac_bc = &ac[i] * (&add1.bits[i] + &add2.bits[i]);
+            self.assigment.push(ac_bc.clone());
+            carry[i + 1] = ac_bc + &add2.bits[i];
+        }
+        let mut ripple = A::ZERO;
+        for i in 1..N - 1 {
+            let bc = &carry[i] + &ripple;
+            let ac_bc = (&bits[i] + &ripple) * &bc;
+            self.assigment.push(ac_bc.clone());
+            bits[i] += bc;
+            ripple += ac_bc;
+        }
+        bits[N - 1] += &carry[N - 1] + ripple;
+        Self {
+            bits,
+            assigment: self.assigment,
+        }
+    }
+
     pub fn wrapping_add(&self, rps: &Self) -> Self {
         let mut bits = [A::ZERO; N];
         if N == 0 {
