@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::fjall::Fjall;
+use crate::db::Fjall;
 use blacknet_serialization::format::{from_bytes, to_bytes};
 use core::fmt::Debug;
 use core::marker::PhantomData;

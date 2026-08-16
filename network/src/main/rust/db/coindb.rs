@@ -15,11 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::blockdb::{BlockDB, BlockIndex};
-use crate::dbview::DBView;
-use crate::fjall::Fjall;
-use crate::genesis;
-use crate::undoblock::UndoBlock;
+use crate::db::{BlockDB, BlockIndex, DBView, Fjall, UndoBlock, genesis};
 use arc_swap::ArcSwap;
 use blacknet_compat::Mode;
 use blacknet_crypto::bigint::UInt256;
@@ -153,9 +149,9 @@ impl CoinDB {
         }
     }
 
-    pub fn check(&self) -> Check {
+    pub fn check(&self) -> CoinDBCheck {
         let state = self.state.load();
-        let mut check = Check {
+        let mut check = CoinDBCheck {
             result: false,
             accounts: 0,
             htlcs: 0,
@@ -800,7 +796,7 @@ impl CoinTx for Update {
 }
 
 #[derive(Deserialize, Serialize)]
-pub struct Check {
+pub struct CoinDBCheck {
     result: bool,
     accounts: u32,
     htlcs: u32,

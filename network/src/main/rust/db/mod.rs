@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025-2026 Pavel Vasin
+ * Copyright (c) 2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,19 +15,17 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-pub mod blockfetcher;
-pub mod connection;
-pub mod db;
-pub mod endpoint;
-pub mod i2psam;
-pub mod natpmp;
-pub mod node;
-pub mod packet;
-pub mod peertable;
-pub mod rollinghashset;
-pub mod router;
-pub mod socks5;
-pub mod staker;
-pub mod torcontroller;
-pub mod txfetcher;
-pub mod txpool;
+mod blockdb;
+mod coindb;
+mod dbview;
+mod fjall;
+pub mod genesis;
+mod undoblock;
+
+use coindb::Update;
+use dbview::DBView;
+use undoblock::UndoBlock;
+
+pub use blockdb::{BlockDB, BlockDBCheck, BlockIndex};
+pub use coindb::{CoinDB, CoinDBCheck, State};
+pub use fjall::Fjall;

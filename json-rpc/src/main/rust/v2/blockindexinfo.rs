@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -16,7 +16,7 @@
  */
 
 use crate::v2::{AmountInfo, HashInfo};
-use blacknet_network::blockdb::BlockIndex;
+use blacknet_network::db::BlockIndex;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]

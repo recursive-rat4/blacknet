@@ -25,8 +25,7 @@ use axum::{
 };
 use blacknet_kernel::blake2b::Hash;
 use blacknet_kernel::proofofstake::DEFAULT_CONFIRMATIONS;
-use blacknet_network::blockdb::Check as BlockDBCheck;
-use blacknet_network::coindb::Check as CoinDBCheck;
+use blacknet_network::db::{BlockDBCheck, CoinDBCheck};
 use blacknet_network::node::Node;
 use std::path::absolute;
 use std::sync::Arc;

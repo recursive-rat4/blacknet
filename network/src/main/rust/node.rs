@@ -15,12 +15,10 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::blockdb::BlockDB;
 use crate::blockfetcher::BlockFetcher;
-use crate::coindb::CoinDB;
 use crate::connection::{Connection, ConnectionId, State};
+use crate::db::{BlockDB, CoinDB, Fjall};
 use crate::endpoint::Endpoint;
-use crate::fjall::Fjall;
 use crate::packet::{BlockAnnounce, Packet, PacketKind, UnfilteredInvList};
 use crate::peertable::PeerTable;
 use crate::router::Router;

@@ -16,7 +16,7 @@
  */
 
 use crate::v2::{AmountInfo, BigIntegerInfo, HashInfo};
-use blacknet_network::coindb::State;
+use blacknet_network::db::State;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]

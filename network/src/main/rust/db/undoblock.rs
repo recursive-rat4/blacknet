@@ -81,6 +81,7 @@ impl UndoBlock {
         self.multisigs.push((id, multisig));
     }
 
+    #[expect(dead_code)]
     pub fn add_blob(&mut self, key: Box<[u8]>, data: Option<Box<[u8]>>) {
         self.blobs.push((key, data));
     }
@@ -133,6 +134,7 @@ impl UndoBlock {
         self.fork_v2
     }
 
+    #[expect(dead_code)]
     pub fn blobs(&self) -> &[(Box<[u8]>, Option<Box<[u8]>>)] {
         &self.blobs
     }

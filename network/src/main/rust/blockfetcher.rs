@@ -15,9 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::blockdb::BlockDB;
-use crate::coindb::{CoinDB, State};
 use crate::connection::{Connection, ConnectionId};
+use crate::db::{BlockDB, CoinDB, State};
 use crate::packet::{BlockAnnounce, Blocks, ConsensusFault, GetBlocks};
 use blacknet_compat::config::Network as Config;
 use blacknet_crypto::bigint::UInt256;

@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::coindb::CoinDB;
+use crate::db::CoinDB;
 use blacknet_compat::config::Network as Config;
 use blacknet_kernel::account::Account;
 use blacknet_kernel::amount::Amount;

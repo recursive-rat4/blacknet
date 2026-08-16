@@ -15,10 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::coindb::{CoinDB, State, Update};
-use crate::dbview::DBView;
-use crate::fjall::Fjall;
-use crate::genesis;
+use crate::db::{CoinDB, DBView, Fjall, State, Update, genesis};
 use crate::rollinghashset::RollingHashSet;
 use arc_swap::ArcSwapOption;
 use blacknet_compat::{XDGDirectories, statvfs};
@@ -102,7 +99,7 @@ pub struct BlockDB {
     cached_index: ArcSwapOption<(Hash, BlockIndex)>,
     rejects: Mutex<RollingHashSet<Hash>>,
     pub(super) blocks: DBView<Hash, Block>,
-    pub(super) indexes: DBView<Hash, BlockIndex>,
+    pub(crate) indexes: DBView<Hash, BlockIndex>,
     pub(super) fjall: Arc<Fjall>,
     data_dir: PathBuf,
 }
@@ -323,8 +320,8 @@ impl BlockDB {
         }
     }
 
-    pub fn check(&self, state: &State) -> Check {
-        let mut check = Check {
+    pub fn check(&self, state: &State) -> BlockDBCheck {
+        let mut check = BlockDBCheck {
             result: false,
             height: state.height(),
             indexes: 0,
@@ -409,7 +406,7 @@ impl BlockDB {
 }
 
 #[derive(Deserialize, Serialize)]
-pub struct Check {
+pub struct BlockDBCheck {
     result: bool,
     height: u32,
     indexes: u32,
