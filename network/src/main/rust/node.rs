@@ -156,6 +156,9 @@ impl Node {
 
         node.router.set_node(Arc::downgrade(&node));
 
+        for _ in 0..config.outgoing_connections {
+            runtime.spawn(node.clone().connector());
+        }
         runtime.spawn(node.clone().rotator());
 
         Ok(node)
@@ -527,6 +530,10 @@ impl Node {
         info!(self.logger, "Evicting {}", connection.log_name());
         connection.close();
         true
+    }
+
+    async fn connector(self: Arc<Self>) {
+        todo!();
     }
 
     async fn rotator(self: Arc<Self>) {

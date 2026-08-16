@@ -36,12 +36,15 @@ use tokio::runtime::{Handle, Runtime};
 use tokio::sync::Mutex;
 use tokio::time::{Duration, sleep};
 
+#[expect(dead_code)]
 pub struct Router {
     logger: Logger,
     runtime: Handle,
     config: Arc<Config>,
     listens: RwLock<HashSet<Endpoint>>,
     peer_table: Arc<PeerTable>,
+    socks_proxy: Option<Endpoint>,
+    tor_proxy: Option<Endpoint>,
     i2p_sam: SAM,
     tor_controller: Mutex<TorController>,
     node: OnceLock<Weak<Node>>,
@@ -62,6 +65,11 @@ impl Router {
             config: config.clone(),
             listens: RwLock::new(HashSet::new()),
             peer_table,
+            socks_proxy: config
+                .proxy
+                .as_ref()
+                .and_then(|proxy| Endpoint::parse(&proxy.host, proxy.port)),
+            tor_proxy: Endpoint::parse(&config.tor_proxy.host, config.tor_proxy.port),
             i2p_sam: SAM::new(mode, dirs, log_manager, config.clone())?,
             tor_controller: Mutex::new(TorController::new(dirs, log_manager, config.clone())?),
             node: OnceLock::new(),
