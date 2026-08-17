@@ -24,14 +24,14 @@ use crate::random::{
 /// SampleZ
 ///
 /// <https://eprint.iacr.org/2007/432>
-pub struct DiscreteGaussianDistribution<I: Integer, G: UniformBitGenerator> {
+pub struct DiscreteGaussianDistribution<I: Integer> {
     mu: f64,
     sigma: f64,
-    uid: UniformIntDistribution<I, G>,
-    f01: Float01Distribution<f64, G>,
+    uid: UniformIntDistribution<I>,
+    f01: Float01Distribution<f64>,
 }
 
-impl<I: Integer, G: UniformBitGenerator> DiscreteGaussianDistribution<I, G>
+impl<I: Integer> DiscreteGaussianDistribution<I>
 where
     f64: Cast<I>,
 {
@@ -64,8 +64,16 @@ where
     }
 }
 
+impl<I: Integer> DiscreteGaussianDistribution<I> {
+    /// Reset internal state.
+    pub const fn reset(&mut self) {
+        self.uid.reset();
+        self.f01.reset();
+    }
+}
+
 impl<I: Integer + Cast<f64>, G: UniformBitGenerator> Distribution<I, G>
-    for DiscreteGaussianDistribution<I, G>
+    for DiscreteGaussianDistribution<I>
 {
     fn sample(&mut self, generator: &mut G) -> I {
         loop {
@@ -79,8 +87,8 @@ impl<I: Integer + Cast<f64>, G: UniformBitGenerator> Distribution<I, G>
         }
     }
 
+    #[inline]
     fn reset(&mut self) {
-        self.uid.reset();
-        self.f01.reset();
+        self.reset()
     }
 }

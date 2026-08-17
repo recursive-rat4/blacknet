@@ -25,7 +25,7 @@ pub fn fill_with_weight<T: Zero + Eq, G: UniformBitGenerator, D: Distribution<T,
     mut weight: usize,
 ) {
     debug_assert!(slice.len() >= weight);
-    let mut uid = UniformIntDistribution::<usize, G>::new(0..slice.len());
+    let mut uid = UniformIntDistribution::<usize>::new(0..slice.len());
     while weight > 0 {
         let i = uid.sample(rng);
         if slice[i] == T::ZERO {

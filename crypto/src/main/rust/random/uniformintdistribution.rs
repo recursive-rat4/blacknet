@@ -18,18 +18,16 @@
 use crate::integer::Integer;
 use crate::random::{Distribution, UniformBitGenerator};
 use core::borrow::BorrowMut;
-use core::marker::PhantomData;
 use core::ops::{Bound, RangeBounds};
 
-pub struct UniformIntDistribution<I: Integer, G: UniformBitGenerator> {
+pub struct UniformIntDistribution<I: Integer> {
     min: I,
     length: I::CastUnsigned,
     length_bytes: u32,
     mask: I::CastUnsigned,
-    phantom: PhantomData<G>,
 }
 
-impl<I: Integer, G: UniformBitGenerator> UniformIntDistribution<I, G> {
+impl<I: Integer> UniformIntDistribution<I> {
     pub fn new(range: impl RangeBounds<I>) -> Self {
         let (min, length) = Self::parse(range);
         let length_bits = Self::length_bits(length);
@@ -38,7 +36,6 @@ impl<I: Integer, G: UniformBitGenerator> UniformIntDistribution<I, G> {
             length,
             length_bytes: Self::length_bytes(length_bits),
             mask: Self::mask(length_bits),
-            phantom: PhantomData,
         }
     }
 
@@ -48,6 +45,8 @@ impl<I: Integer, G: UniformBitGenerator> UniformIntDistribution<I, G> {
         self.length_bytes = Self::length_bytes(length_bits);
         self.mask = Self::mask(length_bits);
     }
+
+    pub const fn reset(&mut self) {}
 
     fn parse(range: impl RangeBounds<I>) -> (I, I::CastUnsigned) {
         let min = match range.start_bound() {
@@ -83,7 +82,7 @@ impl<I: Integer, G: UniformBitGenerator> UniformIntDistribution<I, G> {
         }
     }
 
-    fn next(&self, generator: &mut G) -> I::CastUnsigned {
+    fn next<G: UniformBitGenerator>(&self, generator: &mut G) -> I::CastUnsigned {
         let mut bytes = <I::CastUnsigned as Integer>::Bytes::default();
         generator.fill(&mut bytes.borrow_mut()[..self.length_bytes as usize]);
         let int = I::CastUnsigned::from_le_bytes(bytes);
@@ -91,13 +90,13 @@ impl<I: Integer, G: UniformBitGenerator> UniformIntDistribution<I, G> {
     }
 }
 
-impl<I: Integer, G: UniformBitGenerator> Default for UniformIntDistribution<I, G> {
+impl<I: Integer> Default for UniformIntDistribution<I> {
     fn default() -> Self {
         Self::new(..)
     }
 }
 
-impl<I: Integer, G: UniformBitGenerator> Distribution<I, G> for UniformIntDistribution<I, G> {
+impl<I: Integer, G: UniformBitGenerator> Distribution<I, G> for UniformIntDistribution<I> {
     fn sample(&mut self, generator: &mut G) -> I {
         loop {
             let result = self.next(generator);
@@ -109,5 +108,8 @@ impl<I: Integer, G: UniformBitGenerator> Distribution<I, G> for UniformIntDistri
         }
     }
 
-    fn reset(&mut self) {}
+    #[inline]
+    fn reset(&mut self) {
+        self.reset()
+    }
 }

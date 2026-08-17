@@ -28,7 +28,7 @@ use crate::txpool::TxPool;
 use blacknet_compat::config::Network as Config;
 use blacknet_compat::{Mode, XDGDirectories, getuid, uname};
 use blacknet_crypto::bigint::UInt256;
-use blacknet_crypto::random::{Distribution, FAST_RNG, FastRNG, UniformIntDistribution};
+use blacknet_crypto::random::{Distribution, FAST_RNG, UniformIntDistribution};
 use blacknet_io::Write;
 use blacknet_io::file::replace;
 use blacknet_kernel::blake2b::Hash;
@@ -168,7 +168,7 @@ impl Node {
     }
 
     fn generate_nonce() -> u64 {
-        let mut uid = UniformIntDistribution::<u64, FastRNG>::default();
+        let mut uid = UniformIntDistribution::<u64>::default();
         FAST_RNG.with_borrow_mut(|rng| uid.sample(rng))
     }
 
@@ -522,7 +522,7 @@ impl Node {
             return false;
         }
 
-        let mut uid = UniformIntDistribution::<usize, FastRNG>::new(..candidates.len());
+        let mut uid = UniformIntDistribution::<usize>::new(..candidates.len());
         let idx = FAST_RNG.with_borrow_mut(|rng| uid.sample(rng));
         let connection = candidates[idx];
         info!(self.logger, "Evicting {}", connection.log_name());

@@ -19,7 +19,7 @@ use crate::endpoint::Endpoint;
 use arc_swap::{ArcSwap, ArcSwapOption};
 use blacknet_compat::config::Network as Config;
 use blacknet_compat::{Mode, XDGDirectories};
-use blacknet_crypto::random::{Distribution, FAST_RNG, FastRNG, UniformIntDistribution};
+use blacknet_crypto::random::{Distribution, FAST_RNG, UniformIntDistribution};
 use blacknet_io::file::replace;
 use blacknet_log::{Error as LogError, LogManager, Logger, error, info, warn};
 use core::fmt;
@@ -354,7 +354,7 @@ impl SAM {
             'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
         ];
         let mut id = String::with_capacity(LEN);
-        let mut dst = UniformIntDistribution::<usize, FastRNG>::new(..ALPHABET.len());
+        let mut dst = UniformIntDistribution::<usize>::new(..ALPHABET.len());
         FAST_RNG.with_borrow_mut(|rng| {
             for _ in 0..LEN {
                 id.push(ALPHABET[dst.sample(rng)]);

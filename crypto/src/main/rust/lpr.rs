@@ -67,21 +67,21 @@ pub(crate) fn upscale(rt: &Rt) -> RqNTT {
 }
 
 pub(crate) fn generate_uniform<RNG: UniformBitGenerator>(rng: &mut RNG) -> RqNTT {
-    let mut uid = UniformIntDistribution::<<Zq as IntegerModRing>::Int, RNG>::new(0..Zq::MODULUS);
+    let mut uid = UniformIntDistribution::<<Zq as IntegerModRing>::Int>::new(0..Zq::MODULUS);
     let residues: [<Zq as IntegerModRing>::Int; D] = array::from_fn(|_| uid.sample(rng));
     let coefficients = residues.map(Zq::with_int);
     coefficients.into()
 }
 
 pub(crate) fn generate_error<RNG: UniformBitGenerator>(rng: &mut RNG) -> RqNTT {
-    let mut dgd = DiscreteGaussianDistribution::<i8, RNG>::new(0.0, SIGMA);
+    let mut dgd = DiscreteGaussianDistribution::<i8>::new(0.0, SIGMA);
     let residues: [i8; D] = array::from_fn(|_| dgd.sample(rng));
     let coefficients = residues.map(Zq::from);
     coefficients.into()
 }
 
 pub fn generate_secret_key<RNG: UniformBitGenerator>(rng: &mut RNG) -> SecretKey {
-    let mut tud = UniformIntDistribution::<i8, RNG>::new(-1..=1);
+    let mut tud = UniformIntDistribution::<i8>::new(-1..=1);
     let mut residues = [0_i8; D];
     fill_with_weight(rng, &mut tud, &mut residues, H);
     let coefficients = residues.map(Zq::from);

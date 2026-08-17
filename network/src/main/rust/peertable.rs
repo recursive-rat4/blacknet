@@ -19,7 +19,7 @@ use crate::endpoint::Endpoint;
 use blacknet_compat::config::Network as Config;
 use blacknet_compat::{Mode, XDGDirectories};
 use blacknet_crypto::random::{
-    Distribution, FAST_RNG, FastRNG, Float01Distribution, UniformIntDistribution,
+    Distribution, FAST_RNG, Float01Distribution, UniformIntDistribution,
 };
 use blacknet_io::file::replace;
 use blacknet_kernel::blake2b::Hash;
@@ -259,8 +259,8 @@ impl PeerTable {
                 candidates.push((endpoint, entry, entry.chance(now)));
             }
         }
-        let mut uid = UniformIntDistribution::<usize, FastRNG>::default();
-        let mut f01 = Float01Distribution::<f32, FastRNG>::new();
+        let mut uid = UniformIntDistribution::<usize>::default();
+        let mut f01 = Float01Distribution::<f32>::new();
         FAST_RNG.with_borrow_mut(|rng| {
             while !candidates.is_empty() {
                 uid.set_range(..candidates.len());
@@ -289,7 +289,7 @@ impl PeerTable {
     }
 
     fn shuffle(slice: &mut [Endpoint]) {
-        let mut uid = UniformIntDistribution::<usize, FastRNG>::default();
+        let mut uid = UniformIntDistribution::<usize>::default();
         FAST_RNG.with_borrow_mut(|rng| {
             for i in 1..slice.len() {
                 uid.set_range(..=i);

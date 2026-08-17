@@ -24,7 +24,7 @@ use crate::packet::{
 use arc_swap::{ArcSwap, ArcSwapOption};
 use atomic::Atomic;
 use blacknet_crypto::bigint::UInt256;
-use blacknet_crypto::random::{Distribution, FAST_RNG, FastRNG, UniformIntDistribution};
+use blacknet_crypto::random::{Distribution, FAST_RNG, UniformIntDistribution};
 use blacknet_kernel::amount::Amount;
 use blacknet_kernel::blake2b::Hash;
 use blacknet_log::{Logger, debug, error, info};
@@ -441,8 +441,7 @@ impl Connection {
         sleep(NETWORK_TIMEOUT.try_into().unwrap()).await;
 
         if self.is_established() {
-            let mut delay_dst =
-                UniformIntDistribution::<i64, FastRNG>::new(0..NETWORK_TIMEOUT.value());
+            let mut delay_dst = UniformIntDistribution::<i64>::new(0..NETWORK_TIMEOUT.value());
             let delay = FAST_RNG.with_borrow_mut(|rng| delay_dst.sample(rng));
             let delay = Milliseconds::new(delay);
             sleep(delay.try_into().unwrap()).await;
@@ -480,7 +479,7 @@ impl Connection {
     }
 
     fn send_ping(&self) {
-        let mut uid = UniformIntDistribution::<u32, FastRNG>::default();
+        let mut uid = UniformIntDistribution::<u32>::default();
         let challenge = FAST_RNG.with_borrow_mut(|rng| uid.sample(rng));
         self.set_ping_request(Some((challenge, SystemClock::millis())));
         if self.version() >= Ping::MIN_VERSION {
@@ -491,14 +490,13 @@ impl Connection {
     }
 
     async fn whisperer(self: Arc<Self>) {
-        let mut delay_dst =
-            UniformIntDistribution::<i64, FastRNG>::new(10 * 60 * 1000..20 * 60 * 1000);
+        let mut delay_dst = UniformIntDistribution::<i64>::new(10 * 60 * 1000..20 * 60 * 1000);
         let delay = FAST_RNG.with_borrow_mut(|rng| delay_dst.sample(rng));
         let delay = Milliseconds::new(delay);
         sleep(delay.try_into().unwrap()).await;
 
         delay_dst.set_range(4 * 60 * 60 * 1000..20 * 60 * 60 * 1000);
-        let mut size_dst = UniformIntDistribution::<usize, FastRNG>::new(0..=Peers::MAX);
+        let mut size_dst = UniformIntDistribution::<usize>::new(0..=Peers::MAX);
 
         loop {
             let (n, delay) =

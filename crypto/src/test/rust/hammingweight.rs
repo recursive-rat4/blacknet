@@ -20,7 +20,7 @@ use blacknet_crypto::random::{FastDRG, UniformIntDistribution, fill_with_weight}
 #[test]
 fn weight() {
     let mut drg = FastDRG::default();
-    let mut dst = UniformIntDistribution::<u16, FastDRG>::new(0..256);
+    let mut dst = UniformIntDistribution::<u16>::new(0..256);
     let mut a = [0_u16; 32];
     fill_with_weight(&mut drg, &mut dst, &mut a, 4);
     let filled = a.into_iter().filter(|i| *i != 0).count();
