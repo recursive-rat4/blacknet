@@ -277,8 +277,8 @@ path = "src/benchmark/rust/blake2b.rs"
 harness = false
 
 [[bench]]
-name = "field25519"
-path = "src/benchmark/rust/field25519.rs"
+name = "field"
+path = "src/benchmark/rust/field.rs"
 harness = false
 
 [[bench]]

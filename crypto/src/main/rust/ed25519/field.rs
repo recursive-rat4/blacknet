@@ -23,6 +23,7 @@ use crate::algebra::{
 use crate::bigint::{UInt256, UInt512};
 use crate::branchless::{BlAbs, BlAssign, BlEq, BlOption, BlOrd, BlSelect, BlSwap};
 use crate::integer::Integer;
+use crate::symmetric::{Absorb, Duplexer, Squeeze};
 use core::array;
 use core::fmt;
 use core::iter::{Product, Sum};
@@ -645,6 +646,22 @@ impl BlSwap for Field25519 {
     #[inline]
     fn bl_swap(&mut self, rps: &mut Self, condition: bool) {
         self.n.bl_swap(&mut rps.n, condition)
+    }
+}
+
+impl Absorb<u8> for Field25519 {
+    fn absorb_into<D: Duplexer<Msg = u8>>(self, duplex: &mut D) {
+        let bytes: [u8; 32] = self.canonical().to_le_bytes();
+        duplex.absorb_iter(bytes)
+    }
+}
+
+impl Squeeze<u8> for Field25519 {
+    fn squeeze_from<D: Duplexer<Msg = u8>>(duplex: &mut D) -> Self {
+        // log₂(Δ) ≈ -251
+        let bytes: [u8; 32] = array::from_fn(|_| duplex.squeeze_msg());
+        let n = UInt256::from_le_bytes(bytes);
+        Self::with_int(n)
     }
 }
 
