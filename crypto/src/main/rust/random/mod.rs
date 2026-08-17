@@ -28,7 +28,7 @@ mod uniformintdistribution;
 
 pub use binaryuniformdistribution::BinaryUniformDistribution;
 pub use discretegaussiandistribution::DiscreteGaussianDistribution;
-pub use distribution::{Distribution, UniformDistribution, UniformGenerator};
+pub use distribution::{Distribution, UniformBitGenerator, UniformDistribution, UniformGenerator};
 pub use drg::{FastDRG, StrongDRG};
 #[cfg(feature = "std")]
 pub use fastrng::{FAST_RNG, FastRNG};

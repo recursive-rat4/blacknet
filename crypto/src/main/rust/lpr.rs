@@ -22,7 +22,7 @@ use crate::fermat::{FermatField, FermatNTT1024, FermatRing1024};
 use crate::gf2::GF2;
 use crate::integer::bits_u8;
 use crate::random::{
-    DiscreteGaussianDistribution, Distribution, UniformGenerator, UniformIntDistribution,
+    DiscreteGaussianDistribution, Distribution, UniformBitGenerator, UniformIntDistribution,
     fill_with_weight,
 };
 use core::array;
@@ -66,21 +66,21 @@ pub(crate) fn upscale(rt: &Rt) -> RqNTT {
     array::from_fn(|i| ZQ_DELTA.bl_select(Zq::ZERO, coefficients[i].bl_eq(&Zt::ZERO))).into()
 }
 
-pub(crate) fn generate_uniform<RNG: UniformGenerator<Output = u8>>(rng: &mut RNG) -> RqNTT {
+pub(crate) fn generate_uniform<RNG: UniformBitGenerator>(rng: &mut RNG) -> RqNTT {
     let mut uid = UniformIntDistribution::<<Zq as IntegerModRing>::Int, RNG>::new(0..Zq::MODULUS);
     let residues: [<Zq as IntegerModRing>::Int; D] = array::from_fn(|_| uid.sample(rng));
     let coefficients = residues.map(Zq::with_int);
     coefficients.into()
 }
 
-pub(crate) fn generate_error<RNG: UniformGenerator<Output = u8>>(rng: &mut RNG) -> RqNTT {
+pub(crate) fn generate_error<RNG: UniformBitGenerator>(rng: &mut RNG) -> RqNTT {
     let mut dgd = DiscreteGaussianDistribution::<i8, RNG>::new(0.0, SIGMA);
     let residues: [i8; D] = array::from_fn(|_| dgd.sample(rng));
     let coefficients = residues.map(Zq::from);
     coefficients.into()
 }
 
-pub fn generate_secret_key<RNG: UniformGenerator<Output = u8>>(rng: &mut RNG) -> SecretKey {
+pub fn generate_secret_key<RNG: UniformBitGenerator>(rng: &mut RNG) -> SecretKey {
     let mut tud = UniformIntDistribution::<i8, RNG>::new(-1..=1);
     let mut residues = [0_i8; D];
     fill_with_weight(rng, &mut tud, &mut residues, H);
@@ -90,10 +90,7 @@ pub fn generate_secret_key<RNG: UniformGenerator<Output = u8>>(rng: &mut RNG) ->
     }
 }
 
-pub fn generate_public_key<RNG: UniformGenerator<Output = u8>>(
-    rng: &mut RNG,
-    sk: &SecretKey,
-) -> PublicKey {
+pub fn generate_public_key<RNG: UniformBitGenerator>(rng: &mut RNG, sk: &SecretKey) -> PublicKey {
     let a = generate_uniform(rng);
     let e = generate_error(rng);
     PublicKey {
@@ -102,7 +99,7 @@ pub fn generate_public_key<RNG: UniformGenerator<Output = u8>>(
     }
 }
 
-pub fn encrypt<RNG: UniformGenerator<Output = u8>>(
+pub fn encrypt<RNG: UniformBitGenerator>(
     rng: &mut RNG,
     pk: &PublicKey,
     pt: &PlainText,

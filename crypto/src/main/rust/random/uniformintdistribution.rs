@@ -16,12 +16,12 @@
  */
 
 use crate::integer::Integer;
-use crate::random::{Distribution, UniformGenerator};
+use crate::random::{Distribution, UniformBitGenerator};
 use core::borrow::BorrowMut;
 use core::marker::PhantomData;
 use core::ops::{Bound, RangeBounds};
 
-pub struct UniformIntDistribution<I: Integer, G: UniformGenerator<Output = u8>> {
+pub struct UniformIntDistribution<I: Integer, G: UniformBitGenerator> {
     min: I,
     length: I::CastUnsigned,
     length_bytes: u32,
@@ -29,7 +29,7 @@ pub struct UniformIntDistribution<I: Integer, G: UniformGenerator<Output = u8>> 
     phantom: PhantomData<G>,
 }
 
-impl<I: Integer, G: UniformGenerator<Output = u8>> UniformIntDistribution<I, G> {
+impl<I: Integer, G: UniformBitGenerator> UniformIntDistribution<I, G> {
     pub fn new(range: impl RangeBounds<I>) -> Self {
         let (min, length) = Self::parse(range);
         let length_bits = Self::length_bits(length);
@@ -91,15 +91,13 @@ impl<I: Integer, G: UniformGenerator<Output = u8>> UniformIntDistribution<I, G> 
     }
 }
 
-impl<I: Integer, G: UniformGenerator<Output = u8>> Default for UniformIntDistribution<I, G> {
+impl<I: Integer, G: UniformBitGenerator> Default for UniformIntDistribution<I, G> {
     fn default() -> Self {
         Self::new(..)
     }
 }
 
-impl<I: Integer, G: UniformGenerator<Output = u8>> Distribution<I, G>
-    for UniformIntDistribution<I, G>
-{
+impl<I: Integer, G: UniformBitGenerator> Distribution<I, G> for UniformIntDistribution<I, G> {
     fn sample(&mut self, generator: &mut G) -> I {
         loop {
             let result = self.next(generator);

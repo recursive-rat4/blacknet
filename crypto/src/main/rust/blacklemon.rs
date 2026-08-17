@@ -17,7 +17,7 @@
 
 use crate::algebra::{IntegerModRing, One, Zero};
 use crate::lpr;
-use crate::random::UniformGenerator;
+use crate::random::UniformBitGenerator;
 use zeroize::Zeroize;
 
 // https://blacknet.ninja/blacklemon.pdf
@@ -42,24 +42,21 @@ pub type CipherText = lpr::CipherText;
 
 pub type PlainText = lpr::PlainText;
 
-pub fn generate_secret_key<RNG: UniformGenerator<Output = u8>>(rng: &mut RNG) -> SecretKey {
+pub fn generate_secret_key<RNG: UniformBitGenerator>(rng: &mut RNG) -> SecretKey {
     SecretKey {
         a: lpr::generate_secret_key(rng),
         b: lpr::generate_uniform(rng),
     }
 }
 
-pub fn generate_public_key<RNG: UniformGenerator<Output = u8>>(
-    rng: &mut RNG,
-    sk: &SecretKey,
-) -> PublicKey {
+pub fn generate_public_key<RNG: UniformBitGenerator>(rng: &mut RNG, sk: &SecretKey) -> PublicKey {
     PublicKey {
         a: lpr::generate_public_key(rng, &sk.a),
         b: -sk.b,
     }
 }
 
-pub fn encrypt<RNG: UniformGenerator<Output = u8>>(
+pub fn encrypt<RNG: UniformBitGenerator>(
     rng: &mut RNG,
     pk: &PublicKey,
     pt: &PlainText,

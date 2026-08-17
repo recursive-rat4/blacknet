@@ -17,14 +17,14 @@
 
 use crate::float::{Cast, Float};
 use crate::integer::{Integer, UnsignedInteger};
-use crate::random::{Distribution, UniformGenerator, UniformIntDistribution};
+use crate::random::{Distribution, UniformBitGenerator, UniformIntDistribution};
 
 /// Distribution of floats in range `[0, 1)`.
-pub struct Float01Distribution<F: Float<Bits: UnsignedInteger>, G: UniformGenerator<Output = u8>> {
+pub struct Float01Distribution<F: Float<Bits: UnsignedInteger>, G: UniformBitGenerator> {
     uid: UniformIntDistribution<F::Bits, G>,
 }
 
-impl<F: Float<Bits: UnsignedInteger>, G: UniformGenerator<Output = u8>> Float01Distribution<F, G> {
+impl<F: Float<Bits: UnsignedInteger>, G: UniformBitGenerator> Float01Distribution<F, G> {
     /// Construct the new distribution.
     pub fn new() -> Self {
         let bound = F::Bits::ONE << F::MANTISSA_DIGITS;
@@ -34,7 +34,7 @@ impl<F: Float<Bits: UnsignedInteger>, G: UniformGenerator<Output = u8>> Float01D
     }
 }
 
-impl<F: Float<Bits: UnsignedInteger>, G: UniformGenerator<Output = u8>> Default
+impl<F: Float<Bits: UnsignedInteger>, G: UniformBitGenerator> Default
     for Float01Distribution<F, G>
 {
     fn default() -> Self {
@@ -42,7 +42,7 @@ impl<F: Float<Bits: UnsignedInteger>, G: UniformGenerator<Output = u8>> Default
     }
 }
 
-impl<F: Float<Bits: UnsignedInteger + Cast<F>>, G: UniformGenerator<Output = u8>> Distribution<F, G>
+impl<F: Float<Bits: UnsignedInteger + Cast<F>>, G: UniformBitGenerator> Distribution<F, G>
     for Float01Distribution<F, G>
 {
     fn sample(&mut self, generator: &mut G) -> F {

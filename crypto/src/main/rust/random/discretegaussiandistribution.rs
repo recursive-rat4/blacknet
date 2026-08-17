@@ -17,19 +17,21 @@
 
 use crate::float::Cast;
 use crate::integer::Integer;
-use crate::random::{Distribution, Float01Distribution, UniformGenerator, UniformIntDistribution};
+use crate::random::{
+    Distribution, Float01Distribution, UniformBitGenerator, UniformIntDistribution,
+};
 
 /// SampleZ
 ///
 /// <https://eprint.iacr.org/2007/432>
-pub struct DiscreteGaussianDistribution<I: Integer, G: UniformGenerator<Output = u8>> {
+pub struct DiscreteGaussianDistribution<I: Integer, G: UniformBitGenerator> {
     mu: f64,
     sigma: f64,
     uid: UniformIntDistribution<I, G>,
     f01: Float01Distribution<f64, G>,
 }
 
-impl<I: Integer, G: UniformGenerator<Output = u8>> DiscreteGaussianDistribution<I, G>
+impl<I: Integer, G: UniformBitGenerator> DiscreteGaussianDistribution<I, G>
 where
     f64: Cast<I>,
 {
@@ -62,7 +64,7 @@ where
     }
 }
 
-impl<I: Integer + Cast<f64>, G: UniformGenerator<Output = u8>> Distribution<I, G>
+impl<I: Integer + Cast<f64>, G: UniformBitGenerator> Distribution<I, G>
     for DiscreteGaussianDistribution<I, G>
 {
     fn sample(&mut self, generator: &mut G) -> I {

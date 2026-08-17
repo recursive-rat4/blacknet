@@ -31,6 +31,11 @@ pub trait UniformGenerator {
     }
 }
 
+/// Generator of uniformly distributed bytes.
+pub trait UniformBitGenerator: UniformGenerator<Output = u8> {}
+
+impl<G: UniformGenerator<Output = u8>> UniformBitGenerator for G {}
+
 /// A probability distribution.
 ///
 /// It takes a generator as input and
