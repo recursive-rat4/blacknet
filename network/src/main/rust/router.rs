@@ -157,9 +157,9 @@ impl Router {
         ControlFlow::Continue(())
     }
 
-    async fn accept_i2p(self: Arc<Self>, session_id: String, local_endpoint: Endpoint) {
+    async fn accept_i2p(self: Arc<Self>, local_endpoint: Endpoint) {
         loop {
-            match self.i2p_sam.accept(&session_id).await {
+            match self.i2p_sam.accept().await {
                 Ok((buf_reader, buf_writer, remote_endpoint)) => {
                     match self.node.get().expect("Router initialized").upgrade() {
                         Some(node) => node.accept_connection(
@@ -209,10 +209,11 @@ impl Router {
                     timeout = Self::INIT_TIMEOUT;
                     self.add_listener(session.endpoint());
                     self.runtime
-                        .spawn(self.clone().accept_i2p(session.id(), session.endpoint()));
+                        .spawn(self.clone().accept_i2p(session.endpoint()));
                     session.hung().await;
                     info!(self.logger, "Closing I2P session");
                     self.remove_listener(session.endpoint());
+                    self.i2p_sam.close_session();
                 }
                 Err(msg) => {
                     warn!(self.logger, "{msg}");
