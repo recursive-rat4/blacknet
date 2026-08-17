@@ -48,11 +48,11 @@ impl GHashField {
 
     const fn reduce(x: [u64; 4]) -> [u64; 2] {
         let [ll, lh, hl, hh] = x;
-        let tl = hl ^ hl << 1 ^ hl << 2 ^ hl << 7;
-        let th = (hh << 1 | hl >> 63) ^ (hh << 2 | hl >> 62) ^ (hh << 7 | hl >> 57);
-        let oh = hh >> 63 ^ hh >> 62 ^ hh >> 57;
-        let ol = oh ^ oh << 1 ^ oh << 2 ^ oh << 7;
-        [ll ^ tl ^ ol, lh ^ th ^ hh]
+        let t = hl ^ hh >> 63 ^ hh >> 62 ^ hh >> 57;
+        let t = t as u128 | (hh as u128) << 64;
+        let t = t ^ t << 1 ^ t << 2 ^ t << 7;
+        let [l, h] = [t as u64, (t >> 64) as u64];
+        [ll ^ l, lh ^ h]
     }
 
     fn square_n<const N: usize>(mut self) -> Self {

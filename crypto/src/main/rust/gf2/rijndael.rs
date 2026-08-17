@@ -41,13 +41,10 @@ impl RijndaelField {
     }
 
     const fn reduce(x: u16) -> u8 {
-        let l = x & 0xFF;
-        let h = x >> 8;
-        let t = l ^ h ^ h << 1 ^ h << 3 ^ h << 4;
-        let l = t & 0xFF;
-        let h = t >> 8;
-        let t = l ^ h ^ h << 1 ^ h << 3 ^ h << 4;
-        t as u8
+        let [l, h] = [x as u8, (x >> 8) as u8];
+        let t = h ^ h >> 7 ^ h >> 5 ^ h >> 4;
+        let t = t ^ t << 1 ^ t << 3 ^ t << 4;
+        l ^ t
     }
 }
 
