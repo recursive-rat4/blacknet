@@ -16,20 +16,20 @@
  */
 
 use crate::db::Fjall;
-use blacknet_serialization::format::{from_bytes, to_bytes};
+use blacknet_serialization::format::from_bytes;
 use core::fmt::Debug;
 use core::marker::PhantomData;
 use core::ops::Deref;
-use fjall::{Keyspace, OwnedWriteBatch as WriteBatch, Result};
-use serde::{Deserialize, Serialize};
+use fjall::{Keyspace, Result};
+use serde::Deserialize;
 
-pub struct DBView<K: AsRef<[u8]>, V: for<'de> Deserialize<'de> + Serialize> {
-    keyspace: Keyspace,
+pub struct DBView<K: AsRef<[u8]>, V> {
+    pub(super) keyspace: Keyspace,
     phantom_k: PhantomData<K>,
     phantom_v: PhantomData<V>,
 }
 
-impl<K: AsRef<[u8]>, V: for<'de> Deserialize<'de> + Serialize> DBView<K, V> {
+impl<K: AsRef<[u8]>, V> DBView<K, V> {
     pub fn new(fjall: &Fjall, name: &str) -> Result<Self> {
         Ok(Self {
             keyspace: fjall.database().keyspace(name, Fjall::kv_options)?,
@@ -50,6 +50,19 @@ impl<K: AsRef<[u8]>, V: for<'de> Deserialize<'de> + Serialize> DBView<K, V> {
         self.keyspace.contains_key(key).unwrap()
     }
 
+    pub fn get_bytes(&self, key: K) -> Option<Box<[u8]>> {
+        self.keyspace
+            .get(key)
+            .unwrap()
+            .map(|slice| Box::from(slice.deref()))
+    }
+
+    pub fn count(&self) -> usize {
+        self.keyspace.len().unwrap()
+    }
+}
+
+impl<K: AsRef<[u8]>, V: for<'de> Deserialize<'de>> DBView<K, V> {
     pub fn get(&self, key: K) -> Option<V> {
         self.keyspace
             .get(key)
@@ -65,13 +78,6 @@ impl<K: AsRef<[u8]>, V: for<'de> Deserialize<'de> + Serialize> DBView<K, V> {
         })
     }
 
-    pub fn get_bytes(&self, key: K) -> Option<Box<[u8]>> {
-        self.keyspace
-            .get(key)
-            .unwrap()
-            .map(|slice| Box::from(slice.deref()))
-    }
-
     pub fn iter(&self) -> impl Iterator<Item = (K, V)>
     where
         K: for<'a> TryFrom<&'a [u8], Error: Debug>,
@@ -83,21 +89,5 @@ impl<K: AsRef<[u8]>, V: for<'de> Deserialize<'de> + Serialize> DBView<K, V> {
                 from_bytes::<V>(&value, false).unwrap(),
             )
         })
-    }
-
-    pub fn count(&self) -> usize {
-        self.keyspace.len().unwrap()
-    }
-
-    pub fn insert(&self, batch: &mut WriteBatch, key: K, value: &V) {
-        batch.insert(&self.keyspace, key.as_ref(), to_bytes(value).unwrap())
-    }
-
-    pub fn insert_bytes(&self, batch: &mut WriteBatch, key: K, bytes: &[u8]) {
-        batch.insert(&self.keyspace, key.as_ref(), bytes)
-    }
-
-    pub fn remove(&self, batch: &mut WriteBatch, key: K) {
-        batch.remove(&self.keyspace, key.as_ref())
     }
 }

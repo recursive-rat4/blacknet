@@ -134,9 +134,9 @@ impl BlockDB {
     pub fn remove(&self, hashes: Vec<Hash>) {
         let mut batch = self.fjall.create_write_batch();
         for hash in hashes {
-            self.blocks.remove(&mut batch, hash)
+            batch.remove(&self.blocks, hash)
         }
-        batch.commit().unwrap();
+        batch.commit();
     }
 
     pub fn contains(&self, hash: Hash) -> bool {
@@ -383,7 +383,7 @@ impl BlockDB {
             return Err(Error::not_reachable_vertex(block.previous().to_string()));
         }
         let mut batch = self.fjall.create_write_batch();
-        self.blocks.insert_bytes(&mut batch, hash, &bytes);
+        batch.insert_bytes(&self.blocks, hash, &bytes);
         let mut coin_tx = Update::new(
             coin_db.clone(),
             batch,

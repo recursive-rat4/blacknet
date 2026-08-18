@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::db::{BlockDB, BlockIndex, DBView, Fjall, UndoBlock, genesis};
+use crate::db::{BlockDB, BlockIndex, DBView, Fjall, UndoBlock, WriteBatch, genesis};
 use arc_swap::ArcSwap;
 use blacknet_compat::Mode;
 use blacknet_crypto::bigint::UInt256;
@@ -40,7 +40,6 @@ use blacknet_serialization::format::{from_bytes, to_bytes};
 use blacknet_time::Seconds;
 use core::cmp::{max, min};
 use core::error::Error as StdError;
-use fjall::OwnedWriteBatch as WriteBatch;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, VecDeque, hash_map};
 use std::sync::Arc;
@@ -116,7 +115,7 @@ impl CoinDB {
     pub fn prune(&self) {
         let mut batch = self.block_db.fjall.create_write_batch();
         self.prune_batched(&mut batch);
-        batch.commit().unwrap();
+        batch.commit();
     }
 
     pub fn prune_batched(&self, batch: &mut WriteBatch) {
@@ -130,7 +129,7 @@ impl CoinDB {
             if !self.undos.contains(hash) {
                 break;
             }
-            self.undos.remove(batch, hash);
+            batch.remove(&self.undos, hash);
             if hash == Hash::ZERO {
                 break;
             }
@@ -329,7 +328,7 @@ impl CoinDB {
             block_sizes,
             requires_network: state.requires_network,
         };
-        self.db_state.insert(&mut batch, STATE_KEY, &new_state);
+        batch.insert(&self.db_state, STATE_KEY, &new_state);
         self.state.store(Arc::new(new_state));
 
         let mut prev_index = self
@@ -339,36 +338,34 @@ impl CoinDB {
             .expect("consistent index for undo");
         prev_index.next = Hash::ZERO;
         prev_index.next_size = 0;
-        self.block_db
-            .indexes
-            .insert(&mut batch, block_index.previous(), &prev_index);
-        self.block_db.indexes.remove(&mut batch, hash);
+        batch.insert(&self.block_db.indexes, block_index.previous(), &prev_index);
+        batch.remove(&self.block_db.indexes, hash);
 
         for (key, bytes) in undo.accounts() {
             match bytes {
-                Some(bytes) => self.accounts.insert_bytes(&mut batch, *key, bytes),
-                None => self.accounts.remove(&mut batch, *key),
+                Some(bytes) => batch.insert_bytes(&self.accounts, *key, bytes),
+                None => batch.remove(&self.accounts, *key),
             }
         }
         for (id, bytes) in undo.htlcs() {
             match bytes {
-                Some(bytes) => self.htlcs.insert_bytes(&mut batch, *id, bytes),
-                None => self.htlcs.remove(&mut batch, *id),
+                Some(bytes) => batch.insert_bytes(&self.htlcs, *id, bytes),
+                None => batch.remove(&self.htlcs, *id),
             }
         }
         for (id, bytes) in undo.multisigs() {
             match bytes {
-                Some(bytes) => self.multisigs.insert_bytes(&mut batch, *id, bytes),
-                None => self.multisigs.remove(&mut batch, *id),
+                Some(bytes) => batch.insert_bytes(&self.multisigs, *id, bytes),
+                None => batch.remove(&self.multisigs, *id),
             }
         }
         //TODO undo blobs
 
-        self.undos.remove(&mut batch, hash);
+        batch.remove(&self.undos, hash);
 
         //TODO WalletDB
 
-        batch.commit().unwrap();
+        batch.commit();
 
         hash
     }
@@ -454,7 +451,7 @@ impl State {
 
         for (public_key, balance) in genesis::balances(mode) {
             let account = Account::with_stake(balance);
-            accounts.insert(&mut batch, public_key, &account);
+            batch.insert(accounts, public_key, &account);
             supply += balance;
         }
 
@@ -477,10 +474,10 @@ impl State {
         };
 
         let block_index = BlockIndex::new(Hash::ZERO, Hash::ZERO, 0, 0, Amount::ZERO);
-        indexes.insert(&mut batch, genesis::hash(), &block_index);
+        batch.insert(indexes, genesis::hash(), &block_index);
 
-        db_state.insert(&mut batch, STATE_KEY, &state);
-        batch.commit().unwrap();
+        batch.insert(db_state, STATE_KEY, &state);
+        batch.commit();
         state
     }
 
@@ -652,36 +649,36 @@ impl Update {
             block_sizes: self.state.block_sizes,
             requires_network: self.state.requires_network,
         };
-        let batch = &mut self.write_batch;
-        self.coin_db.db_state.insert(batch, STATE_KEY, &new_state);
+        let mut batch = self.write_batch;
+        batch.insert(&self.coin_db.db_state, STATE_KEY, &new_state);
         self.coin_db.state.store(Arc::new(new_state));
-        self.coin_db
-            .undos
-            .insert(batch, self.block_hash, &self.undo);
-        self.coin_db
-            .block_db
-            .indexes
-            .insert(batch, self.block_previous, &self.prev_index.unwrap());
-        self.coin_db
-            .block_db
-            .indexes
-            .insert(batch, self.block_hash, &self.block_index.unwrap());
+        batch.insert(&self.coin_db.undos, self.block_hash, &self.undo);
+        batch.insert(
+            &self.coin_db.block_db.indexes,
+            self.block_previous,
+            &self.prev_index.unwrap(),
+        );
+        batch.insert(
+            &self.coin_db.block_db.indexes,
+            self.block_hash,
+            &self.block_index.unwrap(),
+        );
         for (key, account) in self.accounts {
-            self.coin_db.accounts.insert(batch, key, &account)
+            batch.insert(&self.coin_db.accounts, key, &account)
         }
         for (id, htlc) in self.htlcs {
             match htlc {
-                Some(htlc) => self.coin_db.htlcs.insert(batch, id, &htlc),
-                None => self.coin_db.htlcs.remove(batch, id),
+                Some(htlc) => batch.insert(&self.coin_db.htlcs, id, &htlc),
+                None => batch.remove(&self.coin_db.htlcs, id),
             }
         }
         for (id, multisig) in self.multisigs {
             match multisig {
-                Some(multisig) => self.coin_db.multisigs.insert(batch, id, &multisig),
-                None => self.coin_db.multisigs.remove(batch, id),
+                Some(multisig) => batch.insert(&self.coin_db.multisigs, id, &multisig),
+                None => batch.remove(&self.coin_db.multisigs, id),
             }
         }
-        self.write_batch.commit().unwrap();
+        batch.commit();
     }
 }
 

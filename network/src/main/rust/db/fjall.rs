@@ -15,12 +15,13 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::db::WriteBatch;
 use blacknet_compat::config::Network as Config;
 use blacknet_compat::{XDGDirectories, ulimit};
 use core::cmp::max;
 use fjall::{
-    CompressionType, Database, KeyspaceCreateOptions, KvSeparationOptions,
-    OwnedWriteBatch as WriteBatch, Result, config::CompressionPolicy,
+    CompressionType, Database, KeyspaceCreateOptions, KvSeparationOptions, Result,
+    config::CompressionPolicy,
 };
 use std::sync::Arc;
 
@@ -67,6 +68,6 @@ impl Fjall {
     }
 
     pub fn create_write_batch(&self) -> WriteBatch {
-        self.database.batch()
+        WriteBatch::new(self.database.batch())
     }
 }

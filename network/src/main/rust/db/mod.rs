@@ -21,10 +21,12 @@ mod dbview;
 mod fjall;
 pub mod genesis;
 mod undoblock;
+mod writebatch;
 
 use coindb::Update;
 use dbview::DBView;
 use undoblock::UndoBlock;
+use writebatch::WriteBatch;
 
 pub use blockdb::{BlockDB, BlockDBCheck, BlockIndex};
 pub use coindb::{CoinDB, CoinDBCheck, State};
