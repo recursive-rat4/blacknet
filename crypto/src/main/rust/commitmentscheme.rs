@@ -15,8 +15,33 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::random::UniformBitGenerator;
+
 /// Commitment scheme is a cryptographic protocol that binds to a message and hides it.
 pub trait CommitmentScheme<Message> {
+    /// Result type.
+    type Commitment;
+    /// Type to open commitment.
+    type Opening;
+
+    /// Commit to a message.
+    fn commit<RNG: UniformBitGenerator>(
+        &self,
+        message: &Message,
+        rng: &mut RNG,
+    ) -> (Self::Commitment, Self::Opening);
+
+    /// Open commitment.
+    fn open(
+        &self,
+        commitment: &Self::Commitment,
+        message: &Message,
+        opening: &Self::Opening,
+    ) -> bool;
+}
+
+/// Binding commitment scheme is a cryptographic protocol that binds to a message but can't hide it.
+pub trait BindingCommitmentScheme<Message> {
     /// Result type.
     type Commitment;
     /// Type to open commitment.

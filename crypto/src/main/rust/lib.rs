@@ -22,7 +22,7 @@ extern crate alloc;
 #[cfg(feature = "std")]
 extern crate std;
 
-pub mod ajtaicommitment;
+pub mod ajtai;
 pub mod algebra;
 pub mod assigner;
 pub mod bigint;

@@ -56,8 +56,8 @@ doctest = false
 path = "src/main/rust/lib.rs"
 
 [[test]]
-name = "ajtaicommitment"
-path = "src/test/rust/ajtaicommitment.rs"
+name = "ajtai"
+path = "src/test/rust/ajtai.rs"
 
 [[test]]
 name = "bigint"
