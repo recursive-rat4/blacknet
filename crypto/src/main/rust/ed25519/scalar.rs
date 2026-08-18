@@ -633,6 +633,9 @@ impl IntegerModRing for Scalar25519 {
     const BITS: u32 = 253;
     const MODULUS: Self::Modulus =
         UInt256::from_hex("1000000000000000000000000000000014DEF9DEA2F79CD65812631A5CF5D3ED");
+    const MAX_CANONICAL: Option<UInt256> = Some(UInt256::from_hex(
+        "1000000000000000000000000000000014DEF9DEA2F79CD65812631A5CF5D3EC",
+    ));
 }
 
 impl BlSelect for Scalar25519 {

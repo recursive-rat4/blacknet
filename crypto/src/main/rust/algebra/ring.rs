@@ -128,6 +128,7 @@ pub trait IntegerModRing
 
     const BITS: u32;
     const MODULUS: Self::Modulus;
+    const MAX_CANONICAL: Option<Self::Int>;
 }
 
 impl<Z: IntegerModRing> AdditiveCyclicGroup for Z {}

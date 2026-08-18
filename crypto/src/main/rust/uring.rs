@@ -345,6 +345,7 @@ macro_rules! impl_uring {
 
                 const BITS: u32 = <$int>::BITS;
                 const MODULUS: $long = $modulus;
+                const MAX_CANONICAL: Option<$int> = Some(<$int>::MAX);
             }
 
             impl BalancedRepresentative for $x {

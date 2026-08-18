@@ -600,6 +600,9 @@ impl IntegerModRing for Field25519 {
     const BITS: u32 = 255;
     const MODULUS: Self::Modulus =
         UInt256::from_hex("7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFED");
+    const MAX_CANONICAL: Option<UInt256> = Some(UInt256::from_hex(
+        "7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEC",
+    ));
 }
 
 impl BlSelect for Field25519 {

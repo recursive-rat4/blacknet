@@ -448,6 +448,7 @@ impl IntegerModRing for FermatField {
 
     const BITS: u32 = 17;
     const MODULUS: Self::Modulus = 65537;
+    const MAX_CANONICAL: Option<i32> = Some(65536);
 }
 
 impl BalancedRepresentative for FermatField {

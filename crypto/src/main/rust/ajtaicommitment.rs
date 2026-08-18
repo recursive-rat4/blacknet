@@ -19,7 +19,8 @@ use crate::algebra::{IntegerModRing, PolynomialRing, UnitalRing};
 use crate::commitmentscheme::CommitmentScheme;
 use crate::matrix::{DenseMatrix, DenseVector};
 use crate::norm::{EuclideanNorm, InfinityNorm, L2, LInf, NormBound};
-use crate::random::UniformGenerator;
+use crate::random::{Distribution, UniformBitGenerator, UniformModDistribution};
+use core::array;
 use core::iter::repeat_with;
 use core::ops::Mul;
 
@@ -43,32 +44,34 @@ impl<R: UnitalRing, Lp, Length> AjtaiCommitment<R, Lp, Length> {
     }
 
     /// Short Integer Solution
-    pub fn sis(g: &mut impl UniformGenerator<Output = R>, rows: u32, columns: u32) -> DenseMatrix<R>
+    pub fn sis<G: UniformBitGenerator>(g: &mut G, rows: u32, columns: u32) -> DenseMatrix<R>
     where
         R: IntegerModRing,
     {
+        let mut umd = UniformModDistribution::<R>::new();
         DenseMatrix::<R>::new(
             rows,
             columns,
-            repeat_with(|| g.generate())
+            repeat_with(|| umd.sample(g))
                 .take(rows as usize * columns as usize)
                 .collect(),
         )
     }
 
     /// Module Short Integer Solution
-    pub fn msis<Z: IntegerModRing>(
-        g: &mut impl UniformGenerator<Output = R>,
+    pub fn msis<Z: IntegerModRing, const N: usize, G: UniformBitGenerator>(
+        g: &mut G,
         rows: u32,
         columns: u32,
     ) -> DenseMatrix<R>
     where
-        R: PolynomialRing<Z>,
+        R: PolynomialRing<Z> + From<[Z; N]>,
     {
+        let mut umd = UniformModDistribution::<Z>::new();
         DenseMatrix::<R>::new(
             rows,
             columns,
-            repeat_with(|| g.generate())
+            repeat_with(|| R::from(array::from_fn(|_| umd.sample(g))))
                 .take(rows as usize * columns as usize)
                 .collect(),
         )

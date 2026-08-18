@@ -25,6 +25,7 @@ mod float01distribution;
 pub mod hammingweight;
 mod quartaryuniformdistribution;
 mod uniformintdistribution;
+mod uniformmoddistribution;
 
 pub use binaryuniformdistribution::BinaryUniformDistribution;
 pub use discretegaussiandistribution::DiscreteGaussianDistribution;
@@ -36,3 +37,4 @@ pub use float01distribution::Float01Distribution;
 pub use hammingweight::fill_with_weight;
 pub use quartaryuniformdistribution::QuartaryUniformDistribution;
 pub use uniformintdistribution::UniformIntDistribution;
+pub use uniformmoddistribution::UniformModDistribution;

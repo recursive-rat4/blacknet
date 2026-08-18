@@ -260,6 +260,10 @@ name = "uniformintdistribution"
 path = "src/test/rust/uniformintdistribution.rs"
 
 [[test]]
+name = "uniformmoddistribution"
+path = "src/test/rust/uniformmoddistribution.rs"
+
+[[test]]
 name = "univariatepolynomial"
 path = "src/test/rust/univariatepolynomial.rs"
 

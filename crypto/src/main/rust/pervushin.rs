@@ -494,6 +494,7 @@ impl IntegerModRing for PervushinField {
 
     const BITS: u32 = 61;
     const MODULUS: Self::Modulus = 2305843009213693951;
+    const MAX_CANONICAL: Option<i64> = Some(2305843009213693950);
 }
 
 impl BalancedRepresentative for PervushinField {

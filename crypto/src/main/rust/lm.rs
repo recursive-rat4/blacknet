@@ -477,6 +477,7 @@ impl IntegerModRing for LMField {
 
     const BITS: u32 = 61;
     const MODULUS: Self::Modulus = 1152921504606847009;
+    const MAX_CANONICAL: Option<i64> = Some(1152921504606847008);
 }
 
 impl BalancedRepresentative for LMField {

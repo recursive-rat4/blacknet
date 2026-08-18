@@ -23,7 +23,7 @@ use crate::gf2::GF2;
 use crate::integer::bits_u8;
 use crate::random::{
     DiscreteGaussianDistribution, Distribution, UniformBitGenerator, UniformIntDistribution,
-    fill_with_weight,
+    UniformModDistribution, fill_with_weight,
 };
 use core::array;
 use zeroize::Zeroize;
@@ -67,9 +67,8 @@ pub(crate) fn upscale(rt: &Rt) -> RqNTT {
 }
 
 pub(crate) fn generate_uniform<RNG: UniformBitGenerator>(rng: &mut RNG) -> RqNTT {
-    let mut uid = UniformIntDistribution::<<Zq as IntegerModRing>::Int>::new(0..Zq::MODULUS);
-    let residues: [<Zq as IntegerModRing>::Int; D] = array::from_fn(|_| uid.sample(rng));
-    let coefficients = residues.map(Zq::with_int);
+    let mut umd = UniformModDistribution::<Zq>::new();
+    let coefficients: [Zq; D] = array::from_fn(|_| umd.sample(rng));
     coefficients.into()
 }
 

@@ -394,6 +394,7 @@ impl IntegerModRing for GF2 {
 
     const BITS: u32 = 1;
     const MODULUS: Self::Modulus = 2;
+    const MAX_CANONICAL: Option<i8> = Some(1);
 }
 
 impl BalancedRepresentative for GF2 {
