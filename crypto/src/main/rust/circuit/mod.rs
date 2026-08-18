@@ -22,7 +22,6 @@ pub mod convolution;
 pub mod logicgate;
 pub mod numbertheoretictransform;
 pub mod polynomial;
-pub mod random;
 pub mod sumcheck;
 pub mod symmetric;
 pub mod uint;

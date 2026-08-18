@@ -15,15 +15,16 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::IntegerModRing;
-use crate::random::{BinaryUniformDistribution, Distribution, UniformGenerator};
+use crate::algebra::UnitalRing;
+use crate::branchless::BlSelect;
+use crate::random::{BinaryUniformDistribution, Distribution, UniformBitGenerator};
 
 /// Uniform distribution over subset `{-1, 0, 1, 2}`.
-pub struct QuartaryUniformDistribution<Z: IntegerModRing> {
-    bud: BinaryUniformDistribution<Z>,
+pub struct QuartaryUniformDistribution {
+    bud: BinaryUniformDistribution,
 }
 
-impl<Z: IntegerModRing> QuartaryUniformDistribution<Z> {
+impl QuartaryUniformDistribution {
     /// Construct a new distribution.
     pub const fn new() -> Self {
         Self {
@@ -37,17 +38,19 @@ impl<Z: IntegerModRing> QuartaryUniformDistribution<Z> {
     }
 }
 
-impl<Z: IntegerModRing> Default for QuartaryUniformDistribution<Z> {
+impl Default for QuartaryUniformDistribution {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<Z: IntegerModRing, G: UniformGenerator<Output = Z>> Distribution<Z, G>
-    for QuartaryUniformDistribution<Z>
+impl<R: UnitalRing + BlSelect<Output = R>, G: UniformBitGenerator> Distribution<R, G>
+    for QuartaryUniformDistribution
 {
-    fn sample(&mut self, generator: &mut G) -> Z {
-        self.bud.sample(generator).double() - self.bud.sample(generator)
+    fn sample(&mut self, generator: &mut G) -> R {
+        let a = Distribution::<R, G>::sample(&mut self.bud, generator);
+        let b = Distribution::<R, G>::sample(&mut self.bud, generator);
+        a.double() - b
     }
 
     #[inline]

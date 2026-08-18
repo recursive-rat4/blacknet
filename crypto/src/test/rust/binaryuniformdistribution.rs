@@ -15,85 +15,36 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_crypto::algebra::One;
-use blacknet_crypto::assigner::random::BinaryUniformDistribution as Assigner;
-use blacknet_crypto::circuit::builder::{CircuitBuilder, Constant, LinearCombination};
-use blacknet_crypto::circuit::random::BinaryUniformDistribution as Circuit;
-use blacknet_crypto::constraintsystem::ConstraintSystem;
 use blacknet_crypto::random::{BinaryUniformDistribution, Distribution, UniformGenerator};
-use core::{array, assert_matches};
+use core::array;
 
-type Z = blacknet_crypto::lm::LMField;
+type Z = blacknet_crypto::uring::U8Ring;
 
-struct GeneratorPlain {
-    i: i16,
+struct TestGenerator {
+    i: u8,
 }
 
-impl GeneratorPlain {
+impl TestGenerator {
     fn new() -> Self {
-        Self { i: 1234 }
+        Self { i: 0xD7 }
     }
 }
 
-impl UniformGenerator for GeneratorPlain {
-    type Output = Z;
+impl UniformGenerator for TestGenerator {
+    type Output = u8;
 
     fn generate(&mut self) -> Self::Output {
-        let result = self.i;
-        self.i += 1;
-        result.into()
+        let ret = self.i;
+        self.i = self.i.wrapping_add(1);
+        ret
     }
 }
 
 #[test]
-fn plain_reproducible() {
-    let mut g = GeneratorPlain::new();
-    let mut bud = BinaryUniformDistribution::<Z>::new();
-    let a: [Z; 16] = [0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0].map(Z::from);
+fn reproducible() {
+    let mut g = TestGenerator::new();
+    let mut bud = BinaryUniformDistribution::new();
+    let a: [Z; 16] = [1, 1, 1, 0, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1].map(Z::from);
     let b: [Z; 16] = array::from_fn(|_| bud.sample(&mut g));
     assert_eq!(b, a);
-}
-
-struct GeneratorCircuit {
-    i: Z,
-}
-
-impl GeneratorCircuit {
-    fn new() -> Self {
-        Self { i: 1234.into() }
-    }
-}
-
-impl UniformGenerator for GeneratorCircuit {
-    type Output = LinearCombination<Z>;
-
-    fn generate(&mut self) -> Self::Output {
-        let result = Constant::new(self.i);
-        self.i += Z::ONE;
-        result.into()
-    }
-}
-
-#[test]
-fn circuit_reproducible() {
-    let a_plain: [Z; 16] = [0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0].map(Z::from);
-
-    let circuit = CircuitBuilder::<Z>::r1cs();
-    let scope = circuit.scope("test");
-    let mut g_circuit = GeneratorCircuit::new();
-    let mut bud_circuit = Circuit::<Z>::new(&circuit);
-    circuit.lay_out();
-    let _a_circuit: [LinearCombination<Z>; 16] =
-        array::from_fn(|_| bud_circuit.sample(&mut g_circuit));
-    drop(scope);
-
-    let r1cs = circuit.to_r1cs();
-    let z = r1cs.assigment();
-
-    let mut g_assigner = GeneratorPlain::new();
-    let mut bud_assigner = Assigner::<Z>::new(&z);
-    let a_assigned: [Z; 16] = array::from_fn(|_| bud_assigner.sample(&mut g_assigner));
-
-    assert_eq!(a_assigned, a_plain);
-    assert_matches!(r1cs.is_satisfied(&z.finish()), Ok(()));
 }

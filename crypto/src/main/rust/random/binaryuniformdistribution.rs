@@ -15,21 +15,21 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::IntegerModRing;
-use crate::integer::Integer;
-use crate::random::{Distribution, UniformGenerator};
+use crate::algebra::{One, Zero};
+use crate::branchless::BlSelect;
+use crate::random::{Distribution, UniformBitGenerator};
 
 /// Uniform distribution over subset `{0, 1}`.
-pub struct BinaryUniformDistribution<Z: IntegerModRing> {
-    cache: Z::Int,
+pub struct BinaryUniformDistribution {
+    cache: u8,
     have_bits: u32,
 }
 
-impl<Z: IntegerModRing> BinaryUniformDistribution<Z> {
+impl BinaryUniformDistribution {
     /// Construct a new distribution.
     pub const fn new() -> Self {
         Self {
-            cache: Z::Int::ZERO,
+            cache: 0,
             have_bits: 0,
         }
     }
@@ -38,34 +38,26 @@ impl<Z: IntegerModRing> BinaryUniformDistribution<Z> {
     pub const fn reset(&mut self) {
         self.have_bits = 0
     }
-
-    fn useful_bits() -> u32 {
-        if Z::MODULUS.count_ones() == 1 {
-            Z::BITS
-        } else {
-            Z::BITS - 1
-        }
-    }
 }
 
-impl<Z: IntegerModRing> Default for BinaryUniformDistribution<Z> {
+impl Default for BinaryUniformDistribution {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<Z: IntegerModRing, G: UniformGenerator<Output = Z>> Distribution<Z, G>
-    for BinaryUniformDistribution<Z>
+impl<S: One + Zero + BlSelect<Output = S>, G: UniformBitGenerator> Distribution<S, G>
+    for BinaryUniformDistribution
 {
-    fn sample(&mut self, generator: &mut G) -> Z {
+    fn sample(&mut self, generator: &mut G) -> S {
         if self.have_bits == 0 {
-            self.cache = generator.generate().canonical();
-            self.have_bits = Self::useful_bits();
+            self.cache = generator.generate();
+            self.have_bits = u8::BITS;
         }
-        let result = self.cache & Z::Int::LIMB_ONE;
-        self.cache >>= Z::Int::LIMB_ONE;
+        let bit = self.cache & 1 != 0;
+        self.cache >>= 1;
         self.have_bits -= 1;
-        Z::with_limb(result)
+        S::ZERO.bl_select(S::ONE, bit)
     }
 
     #[inline]
