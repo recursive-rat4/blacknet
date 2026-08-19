@@ -15,8 +15,6 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#![allow(clippy::manual_is_multiple_of)]
-
 use crate::algebra::{
     AdditiveCommutativeMagma, AdditiveSemigroup, Algebra, Array, Conjugate, DivisionRingOps,
     Double, Inv, LeftOne, LeftZero, MultiplicativeCommutativeMagma, MultiplicativeSemigroup, One,
@@ -55,8 +53,9 @@ impl<Z: Twiddles<M>, const M: usize, const N: usize> NTTRing<Z, M, N> {
     }
 
     const INERTIA: usize = const {
-        assert!(N % M == 0);
-        N / M
+        let (q, r) = (N / M, N % M);
+        assert!(r == 0);
+        q
     };
 }
 

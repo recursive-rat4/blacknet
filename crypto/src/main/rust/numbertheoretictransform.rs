@@ -15,8 +15,6 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#![allow(clippy::manual_is_multiple_of)]
-
 use crate::algebra::{PrimeField, RingOps};
 use crate::convolution::{Convolution, binomial};
 use core::array;
@@ -33,8 +31,9 @@ where
     for<'a> &'a Z: RingOps<Z>,
 {
     let inertia: usize = const {
-        assert!(N % M == 0);
-        N / M
+        let (q, r) = (N / M, N % M);
+        assert!(r == 0);
+        q
     };
     let mut i;
     let mut j = 0;
@@ -62,8 +61,9 @@ where
     for<'a> &'a Z: RingOps<Z>,
 {
     let inertia: usize = const {
-        assert!(N % M == 0);
-        N / M
+        let (q, r) = (N / M, N % M);
+        assert!(r == 0);
+        q
     };
     let mut i;
     let mut j = M;
@@ -98,8 +98,9 @@ where
 {
     fn convolute(a: &[Z; N], b: &[Z; N]) -> [Z; N] {
         let inertia: usize = const {
-            assert!(N % M == 0);
-            N / M
+            let (q, r) = (N / M, N % M);
+            assert!(r == 0);
+            q
         };
         match inertia {
             1 => array::from_fn(|i| &a[i] * &b[i]),

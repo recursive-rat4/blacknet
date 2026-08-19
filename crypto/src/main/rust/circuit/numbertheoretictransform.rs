@@ -15,8 +15,6 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#![allow(clippy::manual_is_multiple_of)]
-
 use crate::algebra::RingOps;
 use crate::circuit::builder::{Constant, LinearCombination, Scope};
 use crate::circuit::convolution::{Convolution, binomial};
@@ -29,8 +27,9 @@ pub fn cooley_tukey<Z: Twiddles<M> + Clone, const M: usize, const N: usize>(
     for<'a> &'a Z: RingOps<Z>,
 {
     let inertia: usize = const {
-        assert!(N % M == 0);
-        N / M
+        let (q, r) = (N / M, N % M);
+        assert!(r == 0);
+        q
     };
     let mut i;
     let mut j = 0;
@@ -59,8 +58,9 @@ pub fn gentleman_sande<Z: Twiddles<M> + Clone, const M: usize, const N: usize>(
     for<'a> &'a Z: RingOps<Z>,
 {
     let inertia: usize = const {
-        assert!(N % M == 0);
-        N / M
+        let (q, r) = (N / M, N % M);
+        assert!(r == 0);
+        q
     };
     let mut i;
     let mut j = M;
@@ -99,8 +99,9 @@ where
         b: [LinearCombination<Z>; N],
     ) -> [LinearCombination<Z>; N] {
         let inertia: usize = const {
-            assert!(N % M == 0);
-            N / M
+            let (q, r) = (N / M, N % M);
+            assert!(r == 0);
+            q
         };
         match inertia {
             1 => array::from_fn(|i| {
