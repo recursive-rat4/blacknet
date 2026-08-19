@@ -18,7 +18,7 @@
 //! Generalized length.
 
 use crate::algebra::{
-    FreeModule, IntegerModRing, MatrixSpace, QuaternionAlgebra, Ring, UnitalRing, UnivariateRing,
+    IntegerModRing, MatrixSpace, QuaternionAlgebra, Ring, UnitalRing, UnivariateRing, VectorRing,
 };
 use crate::convolution::Convolution;
 use crate::float::Cast;
@@ -80,7 +80,7 @@ impl<Z: IntegerModRing<Int: Cast<f64>>> EuclideanNorm for Z {
 
 //RUST https://github.com/rust-lang/rust/issues/137578
 
-impl<R: Ring + EuclideanNorm, const N: usize> EuclideanNorm for FreeModule<R, N> {
+impl<R: Ring + EuclideanNorm, const N: usize> EuclideanNorm for VectorRing<R, N> {
     fn euclidean_norm(&self) -> f64 {
         libm::sqrt(
             self.into_iter()
@@ -115,18 +115,28 @@ impl<R: Ring + EuclideanNorm> EuclideanNorm for SparseVector<R> {
 }
 
 impl<R: UnitalRing + EuclideanNorm> EuclideanNorm for QuaternionAlgebra<R> {
-    #[inline]
     fn euclidean_norm(&self) -> f64 {
-        self.as_ref().euclidean_norm()
+        libm::sqrt(
+            self.as_ref()
+                .iter()
+                .map(EuclideanNorm::euclidean_norm)
+                .map(|i| i * i)
+                .sum::<f64>(),
+        )
     }
 }
 
 impl<R: UnitalRing + EuclideanNorm, const N: usize, C: Convolution<R, N>> EuclideanNorm
     for UnivariateRing<R, N, C>
 {
-    #[inline]
     fn euclidean_norm(&self) -> f64 {
-        self.as_ref().euclidean_norm()
+        libm::sqrt(
+            self.as_ref()
+                .iter()
+                .map(EuclideanNorm::euclidean_norm)
+                .map(|i| i * i)
+                .sum::<f64>(),
+        )
     }
 }
 
@@ -154,7 +164,7 @@ impl<Z: IntegerModRing> InfinityNorm<Z::Int> for Z {
 }
 
 impl<Length: Ord, R: Ring + InfinityNorm<Length>, const N: usize> InfinityNorm<Length>
-    for FreeModule<R, N>
+    for VectorRing<R, N>
 {
     fn check_infinity_norm(&self, bound: &Length) -> bool {
         self.into_iter().all(|i| i.check_infinity_norm(bound))
@@ -260,33 +270,37 @@ impl<Length: Ord, R: Ring + InfinityNorm<Length>> InfinityNorm<Length> for Spars
 impl<Length: Ord, R: UnitalRing + InfinityNorm<Length>> InfinityNorm<Length>
     for QuaternionAlgebra<R>
 {
-    #[inline]
     fn check_infinity_norm(&self, bound: &Length) -> bool {
-        self.as_ref().check_infinity_norm(bound)
+        self.as_ref().iter().all(|i| i.check_infinity_norm(bound))
     }
 
-    #[inline]
     fn infinity_norm(&self) -> Length
     where
         Length: Default,
     {
-        self.as_ref().infinity_norm()
+        self.as_ref()
+            .iter()
+            .map(InfinityNorm::infinity_norm)
+            .max()
+            .unwrap_or_default()
     }
 }
 
 impl<Length: Ord, R: UnitalRing + InfinityNorm<Length>, const N: usize, C: Convolution<R, N>>
     InfinityNorm<Length> for UnivariateRing<R, N, C>
 {
-    #[inline]
     fn check_infinity_norm(&self, bound: &Length) -> bool {
-        self.as_ref().check_infinity_norm(bound)
+        self.as_ref().iter().all(|i| i.check_infinity_norm(bound))
     }
 
-    #[inline]
     fn infinity_norm(&self) -> Length
     where
         Length: Default,
     {
-        self.as_ref().infinity_norm()
+        self.as_ref()
+            .iter()
+            .map(InfinityNorm::infinity_norm)
+            .max()
+            .unwrap_or_default()
     }
 }

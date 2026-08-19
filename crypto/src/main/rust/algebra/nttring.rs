@@ -18,9 +18,9 @@
 #![allow(clippy::manual_is_multiple_of)]
 
 use crate::algebra::{
-    AdditiveCommutativeMagma, AdditiveSemigroup, Algebra, Conjugate, DivisionRingOps, Double,
-    FreeModule, Inv, LeftOne, LeftZero, MultiplicativeCommutativeMagma, MultiplicativeSemigroup,
-    One, RightOne, RightZero, RingOps, Semimodule, Set, Square, UnivariateRing, Zero, batched_inv,
+    AdditiveCommutativeMagma, AdditiveSemigroup, Algebra, Array, Conjugate, DivisionRingOps,
+    Double, Inv, LeftOne, LeftZero, MultiplicativeCommutativeMagma, MultiplicativeSemigroup, One,
+    RightOne, RightZero, RingOps, Semimodule, Set, Square, UnivariateRing, Zero, batched_inv,
 };
 use crate::branchless::BlOption;
 use crate::convolution::{Convolution, Negacyclic};
@@ -41,15 +41,19 @@ type Iso<Z, const N: usize> = UnivariateRing<Z, N, Negacyclic>;
 
 #[derive(Clone, Copy, Deserialize, Eq, PartialEq, Serialize, Zeroize)]
 #[serde(bound(
-    deserialize = "FreeModule<Z, N>: Deserialize<'de>",
-    serialize = "FreeModule<Z, N>: Serialize"
+    deserialize = "[Z; N]: Deserialize<'de>",
+    serialize = "[Z; N]: Serialize"
 ))]
 #[zeroize(bound = "Z: Zeroize")]
 pub struct NTTRing<Z: Twiddles<M>, const M: usize, const N: usize> {
-    spectrum: FreeModule<Z, N>,
+    spectrum: Array<Z, N>,
 }
 
 impl<Z: Twiddles<M>, const M: usize, const N: usize> NTTRing<Z, M, N> {
+    const fn new(spectrum: Array<Z, N>) -> Self {
+        Self { spectrum }
+    }
+
     const INERTIA: usize = const {
         assert!(N % M == 0);
         N / M
@@ -75,16 +79,16 @@ where
 {
     fn from(mut sequence: [Z; N]) -> Self {
         cooley_tukey::<Z, M, N>(&mut sequence);
-        let spectrum = FreeModule::<Z, N>::new(sequence);
+        let spectrum = Array::<Z, N>::new(sequence);
         Self { spectrum }
     }
 }
 
-impl<Z: Twiddles<M>, const M: usize, const N: usize> From<FreeModule<Z, N>> for NTTRing<Z, M, N>
+impl<Z: Twiddles<M>, const M: usize, const N: usize> From<Array<Z, N>> for NTTRing<Z, M, N>
 where
     for<'a> &'a Z: RingOps<Z>,
 {
-    fn from(mut coefficients: FreeModule<Z, N>) -> Self {
+    fn from(mut coefficients: Array<Z, N>) -> Self {
         cooley_tukey::<Z, M, N>(&mut coefficients);
         let spectrum = coefficients;
         Self { spectrum }
@@ -93,7 +97,7 @@ where
 
 impl<Z: Twiddles<M> + Clone, const M: usize, const N: usize> From<Z> for NTTRing<Z, M, N> {
     fn from(scalar: Z) -> Self {
-        let spectrum = FreeModule::<Z, N>::from_fn(|i| {
+        let spectrum = Array::<Z, N>::from_fn(|i| {
             if i % Self::INERTIA == 0 {
                 scalar.clone()
             } else {
@@ -109,7 +113,7 @@ where
     for<'a> &'a Z: RingOps<Z>,
 {
     fn from(iso: Iso<Z, N>) -> Self {
-        let coefficients: FreeModule<Z, N> = iso.into();
+        let coefficients: Array<Z, N> = iso.into();
         Self::from(coefficients)
     }
 }
@@ -126,16 +130,16 @@ where
     }
 }
 
-impl<Z: Twiddles<M>, const M: usize, const N: usize> AsRef<FreeModule<Z, N>> for NTTRing<Z, M, N> {
+impl<Z: Twiddles<M>, const M: usize, const N: usize> AsRef<[Z; N]> for NTTRing<Z, M, N> {
     #[inline]
-    fn as_ref(&self) -> &FreeModule<Z, N> {
+    fn as_ref(&self) -> &[Z; N] {
         &self.spectrum
     }
 }
 
-impl<Z: Twiddles<M>, const M: usize, const N: usize> AsMut<FreeModule<Z, N>> for NTTRing<Z, M, N> {
+impl<Z: Twiddles<M>, const M: usize, const N: usize> AsMut<[Z; N]> for NTTRing<Z, M, N> {
     #[inline]
-    fn as_mut(&mut self) -> &mut FreeModule<Z, N> {
+    fn as_mut(&mut self) -> &mut [Z; N] {
         &mut self.spectrum
     }
 }
@@ -228,20 +232,18 @@ impl<'a, Z: Twiddles<M> + Send, const M: usize, const N: usize> IntoParallelIter
 impl<Z: Twiddles<M>, const M: usize, const N: usize> Add for NTTRing<Z, M, N> {
     type Output = Self;
 
+    #[inline]
     fn add(self, rps: Self) -> Self::Output {
-        Self {
-            spectrum: self.spectrum + rps.spectrum,
-        }
+        Self::new(self.spectrum + rps.spectrum)
     }
 }
 
 impl<Z: Twiddles<M>, const M: usize, const N: usize> Add<&Self> for NTTRing<Z, M, N> {
     type Output = Self;
 
+    #[inline]
     fn add(self, rps: &Self) -> Self::Output {
-        Self {
-            spectrum: self.spectrum + &rps.spectrum,
-        }
+        Self::new(self.spectrum + &rps.spectrum)
     }
 }
 
@@ -251,10 +253,9 @@ where
 {
     type Output = NTTRing<Z, M, N>;
 
+    #[inline]
     fn add(self, rps: NTTRing<Z, M, N>) -> Self::Output {
-        Self::Output {
-            spectrum: &self.spectrum + rps.spectrum,
-        }
+        Self::Output::new(&self.spectrum + rps.spectrum)
     }
 }
 
@@ -265,20 +266,21 @@ where
 {
     type Output = NTTRing<Z, M, N>;
 
+    #[inline]
     fn add(self, rps: &'a NTTRing<Z, M, N>) -> Self::Output {
-        Self::Output {
-            spectrum: &self.spectrum + &rps.spectrum,
-        }
+        Self::Output::new(&self.spectrum + &rps.spectrum)
     }
 }
 
 impl<Z: Twiddles<M>, const M: usize, const N: usize> AddAssign for NTTRing<Z, M, N> {
+    #[inline]
     fn add_assign(&mut self, rps: Self) {
         self.spectrum += rps.spectrum
     }
 }
 
 impl<Z: Twiddles<M>, const M: usize, const N: usize> AddAssign<&Self> for NTTRing<Z, M, N> {
+    #[inline]
     fn add_assign(&mut self, rps: &Self) {
         self.spectrum += &rps.spectrum
     }
@@ -287,10 +289,9 @@ impl<Z: Twiddles<M>, const M: usize, const N: usize> AddAssign<&Self> for NTTRin
 impl<Z: Twiddles<M>, const M: usize, const N: usize> Double for NTTRing<Z, M, N> {
     type Output = Self;
 
+    #[inline]
     fn double(self) -> Self {
-        Self {
-            spectrum: self.spectrum.double(),
-        }
+        Self::new(self.spectrum.double())
     }
 }
 
@@ -300,20 +301,18 @@ where
 {
     type Output = NTTRing<Z, M, N>;
 
+    #[inline]
     fn double(self) -> Self::Output {
-        Self::Output {
-            spectrum: (&self.spectrum).double(),
-        }
+        Self::Output::new((&self.spectrum).double())
     }
 }
 
 impl<Z: Twiddles<M>, const M: usize, const N: usize> Neg for NTTRing<Z, M, N> {
     type Output = Self;
 
+    #[inline]
     fn neg(self) -> Self::Output {
-        Self {
-            spectrum: -self.spectrum,
-        }
+        Self::new(-self.spectrum)
     }
 }
 
@@ -323,30 +322,27 @@ where
 {
     type Output = NTTRing<Z, M, N>;
 
+    #[inline]
     fn neg(self) -> Self::Output {
-        Self::Output {
-            spectrum: -&self.spectrum,
-        }
+        Self::Output::new(-&self.spectrum)
     }
 }
 
 impl<Z: Twiddles<M>, const M: usize, const N: usize> Sub for NTTRing<Z, M, N> {
     type Output = Self;
 
+    #[inline]
     fn sub(self, rps: Self) -> Self::Output {
-        Self {
-            spectrum: self.spectrum - rps.spectrum,
-        }
+        Self::new(self.spectrum - rps.spectrum)
     }
 }
 
 impl<Z: Twiddles<M>, const M: usize, const N: usize> Sub<&Self> for NTTRing<Z, M, N> {
     type Output = Self;
 
+    #[inline]
     fn sub(self, rps: &Self) -> Self::Output {
-        Self {
-            spectrum: self.spectrum - &rps.spectrum,
-        }
+        Self::new(self.spectrum - &rps.spectrum)
     }
 }
 
@@ -356,10 +352,9 @@ where
 {
     type Output = NTTRing<Z, M, N>;
 
+    #[inline]
     fn sub(self, rps: NTTRing<Z, M, N>) -> Self::Output {
-        Self::Output {
-            spectrum: &self.spectrum - rps.spectrum,
-        }
+        Self::Output::new(&self.spectrum - rps.spectrum)
     }
 }
 
@@ -370,20 +365,21 @@ where
 {
     type Output = NTTRing<Z, M, N>;
 
+    #[inline]
     fn sub(self, rps: &'a NTTRing<Z, M, N>) -> Self::Output {
-        Self::Output {
-            spectrum: &self.spectrum - &rps.spectrum,
-        }
+        Self::Output::new(&self.spectrum - &rps.spectrum)
     }
 }
 
 impl<Z: Twiddles<M>, const M: usize, const N: usize> SubAssign for NTTRing<Z, M, N> {
+    #[inline]
     fn sub_assign(&mut self, rps: Self) {
         self.spectrum -= rps.spectrum
     }
 }
 
 impl<Z: Twiddles<M>, const M: usize, const N: usize> SubAssign<&Self> for NTTRing<Z, M, N> {
+    #[inline]
     fn sub_assign(&mut self, rps: &Self) {
         self.spectrum -= &rps.spectrum
     }
@@ -435,7 +431,7 @@ where
     fn mul(self, rps: &'a NTTRing<Z, M, N>) -> Self::Output {
         let sequence =
             <NTTConvolution<M, N> as Convolution<Z, N>>::convolute(&self.spectrum, &rps.spectrum);
-        let spectrum = FreeModule::<Z, N>::new(sequence);
+        let spectrum = Array::<Z, N>::new(sequence);
         Self::Output { spectrum }
     }
 }
@@ -466,11 +462,10 @@ where
 {
     type Output = Self;
 
+    #[inline]
     fn square(self) -> Self {
         if Self::INERTIA == 1 {
-            Self {
-                spectrum: self.spectrum.map(Square::square),
-            }
+            Self::new(self.spectrum.square())
         } else {
             &self * &self
         }
@@ -483,11 +478,10 @@ where
 {
     type Output = NTTRing<Z, M, N>;
 
+    #[inline]
     fn square(self) -> Self::Output {
         if Self::Output::INERTIA == 1 {
-            Self::Output {
-                spectrum: FreeModule::<Z, N>::from_fn(|i| (&self.spectrum[i]).square()),
-            }
+            Self::Output::new((&self.spectrum).square())
         } else {
             self * self
         }
@@ -497,20 +491,18 @@ where
 impl<Z: Twiddles<M>, const M: usize, const N: usize> Mul<Z> for NTTRing<Z, M, N> {
     type Output = Self;
 
+    #[inline]
     fn mul(self, rps: Z) -> Self::Output {
-        Self {
-            spectrum: self.spectrum * rps,
-        }
+        self * &rps
     }
 }
 
 impl<Z: Twiddles<M>, const M: usize, const N: usize> Mul<&Z> for NTTRing<Z, M, N> {
     type Output = Self;
 
+    #[inline]
     fn mul(self, rps: &Z) -> Self::Output {
-        Self::Output {
-            spectrum: self.spectrum * rps,
-        }
+        Self::Output::new(self.spectrum * rps)
     }
 }
 
@@ -520,10 +512,9 @@ where
 {
     type Output = NTTRing<Z, M, N>;
 
+    #[inline]
     fn mul(self, rps: Z) -> Self::Output {
-        Self::Output {
-            spectrum: &self.spectrum * rps,
-        }
+        self * &rps
     }
 }
 
@@ -533,20 +524,21 @@ where
 {
     type Output = NTTRing<Z, M, N>;
 
+    #[inline]
     fn mul(self, rps: &Z) -> Self::Output {
-        Self::Output {
-            spectrum: &self.spectrum * rps,
-        }
+        Self::Output::new(&self.spectrum * rps)
     }
 }
 
 impl<Z: Twiddles<M>, const M: usize, const N: usize> MulAssign<Z> for NTTRing<Z, M, N> {
+    #[inline]
     fn mul_assign(&mut self, rps: Z) {
         self.spectrum *= rps
     }
 }
 
 impl<Z: Twiddles<M>, const M: usize, const N: usize> MulAssign<&Z> for NTTRing<Z, M, N> {
+    #[inline]
     fn mul_assign(&mut self, rps: &Z) {
         self.spectrum *= rps
     }
@@ -584,8 +576,9 @@ where
 impl<Z: Twiddles<M>, const M: usize, const N: usize> Div<Z> for NTTRing<Z, M, N> {
     type Output = BlOption<Self>;
 
+    #[inline]
     fn div(self, rps: Z) -> Self::Output {
-        (self.spectrum / rps).map(|spectrum| Self { spectrum })
+        (self.spectrum / rps).map(Self::new)
     }
 }
 
@@ -595,24 +588,25 @@ where
 {
     type Output = BlOption<Self>;
 
+    #[inline]
     fn div(self, rps: &Z) -> Self::Output {
-        (self.spectrum / rps).map(|spectrum| Self { spectrum })
+        (self.spectrum / rps).map(Self::new)
     }
 }
 
 impl<Z: Twiddles<M>, const M: usize, const N: usize> Sum for NTTRing<Z, M, N> {
+    #[inline]
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
-        let spectrum = iter.map(|i| i.spectrum).sum();
-        Self { spectrum }
+        Self::new(iter.map(|i| i.spectrum).sum())
     }
 }
 
 impl<'a, Z: Twiddles<M> + Clone, const M: usize, const N: usize> Sum<&'a Self>
     for NTTRing<Z, M, N>
 {
+    #[inline]
     fn sum<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
-        let spectrum = iter.map(|i| &i.spectrum).sum();
-        Self { spectrum }
+        Self::new(iter.map(|i| &i.spectrum).sum())
     }
 }
 
@@ -640,20 +634,16 @@ where
 }
 
 impl<Z: Twiddles<M>, const M: usize, const N: usize> LeftZero for NTTRing<Z, M, N> {
-    const LEFT_ZERO: Self = Self {
-        spectrum: FreeModule::<Z, N>::LEFT_ZERO,
-    };
+    const LEFT_ZERO: Self = Self::ZERO;
 }
 
 impl<Z: Twiddles<M>, const M: usize, const N: usize> RightZero for NTTRing<Z, M, N> {
-    const RIGHT_ZERO: Self = Self {
-        spectrum: FreeModule::<Z, N>::RIGHT_ZERO,
-    };
+    const RIGHT_ZERO: Self = Self::ZERO;
 }
 
 impl<Z: Twiddles<M>, const M: usize, const N: usize> Zero for NTTRing<Z, M, N> {
     const ZERO: Self = Self {
-        spectrum: FreeModule::<Z, N>::ZERO,
+        spectrum: Array::<Z, N>::ZERO,
     };
 }
 
@@ -678,9 +668,7 @@ impl<Z: Twiddles<M>, const M: usize, const N: usize> One for NTTRing<Z, M, N> {
             i += 1;
         }
         let t: [Z; N] = unsafe { transmute_copy(&t) };
-        Self {
-            spectrum: FreeModule::<Z, N>::new(t),
-        }
+        Self::new(Array::<Z, N>::new(t))
     };
 }
 
@@ -776,8 +764,6 @@ impl<Msg, Z: Twiddles<M> + Squeeze<Msg>, const M: usize, const N: usize> Squeeze
     for NTTRing<Z, M, N>
 {
     fn squeeze_from<D: Duplexer<Msg = Msg>>(duplex: &mut D) -> Self {
-        Self {
-            spectrum: duplex.squeeze::<FreeModule<Z, N>>(),
-        }
+        Self::new(Array::squeeze_from(duplex))
     }
 }

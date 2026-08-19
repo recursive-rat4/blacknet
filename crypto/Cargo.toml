@@ -132,10 +132,6 @@ name = "field25519"
 path = "src/test/rust/field25519.rs"
 
 [[test]]
-name = "freemodule"
-path = "src/test/rust/freemodule.rs"
-
-[[test]]
 name = "gf2"
 path = "src/test/rust/gf2.rs"
 
@@ -274,6 +270,10 @@ path = "src/test/rust/uint.rs"
 [[test]]
 name = "uring"
 path = "src/test/rust/uring.rs"
+
+[[test]]
+name = "vectorring"
+path = "src/test/rust/vectorring.rs"
 
 [[bench]]
 name = "blake2b"

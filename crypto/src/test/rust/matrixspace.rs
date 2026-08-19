@@ -15,27 +15,27 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_crypto::algebra::{Double, FreeModule, MatrixSpace, Zero};
+use blacknet_crypto::algebra::{Double, MatrixSpace, VectorRing, Zero};
 use blacknet_crypto::norm::InfinityNorm;
 
 type Z = blacknet_crypto::uring::U16Ring;
-type M2 = FreeModule<Z, 2>;
-type M3 = FreeModule<Z, 3>;
+type M2 = VectorRing<Z, 2>;
+type M3 = VectorRing<Z, 3>;
 type S = MatrixSpace<Z, 2, 3, 6>;
 type ST = MatrixSpace<Z, 3, 2, 6>;
 
 #[test]
 #[rustfmt::skip]
 fn add() {
-    let a = S::new([
+    let a = S::from([
         1, 3, 7,
         1, 0, 0,
     ].map(Z::from));
-    let b = S::new([
+    let b = S::from([
         0, 0, 0,
         7, 5, 3,
     ].map(Z::from));
-    let c = S::new([
+    let c = S::from([
         1, 3, 7,
         8, 5, 3,
     ].map(Z::from));
@@ -46,11 +46,11 @@ fn add() {
 #[test]
 #[rustfmt::skip]
 fn dbl() {
-    let a = S::new([
+    let a = S::from([
         0, 1, 2,
         3, 4, 5,
     ].map(Z::from));
-    let b = S::new([
+    let b = S::from([
         0, 2, 4,
         6, 8, 10,
     ].map(Z::from));
@@ -60,8 +60,8 @@ fn dbl() {
 
 #[test]
 #[rustfmt::skip]
-fn module() {
-    let a = S::new([
+fn vector() {
+    let a = S::from([
         17, 18, 19,
         33, 34, 35,
     ].map(Z::from));
@@ -83,12 +83,12 @@ fn module() {
 #[test]
 #[rustfmt::skip]
 fn scalar() {
-    let a = S::new([
+    let a = S::from([
         1, 2, 4,
         0, 3, 9,
     ].map(Z::from));
     let b = Z::from(2);
-    let c = S::new([
+    let c = S::from([
         2, 4, 8,
         0, 6, 18,
     ].map(Z::from));
@@ -99,11 +99,11 @@ fn scalar() {
 #[test]
 #[rustfmt::skip]
 fn transpose() {
-    let a = S::new([
+    let a = S::from([
         1, 2, 3,
         4, 5, 6,
     ].map(Z::from));
-    let b = ST::new([
+    let b = ST::from([
         1, 4,
         2, 5,
         3, 6,
@@ -115,7 +115,7 @@ fn transpose() {
 #[test]
 #[rustfmt::skip]
 fn infinity_norm() {
-    let a = S::new([
+    let a = S::from([
         0, 1, 2,
         3, 4, 5,
     ].map(Z::from));

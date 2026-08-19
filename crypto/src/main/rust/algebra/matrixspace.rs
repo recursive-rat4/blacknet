@@ -16,13 +16,12 @@
  */
 
 use crate::algebra::{
-    AdditiveCommutativeMagma, AdditiveSemigroup, Algebra, Commutator, Double, FreeModule, LeftOne,
+    AdditiveCommutativeMagma, AdditiveSemigroup, Algebra, Array, Commutator, Double, LeftOne,
     LeftZero, MultiplicativeSemigroup, One, RightOne, RightZero, Ring, RingOps, Semimodule,
-    Semiring, SemiringOps, Set, Square, UnitalSemiring, Zero,
+    Semiring, SemiringOps, Set, Square, UnitalSemiring, VectorRing, Zero,
 };
 use crate::symmetric::{Absorb, Duplexer, Squeeze};
-use core::array;
-use core::iter::{Product, Sum, zip};
+use core::iter::{Product, Sum};
 use core::mem::{MaybeUninit, transmute_copy};
 use core::ops::{Add, AddAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign};
 #[cfg(feature = "rayon")]
@@ -39,13 +38,14 @@ pub type MatrixRing<R, const N: usize, const NN: usize> = MatrixSpace<R, N, N, N
     deserialize = "[R; MN]: Deserialize<'de>",
     serialize = "[R; MN]: Serialize"
 ))]
+#[zeroize(bound = "R: Zeroize")]
 pub struct MatrixSpace<R: Semiring, const M: usize, const N: usize, const MN: usize> {
-    elements: [R; MN],
+    elements: Array<R, MN>,
 }
 
 impl<R: Semiring, const M: usize, const N: usize, const MN: usize> MatrixSpace<R, M, N, MN> {
     /// Construct a new matrix.
-    pub const fn new(elements: [R; MN]) -> Self {
+    pub const fn new(elements: Array<R, MN>) -> Self {
         const {
             assert!(M * N == MN);
         }
@@ -57,9 +57,8 @@ impl<R: Semiring, const M: usize, const N: usize, const MN: usize> MatrixSpace<R
     where
         R: Copy,
     {
-        Self {
-            elements: [element; MN],
-        }
+        let elements = [element; MN];
+        Self::new(Array::new(elements))
     }
 
     /// The number of rows.
@@ -99,22 +98,20 @@ impl<R: Semiring, const N: usize, const NN: usize> MatrixSpace<R, N, N, NN> {
             elements[i * N + i] = scalar;
             i += 1;
         }
+        let elements = Array::new(elements);
         Self { elements }
     }
 
     /// Compute the trace.
     pub fn trace(&self) -> R {
-        let mut sigma = R::ZERO;
-        for i in 0..N {
-            sigma += &self[(i, i)]
-        }
-        sigma
+        (0..N).map(|i| &self[(i, i)]).sum()
     }
 }
 
 impl<R: Semiring, const M: usize, const N: usize, const MN: usize> Default
     for MatrixSpace<R, M, N, MN>
 {
+    #[inline]
     fn default() -> Self {
         Self::ZERO
     }
@@ -123,6 +120,16 @@ impl<R: Semiring, const M: usize, const N: usize, const MN: usize> Default
 impl<R: Semiring + Copy, const N: usize, const NN: usize> From<R> for MatrixSpace<R, N, N, NN> {
     fn from(scalar: R) -> Self {
         Self::const_from(scalar)
+    }
+}
+
+impl<R: Semiring, const M: usize, const N: usize, const MN: usize> From<[R; MN]>
+    for MatrixSpace<R, M, N, MN>
+{
+    #[inline]
+    fn from(elements: [R; MN]) -> Self {
+        let elements = Array::new(elements);
+        Self { elements }
     }
 }
 
@@ -264,10 +271,9 @@ impl<R: Semiring, const M: usize, const N: usize, const MN: usize> Add
 {
     type Output = Self;
 
+    #[inline]
     fn add(self, rps: Self) -> Self::Output {
-        let mut lps = self;
-        zip(&mut lps, rps).for_each(|(l, r)| *l += r);
-        lps
+        Self::new(self.elements + rps.elements)
     }
 }
 
@@ -276,10 +282,9 @@ impl<R: Semiring, const M: usize, const N: usize, const MN: usize> Add<&Self>
 {
     type Output = Self;
 
+    #[inline]
     fn add(self, rps: &Self) -> Self::Output {
-        let mut lps = self;
-        zip(&mut lps, rps).for_each(|(l, r)| *l += r);
-        lps
+        Self::new(self.elements + &rps.elements)
     }
 }
 
@@ -290,10 +295,9 @@ where
 {
     type Output = MatrixSpace<R, M, N, MN>;
 
+    #[inline]
     fn add(self, rps: MatrixSpace<R, M, N, MN>) -> Self::Output {
-        let mut rps = rps;
-        zip(self, &mut rps).for_each(|(l, r)| *r += l);
-        rps
+        Self::Output::new(&self.elements + rps.elements)
     }
 }
 
@@ -304,25 +308,27 @@ where
 {
     type Output = MatrixSpace<R, M, N, MN>;
 
+    #[inline]
     fn add(self, rps: &'a MatrixSpace<R, M, N, MN>) -> Self::Output {
-        let elements = array::from_fn(|i| &self.elements[i] + &rps.elements[i]);
-        Self::Output { elements }
+        Self::Output::new(&self.elements + &rps.elements)
     }
 }
 
 impl<R: Semiring, const M: usize, const N: usize, const MN: usize> AddAssign
     for MatrixSpace<R, M, N, MN>
 {
+    #[inline]
     fn add_assign(&mut self, rps: Self) {
-        zip(self, rps).for_each(|(l, r)| *l += r);
+        self.elements += rps.elements
     }
 }
 
 impl<R: Semiring, const M: usize, const N: usize, const MN: usize> AddAssign<&Self>
     for MatrixSpace<R, M, N, MN>
 {
+    #[inline]
     fn add_assign(&mut self, rps: &Self) {
-        zip(self, rps).for_each(|(l, r)| *l += r);
+        self.elements += &rps.elements
     }
 }
 
@@ -331,10 +337,9 @@ impl<R: Semiring, const M: usize, const N: usize, const MN: usize> Double
 {
     type Output = Self;
 
+    #[inline]
     fn double(self) -> Self {
-        Self {
-            elements: self.elements.map(Double::double),
-        }
+        Self::new(self.elements.double())
     }
 }
 
@@ -345,19 +350,18 @@ where
 {
     type Output = MatrixSpace<R, M, N, MN>;
 
+    #[inline]
     fn double(self) -> Self::Output {
-        let elements = array::from_fn(|i| (&self.elements[i]).double());
-        Self::Output { elements }
+        Self::Output::new((&self.elements).double())
     }
 }
 
 impl<R: Ring, const M: usize, const N: usize, const MN: usize> Neg for MatrixSpace<R, M, N, MN> {
     type Output = Self;
 
+    #[inline]
     fn neg(self) -> Self::Output {
-        Self {
-            elements: self.elements.map(Neg::neg),
-        }
+        Self::new(-self.elements)
     }
 }
 
@@ -367,19 +371,18 @@ where
 {
     type Output = MatrixSpace<R, M, N, MN>;
 
+    #[inline]
     fn neg(self) -> Self::Output {
-        let elements = array::from_fn(|i| -&self.elements[i]);
-        Self::Output { elements }
+        Self::Output::new(-&self.elements)
     }
 }
 
 impl<R: Ring, const M: usize, const N: usize, const MN: usize> Sub for MatrixSpace<R, M, N, MN> {
     type Output = Self;
 
+    #[inline]
     fn sub(self, rps: Self) -> Self::Output {
-        let mut lps = self;
-        zip(&mut lps, rps).for_each(|(l, r)| *l -= r);
-        lps
+        Self::new(self.elements - rps.elements)
     }
 }
 
@@ -388,10 +391,9 @@ impl<R: Ring, const M: usize, const N: usize, const MN: usize> Sub<&Self>
 {
     type Output = Self;
 
+    #[inline]
     fn sub(self, rps: &Self) -> Self::Output {
-        let mut lps = self;
-        zip(&mut lps, rps).for_each(|(l, r)| *l -= r);
-        lps
+        Self::new(self.elements - &rps.elements)
     }
 }
 
@@ -402,10 +404,9 @@ where
 {
     type Output = MatrixSpace<R, M, N, MN>;
 
+    #[inline]
     fn sub(self, rps: MatrixSpace<R, M, N, MN>) -> Self::Output {
-        let mut rps = rps;
-        zip(self, &mut rps).for_each(|(l, r)| *r = l - &*r);
-        rps
+        Self::Output::new(&self.elements - rps.elements)
     }
 }
 
@@ -416,25 +417,27 @@ where
 {
     type Output = MatrixSpace<R, M, N, MN>;
 
+    #[inline]
     fn sub(self, rps: &'a MatrixSpace<R, M, N, MN>) -> Self::Output {
-        let elements = array::from_fn(|i| &self.elements[i] - &rps.elements[i]);
-        Self::Output { elements }
+        Self::Output::new(&self.elements - &rps.elements)
     }
 }
 
 impl<R: Ring, const M: usize, const N: usize, const MN: usize> SubAssign
     for MatrixSpace<R, M, N, MN>
 {
+    #[inline]
     fn sub_assign(&mut self, rps: Self) {
-        zip(self, rps).for_each(|(l, r)| *l -= r);
+        self.elements -= rps.elements
     }
 }
 
 impl<R: Ring, const M: usize, const N: usize, const MN: usize> SubAssign<&Self>
     for MatrixSpace<R, M, N, MN>
 {
+    #[inline]
     fn sub_assign(&mut self, rps: &Self) {
-        zip(self, rps).for_each(|(l, r)| *l -= r);
+        self.elements -= &rps.elements
     }
 }
 
@@ -495,7 +498,7 @@ where
             }
         }
         let elements = out.map(|i| unsafe { i.assume_init() });
-        Self::Output { elements }
+        Self::Output::new(Array::new(elements))
     }
 }
 
@@ -559,10 +562,9 @@ impl<R: Semiring, const M: usize, const N: usize, const MN: usize> Mul<&R>
 {
     type Output = Self;
 
+    #[inline]
     fn mul(self, rps: &R) -> Self::Output {
-        let mut lps = self;
-        lps.elements.iter_mut().for_each(|l| *l *= rps);
-        lps
+        Self::new(self.elements * rps)
     }
 }
 
@@ -586,9 +588,9 @@ where
 {
     type Output = MatrixSpace<R, M, N, MN>;
 
+    #[inline]
     fn mul(self, rps: &R) -> Self::Output {
-        let elements = array::from_fn(|i| &self.elements[i] * rps);
-        Self::Output { elements }
+        Self::Output::new(&self.elements * rps)
     }
 }
 
@@ -604,68 +606,71 @@ impl<R: Semiring, const M: usize, const N: usize, const MN: usize> MulAssign<R>
 impl<R: Semiring, const M: usize, const N: usize, const MN: usize> MulAssign<&R>
     for MatrixSpace<R, M, N, MN>
 {
+    #[inline]
     fn mul_assign(&mut self, rps: &R) {
-        self.elements.iter_mut().for_each(|l| *l *= rps);
+        self.elements *= rps
     }
 }
 
-impl<R: Semiring, const M: usize, const N: usize, const MN: usize> Mul<FreeModule<R, N>>
+impl<R: Semiring, const M: usize, const N: usize, const MN: usize> Mul<VectorRing<R, N>>
     for MatrixSpace<R, M, N, MN>
 where
     for<'a> &'a R: SemiringOps<R>,
 {
-    type Output = FreeModule<R, M>;
+    type Output = VectorRing<R, M>;
 
     #[inline]
-    fn mul(self, rps: FreeModule<R, N>) -> Self::Output {
+    fn mul(self, rps: VectorRing<R, N>) -> Self::Output {
         &self * &rps
     }
 }
 
-impl<R: Semiring, const M: usize, const N: usize, const MN: usize> Mul<&FreeModule<R, N>>
+impl<R: Semiring, const M: usize, const N: usize, const MN: usize> Mul<&VectorRing<R, N>>
     for MatrixSpace<R, M, N, MN>
 where
     for<'a> &'a R: SemiringOps<R>,
 {
-    type Output = FreeModule<R, M>;
+    type Output = VectorRing<R, M>;
 
     #[inline]
-    fn mul(self, rps: &FreeModule<R, N>) -> Self::Output {
+    fn mul(self, rps: &VectorRing<R, N>) -> Self::Output {
         &self * rps
     }
 }
 
-impl<R: Semiring, const M: usize, const N: usize, const MN: usize> Mul<FreeModule<R, N>>
+impl<R: Semiring, const M: usize, const N: usize, const MN: usize> Mul<VectorRing<R, N>>
     for &MatrixSpace<R, M, N, MN>
 where
     for<'a> &'a R: SemiringOps<R>,
 {
-    type Output = FreeModule<R, M>;
+    type Output = VectorRing<R, M>;
 
     #[inline]
-    fn mul(self, rps: FreeModule<R, N>) -> Self::Output {
+    fn mul(self, rps: VectorRing<R, N>) -> Self::Output {
         self * &rps
     }
 }
 
-impl<R: Semiring, const M: usize, const N: usize, const MN: usize> Mul<&FreeModule<R, N>>
+impl<R: Semiring, const M: usize, const N: usize, const MN: usize> Mul<&VectorRing<R, N>>
     for &MatrixSpace<R, M, N, MN>
 where
     for<'a> &'a R: SemiringOps<R>,
 {
-    type Output = FreeModule<R, M>;
+    type Output = VectorRing<R, M>;
 
-    fn mul(self, rps: &FreeModule<R, N>) -> Self::Output {
-        FreeModule::<R, M>::from_fn(|i| (0..N).map(|j| &self[(i, j)] * &rps[j]).sum())
+    fn mul(self, rps: &VectorRing<R, N>) -> Self::Output {
+        VectorRing::<R, M>::new(Array::from_fn(|i| {
+            (0..N).map(|j| &self[(i, j)] * &rps[j]).sum()
+        }))
     }
 }
 
 impl<R: Semiring, const M: usize, const N: usize, const MN: usize> Mul<MatrixSpace<R, M, N, MN>>
-    for FreeModule<R, M>
+    for VectorRing<R, M>
 where
     for<'a> &'a R: SemiringOps<R>,
 {
-    type Output = FreeModule<R, N>;
+    type Output = VectorRing<R, N>;
 
     #[inline]
     fn mul(self, rps: MatrixSpace<R, M, N, MN>) -> Self::Output {
@@ -674,11 +679,11 @@ where
 }
 
 impl<R: Semiring, const M: usize, const N: usize, const MN: usize> Mul<&MatrixSpace<R, M, N, MN>>
-    for FreeModule<R, M>
+    for VectorRing<R, M>
 where
     for<'a> &'a R: SemiringOps<R>,
 {
-    type Output = FreeModule<R, N>;
+    type Output = VectorRing<R, N>;
 
     #[inline]
     fn mul(self, rps: &MatrixSpace<R, M, N, MN>) -> Self::Output {
@@ -687,11 +692,11 @@ where
 }
 
 impl<R: Semiring, const M: usize, const N: usize, const MN: usize> Mul<MatrixSpace<R, M, N, MN>>
-    for &FreeModule<R, M>
+    for &VectorRing<R, M>
 where
     for<'a> &'a R: SemiringOps<R>,
 {
-    type Output = FreeModule<R, N>;
+    type Output = VectorRing<R, N>;
 
     #[inline]
     fn mul(self, rps: MatrixSpace<R, M, N, MN>) -> Self::Output {
@@ -700,14 +705,16 @@ where
 }
 
 impl<R: Semiring, const M: usize, const N: usize, const MN: usize> Mul<&MatrixSpace<R, M, N, MN>>
-    for &FreeModule<R, M>
+    for &VectorRing<R, M>
 where
     for<'a> &'a R: SemiringOps<R>,
 {
-    type Output = FreeModule<R, N>;
+    type Output = VectorRing<R, N>;
 
     fn mul(self, rps: &MatrixSpace<R, M, N, MN>) -> Self::Output {
-        FreeModule::<R, N>::from_fn(|j| (0..M).map(|i| &self[i] * &rps[(i, j)]).sum())
+        VectorRing::<R, N>::new(Array::from_fn(|j| {
+            (0..M).map(|i| &self[i] * &rps[(i, j)]).sum()
+        }))
     }
 }
 
@@ -760,20 +767,18 @@ where
 impl<R: Semiring, const M: usize, const N: usize, const MN: usize> Sum
     for MatrixSpace<R, M, N, MN>
 {
+    #[inline]
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
-        iter.reduce(|lps, rps| lps + rps).unwrap_or(Self::LEFT_ZERO)
+        Self::new(iter.map(|i| i.elements).sum())
     }
 }
 
 impl<'a, R: Semiring + Clone, const M: usize, const N: usize, const MN: usize> Sum<&'a Self>
     for MatrixSpace<R, M, N, MN>
 {
-    fn sum<I: Iterator<Item = &'a Self>>(mut iter: I) -> Self {
-        let first = match iter.next() {
-            Some(i) => i.clone(),
-            None => return Self::ZERO,
-        };
-        iter.fold(first, |lps, rps| lps + rps)
+    #[inline]
+    fn sum<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
+        Self::new(iter.map(|i| &i.elements).sum())
     }
 }
 
@@ -815,10 +820,7 @@ impl<R: Semiring, const M: usize, const N: usize, const MN: usize> RightZero
 impl<R: Semiring, const M: usize, const N: usize, const MN: usize> Zero
     for MatrixSpace<R, M, N, MN>
 {
-    const ZERO: Self = {
-        let elements = [R::ZERO; MN];
-        Self { elements }
-    };
+    const ZERO: Self = Self::new(Array::<R, MN>::ZERO);
 }
 
 impl<R: UnitalSemiring, const N: usize, const NN: usize> LeftOne for MatrixSpace<R, N, N, NN> {
@@ -842,6 +844,7 @@ impl<R: UnitalSemiring, const N: usize, const NN: usize> One for MatrixSpace<R, 
             i += 1;
         }
         let elements: [R; NN] = unsafe { transmute_copy(&t) };
+        let elements = Array::new(elements);
         Self { elements }
     };
 }
@@ -882,7 +885,7 @@ impl<Msg, R: Semiring + Absorb<Msg>, const M: usize, const N: usize, const MN: u
     for MatrixSpace<R, M, N, MN>
 {
     fn absorb_into<D: Duplexer<Msg = Msg>>(self, duplex: &mut D) {
-        duplex.absorb_iter(self.elements)
+        duplex.absorb(self.elements)
     }
 }
 
@@ -890,8 +893,6 @@ impl<Msg, R: Semiring + Squeeze<Msg>, const M: usize, const N: usize, const MN: 
     for MatrixSpace<R, M, N, MN>
 {
     fn squeeze_from<D: Duplexer<Msg = Msg>>(duplex: &mut D) -> Self {
-        Self {
-            elements: array::from_fn(|_| duplex.squeeze()),
-        }
+        Self::new(Array::squeeze_from(duplex))
     }
 }

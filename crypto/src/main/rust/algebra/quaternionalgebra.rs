@@ -16,8 +16,8 @@
  */
 
 use crate::algebra::{
-    AdditiveCommutativeMagma, AdditiveSemigroup, Algebra, CommutativeRing, Commutator, Conjugate,
-    Double, FreeModule, Inv, LeftOne, LeftZero, MultiplicativeSemigroup, One, RightOne, RightZero,
+    AdditiveCommutativeMagma, AdditiveSemigroup, Algebra, Array, CommutativeRing, Commutator,
+    Conjugate, Double, Inv, LeftOne, LeftZero, MultiplicativeSemigroup, One, RightOne, RightZero,
     RingOps, Semimodule, Set, Square, TracelessQuaternion, UnitalRing, Zero,
 };
 use crate::branchless::BlOption;
@@ -26,7 +26,9 @@ use core::borrow::{Borrow, BorrowMut};
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
 use core::mem::{MaybeUninit, transmute_copy};
-use core::ops::{Add, AddAssign, Div, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign};
+use core::ops::{
+    Add, AddAssign, Deref, DerefMut, Div, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign,
+};
 #[cfg(feature = "rayon")]
 use rayon::iter::IntoParallelIterator;
 use serde::{Deserialize, Serialize};
@@ -38,12 +40,12 @@ use zeroize::Zeroize;
 #[derive(Clone, Copy, Deserialize, Eq, PartialEq, Serialize, Zeroize)]
 #[zeroize(bound = "R: Zeroize")]
 pub struct QuaternionAlgebra<R: UnitalRing> {
-    coefficients: FreeModule<R, 4>,
+    coefficients: Array<R, 4>,
 }
 
 impl<R: UnitalRing> QuaternionAlgebra<R> {
     /// Construct a new element.
-    pub const fn new(coefficients: FreeModule<R, 4>) -> Self {
+    pub const fn new(coefficients: Array<R, 4>) -> Self {
         Self { coefficients }
     }
 
@@ -56,7 +58,7 @@ impl<R: UnitalRing> QuaternionAlgebra<R> {
             i += 1;
         }
         let t: [R; 4] = unsafe { transmute_copy(&t) };
-        Self::new(FreeModule::<R, 4>::new(t))
+        Self::new(Array::<R, 4>::new(t))
     }
 
     fn reduced_norm(&self) -> R
@@ -87,9 +89,9 @@ impl<R: UnitalRing> From<[R; 4]> for QuaternionAlgebra<R> {
     }
 }
 
-impl<R: UnitalRing> From<FreeModule<R, 4>> for QuaternionAlgebra<R> {
+impl<R: UnitalRing> From<Array<R, 4>> for QuaternionAlgebra<R> {
     #[inline]
-    fn from(coefficients: FreeModule<R, 4>) -> Self {
+    fn from(coefficients: Array<R, 4>) -> Self {
         Self::new(coefficients)
     }
 }
@@ -101,23 +103,23 @@ impl<R: UnitalRing> From<R> for QuaternionAlgebra<R> {
     }
 }
 
-impl<R: UnitalRing> From<QuaternionAlgebra<R>> for FreeModule<R, 4> {
+impl<R: UnitalRing> From<QuaternionAlgebra<R>> for Array<R, 4> {
     #[inline]
     fn from(element: QuaternionAlgebra<R>) -> Self {
         element.coefficients
     }
 }
 
-impl<R: UnitalRing> AsRef<FreeModule<R, 4>> for QuaternionAlgebra<R> {
+impl<R: UnitalRing> AsRef<[R; 4]> for QuaternionAlgebra<R> {
     #[inline]
-    fn as_ref(&self) -> &FreeModule<R, 4> {
+    fn as_ref(&self) -> &[R; 4] {
         &self.coefficients
     }
 }
 
-impl<R: UnitalRing> AsMut<FreeModule<R, 4>> for QuaternionAlgebra<R> {
+impl<R: UnitalRing> AsMut<[R; 4]> for QuaternionAlgebra<R> {
     #[inline]
-    fn as_mut(&mut self) -> &mut FreeModule<R, 4> {
+    fn as_mut(&mut self) -> &mut [R; 4] {
         &mut self.coefficients
     }
 }
@@ -125,14 +127,14 @@ impl<R: UnitalRing> AsMut<FreeModule<R, 4>> for QuaternionAlgebra<R> {
 impl<R: UnitalRing> Borrow<[R]> for QuaternionAlgebra<R> {
     #[inline]
     fn borrow(&self) -> &[R] {
-        self.coefficients.borrow()
+        self.coefficients.deref()
     }
 }
 
 impl<R: UnitalRing> BorrowMut<[R]> for QuaternionAlgebra<R> {
     #[inline]
     fn borrow_mut(&mut self) -> &mut [R] {
-        self.coefficients.borrow_mut()
+        self.coefficients.deref_mut()
     }
 }
 
@@ -218,6 +220,7 @@ impl<'a, R: UnitalRing + Send> IntoParallelIterator for &'a mut QuaternionAlgebr
 impl<R: UnitalRing> Add for QuaternionAlgebra<R> {
     type Output = Self;
 
+    #[inline]
     fn add(self, rps: Self) -> Self::Output {
         Self::new(self.coefficients + rps.coefficients)
     }
@@ -226,6 +229,7 @@ impl<R: UnitalRing> Add for QuaternionAlgebra<R> {
 impl<R: UnitalRing> Add<&Self> for QuaternionAlgebra<R> {
     type Output = Self;
 
+    #[inline]
     fn add(self, rps: &Self) -> Self::Output {
         Self::new(self.coefficients + &rps.coefficients)
     }
@@ -237,6 +241,7 @@ where
 {
     type Output = QuaternionAlgebra<R>;
 
+    #[inline]
     fn add(self, rps: QuaternionAlgebra<R>) -> Self::Output {
         Self::Output::new(&self.coefficients + rps.coefficients)
     }
@@ -248,18 +253,21 @@ where
 {
     type Output = QuaternionAlgebra<R>;
 
+    #[inline]
     fn add(self, rps: &'a QuaternionAlgebra<R>) -> Self::Output {
         Self::Output::new(&self.coefficients + &rps.coefficients)
     }
 }
 
 impl<R: UnitalRing> AddAssign for QuaternionAlgebra<R> {
+    #[inline]
     fn add_assign(&mut self, rps: Self) {
         self.coefficients += rps.coefficients
     }
 }
 
 impl<R: UnitalRing> AddAssign<&Self> for QuaternionAlgebra<R> {
+    #[inline]
     fn add_assign(&mut self, rps: &Self) {
         self.coefficients += &rps.coefficients
     }
@@ -268,6 +276,7 @@ impl<R: UnitalRing> AddAssign<&Self> for QuaternionAlgebra<R> {
 impl<R: UnitalRing> Double for QuaternionAlgebra<R> {
     type Output = Self;
 
+    #[inline]
     fn double(self) -> Self {
         Self::new(self.coefficients.double())
     }
@@ -279,6 +288,7 @@ where
 {
     type Output = QuaternionAlgebra<R>;
 
+    #[inline]
     fn double(self) -> Self::Output {
         Self::Output::new((&self.coefficients).double())
     }
@@ -287,6 +297,7 @@ where
 impl<R: UnitalRing> Neg for QuaternionAlgebra<R> {
     type Output = Self;
 
+    #[inline]
     fn neg(self) -> Self::Output {
         Self::new(-self.coefficients)
     }
@@ -298,6 +309,7 @@ where
 {
     type Output = QuaternionAlgebra<R>;
 
+    #[inline]
     fn neg(self) -> Self::Output {
         Self::Output::new(-&self.coefficients)
     }
@@ -306,6 +318,7 @@ where
 impl<R: UnitalRing> Sub for QuaternionAlgebra<R> {
     type Output = Self;
 
+    #[inline]
     fn sub(self, rps: Self) -> Self::Output {
         Self::new(self.coefficients - rps.coefficients)
     }
@@ -314,6 +327,7 @@ impl<R: UnitalRing> Sub for QuaternionAlgebra<R> {
 impl<R: UnitalRing> Sub<&Self> for QuaternionAlgebra<R> {
     type Output = Self;
 
+    #[inline]
     fn sub(self, rps: &Self) -> Self::Output {
         Self::new(self.coefficients - &rps.coefficients)
     }
@@ -325,6 +339,7 @@ where
 {
     type Output = QuaternionAlgebra<R>;
 
+    #[inline]
     fn sub(self, rps: QuaternionAlgebra<R>) -> Self::Output {
         Self::Output::new(&self.coefficients - rps.coefficients)
     }
@@ -336,18 +351,21 @@ where
 {
     type Output = QuaternionAlgebra<R>;
 
+    #[inline]
     fn sub(self, rps: &'a QuaternionAlgebra<R>) -> Self::Output {
         Self::Output::new(&self.coefficients - &rps.coefficients)
     }
 }
 
 impl<R: UnitalRing> SubAssign for QuaternionAlgebra<R> {
+    #[inline]
     fn sub_assign(&mut self, rps: Self) {
         self.coefficients -= rps.coefficients
     }
 }
 
 impl<R: UnitalRing> SubAssign<&Self> for QuaternionAlgebra<R> {
+    #[inline]
     fn sub_assign(&mut self, rps: &Self) {
         self.coefficients -= &rps.coefficients
     }
@@ -457,6 +475,7 @@ where
 impl<R: UnitalRing> Mul<R> for QuaternionAlgebra<R> {
     type Output = Self;
 
+    #[inline]
     fn mul(self, rps: R) -> Self::Output {
         Self::new(self.coefficients * rps)
     }
@@ -465,6 +484,7 @@ impl<R: UnitalRing> Mul<R> for QuaternionAlgebra<R> {
 impl<R: UnitalRing> Mul<&R> for QuaternionAlgebra<R> {
     type Output = Self;
 
+    #[inline]
     fn mul(self, rps: &R) -> Self::Output {
         Self::new(self.coefficients * rps)
     }
@@ -476,6 +496,7 @@ where
 {
     type Output = QuaternionAlgebra<R>;
 
+    #[inline]
     fn mul(self, rps: R) -> Self::Output {
         Self::Output::new(&self.coefficients * rps)
     }
@@ -487,18 +508,21 @@ where
 {
     type Output = QuaternionAlgebra<R>;
 
+    #[inline]
     fn mul(self, rps: &R) -> Self::Output {
         Self::Output::new(&self.coefficients * rps)
     }
 }
 
 impl<R: UnitalRing> MulAssign<R> for QuaternionAlgebra<R> {
+    #[inline]
     fn mul_assign(&mut self, rps: R) {
         self.coefficients *= rps
     }
 }
 
 impl<R: UnitalRing> MulAssign<&R> for QuaternionAlgebra<R> {
+    #[inline]
     fn mul_assign(&mut self, rps: &R) {
         self.coefficients *= rps
     }
@@ -507,6 +531,7 @@ impl<R: UnitalRing> MulAssign<&R> for QuaternionAlgebra<R> {
 impl<R: UnitalRing + Inv<Output = BlOption<R>>> Div<R> for QuaternionAlgebra<R> {
     type Output = BlOption<Self>;
 
+    #[inline]
     fn div(self, rps: R) -> Self::Output {
         (self.coefficients / rps).map(Self::new)
     }
@@ -518,6 +543,7 @@ where
 {
     type Output = BlOption<Self>;
 
+    #[inline]
     fn div(self, rps: &R) -> Self::Output {
         (self.coefficients / rps).map(Self::new)
     }
@@ -601,7 +627,7 @@ where
     type Output = TracelessQuaternion<R>;
 
     fn commutator(self, rps: &'a QuaternionAlgebra<R>) -> Self::Output {
-        let mut im = FreeModule::<R, 3>::ZERO;
+        let mut im = Array::<R, 3>::ZERO;
         im[0] = (&self[2] * &rps[3] - &self[3] * &rps[2]).double();
         im[1] = (&self[3] * &rps[1] - &self[1] * &rps[3]).double();
         im[2] = (&self[1] * &rps[2] - &self[2] * &rps[1]).double();
@@ -610,16 +636,16 @@ where
 }
 
 impl<R: UnitalRing> Sum for QuaternionAlgebra<R> {
+    #[inline]
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
-        let coefficients = iter.map(|i| i.coefficients).sum();
-        Self::new(coefficients)
+        Self::new(iter.map(|i| i.coefficients).sum())
     }
 }
 
 impl<'a, R: UnitalRing + Clone> Sum<&'a Self> for QuaternionAlgebra<R> {
+    #[inline]
     fn sum<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
-        let coefficients = iter.map(|i| &i.coefficients).sum();
-        Self::new(coefficients)
+        Self::new(iter.map(|i| &i.coefficients).sum())
     }
 }
 
@@ -646,23 +672,23 @@ where
 }
 
 impl<R: UnitalRing> LeftZero for QuaternionAlgebra<R> {
-    const LEFT_ZERO: Self = Self::new(FreeModule::<R, 4>::LEFT_ZERO);
+    const LEFT_ZERO: Self = Self::ZERO;
 }
 
 impl<R: UnitalRing> RightZero for QuaternionAlgebra<R> {
-    const RIGHT_ZERO: Self = Self::new(FreeModule::<R, 4>::RIGHT_ZERO);
+    const RIGHT_ZERO: Self = Self::ZERO;
 }
 
 impl<R: UnitalRing> Zero for QuaternionAlgebra<R> {
-    const ZERO: Self = Self::new(FreeModule::<R, 4>::ZERO);
+    const ZERO: Self = Self::new(Array::ZERO);
 }
 
 impl<R: UnitalRing> LeftOne for QuaternionAlgebra<R> {
-    const LEFT_ONE: Self = Self::const_from(R::ONE);
+    const LEFT_ONE: Self = Self::ONE;
 }
 
 impl<R: UnitalRing> RightOne for QuaternionAlgebra<R> {
-    const RIGHT_ONE: Self = Self::const_from(R::ONE);
+    const RIGHT_ONE: Self = Self::ONE;
 }
 
 impl<R: UnitalRing> One for QuaternionAlgebra<R> {
@@ -710,6 +736,6 @@ impl<Msg, R: UnitalRing + Absorb<Msg>> Absorb<Msg> for QuaternionAlgebra<R> {
 
 impl<Msg, R: UnitalRing + Squeeze<Msg>> Squeeze<Msg> for QuaternionAlgebra<R> {
     fn squeeze_from<D: Duplexer<Msg = Msg>>(duplex: &mut D) -> Self {
-        duplex.squeeze::<FreeModule<R, 4>>().into()
+        duplex.squeeze::<Array<R, 4>>().into()
     }
 }

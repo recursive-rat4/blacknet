@@ -16,7 +16,7 @@
  */
 
 use blacknet_crypto::algebra::Double;
-use blacknet_crypto::algebra::FreeModule;
+use blacknet_crypto::algebra::VectorRing;
 use blacknet_crypto::matrix::{DenseMatrix, DenseVector};
 use blacknet_crypto::polynomial::{
     Hypercube, InBasis, MultilinearExtension, MultivariatePolynomial, Point, Polynomial,
@@ -139,9 +139,9 @@ fn vector() {
 }
 
 #[test]
-fn module() {
+fn vector_ring() {
     let hc = Hypercube::<R>::new(2);
-    let a = FreeModule::from([71, 72, 73, 74].map(R::from));
+    let a = VectorRing::from([71, 72, 73, 74].map(R::from));
     let mle = MultilinearExtension::from_iter(a);
     zip(hc.iter_index(), hc.iter_vertex())
         .for_each(|(index, b)| assert_eq!(mle.point(&b), a[index as usize]));

@@ -15,25 +15,25 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_crypto::algebra::{Commutator, FreeModule, MatrixRing, One};
+use blacknet_crypto::algebra::{Commutator, MatrixRing, One, VectorRing};
 use blacknet_crypto::norm::InfinityNorm;
 
 type Z = blacknet_crypto::pervushin::PervushinField;
-type M = FreeModule<Z, 2>;
+type M = VectorRing<Z, 2>;
 type R = MatrixRing<Z, 2, 4>;
 
 #[test]
 #[rustfmt::skip]
 fn add() {
-    let a = R::new([
+    let a = R::from([
         1, 3,
         1, 0,
     ].map(Z::from));
-    let b = R::new([
+    let b = R::from([
         0, 0,
         7, 5,
     ].map(Z::from));
-    let c = R::new([
+    let c = R::from([
         1, 3,
         8, 5,
     ].map(Z::from));
@@ -44,19 +44,19 @@ fn add() {
 #[test]
 #[rustfmt::skip]
 fn mul() {
-    let a = R::new([
+    let a = R::from([
         1, 0,
         2, 1,
     ].map(Z::from));
-    let b = R::new([
+    let b = R::from([
         1, 2,
         2, 3,
     ].map(Z::from));
-    let c = R::new([
+    let c = R::from([
         1, 2,
         4, 7,
     ].map(Z::from));
-    let d = R::new([
+    let d = R::from([
         5, 2,
         8, 3,
     ].map(Z::from));
@@ -66,8 +66,8 @@ fn mul() {
 
 #[test]
 #[rustfmt::skip]
-fn module() {
-    let a = R::new([
+fn vector() {
+    let a = R::from([
         17, 18,
         33, 34,
     ].map(Z::from));
@@ -90,12 +90,12 @@ fn module() {
 #[test]
 #[rustfmt::skip]
 fn scalar() {
-    let a = R::new([
+    let a = R::from([
         1, 2,
         0, 3,
     ].map(Z::from));
     let b = Z::from(2);
-    let c = R::new([
+    let c = R::from([
         2, 4,
         0, 6,
     ].map(Z::from));
@@ -106,7 +106,7 @@ fn scalar() {
 #[test]
 #[rustfmt::skip]
 fn trace() {
-    let a = R::new([
+    let a = R::from([
         1, 2,
         0, 3,
     ].map(Z::from));
@@ -117,11 +117,11 @@ fn trace() {
 #[test]
 #[rustfmt::skip]
 fn transpose() {
-    let a = R::new([
+    let a = R::from([
         1, 2,
         3, 4,
     ].map(Z::from));
-    let b = R::new([
+    let b = R::from([
         1, 3,
         2, 4,
     ].map(Z::from));
@@ -132,7 +132,7 @@ fn transpose() {
 #[test]
 #[rustfmt::skip]
 fn identity() {
-    let i = R::new([
+    let i = R::from([
         1, 0,
         0, 1,
     ].map(Z::from));
@@ -142,15 +142,15 @@ fn identity() {
 #[test]
 #[rustfmt::skip]
 fn commutator() {
-    let a = R::new([
+    let a = R::from([
         1, 2,
         3, 4,
     ].map(Z::from));
-    let b = R::new([
+    let b = R::from([
         5, 6,
         7, 8,
     ].map(Z::from));
-    let c = R::new([
+    let c = R::from([
         -4, -12,
         12,   4,
     ].map(Z::from));
@@ -160,7 +160,7 @@ fn commutator() {
 #[test]
 #[rustfmt::skip]
 fn infinity_norm() {
-    let a = R::new([
+    let a = R::from([
         0, 1,
         2, 3,
     ].map(Z::from));

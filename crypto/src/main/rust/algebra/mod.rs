@@ -19,9 +19,9 @@
 
 mod abeliangroup;
 mod algebra;
+mod array;
 mod cyclicgroup;
 mod field;
-mod freemodule;
 mod group;
 mod magma;
 mod matrixspace;
@@ -37,12 +37,14 @@ mod semiring;
 mod set;
 mod tracelessquaternion;
 mod univariatering;
+mod vectorring;
+
+use array::Array;
 
 pub use abeliangroup::*;
 pub use algebra::*;
 pub use cyclicgroup::*;
 pub use field::*;
-pub use freemodule::*;
 pub use group::*;
 pub use magma::*;
 pub use matrixspace::*;
@@ -58,3 +60,4 @@ pub use semiring::*;
 pub use set::*;
 pub use tracelessquaternion::*;
 pub use univariatering::*;
+pub use vectorring::*;

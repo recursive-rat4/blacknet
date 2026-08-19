@@ -16,16 +16,17 @@
  */
 
 use crate::algebra::{
-    AdditiveCommutativeMagma, AdditiveSemigroup, CommutativeRing, Conjugate, Double, FreeModule,
-    Inv, LeftZero, QuaternionAlgebra, RightZero, RingOps, Semimodule, Set, Square, UnitalRing,
-    Zero,
+    AdditiveCommutativeMagma, AdditiveSemigroup, Array, CommutativeRing, Conjugate, Double, Inv,
+    LeftZero, QuaternionAlgebra, RightZero, RingOps, Semimodule, Set, Square, UnitalRing, Zero,
 };
 use crate::branchless::BlOption;
 use crate::symmetric::{Absorb, Duplexer, Squeeze};
 use core::borrow::{Borrow, BorrowMut};
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Sum, zip};
-use core::ops::{Add, AddAssign, Div, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign};
+use core::ops::{
+    Add, AddAssign, Deref, DerefMut, Div, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign,
+};
 #[cfg(feature = "rayon")]
 use rayon::iter::IntoParallelIterator;
 use serde::{Deserialize, Serialize};
@@ -37,12 +38,12 @@ use zeroize::Zeroize;
 #[derive(Clone, Copy, Deserialize, Eq, PartialEq, Serialize, Zeroize)]
 #[zeroize(bound = "R: Zeroize")]
 pub struct TracelessQuaternion<R: UnitalRing> {
-    coefficients: FreeModule<R, 3>,
+    coefficients: Array<R, 3>,
 }
 
 impl<R: UnitalRing> TracelessQuaternion<R> {
     /// Construct a new element.
-    pub const fn new(coefficients: FreeModule<R, 3>) -> Self {
+    pub const fn new(coefficients: Array<R, 3>) -> Self {
         Self { coefficients }
     }
 
@@ -74,14 +75,14 @@ impl<R: UnitalRing> From<[R; 3]> for TracelessQuaternion<R> {
     }
 }
 
-impl<R: UnitalRing> From<FreeModule<R, 3>> for TracelessQuaternion<R> {
+impl<R: UnitalRing> From<Array<R, 3>> for TracelessQuaternion<R> {
     #[inline]
-    fn from(coefficients: FreeModule<R, 3>) -> Self {
+    fn from(coefficients: Array<R, 3>) -> Self {
         Self::new(coefficients)
     }
 }
 
-impl<R: UnitalRing> From<TracelessQuaternion<R>> for FreeModule<R, 3> {
+impl<R: UnitalRing> From<TracelessQuaternion<R>> for Array<R, 3> {
     #[inline]
     fn from(element: TracelessQuaternion<R>) -> Self {
         element.coefficients
@@ -99,16 +100,16 @@ impl<R: UnitalRing> From<TracelessQuaternion<R>> for QuaternionAlgebra<R> {
     }
 }
 
-impl<R: UnitalRing> AsRef<FreeModule<R, 3>> for TracelessQuaternion<R> {
+impl<R: UnitalRing> AsRef<[R; 3]> for TracelessQuaternion<R> {
     #[inline]
-    fn as_ref(&self) -> &FreeModule<R, 3> {
+    fn as_ref(&self) -> &[R; 3] {
         &self.coefficients
     }
 }
 
-impl<R: UnitalRing> AsMut<FreeModule<R, 3>> for TracelessQuaternion<R> {
+impl<R: UnitalRing> AsMut<[R; 3]> for TracelessQuaternion<R> {
     #[inline]
-    fn as_mut(&mut self) -> &mut FreeModule<R, 3> {
+    fn as_mut(&mut self) -> &mut [R; 3] {
         &mut self.coefficients
     }
 }
@@ -116,14 +117,14 @@ impl<R: UnitalRing> AsMut<FreeModule<R, 3>> for TracelessQuaternion<R> {
 impl<R: UnitalRing> Borrow<[R]> for TracelessQuaternion<R> {
     #[inline]
     fn borrow(&self) -> &[R] {
-        self.coefficients.borrow()
+        self.coefficients.deref()
     }
 }
 
 impl<R: UnitalRing> BorrowMut<[R]> for TracelessQuaternion<R> {
     #[inline]
     fn borrow_mut(&mut self) -> &mut [R] {
-        self.coefficients.borrow_mut()
+        self.coefficients.deref_mut()
     }
 }
 
@@ -209,6 +210,7 @@ impl<'a, R: UnitalRing + Send> IntoParallelIterator for &'a mut TracelessQuatern
 impl<R: UnitalRing> Add for TracelessQuaternion<R> {
     type Output = Self;
 
+    #[inline]
     fn add(self, rps: Self) -> Self::Output {
         Self::new(self.coefficients + rps.coefficients)
     }
@@ -217,6 +219,7 @@ impl<R: UnitalRing> Add for TracelessQuaternion<R> {
 impl<R: UnitalRing> Add<&Self> for TracelessQuaternion<R> {
     type Output = Self;
 
+    #[inline]
     fn add(self, rps: &Self) -> Self::Output {
         Self::new(self.coefficients + &rps.coefficients)
     }
@@ -228,6 +231,7 @@ where
 {
     type Output = TracelessQuaternion<R>;
 
+    #[inline]
     fn add(self, rps: TracelessQuaternion<R>) -> Self::Output {
         Self::Output::new(&self.coefficients + rps.coefficients)
     }
@@ -239,18 +243,21 @@ where
 {
     type Output = TracelessQuaternion<R>;
 
+    #[inline]
     fn add(self, rps: &'a TracelessQuaternion<R>) -> Self::Output {
         Self::Output::new(&self.coefficients + &rps.coefficients)
     }
 }
 
 impl<R: UnitalRing> AddAssign for TracelessQuaternion<R> {
+    #[inline]
     fn add_assign(&mut self, rps: Self) {
         self.coefficients += rps.coefficients
     }
 }
 
 impl<R: UnitalRing> AddAssign<&Self> for TracelessQuaternion<R> {
+    #[inline]
     fn add_assign(&mut self, rps: &Self) {
         self.coefficients += &rps.coefficients
     }
@@ -259,6 +266,7 @@ impl<R: UnitalRing> AddAssign<&Self> for TracelessQuaternion<R> {
 impl<R: UnitalRing> Double for TracelessQuaternion<R> {
     type Output = Self;
 
+    #[inline]
     fn double(self) -> Self {
         Self::new(self.coefficients.double())
     }
@@ -270,6 +278,7 @@ where
 {
     type Output = TracelessQuaternion<R>;
 
+    #[inline]
     fn double(self) -> Self::Output {
         Self::Output::new((&self.coefficients).double())
     }
@@ -278,6 +287,7 @@ where
 impl<R: UnitalRing> Neg for TracelessQuaternion<R> {
     type Output = Self;
 
+    #[inline]
     fn neg(self) -> Self::Output {
         Self::new(-self.coefficients)
     }
@@ -289,6 +299,7 @@ where
 {
     type Output = TracelessQuaternion<R>;
 
+    #[inline]
     fn neg(self) -> Self::Output {
         Self::Output::new(-&self.coefficients)
     }
@@ -297,6 +308,7 @@ where
 impl<R: UnitalRing> Sub for TracelessQuaternion<R> {
     type Output = Self;
 
+    #[inline]
     fn sub(self, rps: Self) -> Self::Output {
         Self::new(self.coefficients - rps.coefficients)
     }
@@ -305,6 +317,7 @@ impl<R: UnitalRing> Sub for TracelessQuaternion<R> {
 impl<R: UnitalRing> Sub<&Self> for TracelessQuaternion<R> {
     type Output = Self;
 
+    #[inline]
     fn sub(self, rps: &Self) -> Self::Output {
         Self::new(self.coefficients - &rps.coefficients)
     }
@@ -316,6 +329,7 @@ where
 {
     type Output = TracelessQuaternion<R>;
 
+    #[inline]
     fn sub(self, rps: TracelessQuaternion<R>) -> Self::Output {
         Self::Output::new(&self.coefficients - rps.coefficients)
     }
@@ -327,18 +341,21 @@ where
 {
     type Output = TracelessQuaternion<R>;
 
+    #[inline]
     fn sub(self, rps: &'a TracelessQuaternion<R>) -> Self::Output {
         Self::Output::new(&self.coefficients - &rps.coefficients)
     }
 }
 
 impl<R: UnitalRing> SubAssign for TracelessQuaternion<R> {
+    #[inline]
     fn sub_assign(&mut self, rps: Self) {
         self.coefficients -= rps.coefficients
     }
 }
 
 impl<R: UnitalRing> SubAssign<&Self> for TracelessQuaternion<R> {
+    #[inline]
     fn sub_assign(&mut self, rps: &Self) {
         self.coefficients -= &rps.coefficients
     }
@@ -347,6 +364,7 @@ impl<R: UnitalRing> SubAssign<&Self> for TracelessQuaternion<R> {
 impl<R: UnitalRing> Mul<R> for TracelessQuaternion<R> {
     type Output = Self;
 
+    #[inline]
     fn mul(self, rps: R) -> Self::Output {
         Self::new(self.coefficients * rps)
     }
@@ -355,6 +373,7 @@ impl<R: UnitalRing> Mul<R> for TracelessQuaternion<R> {
 impl<R: UnitalRing> Mul<&R> for TracelessQuaternion<R> {
     type Output = Self;
 
+    #[inline]
     fn mul(self, rps: &R) -> Self::Output {
         Self::new(self.coefficients * rps)
     }
@@ -366,6 +385,7 @@ where
 {
     type Output = TracelessQuaternion<R>;
 
+    #[inline]
     fn mul(self, rps: R) -> Self::Output {
         Self::Output::new(&self.coefficients * rps)
     }
@@ -377,18 +397,21 @@ where
 {
     type Output = TracelessQuaternion<R>;
 
+    #[inline]
     fn mul(self, rps: &R) -> Self::Output {
         Self::Output::new(&self.coefficients * rps)
     }
 }
 
 impl<R: UnitalRing> MulAssign<R> for TracelessQuaternion<R> {
+    #[inline]
     fn mul_assign(&mut self, rps: R) {
         self.coefficients *= rps
     }
 }
 
 impl<R: UnitalRing> MulAssign<&R> for TracelessQuaternion<R> {
+    #[inline]
     fn mul_assign(&mut self, rps: &R) {
         self.coefficients *= rps
     }
@@ -424,6 +447,7 @@ where
 impl<R: UnitalRing + Inv<Output = BlOption<R>>> Div<R> for TracelessQuaternion<R> {
     type Output = BlOption<Self>;
 
+    #[inline]
     fn div(self, rps: R) -> Self::Output {
         (self.coefficients / rps).map(Self::new)
     }
@@ -435,6 +459,7 @@ where
 {
     type Output = BlOption<Self>;
 
+    #[inline]
     fn div(self, rps: &R) -> Self::Output {
         (self.coefficients / rps).map(Self::new)
     }
@@ -473,29 +498,29 @@ where
 }
 
 impl<R: UnitalRing> Sum for TracelessQuaternion<R> {
+    #[inline]
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
-        let coefficients = iter.map(|i| i.coefficients).sum();
-        Self::new(coefficients)
+        Self::new(iter.map(|i| i.coefficients).sum())
     }
 }
 
 impl<'a, R: UnitalRing + Clone> Sum<&'a Self> for TracelessQuaternion<R> {
+    #[inline]
     fn sum<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
-        let coefficients = iter.map(|i| &i.coefficients).sum();
-        Self::new(coefficients)
+        Self::new(iter.map(|i| &i.coefficients).sum())
     }
 }
 
 impl<R: UnitalRing> LeftZero for TracelessQuaternion<R> {
-    const LEFT_ZERO: Self = Self::new(FreeModule::<R, 3>::LEFT_ZERO);
+    const LEFT_ZERO: Self = Self::ZERO;
 }
 
 impl<R: UnitalRing> RightZero for TracelessQuaternion<R> {
-    const RIGHT_ZERO: Self = Self::new(FreeModule::<R, 3>::RIGHT_ZERO);
+    const RIGHT_ZERO: Self = Self::ZERO;
 }
 
 impl<R: UnitalRing> Zero for TracelessQuaternion<R> {
-    const ZERO: Self = Self::new(FreeModule::<R, 3>::ZERO);
+    const ZERO: Self = Self::new(Array::ZERO);
 }
 
 impl<R: UnitalRing> Set for TracelessQuaternion<R> {}
@@ -529,6 +554,6 @@ impl<Msg, R: UnitalRing + Absorb<Msg>> Absorb<Msg> for TracelessQuaternion<R> {
 
 impl<Msg, R: UnitalRing + Squeeze<Msg>> Squeeze<Msg> for TracelessQuaternion<R> {
     fn squeeze_from<D: Duplexer<Msg = Msg>>(duplex: &mut D) -> Self {
-        duplex.squeeze::<FreeModule<R, 3>>().into()
+        Self::new(Array::squeeze_from(duplex))
     }
 }

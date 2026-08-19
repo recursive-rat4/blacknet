@@ -16,8 +16,8 @@
  */
 
 use crate::algebra::{
-    AdditiveCommutativeMagma, AdditiveSemigroup, Algebra, CommutativeSemiring, Conjugate, Double,
-    FreeModule, IntegerModRing, Inv, LeftOne, LeftZero, MultiplicativeCommutativeMagma,
+    AdditiveCommutativeMagma, AdditiveSemigroup, Algebra, Array, CommutativeSemiring, Conjugate,
+    Double, IntegerModRing, Inv, LeftOne, LeftZero, MultiplicativeCommutativeMagma,
     MultiplicativeSemigroup, One, PolynomialRing, PowerOfTwoCyclotomicRing, RightOne, RightZero,
     RingOps, Semimodule, SemiringOps, Set, Square, UnitalRing, UnitalSemiring, Zero,
 };
@@ -29,7 +29,9 @@ use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
 use core::marker::PhantomData;
 use core::mem::{MaybeUninit, transmute_copy};
-use core::ops::{Add, AddAssign, Div, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign};
+use core::ops::{
+    Add, AddAssign, Deref, DerefMut, Div, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign,
+};
 #[cfg(feature = "rayon")]
 use rayon::iter::IntoParallelIterator;
 use serde::{Deserialize, Serialize};
@@ -38,19 +40,19 @@ use zeroize::Zeroize;
 /// Univariate quotient polynomial ring in monomial basis.
 #[derive(Deserialize, Serialize, Zeroize)]
 #[serde(bound(
-    deserialize = "FreeModule<R, N>: Deserialize<'de>",
-    serialize = "FreeModule<R, N>: Serialize"
+    deserialize = "[R; N]: Deserialize<'de>",
+    serialize = "[R; N]: Serialize"
 ))]
 #[zeroize(bound = "R: Zeroize")]
 pub struct UnivariateRing<R: UnitalSemiring, const N: usize, C: Convolution<R, N>> {
-    coefficients: FreeModule<R, N>,
+    coefficients: Array<R, N>,
     #[serde(skip)]
     phantom: PhantomData<C>,
 }
 
 impl<R: UnitalSemiring, const N: usize, C: Convolution<R, N>> UnivariateRing<R, N, C> {
     /// Construct a new polynomial given the coefficients.
-    pub const fn new(coefficients: FreeModule<R, N>) -> Self {
+    pub const fn new(coefficients: Array<R, N>) -> Self {
         const {
             assert!(N.is_power_of_two(), "Not implemented");
         };
@@ -70,13 +72,14 @@ impl<R: UnitalSemiring, const N: usize, C: Convolution<R, N>> UnivariateRing<R, 
             i += 1;
         }
         let t: [R; N] = unsafe { transmute_copy(&t) };
-        Self::new(FreeModule::<R, N>::new(t))
+        Self::new(Array::<R, N>::new(t))
     }
 }
 
 impl<R: UnitalSemiring + Clone, const N: usize, C: Convolution<R, N>> Clone
     for UnivariateRing<R, N, C>
 {
+    #[inline]
     fn clone(&self) -> Self {
         Self::new(self.coefficients.clone())
     }
@@ -105,6 +108,7 @@ impl<R: UnitalSemiring, const N: usize, C: Convolution<R, N>> Default for Univar
 impl<R: UnitalSemiring + PartialEq, const N: usize, C: Convolution<R, N>> PartialEq
     for UnivariateRing<R, N, C>
 {
+    #[inline]
     fn eq(&self, rps: &Self) -> bool {
         self.coefficients == rps.coefficients
     }
@@ -121,11 +125,11 @@ impl<R: UnitalSemiring, const N: usize, C: Convolution<R, N>> From<[R; N]>
     }
 }
 
-impl<R: UnitalSemiring, const N: usize, C: Convolution<R, N>> From<FreeModule<R, N>>
+impl<R: UnitalSemiring, const N: usize, C: Convolution<R, N>> From<Array<R, N>>
     for UnivariateRing<R, N, C>
 {
     #[inline]
-    fn from(coefficients: FreeModule<R, N>) -> Self {
+    fn from(coefficients: Array<R, N>) -> Self {
         Self::new(coefficients)
     }
 }
@@ -138,7 +142,7 @@ impl<R: UnitalSemiring, const N: usize, C: Convolution<R, N>> From<R> for Univar
 }
 
 impl<R: UnitalSemiring, const N: usize, C: Convolution<R, N>> From<UnivariateRing<R, N, C>>
-    for FreeModule<R, N>
+    for Array<R, N>
 {
     #[inline]
     fn from(polynomial: UnivariateRing<R, N, C>) -> Self {
@@ -146,20 +150,20 @@ impl<R: UnitalSemiring, const N: usize, C: Convolution<R, N>> From<UnivariateRin
     }
 }
 
-impl<R: UnitalSemiring, const N: usize, C: Convolution<R, N>> AsRef<FreeModule<R, N>>
+impl<R: UnitalSemiring, const N: usize, C: Convolution<R, N>> AsRef<[R; N]>
     for UnivariateRing<R, N, C>
 {
     #[inline]
-    fn as_ref(&self) -> &FreeModule<R, N> {
+    fn as_ref(&self) -> &[R; N] {
         &self.coefficients
     }
 }
 
-impl<R: UnitalSemiring, const N: usize, C: Convolution<R, N>> AsMut<FreeModule<R, N>>
+impl<R: UnitalSemiring, const N: usize, C: Convolution<R, N>> AsMut<[R; N]>
     for UnivariateRing<R, N, C>
 {
     #[inline]
-    fn as_mut(&mut self) -> &mut FreeModule<R, N> {
+    fn as_mut(&mut self) -> &mut [R; N] {
         &mut self.coefficients
     }
 }
@@ -169,7 +173,7 @@ impl<R: UnitalSemiring, const N: usize, C: Convolution<R, N>> Borrow<[R]>
 {
     #[inline]
     fn borrow(&self) -> &[R] {
-        self.coefficients.borrow()
+        self.coefficients.deref()
     }
 }
 
@@ -178,7 +182,7 @@ impl<R: UnitalSemiring, const N: usize, C: Convolution<R, N>> BorrowMut<[R]>
 {
     #[inline]
     fn borrow_mut(&mut self) -> &mut [R] {
-        self.coefficients.borrow_mut()
+        self.coefficients.deref_mut()
     }
 }
 
@@ -280,6 +284,7 @@ impl<'a, R: UnitalSemiring + Send, const N: usize, C: Convolution<R, N>> IntoPar
 impl<R: UnitalSemiring, const N: usize, C: Convolution<R, N>> Add for UnivariateRing<R, N, C> {
     type Output = Self;
 
+    #[inline]
     fn add(self, rps: Self) -> Self::Output {
         Self::new(self.coefficients + rps.coefficients)
     }
@@ -290,6 +295,7 @@ impl<R: UnitalSemiring, const N: usize, C: Convolution<R, N>> Add<&Self>
 {
     type Output = Self;
 
+    #[inline]
     fn add(self, rps: &Self) -> Self::Output {
         Self::new(self.coefficients + &rps.coefficients)
     }
@@ -302,6 +308,7 @@ where
 {
     type Output = UnivariateRing<R, N, C>;
 
+    #[inline]
     fn add(self, rps: UnivariateRing<R, N, C>) -> Self::Output {
         Self::Output::new(&self.coefficients + rps.coefficients)
     }
@@ -314,6 +321,7 @@ where
 {
     type Output = UnivariateRing<R, N, C>;
 
+    #[inline]
     fn add(self, rps: &'a UnivariateRing<R, N, C>) -> Self::Output {
         Self::Output::new(&self.coefficients + &rps.coefficients)
     }
@@ -322,6 +330,7 @@ where
 impl<R: UnitalSemiring, const N: usize, C: Convolution<R, N>> AddAssign
     for UnivariateRing<R, N, C>
 {
+    #[inline]
     fn add_assign(&mut self, rps: Self) {
         self.coefficients += rps.coefficients
     }
@@ -330,6 +339,7 @@ impl<R: UnitalSemiring, const N: usize, C: Convolution<R, N>> AddAssign
 impl<R: UnitalSemiring, const N: usize, C: Convolution<R, N>> AddAssign<&Self>
     for UnivariateRing<R, N, C>
 {
+    #[inline]
     fn add_assign(&mut self, rps: &Self) {
         self.coefficients += &rps.coefficients
     }
@@ -338,6 +348,7 @@ impl<R: UnitalSemiring, const N: usize, C: Convolution<R, N>> AddAssign<&Self>
 impl<R: UnitalSemiring, const N: usize, C: Convolution<R, N>> Double for UnivariateRing<R, N, C> {
     type Output = Self;
 
+    #[inline]
     fn double(self) -> Self {
         Self::new(self.coefficients.double())
     }
@@ -349,6 +360,7 @@ where
 {
     type Output = UnivariateRing<R, N, C>;
 
+    #[inline]
     fn double(self) -> Self::Output {
         Self::Output::new((&self.coefficients).double())
     }
@@ -357,6 +369,7 @@ where
 impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Neg for UnivariateRing<R, N, C> {
     type Output = Self;
 
+    #[inline]
     fn neg(self) -> Self::Output {
         Self::new(-self.coefficients)
     }
@@ -368,6 +381,7 @@ where
 {
     type Output = UnivariateRing<R, N, C>;
 
+    #[inline]
     fn neg(self) -> Self::Output {
         Self::Output::new(-&self.coefficients)
     }
@@ -376,6 +390,7 @@ where
 impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Sub for UnivariateRing<R, N, C> {
     type Output = Self;
 
+    #[inline]
     fn sub(self, rps: Self) -> Self::Output {
         Self::new(self.coefficients - rps.coefficients)
     }
@@ -384,6 +399,7 @@ impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Sub for UnivariateRing
 impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> Sub<&Self> for UnivariateRing<R, N, C> {
     type Output = Self;
 
+    #[inline]
     fn sub(self, rps: &Self) -> Self::Output {
         Self::new(self.coefficients - &rps.coefficients)
     }
@@ -396,6 +412,7 @@ where
 {
     type Output = UnivariateRing<R, N, C>;
 
+    #[inline]
     fn sub(self, rps: UnivariateRing<R, N, C>) -> Self::Output {
         Self::Output::new(&self.coefficients - rps.coefficients)
     }
@@ -408,12 +425,14 @@ where
 {
     type Output = UnivariateRing<R, N, C>;
 
+    #[inline]
     fn sub(self, rps: &'a UnivariateRing<R, N, C>) -> Self::Output {
         Self::Output::new(&self.coefficients - &rps.coefficients)
     }
 }
 
 impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> SubAssign for UnivariateRing<R, N, C> {
+    #[inline]
     fn sub_assign(&mut self, rps: Self) {
         self.coefficients -= rps.coefficients
     }
@@ -422,6 +441,7 @@ impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> SubAssign for Univaria
 impl<R: UnitalRing, const N: usize, C: Convolution<R, N>> SubAssign<&Self>
     for UnivariateRing<R, N, C>
 {
+    #[inline]
     fn sub_assign(&mut self, rps: &Self) {
         self.coefficients -= &rps.coefficients
     }
@@ -465,7 +485,7 @@ impl<'a, R: UnitalSemiring, const N: usize, C: Convolution<R, N>> Mul<&'a Univar
 
     fn mul(self, rps: &'a UnivariateRing<R, N, C>) -> Self::Output {
         let sequence = C::convolute(&self.coefficients, &rps.coefficients);
-        let coefficients = FreeModule::<R, N>::new(sequence);
+        let coefficients = Array::<R, N>::new(sequence);
         Self::Output::new(coefficients)
     }
 }
@@ -509,6 +529,7 @@ impl<R: UnitalSemiring, const N: usize, C: Convolution<R, N>> Square for &Univar
 impl<R: UnitalSemiring, const N: usize, C: Convolution<R, N>> Mul<R> for UnivariateRing<R, N, C> {
     type Output = Self;
 
+    #[inline]
     fn mul(self, rps: R) -> Self::Output {
         Self::new(self.coefficients * rps)
     }
@@ -517,6 +538,7 @@ impl<R: UnitalSemiring, const N: usize, C: Convolution<R, N>> Mul<R> for Univari
 impl<R: UnitalSemiring, const N: usize, C: Convolution<R, N>> Mul<&R> for UnivariateRing<R, N, C> {
     type Output = Self;
 
+    #[inline]
     fn mul(self, rps: &R) -> Self::Output {
         Self::new(self.coefficients * rps)
     }
@@ -528,6 +550,7 @@ where
 {
     type Output = UnivariateRing<R, N, C>;
 
+    #[inline]
     fn mul(self, rps: R) -> Self::Output {
         Self::Output::new(&self.coefficients * rps)
     }
@@ -539,6 +562,7 @@ where
 {
     type Output = UnivariateRing<R, N, C>;
 
+    #[inline]
     fn mul(self, rps: &R) -> Self::Output {
         Self::Output::new(&self.coefficients * rps)
     }
@@ -547,6 +571,7 @@ where
 impl<R: UnitalSemiring, const N: usize, C: Convolution<R, N>> MulAssign<R>
     for UnivariateRing<R, N, C>
 {
+    #[inline]
     fn mul_assign(&mut self, rps: R) {
         self.coefficients *= rps
     }
@@ -555,6 +580,7 @@ impl<R: UnitalSemiring, const N: usize, C: Convolution<R, N>> MulAssign<R>
 impl<R: UnitalSemiring, const N: usize, C: Convolution<R, N>> MulAssign<&R>
     for UnivariateRing<R, N, C>
 {
+    #[inline]
     fn mul_assign(&mut self, rps: &R) {
         self.coefficients *= rps
     }
@@ -565,6 +591,7 @@ impl<R: UnitalSemiring + Inv<Output = BlOption<R>>, const N: usize, C: Convoluti
 {
     type Output = BlOption<Self>;
 
+    #[inline]
     fn div(self, rps: R) -> Self::Output {
         (self.coefficients / rps).map(Self::new)
     }
@@ -577,24 +604,25 @@ where
 {
     type Output = BlOption<Self>;
 
+    #[inline]
     fn div(self, rps: &R) -> Self::Output {
         (self.coefficients / rps).map(Self::new)
     }
 }
 
 impl<R: UnitalSemiring, const N: usize, C: Convolution<R, N>> Sum for UnivariateRing<R, N, C> {
+    #[inline]
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
-        let coefficients = iter.map(|i| i.coefficients).sum();
-        Self::new(coefficients)
+        Self::new(iter.map(|i| i.coefficients).sum())
     }
 }
 
 impl<'a, R: UnitalSemiring + Clone, const N: usize, C: Convolution<R, N>> Sum<&'a Self>
     for UnivariateRing<R, N, C>
 {
+    #[inline]
     fn sum<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
-        let coefficients = iter.map(|i| &i.coefficients).sum();
-        Self::new(coefficients)
+        Self::new(iter.map(|i| &i.coefficients).sum())
     }
 }
 
@@ -617,25 +645,25 @@ impl<'a, R: UnitalSemiring + Clone, const N: usize, C: Convolution<R, N>> Produc
 }
 
 impl<R: UnitalSemiring, const N: usize, C: Convolution<R, N>> LeftZero for UnivariateRing<R, N, C> {
-    const LEFT_ZERO: Self = Self::new(FreeModule::<R, N>::LEFT_ZERO);
+    const LEFT_ZERO: Self = Self::ZERO;
 }
 
 impl<R: UnitalSemiring, const N: usize, C: Convolution<R, N>> RightZero
     for UnivariateRing<R, N, C>
 {
-    const RIGHT_ZERO: Self = Self::new(FreeModule::<R, N>::RIGHT_ZERO);
+    const RIGHT_ZERO: Self = Self::ZERO;
 }
 
 impl<R: UnitalSemiring, const N: usize, C: Convolution<R, N>> Zero for UnivariateRing<R, N, C> {
-    const ZERO: Self = Self::new(FreeModule::<R, N>::ZERO);
+    const ZERO: Self = Self::new(Array::ZERO);
 }
 
 impl<R: UnitalSemiring, const N: usize, C: Convolution<R, N>> LeftOne for UnivariateRing<R, N, C> {
-    const LEFT_ONE: Self = Self::const_from(R::ONE);
+    const LEFT_ONE: Self = Self::ONE;
 }
 
 impl<R: UnitalSemiring, const N: usize, C: Convolution<R, N>> RightOne for UnivariateRing<R, N, C> {
-    const RIGHT_ONE: Self = Self::const_from(R::ONE);
+    const RIGHT_ONE: Self = Self::ONE;
 }
 
 impl<R: UnitalSemiring, const N: usize, C: Convolution<R, N>> One for UnivariateRing<R, N, C> {
@@ -737,6 +765,6 @@ impl<Msg, R: UnitalSemiring + Squeeze<Msg>, const N: usize, C: Convolution<R, N>
     for UnivariateRing<R, N, C>
 {
     fn squeeze_from<D: Duplexer<Msg = Msg>>(duplex: &mut D) -> Self {
-        duplex.squeeze::<FreeModule<R, N>>().into()
+        Self::new(Array::squeeze_from(duplex))
     }
 }
