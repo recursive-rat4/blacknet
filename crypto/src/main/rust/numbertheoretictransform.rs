@@ -35,6 +35,7 @@ where
         assert!(r == 0);
         q
     };
+    let twiddles = const { Z::TWIDDLES };
     let mut i;
     let mut j = 0;
     let mut k = N / 2;
@@ -42,10 +43,11 @@ where
         let mut l = 0;
         while l < N {
             j += 1;
-            let zeta = &Z::TWIDDLES[j];
+            let zeta = unsafe { twiddles.get_unchecked(j) };
             i = l;
             while i < l + k {
-                let t = &a[i + k] * zeta;
+                let a_ik = unsafe { a.get_unchecked(i + k) };
+                let t = a_ik * zeta;
                 a[i + k] = &a[i] - &t;
                 a[i] += t;
                 i += 1;
@@ -65,6 +67,7 @@ where
         assert!(r == 0);
         q
     };
+    let twiddles = const { Z::TWIDDLES };
     let mut i;
     let mut j = M;
     let mut k = inertia;
@@ -72,12 +75,14 @@ where
         let mut l = 0;
         while l < N {
             j -= 1;
-            let zeta = -&Z::TWIDDLES[j];
+            let zeta = unsafe { -twiddles.get_unchecked(j) };
             i = l;
             while i < l + k {
+                let a_ik = unsafe { a.get_unchecked(i + k) };
                 let t = a[i].clone();
-                a[i] += a[i + k].clone();
-                a[i + k] = t - &a[i + k];
+                a[i] = &a[i] + a_ik;
+                let a_ik = unsafe { a.get_unchecked(i + k) };
+                a[i + k] = t - a_ik;
                 a[i + k] *= &zeta;
                 i += 1;
             }
