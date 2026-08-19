@@ -17,6 +17,7 @@
 
 mod blockdb;
 mod coindb;
+mod dbversion;
 mod dbview;
 mod fjall;
 pub mod genesis;
@@ -24,10 +25,12 @@ mod undoblock;
 mod writebatch;
 
 use coindb::Update;
+use dbversion::DBVersionKey;
 use dbview::DBView;
 use undoblock::UndoBlock;
 use writebatch::WriteBatch;
 
 pub use blockdb::{BlockDB, BlockDBCheck, BlockIndex};
 pub use coindb::{CoinDB, CoinDBCheck, State};
+pub use dbversion::DBVersion;
 pub use fjall::Fjall;

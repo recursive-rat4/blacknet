@@ -332,6 +332,7 @@ dependencies = [
  "natpmp",
  "serde",
  "serde_json",
+ "serde_repr",
  "sha2",
  "sha3",
  "spdlog-rs",

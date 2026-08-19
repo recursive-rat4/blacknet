@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::db::{CoinDB, DBView, Fjall, State, Update, genesis};
+use crate::db::{CoinDB, DBVersion, DBVersionKey, DBView, Fjall, State, Update, genesis};
 use crate::rollinghashset::RollingHashSet;
 use arc_swap::ArcSwapOption;
 use blacknet_compat::{XDGDirectories, statvfs};
@@ -26,11 +26,12 @@ use blacknet_kernel::error::{Error, Result};
 use blacknet_kernel::proofofstake::{
     MAX_BLOCK_SIZE, ROLLBACK_LIMIT, UPGRADE_THRESHOLD, Version as PoSVersion, is_too_far_in_future,
 };
-use blacknet_log::{LogManager, Logger, error, info, warn};
+use blacknet_log::{LogManager, Logger, debug, error, info, warn};
 use blacknet_serialization::format::from_bytes;
 use blacknet_time::SystemClock;
 use core::error::Error as StdError;
 use serde::{Deserialize, Serialize};
+use serde_repr::{Deserialize_repr, Serialize_repr};
 use std::fs::{self, File};
 use std::io::{BufReader, BufWriter, Read, Write};
 use std::path::PathBuf;
@@ -93,6 +94,13 @@ impl BlockIndex {
     }
 }
 
+#[derive(Debug, Default, Deserialize_repr, Serialize_repr)]
+#[repr(u32)]
+enum BlockDBVersion {
+    #[default]
+    V1,
+}
+
 pub struct BlockDB {
     logger: Logger,
     cached_block: ArcSwapOption<(Hash, Box<[u8]>)>,
@@ -108,10 +116,28 @@ impl BlockDB {
     pub fn new(
         dirs: &XDGDirectories,
         fjall: Arc<Fjall>,
+        db_version: &DBVersion,
         log_manager: &LogManager,
     ) -> Result<Arc<Self>, Box<dyn StdError>> {
+        let logger = log_manager.logger("BlockDB")?;
+
+        match db_version.get_or_err::<BlockDBVersion>(DBVersionKey::BlockDB) {
+            Some(Ok(version)) => debug!(logger, "Open {version:?}"),
+            Some(Err(err)) => {
+                debug!(logger, "{err:?}");
+                return Err("Unknown BlockDB version".into());
+            }
+            None => {
+                let version = BlockDBVersion::default();
+                debug!(logger, "Initializing {version:?}");
+                let mut batch = fjall.create_write_batch();
+                batch.verset(db_version, DBVersionKey::BlockDB, &version);
+                batch.commit();
+            }
+        }
+
         Ok(Arc::new(Self {
-            logger: log_manager.logger("BlockDB")?,
+            logger,
             cached_block: ArcSwapOption::empty(),
             cached_index: ArcSwapOption::empty(),
             rejects: Mutex::new(RollingHashSet::new(ROLLBACK_LIMIT)),

@@ -17,7 +17,7 @@
 
 use crate::blockfetcher::BlockFetcher;
 use crate::connection::{Connection, ConnectionId, State};
-use crate::db::{BlockDB, CoinDB, Fjall};
+use crate::db::{BlockDB, CoinDB, DBVersion, Fjall};
 use crate::endpoint::Endpoint;
 use crate::packet::{BlockAnnounce, Packet, PacketKind, UnfilteredInvList};
 use crate::peertable::PeerTable;
@@ -109,8 +109,9 @@ impl Node {
         }
 
         let fjall = Fjall::open(dirs, config)?;
-        let block_db = BlockDB::new(dirs, fjall.clone(), log_manager)?;
-        let coin_db = CoinDB::new(&mode, &fjall, log_manager, block_db.clone())?;
+        let db_version = DBVersion::new(&fjall)?;
+        let block_db = BlockDB::new(dirs, fjall.clone(), &db_version, log_manager)?;
+        let coin_db = CoinDB::new(&mode, &fjall, db_version, log_manager, block_db.clone())?;
         block_db.import(&coin_db);
 
         let peer_table = PeerTable::new(&mode, dirs, log_manager, config.clone())?;

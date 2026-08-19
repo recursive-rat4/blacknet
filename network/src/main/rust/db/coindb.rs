@@ -15,7 +15,9 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::db::{BlockDB, BlockIndex, DBView, Fjall, UndoBlock, WriteBatch, genesis};
+use crate::db::{
+    BlockDB, BlockIndex, DBVersion, DBVersionKey, DBView, Fjall, UndoBlock, WriteBatch, genesis,
+};
 use arc_swap::ArcSwap;
 use blacknet_compat::Mode;
 use blacknet_crypto::bigint::UInt256;
@@ -35,22 +37,27 @@ use blacknet_kernel::proofofstake::{
 use blacknet_kernel::transaction::{
     CoinTx, HashTimeLockContractId, MultiSignatureLockContractId, Transaction,
 };
-use blacknet_log::{LogManager, Logger, error, info};
+use blacknet_log::{LogManager, Logger, debug, error, info};
 use blacknet_serialization::format::{from_bytes, to_bytes};
 use blacknet_time::Seconds;
 use core::cmp::{max, min};
 use core::error::Error as StdError;
 use serde::{Deserialize, Serialize};
+use serde_repr::{Deserialize_repr, Serialize_repr};
 use std::collections::{HashMap, VecDeque, hash_map};
 use std::sync::Arc;
 
-type StateKey = [u8; 1];
-const STATE_KEY: StateKey = [0; 1];
+#[derive(Debug, Default, Deserialize_repr, Serialize_repr)]
+#[repr(u32)]
+enum CoinDBVersion {
+    #[default]
+    V1,
+}
 
 pub struct CoinDB {
     logger: Logger,
     state: ArcSwap<State>,
-    db_state: DBView<StateKey, State>,
+    db_version: DBVersion,
     accounts: DBView<PublicKey, Account>,
     htlcs: DBView<HashTimeLockContractId, HTLC>,
     multisigs: DBView<MultiSignatureLockContractId, Multisig>,
@@ -62,21 +69,39 @@ impl CoinDB {
     pub fn new(
         mode: &Mode,
         fjall: &Fjall,
+        db_version: DBVersion,
         log_manager: &LogManager,
         block_db: Arc<BlockDB>,
     ) -> core::result::Result<Arc<Self>, Box<dyn StdError>> {
-        let db_state = DBView::new(fjall, "state")?;
+        let logger = log_manager.logger("CoinDB")?;
+
+        match db_version.get_or_err::<CoinDBVersion>(DBVersionKey::CoinDB) {
+            Some(Ok(version)) => debug!(logger, "Open {version:?}"),
+            Some(Err(err)) => {
+                debug!(logger, "{err:?}");
+                return Err("Unknown CoinDB version".into());
+            }
+            None => {
+                let version = CoinDBVersion::default();
+                debug!(logger, "Initializing {version:?}");
+                let mut batch = fjall.create_write_batch();
+                batch.verset(&db_version, DBVersionKey::CoinDB, &version);
+                batch.commit();
+            }
+        }
+
         let accounts = DBView::new(fjall, "accounts")?;
 
-        let state = db_state.get(STATE_KEY).map_or_else(
-            || State::genesis(mode, fjall, &db_state, &accounts, &block_db.indexes),
-            |mut state| {
-                state.requires_network = mode.requires_network();
-                state
-            },
-        );
+        let state = db_version
+            .get::<State>(DBVersionKey::CoinDBState)
+            .map_or_else(
+                || State::genesis(mode, fjall, &db_version, &accounts, &block_db.indexes),
+                |mut state| {
+                    state.requires_network = mode.requires_network();
+                    state
+                },
+            );
 
-        let logger = log_manager.logger("CoinDB")?;
         info!(
             logger,
             "Consensus height {} PoS {:?}",
@@ -87,7 +112,7 @@ impl CoinDB {
         Ok(Arc::new(Self {
             logger,
             state: ArcSwap::new(Arc::new(state)),
-            db_state,
+            db_version,
             accounts,
             htlcs: DBView::new(fjall, "htlcs")?,
             multisigs: DBView::new(fjall, "multisigs")?,
@@ -328,7 +353,7 @@ impl CoinDB {
             block_sizes,
             requires_network: state.requires_network,
         };
-        batch.insert(&self.db_state, STATE_KEY, &new_state);
+        batch.verset(&self.db_version, DBVersionKey::CoinDBState, &new_state);
         self.state.store(Arc::new(new_state));
 
         let mut prev_index = self
@@ -442,7 +467,7 @@ impl State {
     pub fn genesis(
         mode: &Mode,
         fjall: &Fjall,
-        db_state: &DBView<StateKey, State>,
+        db_version: &DBVersion,
         accounts: &DBView<PublicKey, Account>,
         indexes: &DBView<Hash, BlockIndex>,
     ) -> Self {
@@ -476,7 +501,7 @@ impl State {
         let block_index = BlockIndex::new(Hash::ZERO, Hash::ZERO, 0, 0, Amount::ZERO);
         batch.insert(indexes, genesis::hash(), &block_index);
 
-        batch.insert(db_state, STATE_KEY, &state);
+        batch.verset(db_version, DBVersionKey::CoinDBState, &state);
         batch.commit();
         state
     }
@@ -650,7 +675,11 @@ impl Update {
             requires_network: self.state.requires_network,
         };
         let mut batch = self.write_batch;
-        batch.insert(&self.coin_db.db_state, STATE_KEY, &new_state);
+        batch.verset(
+            &self.coin_db.db_version,
+            DBVersionKey::CoinDBState,
+            &new_state,
+        );
         self.coin_db.state.store(Arc::new(new_state));
         batch.insert(&self.coin_db.undos, self.block_hash, &self.undo);
         batch.insert(
