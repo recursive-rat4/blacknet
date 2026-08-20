@@ -20,6 +20,7 @@ use crate::i2psam::SAM;
 use crate::natpmp::natpmp_forward;
 use crate::node::Node;
 use crate::peertable::PeerTable;
+use crate::socks5::socks5;
 use crate::torcontroller::TorController;
 use blacknet_compat::config::Network as Config;
 use blacknet_compat::{Mode, XDGDirectories};
@@ -31,12 +32,12 @@ use core::ops::ControlFlow;
 use std::collections::HashSet;
 use std::sync::{Arc, OnceLock, RwLock, Weak};
 use tokio::io::{BufReader, BufWriter};
+use tokio::net::tcp::{OwnedReadHalf, OwnedWriteHalf};
 use tokio::net::{TcpListener, TcpStream};
 use tokio::runtime::{Handle, Runtime};
 use tokio::sync::Mutex;
 use tokio::time::{Duration, sleep};
 
-#[expect(dead_code)]
 pub struct Router {
     logger: Logger,
     runtime: Handle,
@@ -93,6 +94,105 @@ impl Router {
 
     pub fn set_node(&self, node: Weak<Node>) {
         self.node.set(node).expect("Node constructor")
+    }
+
+    pub async fn connect(
+        &self,
+        endpoint: Endpoint,
+    ) -> Option<(
+        BufReader<OwnedReadHalf>,
+        BufWriter<OwnedWriteHalf>,
+        Endpoint,
+    )> {
+        match endpoint {
+            Endpoint::IPv4 {
+                port: _,
+                address: _,
+            } => {
+                if !self.config.ipv4 {
+                    return None;
+                }
+                match self.socks_proxy {
+                    Some(proxy) => {
+                        let (buf_reader, buf_writer) = socks5(proxy, endpoint).await.ok()?;
+                        Some((buf_reader, buf_writer, proxy))
+                    }
+                    None => {
+                        let endpoint = endpoint.to_rust()?;
+                        let socket = TcpStream::connect(endpoint).await.ok()?;
+                        let local_endpoint = Endpoint::from(socket.local_addr().ok()?);
+                        let (tcp_read, tcp_write) = socket.into_split();
+                        let (buf_reader, buf_writer) =
+                            (BufReader::new(tcp_read), BufWriter::new(tcp_write));
+                        if !local_endpoint.is_local() {
+                            let mut local_endpoint = local_endpoint;
+                            local_endpoint.set_port(self.config.port);
+                            self.add_listener(local_endpoint);
+                        }
+                        Some((buf_reader, buf_writer, local_endpoint))
+                    }
+                }
+            }
+            Endpoint::IPv6 {
+                port: _,
+                address: _,
+            } => {
+                if !self.config.ipv6 {
+                    return None;
+                }
+                match self.socks_proxy {
+                    Some(proxy) => {
+                        let (buf_reader, buf_writer) = socks5(proxy, endpoint).await.ok()?;
+                        Some((buf_reader, buf_writer, proxy))
+                    }
+                    None => {
+                        let endpoint = endpoint.to_rust()?;
+                        let socket = TcpStream::connect(endpoint).await.ok()?;
+                        let local_endpoint = Endpoint::from(socket.local_addr().ok()?);
+                        let (tcp_read, tcp_write) = socket.into_split();
+                        let (buf_reader, buf_writer) =
+                            (BufReader::new(tcp_read), BufWriter::new(tcp_write));
+                        if !local_endpoint.is_local() {
+                            let mut local_endpoint = local_endpoint;
+                            local_endpoint.set_port(self.config.port);
+                            self.add_listener(local_endpoint);
+                        }
+                        Some((buf_reader, buf_writer, local_endpoint))
+                    }
+                }
+            }
+            Endpoint::TORv3 {
+                port: _,
+                address: _,
+            } => {
+                if !self.config.tor {
+                    return None;
+                }
+                match self.tor_proxy {
+                    Some(proxy) => {
+                        let (buf_reader, buf_writer) = socks5(proxy, endpoint).await.ok()?;
+                        Some((buf_reader, buf_writer, proxy))
+                    }
+                    None => None,
+                }
+            }
+            Endpoint::I2P {
+                port: _,
+                address: _,
+            } => {
+                if !self.config.i2p {
+                    return None;
+                }
+                self.i2p_sam.connect(endpoint).await.ok()
+            }
+            Endpoint::TORv2 {
+                port: _,
+                address: _,
+            } => {
+                // obsolete
+                None
+            }
+        }
     }
 
     async fn listen_ip(self: Arc<Self>) {

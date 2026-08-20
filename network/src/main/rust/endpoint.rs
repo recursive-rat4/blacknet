@@ -108,6 +108,17 @@ impl Endpoint {
             Endpoint::I2P { port, address } => to_log_i2p(port, address, detail),
         }
     }
+
+    pub const fn set_port(&mut self, port: u16) {
+        let new_port = port;
+        match self {
+            Endpoint::IPv4 { port, address: _ } => *port = new_port,
+            Endpoint::IPv6 { port, address: _ } => *port = new_port,
+            Endpoint::TORv2 { port, address: _ } => *port = new_port,
+            Endpoint::TORv3 { port, address: _ } => *port = new_port,
+            Endpoint::I2P { port, address: _ } => *port = new_port,
+        }
+    }
 }
 
 impl From<SocketAddr> for Endpoint {
