@@ -177,7 +177,6 @@ impl Connection {
 
 pub struct Session {
     logger: Logger,
-    local_endpoint: Endpoint,
     connection: Connection,
 }
 
@@ -211,10 +210,6 @@ impl Session {
             }
         }
     }
-
-    pub const fn endpoint(&self) -> Endpoint {
-        self.local_endpoint
-    }
 }
 
 pub struct SAM {
@@ -224,7 +219,7 @@ pub struct SAM {
     private_key: ArcSwap<String>,
     endpoint: Endpoint,
     agent_name: String,
-    session_id: ArcSwapOption<String>,
+    session: ArcSwapOption<(String, Endpoint)>,
 }
 
 impl SAM {
@@ -249,11 +244,11 @@ impl SAM {
             private_key: ArcSwap::new(Arc::new(private_key)),
             endpoint,
             agent_name: mode.agent_name().to_owned(),
-            session_id: ArcSwapOption::empty(),
+            session: ArcSwapOption::empty(),
         })
     }
 
-    pub async fn create_session(&self) -> Result<Session, Error> {
+    pub async fn create_session(&self) -> Result<(Session, Endpoint), Error> {
         let session_id = Self::generate_id();
         let mut connection = Connection::new(self.logger.clone(), self.endpoint).await?;
         let private_key = self.private_key.load();
@@ -275,16 +270,16 @@ impl SAM {
         }
         let session = Session {
             logger: self.logger.clone(),
-            local_endpoint,
             connection,
         };
         info!(self.logger, "Created session {}", session_id);
-        self.session_id.store(Some(Arc::new(session_id)));
-        Ok(session)
+        self.session
+            .store(Some(Arc::new((session_id, local_endpoint))));
+        Ok((session, local_endpoint))
     }
 
     pub fn close_session(&self) {
-        self.session_id.store(None);
+        self.session.store(None);
     }
 
     pub async fn accept(
@@ -300,11 +295,12 @@ impl SAM {
         let mut connection = Connection::new(self.logger.clone(), self.endpoint).await?;
         let request = format!(
             "STREAM ACCEPT ID={}\n",
-            self.session_id
+            self.session
                 .load()
                 .deref()
                 .as_ref()
                 .ok_or(Error::message("No session id"))?
+                .0
         );
         connection.request(&request).await?;
         let message = connection.read().await?;
@@ -330,21 +326,27 @@ impl SAM {
     pub async fn connect(
         &self,
         remote_endpoint: Endpoint,
-    ) -> Result<(BufReader<OwnedReadHalf>, BufWriter<OwnedWriteHalf>), Error> {
+    ) -> Result<
+        (
+            BufReader<OwnedReadHalf>,
+            BufWriter<OwnedWriteHalf>,
+            Endpoint,
+        ),
+        Error,
+    > {
+        let session = self.session.load();
+        let Some(session) = session.deref() else {
+            return Err(Error::message("No session"));
+        };
         let mut connection = Connection::new(self.logger.clone(), self.endpoint).await?;
         let destination = connection.lookup(&remote_endpoint.to_host()).await?;
         let request = format!(
             "STREAM CONNECT ID={} DESTINATION={}\n",
-            self.session_id
-                .load()
-                .deref()
-                .as_ref()
-                .ok_or(Error::message("No session id"))?,
-            destination
+            session.0, destination
         );
         let answer = connection.request(&request).await?;
         answer.ok()?;
-        Ok((connection.buf_reader, connection.buf_writer))
+        Ok((connection.buf_reader, connection.buf_writer, session.1))
     }
 
     fn generate_id() -> String {

@@ -205,14 +205,13 @@ impl Router {
         let mut timeout = Self::INIT_TIMEOUT;
         loop {
             match self.i2p_sam.create_session().await {
-                Ok(mut session) => {
+                Ok((mut session, local_endpoint)) => {
                     timeout = Self::INIT_TIMEOUT;
-                    self.add_listener(session.endpoint());
-                    self.runtime
-                        .spawn(self.clone().accept_i2p(session.endpoint()));
+                    self.add_listener(local_endpoint);
+                    self.runtime.spawn(self.clone().accept_i2p(local_endpoint));
                     session.hung().await;
                     info!(self.logger, "Closing I2P session");
-                    self.remove_listener(session.endpoint());
+                    self.remove_listener(local_endpoint);
                     self.i2p_sam.close_session();
                 }
                 Err(msg) => {
