@@ -118,7 +118,7 @@ fn bind() {
 
 #[test]
 fn matrix() {
-    let hc = Hypercube::<R>::new(3);
+    let hc = Hypercube::new(3);
     #[rustfmt::skip]
     let a = DenseMatrix::new(2, 4, [
         30, 31, 32, 33,
@@ -131,7 +131,7 @@ fn matrix() {
 
 #[test]
 fn vector() {
-    let hc = Hypercube::<R>::new(3);
+    let hc = Hypercube::new(3);
     let a = DenseVector::from([63, 64, 65, 66, 67, 68, 69, 70].map(R::from));
     let mle = MultilinearExtension::from(a.clone());
     zip(hc.iter_index(), hc.iter_vertex())
@@ -140,7 +140,7 @@ fn vector() {
 
 #[test]
 fn vector_ring() {
-    let hc = Hypercube::<R>::new(2);
+    let hc = Hypercube::new(2);
     let a = VectorRing::from([71, 72, 73, 74].map(R::from));
     let mle = MultilinearExtension::from_iter(a);
     zip(hc.iter_index(), hc.iter_vertex())

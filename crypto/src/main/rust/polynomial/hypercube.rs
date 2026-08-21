@@ -15,27 +15,24 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::UnitalSemiring;
+use crate::algebra::{One, Zero};
 use crate::polynomial::MultivariatePolynomial;
 use alloc::vec::Vec;
-use core::iter::Map;
-use core::marker::PhantomData;
+use core::iter::{Map, Sum};
 use core::ops::Range;
 
 /// An n-dimensional unit hypercube with a vertex at the origin in the coordinate system.
-pub struct Hypercube<R: UnitalSemiring> {
+pub struct Hypercube {
     dimension: u32,
     vertices: u32,
-    phantom: PhantomData<R>,
 }
 
-impl<R: UnitalSemiring> Hypercube<R> {
+impl Hypercube {
     /// Construct a new hypercube.
     pub const fn new(dimension: u32) -> Self {
         Self {
             dimension,
             vertices: 1 << dimension,
-            phantom: PhantomData,
         }
     }
 
@@ -45,16 +42,18 @@ impl<R: UnitalSemiring> Hypercube<R> {
     }
 
     /// Iterate vertices.
-    pub fn iter_vertex<Vertex: From<Vec<R>>>(&self) -> Map<Range<u32>, impl FnMut(u32) -> Vertex> {
+    pub fn iter_vertex<S: One + Zero, Vertex: From<Vec<S>>>(
+        &self,
+    ) -> Map<Range<u32>, impl FnMut(u32) -> Vertex> {
         (0..self.vertices).map(move |index| {
-            let mut coordinates = Vec::<R>::with_capacity(self.dimension as usize);
+            let mut coordinates = Vec::<S>::with_capacity(self.dimension as usize);
             let mut s = self.vertices;
             for _ in 0..self.dimension {
                 s >>= 1;
                 if index & s == s {
-                    coordinates.push(R::ONE)
+                    coordinates.push(S::ONE)
                 } else {
-                    coordinates.push(R::ZERO)
+                    coordinates.push(S::ZERO)
                 }
             }
             Vertex::from(coordinates)
@@ -72,11 +71,14 @@ impl<R: UnitalSemiring> Hypercube<R> {
     }
 
     /// Sum a polynomial over a unit hypercube.
-    pub fn sum<P: MultivariatePolynomial<Coefficient = R, Point: From<Vec<R>>>>(
+    pub fn sum<
+        R: One + Zero + Sum,
+        P: MultivariatePolynomial<Coefficient = R, Point: From<Vec<R>>>,
+    >(
         polynomial: &P,
     ) -> R {
         Hypercube::new(polynomial.variables())
-            .iter_vertex::<P::Point>()
+            .iter_vertex::<R, P::Point>()
             .map(|vertex| polynomial.point(&vertex))
             .sum()
     }

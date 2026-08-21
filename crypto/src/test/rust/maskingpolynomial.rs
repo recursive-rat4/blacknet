@@ -53,25 +53,25 @@ fn bind() {
 
     mask = a.clone();
     mask.bind(&R::from(-2));
-    assert_eq!(a.sum_with_var::<-2>(), Hypercube::<R>::sum(&mask));
+    assert_eq!(a.sum_with_var::<-2>(), Hypercube::sum(&mask));
     mask = a.clone();
     mask.bind(&R::from(-1));
-    assert_eq!(a.sum_with_var::<-1>(), Hypercube::<R>::sum(&mask));
+    assert_eq!(a.sum_with_var::<-1>(), Hypercube::sum(&mask));
     mask = a.clone();
     mask.bind(&R::from(0));
-    assert_eq!(a.sum_with_var::<0>(), Hypercube::<R>::sum(&mask));
+    assert_eq!(a.sum_with_var::<0>(), Hypercube::sum(&mask));
     mask = a.clone();
     mask.bind(&R::from(1));
-    assert_eq!(a.sum_with_var::<1>(), Hypercube::<R>::sum(&mask));
+    assert_eq!(a.sum_with_var::<1>(), Hypercube::sum(&mask));
     mask = a.clone();
     mask.bind(&R::from(2));
-    assert_eq!(a.sum_with_var::<2>(), Hypercube::<R>::sum(&mask));
+    assert_eq!(a.sum_with_var::<2>(), Hypercube::sum(&mask));
     mask = a.clone();
     mask.bind(&R::from(3));
-    assert_eq!(a.sum_with_var::<3>(), Hypercube::<R>::sum(&mask));
+    assert_eq!(a.sum_with_var::<3>(), Hypercube::sum(&mask));
     mask = a.clone();
     mask.bind(&R::from(4));
-    assert_eq!(a.sum_with_var::<4>(), Hypercube::<R>::sum(&mask));
+    assert_eq!(a.sum_with_var::<4>(), Hypercube::sum(&mask));
 }
 
 #[test]

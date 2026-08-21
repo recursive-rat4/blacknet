@@ -94,7 +94,7 @@ fn bind() {
 
 #[test]
 fn point() {
-    let hc = Hypercube::<R>::new(3);
+    let hc = Hypercube::new(3);
     let a = Point::<R>::from([1, 0, 0].map(R::from));
     let eq = EqExtension::<R>::from(a.coordinates().clone());
     hc.iter_vertex().for_each(|b| {
@@ -108,7 +108,7 @@ fn point() {
 
 #[test]
 fn hypercube() {
-    let hc = Hypercube::<R>::new(3);
+    let hc = Hypercube::new(3);
     let a = Vec::<R>::from([1, 0, 0].map(R::from));
     let eq = EqExtension::<R>::from(a);
     let pis = eq.hypercube();
