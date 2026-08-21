@@ -135,11 +135,14 @@ pub fn encode(bytes: &[u8; D / 8]) -> PlainText {
 
 pub fn decode(pt: &PlainText) -> [u8; D / 8] {
     let mut bytes = [0_u8; D / 8];
-    for (i, chunk) in pt.m.as_ref().chunks_exact(8).enumerate() {
+    let (chunks, []) = pt.m.as_ref().as_chunks::<8>() else {
+        unreachable!()
+    };
+    for (i, chunk) in chunks.iter().enumerate() {
         let byte = chunk
             .iter()
             .rev()
-            .map(|bit| 1u8.bl_select(0, bit.bl_eq(&Zt::ZERO)))
+            .map(|&bit| 1u8.bl_select(0, bit == Zt::ZERO))
             .fold(0, |a, i| (a << 1) | i);
         bytes[i] = byte;
     }

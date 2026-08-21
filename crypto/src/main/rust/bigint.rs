@@ -23,6 +23,7 @@ use core::array;
 use core::cmp::Ordering;
 use core::fmt;
 use core::iter::zip;
+use core::mem::transmute_copy;
 use core::ops::{
     Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, Div, DivAssign, Mul, Neg, Rem,
     RemAssign, Shl, ShlAssign, Shr, ShrAssign, Sub, SubAssign,
@@ -227,12 +228,10 @@ impl<const N: usize> BigInt<N> {
         const {
             assert!(M == N * size_of::<u64>());
         };
-        let (chunks, []) = bytes.as_chunks::<{ size_of::<u64>() }>() else {
-            unreachable!()
-        };
-        let mut limbs = [0_u64; N];
-        for (limb, chunk) in zip(&mut limbs, chunks.iter().rev()) {
-            *limb = u64::from_be_bytes(*chunk);
+        let chunks: [[u8; size_of::<u64>()]; N] = unsafe { transmute_copy(&bytes) };
+        let mut limbs = chunks.map(u64::from_be_bytes);
+        for i in 0..N / 2 {
+            limbs.swap(i, N - 1 - i)
         }
         Self { limbs }
     }
@@ -240,24 +239,16 @@ impl<const N: usize> BigInt<N> {
         const {
             assert!(M == N * size_of::<u64>());
         };
-        let (chunks, []) = bytes.as_chunks::<{ size_of::<u64>() }>() else {
-            unreachable!()
-        };
-        let mut limbs = [0_u64; N];
-        for (limb, chunk) in zip(&mut limbs, chunks) {
-            *limb = u64::from_le_bytes(*chunk);
-        }
+        let chunks: [[u8; size_of::<u64>()]; N] = unsafe { transmute_copy(&bytes) };
+        let limbs = chunks.map(u64::from_le_bytes);
         Self { limbs }
     }
     pub fn to_le_bytes<const M: usize>(self) -> [u8; M] {
         const {
             assert!(M == N * size_of::<u64>());
         };
-        let mut bytes = [0_u8; M];
-        for (chunk, limb) in zip(bytes.chunks_exact_mut(size_of::<u64>()), self.limbs) {
-            chunk.copy_from_slice(&limb.to_le_bytes());
-        }
-        bytes
+        let chunks = self.limbs.map(u64::to_le_bytes);
+        unsafe { transmute_copy(&chunks) }
     }
 
     #[doc(hidden)]
