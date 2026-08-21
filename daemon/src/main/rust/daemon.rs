@@ -17,7 +17,7 @@
 
 use blacknet_compat::config::Config;
 use blacknet_compat::{XDGDirectories, mode};
-use blacknet_json_rpc::rpc_server;
+use blacknet_json_rpc::RPCServer;
 use blacknet_log::{LogManager, Strategy};
 use blacknet_network::node::Node;
 use std::env::args;
@@ -51,7 +51,7 @@ fn daemon() -> Result<(), Box<dyn Error>> {
     if config.rpc.enabled {
         let node = node.clone();
         runtime.spawn(async move {
-            rpc_server(&config.rpc, &log_manager, node, shutdown_send).await;
+            RPCServer::serve(&config.rpc, &log_manager, node, shutdown_send).await;
         });
     }
     runtime.block_on(async move {
