@@ -15,16 +15,20 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::db::{CoinDB, DBVersion, DBVersionKey, DBView, Fjall, State, Update, genesis};
-use crate::rollinghashset::RollingHashSet;
+use crate::{
+    db::{BlockIndex, CoinDB, DBVersion, DBVersionKey, DBView, Fjall, State, Update, genesis},
+    rollinghashset::RollingHashSet,
+};
 use arc_swap::ArcSwapOption;
 use blacknet_compat::{XDGDirectories, statvfs};
-use blacknet_kernel::amount::Amount;
-use blacknet_kernel::blake2b::Hash;
-use blacknet_kernel::block::{BLOCK_VERSION, Block};
-use blacknet_kernel::error::{Error, Result};
-use blacknet_kernel::proofofstake::{
-    MAX_BLOCK_SIZE, ROLLBACK_LIMIT, UPGRADE_THRESHOLD, Version as PoSVersion, is_too_far_in_future,
+use blacknet_kernel::{
+    blake2b::Hash,
+    block::{BLOCK_VERSION, Block},
+    error::{Error, Result},
+    proofofstake::{
+        MAX_BLOCK_SIZE, ROLLBACK_LIMIT, UPGRADE_THRESHOLD, Version as PoSVersion,
+        is_too_far_in_future,
+    },
 };
 use blacknet_log::{LogManager, Logger, debug, error, info, warn};
 use blacknet_serialization::format::from_bytes;
@@ -32,67 +36,15 @@ use blacknet_time::SystemClock;
 use core::error::Error as StdError;
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
-use std::fs::{self, File};
-use std::io::{BufReader, BufWriter, Read, Write};
-use std::path::PathBuf;
-use std::sync::{Arc, Mutex};
+use std::{
+    fs::{self, File},
+    io::{BufReader, BufWriter, Read, Write},
+    path::PathBuf,
+    sync::{Arc, Mutex},
+};
+use tokio::sync::mpsc;
 
 const MIN_DISK_SPACE: u64 = MAX_BLOCK_SIZE as u64 * 2;
-
-#[derive(Clone, Copy, Deserialize, Serialize)]
-pub struct BlockIndex {
-    previous: Hash,
-    pub(super) next: Hash,
-    pub(super) next_size: u32,
-    height: u32,
-    generated: Amount,
-}
-
-impl BlockIndex {
-    pub const fn new(
-        previous: Hash,
-        next: Hash,
-        next_size: u32,
-        height: u32,
-        generated: Amount,
-    ) -> Self {
-        Self {
-            previous,
-            next,
-            next_size,
-            height,
-            generated,
-        }
-    }
-
-    pub const fn previous(&self) -> Hash {
-        self.previous
-    }
-
-    pub const fn next(&self) -> Hash {
-        self.next
-    }
-
-    pub const fn next_size(&self) -> u32 {
-        self.next_size
-    }
-
-    pub const fn height(&self) -> u32 {
-        self.height
-    }
-
-    pub const fn generated(&self) -> Amount {
-        self.generated
-    }
-
-    pub const fn set_next(&mut self, next: Hash) {
-        self.next = next
-    }
-
-    pub const fn set_next_size(&mut self, next_size: u32) {
-        self.next_size = next_size
-    }
-}
 
 #[derive(Debug, Default, Deserialize_repr, Serialize_repr)]
 #[repr(u32)]
@@ -101,11 +53,16 @@ enum BlockDBVersion {
     V1,
 }
 
+pub type Notification = (Block, Hash, u32, u32, Vec<Hash>);
+pub type Notifier = mpsc::UnboundedReceiver<Arc<Notification>>;
+pub type Subscriber = mpsc::UnboundedSender<Arc<Notification>>;
+
 pub struct BlockDB {
     logger: Logger,
     cached_block: ArcSwapOption<(Hash, Box<[u8]>)>,
     cached_index: ArcSwapOption<(Hash, BlockIndex)>,
     rejects: Mutex<RollingHashSet<Hash>>,
+    subscribers: Mutex<Vec<Subscriber>>,
     pub(super) blocks: DBView<Hash, Block>,
     pub(crate) indexes: DBView<Hash, BlockIndex>,
     pub(super) fjall: Arc<Fjall>,
@@ -141,11 +98,18 @@ impl BlockDB {
             cached_block: ArcSwapOption::empty(),
             cached_index: ArcSwapOption::empty(),
             rejects: Mutex::new(RollingHashSet::new(ROLLBACK_LIMIT)),
+            subscribers: Mutex::new(Vec::new()),
             blocks: DBView::with_blob(&fjall, "blocks")?,
             indexes: DBView::new(&fjall, "indexes")?,
             fjall,
             data_dir: dirs.data().to_owned(),
         }))
+    }
+
+    pub fn subscribe(&self) -> Notifier {
+        let (sender, receiver) = mpsc::unbounded_channel();
+        self.subscribers.lock().unwrap().push(sender);
+        receiver
     }
 
     pub const fn cached_block(&self) -> &ArcSwapOption<(Hash, Box<[u8]>)> {
@@ -408,6 +372,7 @@ impl BlockDB {
         if block.previous() != state.block_hash() {
             return Err(Error::not_reachable_vertex(block.previous().to_string()));
         }
+        let bytes_len = bytes.len() as u32;
         let mut batch = self.fjall.create_write_batch();
         batch.insert_bytes(&self.blocks, hash, &bytes);
         let mut coin_tx = Update::new(
@@ -417,17 +382,23 @@ impl BlockDB {
             hash,
             block.previous(),
             block.time(),
-            bytes.len() as u32,
+            bytes_len,
             block.generator(),
         );
-        #[expect(unused_variables)]
-        let tx_hashes =
-            coin_db.process_block_impl(&mut coin_tx, hash, &block, bytes.len() as u32)?;
+        let tx_hashes = coin_db.process_block_impl(&mut coin_tx, hash, &block, bytes_len)?;
         coin_tx.commit_impl();
-        //TODO RPC
         self.cached_block
             .store(Some(Arc::new((block.previous(), bytes))));
+        self.notify((block, hash, state.height() + 1, bytes_len, tx_hashes));
         Ok(())
+    }
+
+    fn notify(&self, notification: Notification) {
+        let notification = Arc::new(notification);
+        let subscribers = self.subscribers.lock().unwrap();
+        for subscriber in subscribers.iter() {
+            let _ = subscriber.send(notification.clone());
+        }
     }
 }
 

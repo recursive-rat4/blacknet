@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2025 Pavel Vasin
+ * Copyright (c) 2018-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -30,7 +30,7 @@ impl TxPoolInfo {
     pub fn new(tx_pool: &TxPool) -> Self {
         Self {
             size: tx_pool.len() as u32,
-            dataSize: tx_pool.data_len() as u32,
+            dataSize: tx_pool.data_size() as u32,
             tx: tx_pool.hashes().copied().map(HashInfo::from).collect(),
         }
     }

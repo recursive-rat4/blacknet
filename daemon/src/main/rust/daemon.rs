@@ -15,18 +15,17 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_compat::config::Config;
-use blacknet_compat::{XDGDirectories, mode};
+use blacknet_compat::{XDGDirectories, config::Config, mode};
 use blacknet_json_rpc::RPCServer;
 use blacknet_log::{LogManager, Strategy};
 use blacknet_network::node::Node;
-use std::env::args;
-use std::error::Error;
-use std::process::ExitCode;
-use std::sync::atomic::{AtomicU64, Ordering};
-use tokio::select;
-use tokio::signal::ctrl_c;
-use tokio::sync::mpsc::unbounded_channel;
+use core::error::Error;
+use std::{
+    env::args,
+    process::ExitCode,
+    sync::atomic::{AtomicU64, Ordering},
+};
+use tokio::{select, signal::ctrl_c, sync::mpsc::unbounded_channel};
 
 fn daemon() -> Result<(), Box<dyn Error>> {
     if args().nth(1).is_some_and(|arg| arg == "--version") {
@@ -50,8 +49,11 @@ fn daemon() -> Result<(), Box<dyn Error>> {
     let node = Node::new(mode, &dirs, &log_manager, &runtime, &config.network)?;
     if config.rpc.enabled {
         let node = node.clone();
+        let rpc_server = RPCServer::new(&runtime, &node);
         runtime.spawn(async move {
-            RPCServer::serve(&config.rpc, &log_manager, node, shutdown_send).await;
+            rpc_server
+                .serve(&config.rpc, &log_manager, node, shutdown_send)
+                .await;
         });
     }
     runtime.block_on(async move {

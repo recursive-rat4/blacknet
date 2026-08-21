@@ -16,6 +16,7 @@
  */
 
 mod blockdb;
+mod blockindex;
 mod coindb;
 mod dbversion;
 mod dbview;
@@ -30,7 +31,11 @@ use dbview::DBView;
 use undoblock::UndoBlock;
 use writebatch::WriteBatch;
 
-pub use blockdb::{BlockDB, BlockDBCheck, BlockIndex};
+pub use blockdb::{
+    BlockDB, BlockDBCheck, Notification as BlockNotification, Notifier as BlockNotifier,
+    Subscriber as BlockSubscriber,
+};
+pub use blockindex::BlockIndex;
 pub use coindb::{CoinDB, CoinDBCheck, State};
 pub use dbversion::DBVersion;
 pub use fjall::Fjall;

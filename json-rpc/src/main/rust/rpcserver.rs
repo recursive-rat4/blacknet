@@ -19,39 +19,56 @@ use crate::v2;
 use axum::{Router, extract::ws::Message, routing::get};
 use blacknet_compat::config::RPC as Config;
 use blacknet_log::{LogManager, error, info};
-use blacknet_network::node::Node;
+use blacknet_network::{db::BlockNotifier, node::Node, txpool::Notifier as TxPoolNotifier};
+use blacknet_wallet::address::AddressCodec;
 use core::num::NonZero;
+use serde_json::to_string;
 use std::sync::{
-    Arc, Mutex,
+    Arc,
     atomic::{AtomicU64, Ordering},
 };
-use tokio::net::TcpListener;
-use tokio::sync::mpsc;
+use tokio::{
+    net::TcpListener,
+    runtime::Runtime,
+    sync::{Mutex, mpsc},
+};
 
 pub struct RPCServer {
     next_subscriber_id: AtomicU64,
-    block_notify: Mutex<Vec<Subscriber>>,
-    txpool_notify: Mutex<Vec<Subscriber>>,
-    wallet_notify: Mutex<Vec<Subscriber>>,
+    block_subscribers: Mutex<Vec<Subscriber>>,
+    txpool_subscribers: Mutex<Vec<Subscriber>>,
+    wallet_subscribers: Mutex<Vec<Subscriber>>,
+    address_codec: AddressCodec,
 }
 
 impl RPCServer {
-    fn new() -> Arc<Self> {
-        Arc::new(Self {
+    pub fn new(runtime: &Runtime, node: &Node) -> Arc<Self> {
+        let rpc_server = Arc::new(Self {
             next_subscriber_id: AtomicU64::new(1),
-            block_notify: Mutex::new(Vec::new()),
-            txpool_notify: Mutex::new(Vec::new()),
-            wallet_notify: Mutex::new(Vec::new()),
-        })
+            block_subscribers: Mutex::new(Vec::new()),
+            txpool_subscribers: Mutex::new(Vec::new()),
+            wallet_subscribers: Mutex::new(Vec::new()),
+            address_codec: AddressCodec::new(node.mode()).unwrap(),
+        });
+        runtime.spawn(RPCServer::block_observer(
+            rpc_server.clone(),
+            node.block_db().subscribe(),
+        ));
+        runtime.spawn(RPCServer::txpool_observer(
+            rpc_server.clone(),
+            node.tx_pool().read().unwrap().subscribe(),
+        ));
+        //TODO wallet
+        rpc_server
     }
 
     pub async fn serve(
+        self: Arc<Self>,
         config: &Config,
         log_manager: &LogManager,
         node: Arc<Node>,
         shutdown_send: mpsc::UnboundedSender<()>,
     ) {
-        let rpc_server = RPCServer::new();
         let logger = log_manager.logger("RPCServer").unwrap();
         let logger_shutdown = logger.clone();
         let router = Router::new()
@@ -62,7 +79,8 @@ impl RPCServer {
                     let _ = shutdown_send.send(());
                 }),
             )
-            .merge(v2::routes(node, rpc_server));
+            .merge(v2::routes(node, self));
+
         let addr = format!("{}:{}", config.bind.host, config.bind.port);
         match TcpListener::bind(&addr).await {
             Ok(listener) => {
@@ -76,51 +94,51 @@ impl RPCServer {
         }
     }
 
-    pub(super) fn subscribe_block(&self, subscriber: &Subscriber) {
-        let mut block_notify = self.block_notify.lock().unwrap();
-        block_notify.push(subscriber.clone());
+    pub(super) async fn subscribe_block(&self, subscriber: &Subscriber) {
+        let mut block_subscribers = self.block_subscribers.lock().await;
+        block_subscribers.push(subscriber.clone());
     }
 
-    pub(super) fn subscribe_txpool(&self, subscriber: &Subscriber) {
-        let mut txpool_notify = self.txpool_notify.lock().unwrap();
-        txpool_notify.push(subscriber.clone());
+    pub(super) async fn subscribe_txpool(&self, subscriber: &Subscriber) {
+        let mut txpool_subscribers = self.txpool_subscribers.lock().await;
+        txpool_subscribers.push(subscriber.clone());
     }
 
-    pub(super) fn subscribe_wallet(&self, subscriber: &Subscriber) {
-        let mut wallet_notify = self.wallet_notify.lock().unwrap();
-        wallet_notify.push(subscriber.clone());
+    pub(super) async fn subscribe_wallet(&self, subscriber: &Subscriber) {
+        let mut wallet_subscribers = self.wallet_subscribers.lock().await;
+        wallet_subscribers.push(subscriber.clone());
     }
 
-    pub(super) fn unsubscribe_block(&self, subscriber: &Subscriber) {
-        let mut block_notify = self.block_notify.lock().unwrap();
-        if let Some(index) = block_notify
+    pub(super) async fn unsubscribe_block(&self, subscriber: &Subscriber) {
+        let mut block_subscribers = self.block_subscribers.lock().await;
+        if let Some(index) = block_subscribers
             .iter()
             .map(Subscriber::id)
             .position(|id| id == subscriber.id)
         {
-            block_notify.swap_remove(index);
+            block_subscribers.swap_remove(index);
         }
     }
 
-    pub(super) fn unsubscribe_txpool(&self, subscriber: &Subscriber) {
-        let mut txpool_notify = self.txpool_notify.lock().unwrap();
-        if let Some(index) = txpool_notify
+    pub(super) async fn unsubscribe_txpool(&self, subscriber: &Subscriber) {
+        let mut txpool_subscribers = self.txpool_subscribers.lock().await;
+        if let Some(index) = txpool_subscribers
             .iter()
             .map(Subscriber::id)
             .position(|id| id == subscriber.id)
         {
-            txpool_notify.swap_remove(index);
+            txpool_subscribers.swap_remove(index);
         }
     }
 
-    pub(super) fn unsubscribe_wallet(&self, subscriber: &Subscriber) {
-        let mut wallet_notify = self.wallet_notify.lock().unwrap();
-        if let Some(index) = wallet_notify
+    pub(super) async fn unsubscribe_wallet(&self, subscriber: &Subscriber) {
+        let mut wallet_subscribers = self.wallet_subscribers.lock().await;
+        if let Some(index) = wallet_subscribers
             .iter()
             .map(Subscriber::id)
             .position(|id| id == subscriber.id)
         {
-            wallet_notify.swap_remove(index);
+            wallet_subscribers.swap_remove(index);
         }
     }
 
@@ -136,9 +154,52 @@ impl RPCServer {
         let n = self.next_subscriber_id.fetch_add(1, Ordering::Relaxed);
         NonZero::<u64>::new(n).expect("64-bit id is enough")
     }
+
+    async fn block_observer(self: Arc<Self>, mut block_notifier: BlockNotifier) {
+        while let Some(notification) = block_notifier.recv().await {
+            let mut subscribers = self.block_subscribers.lock().await;
+            if subscribers.is_empty() {
+                continue;
+            }
+            let notification =
+                v2::BlockNotification::new(&notification, &self.address_codec).unwrap();
+            let notification = v2::WebSocketNotification::with_block(notification).unwrap();
+            let notification = to_string(&notification).unwrap();
+            let notification = Message::Text(notification.into());
+            let mut i = 0;
+            while i < subscribers.len() {
+                if subscribers[i].sender.try_send(notification.clone()).is_ok() {
+                    i += 1;
+                } else {
+                    subscribers.swap_remove(i);
+                }
+            }
+        }
+    }
+
+    async fn txpool_observer(self: Arc<Self>, mut txpool_notifier: TxPoolNotifier) {
+        while let Some(notification) = txpool_notifier.recv().await {
+            let mut subscribers = self.txpool_subscribers.lock().await;
+            if subscribers.is_empty() {
+                continue;
+            }
+            let notification =
+                v2::TransactionNotification::new(&notification, &self.address_codec).unwrap();
+            let notification = v2::WebSocketNotification::with_transaction(notification).unwrap();
+            let notification = to_string(&notification).unwrap();
+            let notification = Message::Text(notification.into());
+            let mut i = 0;
+            while i < subscribers.len() {
+                if subscribers[i].sender.try_send(notification.clone()).is_ok() {
+                    i += 1;
+                } else {
+                    subscribers.swap_remove(i);
+                }
+            }
+        }
+    }
 }
 
-#[expect(dead_code)]
 #[derive(Clone)]
 pub(super) struct Subscriber {
     id: NonZero<u64>,

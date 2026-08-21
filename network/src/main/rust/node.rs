@@ -123,11 +123,13 @@ impl Node {
             config,
             peer_table.clone(),
         )?;
-        let tx_pool = Arc::new(RwLock::new(TxPool::new(
+        let tx_pool = TxPool::new(
             log_manager,
+            runtime,
             config.clone(),
+            &block_db,
             coin_db.clone(),
-        )?));
+        )?;
         let node = Arc::new(Self {
             logger,
             runtime: runtime.handle().clone(),

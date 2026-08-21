@@ -15,30 +15,39 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::db::CoinDB;
+use crate::db::{BlockDB, BlockNotifier, CoinDB};
 use blacknet_compat::config::Network as Config;
-use blacknet_kernel::account::Account;
-use blacknet_kernel::amount::Amount;
-use blacknet_kernel::blake2b::Hash;
-use blacknet_kernel::ed25519::PublicKey;
-use blacknet_kernel::error::{Error, Result};
-use blacknet_kernel::htlc::HTLC;
-use blacknet_kernel::multisig::Multisig;
-use blacknet_kernel::transaction::{
-    CoinTx, HashTimeLockContractId, MultiSignatureLockContractId, Transaction,
+use blacknet_kernel::{
+    account::Account,
+    amount::Amount,
+    blake2b::Hash,
+    ed25519::PublicKey,
+    error::{Error, Result},
+    htlc::HTLC,
+    multisig::Multisig,
+    transaction::{CoinTx, HashTimeLockContractId, MultiSignatureLockContractId, Transaction},
 };
 use blacknet_log::{Error as LogError, LogManager, Logger, debug, warn};
 use blacknet_serialization::format::from_bytes;
 use blacknet_time::{Milliseconds, Seconds};
-use std::collections::{HashMap, HashSet, hash_map::Keys};
-use std::sync::Arc;
+use core::{cmp::max, mem::replace};
+use std::{
+    collections::{HashMap, HashSet, hash_map::Keys},
+    sync::{Arc, Mutex, RwLock},
+};
+use tokio::{runtime::Runtime, sync::mpsc};
+
+pub type Notification = (Transaction, Hash, Milliseconds, u32);
+pub type Notifier = mpsc::UnboundedReceiver<Arc<Notification>>;
+pub type Subscriber = mpsc::UnboundedSender<Arc<Notification>>;
 
 pub struct TxPool {
     logger: Logger,
     config: Arc<Config>,
     map: HashMap<Hash, Box<[u8]>>,
     rejects: HashSet<Hash>,
-    data_len: usize,
+    data_size: usize,
+    max_seen_len: usize,
     accounts: HashMap<PublicKey, Account>,
     htlcs: HashMap<HashTimeLockContractId, Option<HTLC>>,
     multisigs: HashMap<MultiSignatureLockContractId, Option<Multisig>>,
@@ -47,20 +56,24 @@ pub struct TxPool {
     undo_htlcs: HashMap<HashTimeLockContractId, (bool, Option<HTLC>)>,
     undo_multisigs: HashMap<MultiSignatureLockContractId, (bool, Option<Multisig>)>,
     coin_db: Arc<CoinDB>,
+    subscribers: Mutex<Vec<Subscriber>>,
 }
 
 impl TxPool {
     pub fn new(
         log_manager: &LogManager,
+        runtime: &Runtime,
         config: Arc<Config>,
+        block_db: &BlockDB,
         coin_db: Arc<CoinDB>,
-    ) -> core::result::Result<Self, LogError> {
-        Ok(Self {
+    ) -> core::result::Result<Arc<RwLock<Self>>, LogError> {
+        let tx_pool = Arc::new(RwLock::new(Self {
             logger: log_manager.logger("TxPool")?,
             config,
             map: HashMap::new(),
             rejects: HashSet::new(),
-            data_len: 0,
+            data_size: 0,
+            max_seen_len: 512,
             accounts: HashMap::new(),
             htlcs: HashMap::new(),
             multisigs: HashMap::new(),
@@ -69,7 +82,19 @@ impl TxPool {
             undo_htlcs: HashMap::new(),
             undo_multisigs: HashMap::new(),
             coin_db,
-        })
+            subscribers: Mutex::new(Vec::new()),
+        }));
+        runtime.spawn(TxPool::block_observer(
+            tx_pool.clone(),
+            block_db.subscribe(),
+        ));
+        Ok(tx_pool)
+    }
+
+    pub fn subscribe(&self) -> Notifier {
+        let (sender, receiver) = mpsc::unbounded_channel();
+        self.subscribers.lock().unwrap().push(sender);
+        receiver
     }
 
     pub fn is_empty(&self) -> bool {
@@ -80,8 +105,8 @@ impl TxPool {
         self.map.len()
     }
 
-    pub const fn data_len(&self) -> usize {
-        self.data_len
+    pub const fn data_size(&self) -> usize {
+        self.data_size
     }
 
     pub fn min_fee_rate(&self) -> Amount {
@@ -113,7 +138,7 @@ impl TxPool {
         if self.map.contains_key(&hash) {
             return Err(Error::already_have(hash.to_string()));
         }
-        if self.data_len + bytes.len() > self.config.tx_pool_size {
+        if self.data_size + bytes.len() > self.config.tx_pool_size {
             if remote {
                 return Err(Error::in_future("TxPool is full"));
             } else {
@@ -127,23 +152,35 @@ impl TxPool {
         result
     }
 
-    fn process_impl_with_fee(
-        &mut self,
-        hash: Hash,
-        bytes: &[u8],
-        _time: Milliseconds,
-    ) -> Result<Amount> {
+    fn process_impl(&mut self, hash: Hash, bytes: &[u8]) -> Result<()> {
         let tx = from_bytes::<Transaction>(bytes, false)?;
         let fee = tx.fee();
         self.check_fee(bytes.len() as u32, fee)?;
         let result = self.process_transaction_impl(&tx, hash);
         self.undo_impl(result)?;
         self.map.insert(hash, bytes.into());
-        self.data_len += bytes.len();
+        self.data_size += bytes.len();
         self.transactions.push(hash);
-        //TODO wallet
-        //TODO rpc
+        Ok(())
+    }
+
+    fn process_impl_with_fee(
+        &mut self,
+        hash: Hash,
+        bytes: &[u8],
+        time: Milliseconds,
+    ) -> Result<Amount> {
+        let tx = from_bytes::<Transaction>(bytes, false)?;
+        let fee = tx.fee();
+        let bytes_len = bytes.len() as u32;
+        self.check_fee(bytes_len, fee)?;
+        let result = self.process_transaction_impl(&tx, hash);
+        self.undo_impl(result)?;
+        self.map.insert(hash, bytes.into());
+        self.data_size += bytes.len();
+        self.transactions.push(hash);
         debug!(self.logger, "Accepted {hash}");
+        self.notify((tx, hash, time, bytes_len));
         Ok(fee)
     }
 
@@ -185,6 +222,49 @@ impl TxPool {
                 });
         }
         result
+    }
+
+    fn remove(&mut self, hashes: &[Hash]) {
+        if hashes.is_empty() || self.transactions.is_empty() {
+            return;
+        }
+
+        let (txs, map) = self.steal();
+        for hash in txs {
+            if !hashes.contains(&hash) {
+                let _ = self.process_impl(hash, map.get(&hash).unwrap());
+            }
+        }
+    }
+
+    fn steal(&mut self) -> (Vec<Hash>, HashMap<Hash, Box<[u8]>>) {
+        self.max_seen_len = max(self.max_seen_len, self.transactions.len());
+        let txs = replace(
+            &mut self.transactions,
+            Vec::with_capacity(self.max_seen_len),
+        );
+        let map = replace(&mut self.map, HashMap::with_capacity(self.max_seen_len));
+        self.data_size = 0;
+        self.accounts.clear();
+        self.htlcs.clear();
+        self.multisigs.clear();
+        (txs, map)
+    }
+
+    fn notify(&self, notification: Notification) {
+        let notification = Arc::new(notification);
+        let subscribers = self.subscribers.lock().unwrap();
+        for subscriber in subscribers.iter() {
+            let _ = subscriber.send(notification.clone());
+        }
+    }
+
+    async fn block_observer(tx_pool: Arc<RwLock<Self>>, mut block_notifier: BlockNotifier) {
+        while let Some(notification) = block_notifier.recv().await {
+            let mut tx_pool = tx_pool.write().unwrap();
+            tx_pool.rejects.clear();
+            tx_pool.remove(&notification.4);
+        }
     }
 }
 

@@ -53,7 +53,7 @@ async fn receiver(
     while let Some(Ok(message)) = stream.next().await {
         match message {
             Message::Text(utf8) => {
-                if on_text(&utf8, &subscriber, &rpc_server).is_break() {
+                if on_text(&utf8, &subscriber, &rpc_server).await.is_break() {
                     break;
                 }
             }
@@ -64,14 +64,18 @@ async fn receiver(
     }
 }
 
-fn on_text(utf8: &Utf8Bytes, subscriber: &Subscriber, rpc_server: &RPCServer) -> ControlFlow<()> {
+async fn on_text(
+    utf8: &Utf8Bytes,
+    subscriber: &Subscriber,
+    rpc_server: &RPCServer,
+) -> ControlFlow<()> {
     match from_str::<Value>(utf8) {
-        Ok(Value::Object(object)) => on_object(&object, subscriber, rpc_server),
+        Ok(Value::Object(object)) => on_object(&object, subscriber, rpc_server).await,
         _ => ControlFlow::Break(()),
     }
 }
 
-fn on_object(
+async fn on_object(
     request: &Map<String, Value>,
     subscriber: &Subscriber,
     rpc_server: &RPCServer,
@@ -80,13 +84,13 @@ fn on_object(
         return ControlFlow::Break(());
     };
     match command.as_str() {
-        "subscribe" => on_subscribe(request, subscriber, rpc_server),
-        "unsubscribe" => on_unsubscribe(request, subscriber, rpc_server),
+        "subscribe" => on_subscribe(request, subscriber, rpc_server).await,
+        "unsubscribe" => on_unsubscribe(request, subscriber, rpc_server).await,
         _ => ControlFlow::Break(()),
     }
 }
 
-fn on_subscribe(
+async fn on_subscribe(
     request: &Map<String, Value>,
     subscriber: &Subscriber,
     rpc_server: &RPCServer,
@@ -96,22 +100,22 @@ fn on_subscribe(
     };
     match route.as_str() {
         "block" => {
-            rpc_server.subscribe_block(subscriber);
+            rpc_server.subscribe_block(subscriber).await;
             ControlFlow::Continue(())
         }
         "txpool" => {
-            rpc_server.subscribe_txpool(subscriber);
+            rpc_server.subscribe_txpool(subscriber).await;
             ControlFlow::Continue(())
         }
         "wallet" => {
-            rpc_server.subscribe_wallet(subscriber);
+            rpc_server.subscribe_wallet(subscriber).await;
             ControlFlow::Continue(())
         }
         _ => ControlFlow::Break(()),
     }
 }
 
-fn on_unsubscribe(
+async fn on_unsubscribe(
     request: &Map<String, Value>,
     subscriber: &Subscriber,
     rpc_server: &RPCServer,
@@ -121,15 +125,15 @@ fn on_unsubscribe(
     };
     match route.as_str() {
         "block" => {
-            rpc_server.unsubscribe_block(subscriber);
+            rpc_server.unsubscribe_block(subscriber).await;
             ControlFlow::Continue(())
         }
         "txpool" => {
-            rpc_server.unsubscribe_txpool(subscriber);
+            rpc_server.unsubscribe_txpool(subscriber).await;
             ControlFlow::Continue(())
         }
         "wallet" => {
-            rpc_server.unsubscribe_wallet(subscriber);
+            rpc_server.unsubscribe_wallet(subscriber).await;
             ControlFlow::Continue(())
         }
         _ => ControlFlow::Break(()),

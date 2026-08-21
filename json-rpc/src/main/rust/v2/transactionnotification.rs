@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2025 Pavel Vasin
+ * Copyright (c) 2019-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -16,9 +16,7 @@
  */
 
 use crate::v2::{AmountInfo, HashInfo, PublicKeyInfo, Result, SignatureInfo, TxDataInfo};
-use blacknet_kernel::blake2b::Hash;
-use blacknet_kernel::transaction::Transaction;
-use blacknet_time::Seconds;
+use blacknet_network::txpool::Notification;
 use blacknet_wallet::address::AddressCodec;
 use serde::{Deserialize, Serialize};
 
@@ -37,24 +35,22 @@ pub struct TransactionNotification {
 }
 
 impl TransactionNotification {
-    pub fn new(
-        tx: &Transaction,
-        hash: Hash,
-        time: Seconds,
-        size: u32,
-        address_codec: &AddressCodec,
-    ) -> Result<Self> {
+    pub fn new(notification: &Notification, address_codec: &AddressCodec) -> Result<Self> {
         Ok(Self {
-            hash: hash.into(),
-            time: time.into(),
-            size,
-            signature: tx.signature().into(),
-            from: PublicKeyInfo::new(tx.from(), address_codec)?,
-            seq: tx.seq(),
-            referenceChain: tx.anchor().into(),
-            fee: tx.fee().into(),
-            r#type: tx.kind() as u8,
-            data: TxDataInfo::new(tx.kind(), tx.data_bytes(), address_codec)?,
+            hash: notification.1.into(),
+            time: notification.2.into(),
+            size: notification.3,
+            signature: notification.0.signature().into(),
+            from: PublicKeyInfo::new(notification.0.from(), address_codec)?,
+            seq: notification.0.seq(),
+            referenceChain: notification.0.anchor().into(),
+            fee: notification.0.fee().into(),
+            r#type: notification.0.kind() as u8,
+            data: TxDataInfo::new(
+                notification.0.kind(),
+                notification.0.data_bytes(),
+                address_codec,
+            )?,
         })
     }
 }

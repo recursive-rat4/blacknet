@@ -75,6 +75,8 @@ impl WalletDB {
             address_codec: AddressCodec::new(mode)?,
             wallets,
         })
+
+        //TODO txpool
     }
 
     fn mkdir(dirs: &XDGDirectories) -> Result<PathBuf, IoError> {

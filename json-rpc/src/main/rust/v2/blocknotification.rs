@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2025 Pavel Vasin
+ * Copyright (c) 2019-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -16,8 +16,7 @@
  */
 
 use crate::v2::{HashInfo, PublicKeyInfo, Result};
-use blacknet_kernel::blake2b::Hash;
-use blacknet_kernel::block::Block;
+use blacknet_network::db::BlockNotification as Notification;
 use blacknet_wallet::address::AddressCodec;
 use serde::{Deserialize, Serialize};
 
@@ -34,22 +33,16 @@ pub struct BlockNotification {
 }
 
 impl BlockNotification {
-    pub fn new(
-        block: &Block,
-        hash: Hash,
-        height: u32,
-        size: u32,
-        address_codec: &AddressCodec,
-    ) -> Result<Self> {
+    pub fn new(notification: &Notification, address_codec: &AddressCodec) -> Result<Self> {
         Ok(Self {
-            hash: hash.into(),
-            height,
-            size,
-            version: block.version(),
-            previous: block.previous().into(),
-            time: block.time().into(),
-            generator: PublicKeyInfo::new(block.generator(), address_codec)?,
-            transactions: block.raw_transactions().len() as u32,
+            hash: notification.1.into(),
+            height: notification.2,
+            size: notification.3,
+            version: notification.0.version(),
+            previous: notification.0.previous().into(),
+            time: notification.0.time().into(),
+            generator: PublicKeyInfo::new(notification.0.generator(), address_codec)?,
+            transactions: notification.0.raw_transactions().len() as u32,
         })
     }
 }
