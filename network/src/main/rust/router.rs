@@ -15,28 +15,43 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::endpoint::{Endpoint, ipv4_any, ipv6_any};
-use crate::i2psam::SAM;
-use crate::natpmp::natpmp_forward;
-use crate::node::Node;
-use crate::peertable::PeerTable;
-use crate::socks5::socks5;
-use crate::torcontroller::TorController;
-use blacknet_compat::config::Network as Config;
-use blacknet_compat::{Mode, XDGDirectories};
+use crate::{
+    endpoint::{Endpoint, ipv4_any, ipv6_any},
+    i2psam::SAM,
+    natpmp::natpmp_forward,
+    peertable::PeerTable,
+    socks5::socks5,
+    torcontroller::TorController,
+};
+use blacknet_compat::{
+    config::Network as Config,
+    {Mode, XDGDirectories},
+};
 use blacknet_log::{LogManager, Logger, info, warn};
-use core::cmp::min;
-use core::error::Error;
-use core::net::SocketAddr;
-use core::ops::ControlFlow;
-use std::collections::HashSet;
-use std::sync::{Arc, OnceLock, RwLock, Weak};
-use tokio::io::{BufReader, BufWriter};
-use tokio::net::tcp::{OwnedReadHalf, OwnedWriteHalf};
-use tokio::net::{TcpListener, TcpStream};
-use tokio::runtime::{Handle, Runtime};
-use tokio::sync::Mutex;
-use tokio::time::{Duration, sleep};
+use core::{cmp::min, error::Error, net::SocketAddr, ops::ControlFlow};
+use std::{
+    collections::HashSet,
+    sync::{Arc, RwLock},
+};
+use tokio::{
+    io::{BufReader, BufWriter},
+    net::{
+        TcpListener, TcpStream,
+        tcp::{OwnedReadHalf, OwnedWriteHalf},
+    },
+    runtime::{Handle, Runtime},
+    sync::{Mutex, mpsc},
+    time::{Duration, sleep},
+};
+
+pub type Notification = (
+    BufReader<OwnedReadHalf>,
+    BufWriter<OwnedWriteHalf>,
+    Endpoint,
+    Endpoint,
+);
+pub type Notifier = mpsc::Receiver<Notification>;
+pub type Subscriber = mpsc::Sender<Notification>;
 
 pub struct Router {
     logger: Logger,
@@ -48,7 +63,7 @@ pub struct Router {
     tor_proxy: Option<Endpoint>,
     i2p_sam: SAM,
     tor_controller: Mutex<TorController>,
-    node: OnceLock<Weak<Node>>,
+    subscriber: Subscriber,
 }
 
 impl Router {
@@ -59,7 +74,9 @@ impl Router {
         runtime: &Runtime,
         config: &Arc<Config>,
         peer_table: Arc<PeerTable>,
-    ) -> Result<Arc<Self>, Box<dyn Error>> {
+    ) -> Result<(Arc<Self>, Notifier), Box<dyn Error>> {
+        let (subscriber, notifier) = mpsc::channel(config.incoming_connections as usize);
+
         let router = Arc::new(Self {
             logger: log_manager.logger("Router")?,
             runtime: runtime.handle().clone(),
@@ -73,7 +90,7 @@ impl Router {
             tor_proxy: Endpoint::parse(&config.tor_proxy.host, config.tor_proxy.port),
             i2p_sam: SAM::new(mode, dirs, log_manager, config.clone())?,
             tor_controller: Mutex::new(TorController::new(dirs, log_manager, config.clone())?),
-            node: OnceLock::new(),
+            subscriber,
         });
 
         if config.ipv6 || config.ipv4 {
@@ -89,11 +106,7 @@ impl Router {
             runtime.spawn(router.clone().listen_i2p());
         }
 
-        Ok(router)
-    }
-
-    pub fn set_node(&self, node: Weak<Node>) {
-        self.node.set(node).expect("Node constructor")
+        Ok((router, notifier))
     }
 
     pub async fn connect(
@@ -212,7 +225,7 @@ impl Router {
                     loop {
                         match listener.accept().await {
                             Ok((socket, addr)) => {
-                                if self.accept_ip(socket, addr).is_break() {
+                                if self.accept_ip(socket, addr).await.is_break() {
                                     break;
                                 }
                             }
@@ -234,7 +247,7 @@ impl Router {
         }
     }
 
-    fn accept_ip(&self, tcp_stream: TcpStream, addr: SocketAddr) -> ControlFlow<()> {
+    async fn accept_ip(&self, tcp_stream: TcpStream, addr: SocketAddr) -> ControlFlow<()> {
         let remote_endpoint: Endpoint = addr.into();
         let local_endpoint: Endpoint = match tcp_stream.local_addr() {
             Ok(addr) => addr.into(),
@@ -248,27 +261,31 @@ impl Router {
         }
         let (tcp_read, tcp_write) = tcp_stream.into_split();
         let (buf_reader, buf_writer) = (BufReader::new(tcp_read), BufWriter::new(tcp_write));
-        match self.node.get().expect("Router initialized").upgrade() {
-            Some(node) => {
-                node.accept_connection(buf_reader, buf_writer, remote_endpoint, local_endpoint)
-            }
-            None => return ControlFlow::Break(()),
+        if self
+            .subscriber
+            .send((buf_reader, buf_writer, remote_endpoint, local_endpoint))
+            .await
+            .is_ok()
+        {
+            ControlFlow::Continue(())
+        } else {
+            ControlFlow::Break(())
         }
-        ControlFlow::Continue(())
     }
 
     async fn accept_i2p(self: Arc<Self>, local_endpoint: Endpoint) {
         loop {
             match self.i2p_sam.accept().await {
                 Ok((buf_reader, buf_writer, remote_endpoint)) => {
-                    match self.node.get().expect("Router initialized").upgrade() {
-                        Some(node) => node.accept_connection(
-                            buf_reader,
-                            buf_writer,
-                            remote_endpoint,
-                            local_endpoint,
-                        ),
-                        None => break,
+                    if self
+                        .subscriber
+                        .send((buf_reader, buf_writer, remote_endpoint, local_endpoint))
+                        .await
+                        .is_ok()
+                    {
+                        continue;
+                    } else {
+                        break;
                     }
                 }
                 Err(err) => {

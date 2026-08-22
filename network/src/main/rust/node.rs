@@ -15,43 +15,55 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::blockfetcher::BlockFetcher;
-use crate::connection::{Connection, ConnectionId, State};
-use crate::db::{BlockDB, CoinDB, DBVersion, Fjall};
-use crate::endpoint::Endpoint;
-use crate::packet::{BlockAnnounce, Packet, PacketKind, UnfilteredInvList};
-use crate::peertable::PeerTable;
-use crate::router::Router;
-use crate::staker::Staker;
-use crate::txfetcher::TxFetcher;
-use crate::txpool::TxPool;
-use blacknet_compat::config::Network as Config;
-use blacknet_compat::{Mode, XDGDirectories, getuid, uname};
-use blacknet_crypto::bigint::UInt256;
-use blacknet_crypto::random::{Distribution, FAST_RNG, UniformIntDistribution};
-use blacknet_io::Write;
-use blacknet_io::file::replace;
-use blacknet_kernel::blake2b::Hash;
-use blacknet_kernel::error::Error;
-use blacknet_kernel::proofofstake::{
-    BLOCK_RESERVED_SIZE, DEFAULT_MAX_BLOCK_SIZE, guess_initial_synchronization, time_slot,
+use crate::{
+    blockfetcher::BlockFetcher,
+    connection::{Connection, ConnectionId, State},
+    db::{BlockDB, CoinDB, DBVersion, Fjall},
+    endpoint::Endpoint,
+    packet::{BlockAnnounce, Packet, PacketKind, UnfilteredInvList},
+    peertable::PeerTable,
+    router::{Notifier, Router},
+    staker::Staker,
+    txfetcher::TxFetcher,
+    txpool::TxPool,
+};
+use blacknet_compat::{
+    config::Network as Config,
+    {Mode, XDGDirectories, getuid, uname},
+};
+use blacknet_crypto::{
+    bigint::UInt256,
+    random::{Distribution, FAST_RNG, UniformIntDistribution},
+};
+use blacknet_io::{Write, file::replace};
+use blacknet_kernel::{
+    blake2b::Hash,
+    error::Error,
+    proofofstake::{
+        BLOCK_RESERVED_SIZE, DEFAULT_MAX_BLOCK_SIZE, guess_initial_synchronization, time_slot,
+    },
 };
 use blacknet_log::{LogManager, Logger, error, info, warn};
 use blacknet_serialization::format::to_write;
 use blacknet_time::{Milliseconds, Seconds, SystemClock};
 use blacknet_wallet::walletdb::WalletDB;
-use core::error::Error as StdError;
-use core::ops::Deref;
+use core::{error::Error as StdError, ops::Deref};
 use serde::{Deserialize, Serialize};
-use std::collections::HashSet;
-use std::path::PathBuf;
-use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::{Arc, RwLock};
-use tokio::io::{BufReader, BufWriter};
-use tokio::net::tcp::{OwnedReadHalf, OwnedWriteHalf};
-use tokio::runtime::{Handle, Runtime};
-use tokio::sync::mpsc::UnboundedReceiver;
-use tokio::time::{Duration, sleep};
+use std::{
+    collections::HashSet,
+    path::PathBuf,
+    sync::{
+        Arc, RwLock,
+        atomic::{AtomicU64, Ordering},
+    },
+};
+use tokio::{
+    io::{BufReader, BufWriter},
+    net::tcp::{OwnedReadHalf, OwnedWriteHalf},
+    runtime::{Handle, Runtime},
+    sync::mpsc::UnboundedReceiver,
+    time::{Duration, sleep},
+};
 
 pub const NETWORK_TIMEOUT: Milliseconds = Milliseconds::with_seconds(90);
 pub const PROTOCOL_VERSION: u32 = 15;
@@ -115,7 +127,7 @@ impl Node {
         block_db.import(&coin_db);
 
         let peer_table = PeerTable::new(&mode, dirs, log_manager, config.clone())?;
-        let router = Router::new(
+        let (router, notifier) = Router::new(
             &mode,
             dirs,
             log_manager,
@@ -155,11 +167,10 @@ impl Node {
             mode,
         });
 
-        node.router.set_node(Arc::downgrade(&node));
-
         for _ in 0..config.outgoing_connections {
             runtime.spawn(node.clone().connector());
         }
+        runtime.spawn(node.clone().acceptor(notifier));
         runtime.spawn(node.clone().rotator());
 
         Ok(node)
@@ -439,8 +450,8 @@ impl Node {
         n
     }
 
-    pub fn accept_connection(
-        self: Arc<Self>,
+    fn accept_connection(
+        self: &Arc<Self>,
         buf_reader: BufReader<OwnedReadHalf>,
         buf_writer: BufWriter<OwnedWriteHalf>,
         remote_endpoint: Endpoint,
@@ -458,7 +469,7 @@ impl Node {
         self.add_incoming_connection(connection, buf_reader, buf_writer, recv_channel)
     }
 
-    pub fn add_incoming_connection(
+    fn add_incoming_connection(
         &self,
         connection: Arc<Connection>,
         buf_reader: BufReader<OwnedReadHalf>,
@@ -531,6 +542,17 @@ impl Node {
         info!(self.logger, "Evicting {}", connection.log_name());
         connection.close();
         true
+    }
+
+    async fn acceptor(self: Arc<Self>, mut notifier: Notifier) {
+        while let Some(notification) = notifier.recv().await {
+            self.accept_connection(
+                notification.0,
+                notification.1,
+                notification.2,
+                notification.3,
+            )
+        }
     }
 
     async fn connector(self: Arc<Self>) {
