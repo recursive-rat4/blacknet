@@ -31,3 +31,4 @@ pub mod staker;
 pub mod torcontroller;
 pub mod txfetcher;
 pub mod txpool;
+pub mod wallet;

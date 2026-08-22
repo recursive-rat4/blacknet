@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2025 Pavel Vasin
+ * Copyright (c) 2018-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -17,8 +17,8 @@
 
 use crate::v2::error::Result;
 use blacknet_kernel::transaction::RefundHTLC;
+use blacknet_network::wallet::{AddressCodec, AddressKind};
 use blacknet_serialization::format::from_bytes;
-use blacknet_wallet::address::{AddressCodec, AddressKind};
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]

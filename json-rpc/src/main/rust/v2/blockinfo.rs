@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2025 Pavel Vasin
+ * Copyright (c) 2019-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -16,11 +16,9 @@
  */
 
 use crate::v2::{HashInfo, PublicKeyInfo, Result, SignatureInfo, TransactionInfo};
-use blacknet_kernel::blake2b::Hash;
-use blacknet_kernel::block::Block;
-use blacknet_kernel::transaction::Transaction;
+use blacknet_kernel::{blake2b::Hash, block::Block, transaction::Transaction};
+use blacknet_network::wallet::AddressCodec;
 use blacknet_serialization::format::from_bytes;
-use blacknet_wallet::address::AddressCodec;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, to_value};
 

@@ -273,7 +273,6 @@ dependencies = [
  "blacknet-network",
  "blacknet-serialization",
  "blacknet-time",
- "blacknet-wallet",
  "data-encoding",
  "futures-util",
  "serde",
@@ -316,6 +315,7 @@ version = "0.3.0"
 dependencies = [
  "arc-swap",
  "atomic",
+ "bech32",
  "blacknet-compat",
  "blacknet-crypto",
  "blacknet-io",
@@ -323,13 +323,13 @@ dependencies = [
  "blacknet-log",
  "blacknet-serialization",
  "blacknet-time",
- "blacknet-wallet",
  "bytemuck",
  "data-encoding",
  "data-encoding-macro",
  "fjall",
  "hashlink",
  "natpmp",
+ "rusqlite",
  "serde",
  "serde_json",
  "serde_repr",
@@ -362,20 +362,6 @@ name = "blacknet-vm"
 version = "0.3.0"
 dependencies = [
  "blacknet-crypto",
-]
-
-[[package]]
-name = "blacknet-wallet"
-version = "0.3.0"
-dependencies = [
- "bech32",
- "blacknet-compat",
- "blacknet-kernel",
- "blacknet-log",
- "blacknet-time",
- "data-encoding",
- "rusqlite",
- "spdlog-rs",
 ]
 
 [[package]]

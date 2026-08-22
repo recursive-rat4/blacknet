@@ -15,11 +15,10 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::v2::error::Result;
-use crate::v2::{AmountInfo, PublicKeyInfo};
+use crate::v2::{AmountInfo, PublicKeyInfo, error::Result};
 use blacknet_kernel::transaction::{PayloadKind, PaymentId, Transfer};
+use blacknet_network::wallet::AddressCodec;
 use blacknet_serialization::format::from_bytes;
-use blacknet_wallet::address::AddressCodec;
 use data_encoding::HEXUPPER;
 use serde::{Deserialize, Serialize};
 

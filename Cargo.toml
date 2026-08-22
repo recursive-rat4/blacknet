@@ -30,7 +30,6 @@ members = [
     "serialization",
     "time",
     "vm",
-    "wallet",
 ]
 
 [workspace.dependencies]
@@ -44,7 +43,6 @@ blacknet-network = { path = "network" }
 blacknet-serialization = { path = "serialization" }
 blacknet-time = { path = "time" }
 blacknet-vm = { path = "vm" }
-blacknet-wallet = { path = "wallet" }
 arc-swap = { version = "1.9.1" }
 atomic = { version = "0.6.1", default-features = false }
 axum = { version = "0.8.9", default-features = false, features = ["form", "http1", "json", "tokio", "ws"] }

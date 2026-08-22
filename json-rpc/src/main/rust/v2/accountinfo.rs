@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2025 Pavel Vasin
+ * Copyright (c) 2018-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -17,7 +17,7 @@
 
 use crate::v2::{AmountInfo, PublicKeyInfo, Result};
 use blacknet_kernel::account::{Account, Lease};
-use blacknet_wallet::address::AddressCodec;
+use blacknet_network::wallet::AddressCodec;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2025 Pavel Vasin
+ * Copyright (c) 2020-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -17,7 +17,7 @@
 
 use blacknet_compat::Mode;
 use blacknet_kernel::ed25519::PublicKey;
-use blacknet_wallet::address::{AddressCodec, AddressKind};
+use blacknet_network::wallet::{AddressCodec, AddressKind};
 use data_encoding::HEXUPPER;
 
 #[test]

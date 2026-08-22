@@ -23,15 +23,16 @@ use axum::{
     routing::get,
     routing::post,
 };
-use blacknet_kernel::amount::Amount;
-use blacknet_kernel::blake2b::Hash;
-use blacknet_kernel::ed25519::{to_public_key, to_secret_key};
-use blacknet_kernel::hashlock::{HashKind, HashLock};
-use blacknet_kernel::timelock::{TimeKind, TimeLock};
-use blacknet_kernel::transaction::*;
-use blacknet_network::node::Node;
+use blacknet_kernel::{
+    amount::Amount,
+    blake2b::Hash,
+    ed25519::{to_public_key, to_secret_key},
+    hashlock::{HashKind, HashLock},
+    timelock::{TimeKind, TimeLock},
+    transaction::*,
+};
+use blacknet_network::{node::Node, wallet::AddressKind};
 use blacknet_serialization::format::to_bytes;
-use blacknet_wallet::address::AddressKind;
 use data_encoding::HEXUPPER_PERMISSIVE as HEX;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;

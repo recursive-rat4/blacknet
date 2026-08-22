@@ -15,13 +15,14 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::v2::error::Result;
-use crate::v2::{AmountInfo, ByteArrayInfo, PublicKeyInfo};
-use blacknet_kernel::hashlock::{HashKind, HashLock};
-use blacknet_kernel::timelock::{TimeKind, TimeLock};
-use blacknet_kernel::transaction::CreateHTLC;
+use crate::v2::{AmountInfo, ByteArrayInfo, PublicKeyInfo, error::Result};
+use blacknet_kernel::{
+    hashlock::{HashKind, HashLock},
+    timelock::{TimeKind, TimeLock},
+    transaction::CreateHTLC,
+};
+use blacknet_network::wallet::AddressCodec;
 use blacknet_serialization::format::from_bytes;
-use blacknet_wallet::address::AddressCodec;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]

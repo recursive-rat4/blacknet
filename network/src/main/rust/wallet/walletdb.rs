@@ -15,11 +15,9 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::address::AddressCodec;
-use crate::wallet::Wallet;
+use crate::wallet::{AddressCodec, Wallet};
 use blacknet_compat::{Mode, XDGDirectories};
-use blacknet_kernel::blake2b::Hash;
-use blacknet_kernel::ed25519::PublicKey;
+use blacknet_kernel::{blake2b::Hash, ed25519::PublicKey};
 use blacknet_log::{LogManager, Logger, error, info};
 use core::error::Error as StdError;
 use core::fmt;
@@ -27,9 +25,10 @@ use rusqlite::Error as SqliteError;
 use std::collections::HashMap;
 use std::fs::{DirBuilder, read_dir};
 use std::io::Error as IoError;
+use std::path::PathBuf;
+
 #[cfg(target_family = "unix")]
 use std::os::unix::fs::DirBuilderExt;
-use std::path::PathBuf;
 
 pub struct WalletDB {
     logger: Logger,

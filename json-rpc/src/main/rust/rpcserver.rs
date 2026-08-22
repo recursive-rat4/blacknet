@@ -19,8 +19,9 @@ use crate::v2;
 use axum::{Router, extract::ws::Message, routing::get};
 use blacknet_compat::config::RPC as Config;
 use blacknet_log::{LogManager, error, info};
-use blacknet_network::{db::BlockNotifier, node::Node, txpool::Notifier as TxPoolNotifier};
-use blacknet_wallet::address::AddressCodec;
+use blacknet_network::{
+    db::BlockNotifier, node::Node, txpool::Notifier as TxPoolNotifier, wallet::AddressCodec,
+};
 use core::num::NonZero;
 use serde_json::to_string;
 use std::sync::{

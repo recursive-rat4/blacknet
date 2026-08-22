@@ -16,8 +16,7 @@
  */
 
 use crate::v2::{AmountInfo, HashInfo, PublicKeyInfo, Result, SignatureInfo, TxDataInfo};
-use blacknet_network::txpool::Notification;
-use blacknet_wallet::address::AddressCodec;
+use blacknet_network::{txpool::Notification, wallet::AddressCodec};
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]

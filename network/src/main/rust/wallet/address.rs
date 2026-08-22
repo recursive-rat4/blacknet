@@ -15,9 +15,11 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use bech32::primitives::decode::{CheckedHrpstring, CheckedHrpstringError};
-use bech32::primitives::hrp::Error as HrpError;
-use bech32::{Bech32, DecodeError, EncodeError, Hrp, decode, encode};
+use bech32::{
+    primitives::decode::{CheckedHrpstring, CheckedHrpstringError},
+    primitives::hrp::Error as HrpError,
+    {Bech32, DecodeError, EncodeError, Hrp, decode, encode},
+};
 use blacknet_compat::Mode;
 use blacknet_kernel::ed25519::PublicKey;
 use core::fmt;

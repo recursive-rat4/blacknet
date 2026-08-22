@@ -26,6 +26,7 @@ use crate::{
     staker::Staker,
     txfetcher::TxFetcher,
     txpool::TxPool,
+    wallet::WalletDB,
 };
 use blacknet_compat::{
     config::Network as Config,
@@ -46,7 +47,6 @@ use blacknet_kernel::{
 use blacknet_log::{LogManager, Logger, error, info, warn};
 use blacknet_serialization::format::to_write;
 use blacknet_time::{Milliseconds, Seconds, SystemClock};
-use blacknet_wallet::walletdb::WalletDB;
 use core::{error::Error as StdError, ops::Deref};
 use serde::{Deserialize, Serialize};
 use std::{

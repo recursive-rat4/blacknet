@@ -37,10 +37,10 @@ blacknet-io.workspace = true
 blacknet-kernel.workspace = true
 blacknet-log = { workspace = true, features = ["log"] }
 blacknet-serialization.workspace = true
-blacknet-time.workspace = true
-blacknet-wallet.workspace = true
+blacknet-time = { workspace = true, features = ["std"] }
 arc-swap.workspace = true
 atomic.workspace = true
+bech32.workspace = true
 bytemuck.workspace = true
 data-encoding = { workspace = true, features = ["std"] }
 data-encoding-macro.workspace = true
@@ -56,12 +56,22 @@ spdlog-rs.workspace = true
 tokio.workspace = true
 tokio-util.workspace = true
 
+[target.'cfg(not(windows))'.dependencies]
+rusqlite.workspace = true
+
+[target.'cfg(windows)'.dependencies]
+rusqlite = { workspace = true, features = ["bundled"] }
+
 [lints]
 workspace = true
 
 [lib]
 doctest = false
 path = "src/main/rust/lib.rs"
+
+[[test]]
+name = "address"
+path = "src/test/rust/address.rs"
 
 [[test]]
 name = "blockannounce"
@@ -82,3 +92,7 @@ path = "src/test/rust/i2psam.rs"
 [[test]]
 name = "rollinghashset"
 path = "src/test/rust/rollinghashset.rs"
+
+[[test]]
+name = "wallet"
+path = "src/test/rust/wallet.rs"

@@ -16,8 +16,7 @@
  */
 
 use crate::v2::{HashInfo, PublicKeyInfo, Result};
-use blacknet_network::db::BlockNotification as Notification;
-use blacknet_wallet::address::AddressCodec;
+use blacknet_network::{db::BlockNotification as Notification, wallet::AddressCodec};
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]

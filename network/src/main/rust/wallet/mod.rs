@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -16,5 +16,9 @@
  */
 
 pub mod address;
-pub mod wallet;
+mod wallet;
 pub mod walletdb;
+
+pub use address::{AddressCodec, AddressKind};
+pub use wallet::Wallet;
+pub use walletdb::WalletDB;
