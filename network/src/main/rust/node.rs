@@ -156,7 +156,7 @@ impl Node {
             coin_db: coin_db.clone(),
             block_fetcher: BlockFetcher::new(log_manager, runtime, config, block_db, coin_db)?,
             tx_pool: tx_pool.clone(),
-            tx_fetcher: TxFetcher::new(runtime, Arc::downgrade(&tx_pool)),
+            tx_fetcher: TxFetcher::new(runtime, tx_pool),
             wallet_db: WalletDB::new(&mode, dirs, log_manager)?,
             staker: Staker::new(log_manager)?,
             agent_string: format!("/{agent_name}:{agent_version}/"),

@@ -15,29 +15,35 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::connection::{Connection, ConnectionId};
-use crate::node::NETWORK_TIMEOUT;
-use crate::packet::{GetTransactions, Inventory, MAX_INVENTORY, MAX_TRANSACTIONS};
-use crate::txpool::TxPool;
+use crate::{
+    connection::{Connection, ConnectionId},
+    node::NETWORK_TIMEOUT,
+    packet::{GetTransactions, Inventory, MAX_INVENTORY, MAX_TRANSACTIONS},
+    txpool::TxPool,
+};
 use blacknet_kernel::blake2b::Hash;
 use blacknet_time::{Milliseconds, SystemClock};
 use core::cmp::min;
-use std::collections::HashMap;
-use std::sync::{Arc, Mutex, RwLock, Weak};
-use tokio::runtime::Runtime;
-use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender, unbounded_channel};
-use tokio::time::sleep;
+use std::{
+    collections::HashMap,
+    sync::{Arc, Mutex, RwLock, Weak},
+};
+use tokio::{
+    runtime::Runtime,
+    sync::mpsc::{UnboundedReceiver, UnboundedSender, unbounded_channel},
+    time::sleep,
+};
 
 const MAX_REQUESTS: usize = 16 * MAX_INVENTORY;
 
 pub struct TxFetcher {
     inventory_send: UnboundedSender<(Weak<Connection>, Inventory)>,
     requests: Mutex<HashMap<Hash, (ConnectionId, Milliseconds)>>,
-    tx_pool: Weak<RwLock<TxPool>>,
+    tx_pool: Arc<RwLock<TxPool>>,
 }
 
 impl TxFetcher {
-    pub fn new(runtime: &Runtime, tx_pool: Weak<RwLock<TxPool>>) -> Arc<Self> {
+    pub fn new(runtime: &Runtime, tx_pool: Arc<RwLock<TxPool>>) -> Arc<Self> {
         let (inventory_send, inventory_recv) = unbounded_channel();
         let tx_fetcher = Arc::new(Self {
             inventory_send,
@@ -69,11 +75,8 @@ impl TxFetcher {
         self: Arc<Self>,
         mut inventory_recv: UnboundedReceiver<(Weak<Connection>, Inventory)>,
     ) {
-        loop {
-            let (connection, inventory) = inventory_recv.recv().await.unwrap();
-            let connection = if let Some(connection) = connection.upgrade() {
-                connection
-            } else {
+        while let Some((connection, inventory)) = inventory_recv.recv().await {
+            let Some(connection) = connection.upgrade() else {
                 continue;
             };
 
@@ -84,8 +87,7 @@ impl TxFetcher {
 
             let capacity = min(inventory.len(), MAX_TRANSACTIONS);
             let mut request = GetTransactions::with_capacity(capacity);
-            let tx_pool_strong = self.tx_pool.upgrade().unwrap();
-            let tx_pool = tx_pool_strong.read().unwrap();
+            let tx_pool = self.tx_pool.read().unwrap();
             let now = SystemClock::millis();
 
             for hash in inventory {
