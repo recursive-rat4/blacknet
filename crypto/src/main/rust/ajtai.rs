@@ -19,7 +19,7 @@ use crate::algebra::{IntegerModRing, PolynomialRing, UnitalRing};
 use crate::branchless::BlSelect;
 use crate::commitmentscheme::{BindingCommitmentScheme, CommitmentScheme};
 use crate::matrix::{DenseMatrix, DenseVector};
-use crate::norm::{EuclideanNorm, InfinityNorm, L2, LInf, NormBound};
+use crate::norm::Norm;
 use crate::random::{
     BinaryUniformDistribution, Distribution, UniformBitGenerator, UniformModDistribution,
 };
@@ -28,20 +28,20 @@ use core::iter::repeat_with;
 use core::ops::Mul;
 
 /// Ajtai hash.
-pub struct AjtaiHash<R: UnitalRing, Lp, Length> {
+pub struct AjtaiHash<Lp, R: UnitalRing + Norm<Lp>> {
     a: DenseMatrix<R>,
-    norm_bound: NormBound<Lp, Length>,
+    bound: <R as Norm<Lp>>::Length,
 }
 
-impl<R: UnitalRing, Lp, Length> AjtaiHash<R, Lp, Length> {
+impl<Lp, R: UnitalRing + Norm<Lp>> AjtaiHash<Lp, R> {
     /// Construct with given setup and norm bound.
-    pub const fn new(a: DenseMatrix<R>, norm_bound: NormBound<Lp, Length>) -> Self {
-        Self { a, norm_bound }
+    pub const fn new(a: DenseMatrix<R>, bound: <R as Norm<Lp>>::Length) -> Self {
+        Self { a, bound }
     }
 
     /// Set another norm bound.
-    pub fn set_norm_bound(&mut self, norm_bound: NormBound<Lp, Length>) {
-        self.norm_bound = norm_bound;
+    pub fn set_norm_bound(&mut self, bound: <R as Norm<Lp>>::Length) {
+        self.bound = bound;
     }
 
     /// Short Integer Solution
@@ -79,8 +79,8 @@ impl<R: UnitalRing, Lp, Length> AjtaiHash<R, Lp, Length> {
     }
 }
 
-impl<R: UnitalRing + Eq, Message: EuclideanNorm> BindingCommitmentScheme<Message>
-    for AjtaiHash<R, L2, f64>
+impl<Lp, R: UnitalRing + Norm<Lp> + Eq, Message: Norm<Lp, Length = R::Length>>
+    BindingCommitmentScheme<Message> for AjtaiHash<Lp, R>
 where
     for<'a, 'b> &'a DenseMatrix<R>: Mul<&'b Message, Output = DenseVector<R>>,
 {
@@ -92,47 +92,30 @@ where
     }
 
     fn open(&self, c: &DenseVector<R>, m: &Message, _o: &()) -> bool {
-        self.norm_bound.check(m) && &self.a * m == *c
-    }
-}
-
-impl<R: UnitalRing + Eq, Length: Ord, Message: InfinityNorm<Length>>
-    BindingCommitmentScheme<Message> for AjtaiHash<R, LInf, Length>
-where
-    for<'a, 'b> &'a DenseMatrix<R>: Mul<&'b Message, Output = DenseVector<R>>,
-{
-    type Commitment = DenseVector<R>;
-    type Opening = ();
-
-    fn commit(&self, m: &Message) -> (DenseVector<R>, ()) {
-        (&self.a * m, ())
-    }
-
-    fn open(&self, c: &DenseVector<R>, m: &Message, _o: &()) -> bool {
-        self.norm_bound.check(m) && &self.a * m == *c
+        m.check_norm(&self.bound) && &self.a * m == *c
     }
 }
 
 /// Ajtai commitment scheme.
-pub struct AjtaiCommitment<R: UnitalRing, Lp, Length> {
+pub struct AjtaiCommitment<Lp, R: UnitalRing + Norm<Lp>> {
     a: DenseMatrix<R>,
     b: DenseMatrix<R>,
-    norm_bound: NormBound<Lp, Length>,
+    bound: <R as Norm<Lp>>::Length,
 }
 
-impl<R: UnitalRing, Lp, Length> AjtaiCommitment<R, Lp, Length> {
+impl<Lp, R: UnitalRing + Norm<Lp>> AjtaiCommitment<Lp, R> {
     /// Construct with given setup and norm bound.
-    pub fn new(setup: (DenseMatrix<R>, DenseMatrix<R>), norm_bound: NormBound<Lp, Length>) -> Self {
+    pub fn new(setup: (DenseMatrix<R>, DenseMatrix<R>), bound: <R as Norm<Lp>>::Length) -> Self {
         Self {
             a: setup.0,
             b: setup.1,
-            norm_bound,
+            bound,
         }
     }
 
     /// Set another norm bound.
-    pub fn set_norm_bound(&mut self, norm_bound: NormBound<Lp, Length>) {
-        self.norm_bound = norm_bound;
+    pub fn set_norm_bound(&mut self, bound: <R as Norm<Lp>>::Length) {
+        self.bound = bound;
     }
 
     /// Short Integer Solution
@@ -194,12 +177,15 @@ impl<R: UnitalRing, Lp, Length> AjtaiCommitment<R, Lp, Length> {
     }
 }
 
-impl<R: UnitalRing + Eq + BlSelect<Output = R>, Message: EuclideanNorm> CommitmentScheme<Message>
-    for AjtaiCommitment<R, L2, f64>
+impl<
+    Lp,
+    R: UnitalRing + Norm<Lp> + Eq + BlSelect<Output = R>,
+    Message: Norm<Lp, Length = R::Length>,
+> CommitmentScheme<Message> for AjtaiCommitment<Lp, R>
 where
     for<'a, 'b> &'a DenseMatrix<R>: Mul<&'b Message, Output = DenseVector<R>>,
     for<'a, 'b> &'a DenseMatrix<R>: Mul<&'b DenseVector<R>, Output = DenseVector<R>>,
-    DenseVector<R>: EuclideanNorm,
+    DenseVector<R>: Norm<Lp, Length = R::Length>,
 {
     type Commitment = DenseVector<R>;
     type Opening = DenseVector<R>;
@@ -217,33 +203,6 @@ where
     }
 
     fn open(&self, c: &DenseVector<R>, m: &Message, o: &DenseVector<R>) -> bool {
-        self.norm_bound.check(m) && self.norm_bound.check(o) && &self.a * m + &self.b * o == *c
-    }
-}
-
-impl<R: UnitalRing + Eq + BlSelect<Output = R>, Length: Ord, Message: InfinityNorm<Length>>
-    CommitmentScheme<Message> for AjtaiCommitment<R, LInf, Length>
-where
-    for<'a, 'b> &'a DenseMatrix<R>: Mul<&'b Message, Output = DenseVector<R>>,
-    for<'a, 'b> &'a DenseMatrix<R>: Mul<&'b DenseVector<R>, Output = DenseVector<R>>,
-    DenseVector<R>: InfinityNorm<Length>,
-{
-    type Commitment = DenseVector<R>;
-    type Opening = DenseVector<R>;
-
-    fn commit<RNG: UniformBitGenerator>(
-        &self,
-        m: &Message,
-        rng: &mut RNG,
-    ) -> (DenseVector<R>, DenseVector<R>) {
-        let mut bud = BinaryUniformDistribution::new();
-        let r: DenseVector<R> = repeat_with(|| bud.sample(rng))
-            .take(self.b.columns() as usize)
-            .collect();
-        (&self.a * m + &self.b * &r, r)
-    }
-
-    fn open(&self, c: &DenseVector<R>, m: &Message, o: &DenseVector<R>) -> bool {
-        self.norm_bound.check(m) && self.norm_bound.check(o) && &self.a * m + &self.b * o == *c
+        m.check_norm(&self.bound) && o.check_norm(&self.bound) && &self.a * m + &self.b * o == *c
     }
 }

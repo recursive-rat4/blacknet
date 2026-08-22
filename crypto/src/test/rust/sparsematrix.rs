@@ -16,7 +16,7 @@
  */
 
 use blacknet_crypto::matrix::{DenseMatrix, DenseVector, SparseMatrix};
-use blacknet_crypto::norm::InfinityNorm;
+use blacknet_crypto::norm::{LInf, Norm};
 
 type R = blacknet_crypto::uring::U32Ring;
 
@@ -92,7 +92,7 @@ fn infinity_norm() {
     };
     let n = 4;
     let b = 5;
-    assert!(!a.check_infinity_norm(&n));
-    assert!(a.check_infinity_norm(&b));
-    assert_eq!(a.infinity_norm(), n);
+    assert!(!Norm::<LInf>::check_norm(&a, &n));
+    assert!(Norm::<LInf>::check_norm(&a, &b));
+    assert_eq!(Norm::<LInf>::norm(&a), n);
 }

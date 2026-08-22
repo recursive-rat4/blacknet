@@ -18,7 +18,7 @@
 use blacknet_crypto::algebra::{
     BalancedRepresentative, Conjugate, IntegerModRing, Inv, One, PolynomialRing, Sqrt, Square, Zero,
 };
-use blacknet_crypto::norm::InfinityNorm;
+use blacknet_crypto::norm::{LInf, Norm};
 
 type Z = blacknet_crypto::pervushin::PervushinField;
 type F = blacknet_crypto::pervushin::PervushinField2;
@@ -142,10 +142,10 @@ fn z_infinity_norm() {
     let ag = 677133638855483917;
     let bb = 1140329745848183219;
     let bg = 1140329745848183220;
-    assert!(!a.check_infinity_norm(&ab));
-    assert!(a.check_infinity_norm(&ag));
-    assert!(!b.check_infinity_norm(&bb));
-    assert!(b.check_infinity_norm(&bg));
+    assert!(!Norm::<LInf>::check_norm(&a, &ab));
+    assert!(Norm::<LInf>::check_norm(&a, &ag));
+    assert!(!Norm::<LInf>::check_norm(&b, &bb));
+    assert!(Norm::<LInf>::check_norm(&b, &bg));
 }
 
 #[test]

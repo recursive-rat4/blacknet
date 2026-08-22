@@ -19,7 +19,7 @@ use blacknet_crypto::algebra::{
     Commutator, Conjugate, Double, IntegerModRing, Inv, One, QuaternionAlgebra, Square,
     TracelessQuaternion, Zero,
 };
-use blacknet_crypto::norm::InfinityNorm;
+use blacknet_crypto::norm::{LInf, Norm};
 
 type Z = blacknet_crypto::pervushin::PervushinField;
 type A = QuaternionAlgebra<Z>;
@@ -130,6 +130,6 @@ fn infinity_norm() {
     let a = A::from([0, 3, 6, -7].map(Z::from));
     let ab = 7;
     let ag = 8;
-    assert!(!a.check_infinity_norm(&ab));
-    assert!(a.check_infinity_norm(&ag));
+    assert!(!Norm::<LInf>::check_norm(&a, &ab));
+    assert!(Norm::<LInf>::check_norm(&a, &ag));
 }

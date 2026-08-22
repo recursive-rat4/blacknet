@@ -17,7 +17,7 @@
 
 use blacknet_crypto::algebra::{IntegerModRing, Inv, Sqrt, Square};
 use blacknet_crypto::gf2::GF2;
-use blacknet_crypto::norm::InfinityNorm;
+use blacknet_crypto::norm::{LInf, Norm};
 
 #[test]
 fn congruence() {
@@ -89,8 +89,8 @@ fn sqrt() {
 
 #[test]
 fn infinity_norm() {
-    assert!(!GF2::with_int(0).check_infinity_norm(&0));
-    assert!(GF2::with_int(0).check_infinity_norm(&1));
-    assert!(!GF2::with_int(1).check_infinity_norm(&0));
-    assert!(!GF2::with_int(1).check_infinity_norm(&1));
+    assert!(!Norm::<LInf>::check_norm(&GF2::with_int(0), &0));
+    assert!(Norm::<LInf>::check_norm(&GF2::with_int(0), &1));
+    assert!(!Norm::<LInf>::check_norm(&GF2::with_int(1), &0));
+    assert!(!Norm::<LInf>::check_norm(&GF2::with_int(1), &1));
 }

@@ -17,7 +17,7 @@
 
 use blacknet_crypto::johnsonlindenstrauss::JohnsonLindenstrauss;
 use blacknet_crypto::matrix::DenseVector;
-use blacknet_crypto::norm::EuclideanNorm;
+use blacknet_crypto::norm::{L2, Norm};
 
 type Z = blacknet_crypto::pervushin::PervushinField;
 type DRG = blacknet_crypto::random::FastDRG;
@@ -32,6 +32,6 @@ fn test() {
     let jl = JohnsonLindenstrauss::<Z>::random(&mut drg, high.dimension());
     let low = jl.project(&high);
 
-    assert!(low.euclidean_norm() > high.euclidean_norm() * slack_min);
-    assert!(low.euclidean_norm() < high.euclidean_norm() * slack_max);
+    assert!(Norm::<L2>::norm(&low) > Norm::<L2>::norm(&high) * slack_min);
+    assert!(Norm::<L2>::norm(&low) < Norm::<L2>::norm(&high) * slack_max);
 }

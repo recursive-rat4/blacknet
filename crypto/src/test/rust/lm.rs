@@ -18,7 +18,7 @@
 use blacknet_crypto::algebra::{
     BalancedRepresentative, Conjugate, Double, IntegerModRing, Inv, One, Square, Zero,
 };
-use blacknet_crypto::norm::InfinityNorm;
+use blacknet_crypto::norm::{LInf, Norm};
 use core::array;
 
 type Z = blacknet_crypto::lm::LMField;
@@ -565,6 +565,6 @@ fn r64_infinity_norm() {
     let good = 67133638855483917;
 
     let elt = R64::from(coeffs);
-    assert!(!elt.check_infinity_norm(&bad));
-    assert!(elt.check_infinity_norm(&good));
+    assert!(!Norm::<LInf>::check_norm(&elt, &bad));
+    assert!(Norm::<LInf>::check_norm(&elt, &good));
 }

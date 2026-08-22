@@ -16,7 +16,7 @@
  */
 
 use blacknet_crypto::algebra::{Commutator, MatrixRing, One, VectorRing};
-use blacknet_crypto::norm::InfinityNorm;
+use blacknet_crypto::norm::{LInf, Norm};
 
 type Z = blacknet_crypto::pervushin::PervushinField;
 type M = VectorRing<Z, 2>;
@@ -166,7 +166,7 @@ fn infinity_norm() {
     ].map(Z::from));
     let n = 3;
     let b = 4;
-    assert!(!a.check_infinity_norm(&n));
-    assert!(a.check_infinity_norm(&b));
-    assert_eq!(a.infinity_norm(), n);
+    assert!(!Norm::<LInf>::check_norm(&a, &n));
+    assert!(Norm::<LInf>::check_norm(&a, &b));
+    assert_eq!(Norm::<LInf>::norm(&a), n);
 }

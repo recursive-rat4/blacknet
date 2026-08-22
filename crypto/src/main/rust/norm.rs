@@ -18,288 +18,252 @@
 //! Generalized length.
 
 use crate::algebra::{
-    IntegerModRing, MatrixSpace, QuaternionAlgebra, Ring, UnitalRing, UnivariateRing, VectorRing,
+    IntegerModRing, MatrixSpace, QuaternionAlgebra, Semiring, UnitalRing, UnitalSemiring,
+    UnivariateRing, VectorRing, Zero,
 };
 use crate::convolution::Convolution;
 use crate::float::Cast;
 use crate::matrix::{DenseMatrix, DenseVector, SparseMatrix, SparseVector};
-use core::marker::PhantomData;
 
 /// ℓ₂ space.
 pub enum L2 {}
 /// ℓ-∞ space.
 pub enum LInf {}
 
-/// ℓₚ norm bound.
-pub struct NormBound<Lp, Length> {
-    bound: Length,
-    phantom: PhantomData<Lp>,
+/// ℓₚ norm.
+pub trait Norm<Lp> {
+    /// Non-negative numeric.
+    type Length;
+
+    /// Check whether the norm is less than bound.
+    fn check_norm(&self, bound: &Self::Length) -> bool;
+    /// Compute the norm.
+    fn norm(&self) -> Self::Length;
 }
 
-impl NormBound<L2, f64> {
-    /// Construct a Euclidean norm bound.
-    pub const fn new(bound: f64) -> Self {
-        Self {
-            bound,
-            phantom: PhantomData,
-        }
+impl<Z: IntegerModRing<Int: Cast<f64>>> Norm<L2> for Z {
+    type Length = f64;
+
+    fn check_norm(&self, bound: &f64) -> bool {
+        self.absolute().cast() < *bound
     }
 
-    /// Check whether the norm of an object is less than bound.
-    pub fn check<Object: EuclideanNorm>(&self, object: &Object) -> bool {
-        object.euclidean_norm() < self.bound
-    }
-}
-
-impl<Length: Ord> NormBound<LInf, Length> {
-    /// Construct an infinity norm bound.
-    pub const fn new(bound: Length) -> Self {
-        Self {
-            bound,
-            phantom: PhantomData,
-        }
-    }
-
-    /// Check whether the norm of an object is less than bound.
-    pub fn check<Object: InfinityNorm<Length>>(&self, object: &Object) -> bool {
-        object.check_infinity_norm(&self.bound)
-    }
-}
-
-/// ℓ₂ norm.
-pub trait EuclideanNorm {
-    /// Compute Euclidean norm.
-    fn euclidean_norm(&self) -> f64;
-}
-
-impl<Z: IntegerModRing<Int: Cast<f64>>> EuclideanNorm for Z {
-    fn euclidean_norm(&self) -> f64 {
+    fn norm(&self) -> f64 {
         self.absolute().cast()
     }
 }
 
 //RUST https://github.com/rust-lang/rust/issues/137578
 
-impl<R: Ring + EuclideanNorm, const N: usize> EuclideanNorm for VectorRing<R, N> {
-    fn euclidean_norm(&self) -> f64 {
-        libm::sqrt(
-            self.into_iter()
-                .map(EuclideanNorm::euclidean_norm)
-                .map(|i| i * i)
-                .sum::<f64>(),
-        )
+impl<R: Semiring + Norm<L2, Length = f64>, const N: usize> Norm<L2> for VectorRing<R, N> {
+    type Length = R::Length;
+
+    fn check_norm(&self, bound: &Self::Length) -> bool {
+        self.norm() < *bound
+    }
+
+    fn norm(&self) -> Self::Length {
+        libm::sqrt(self.into_iter().map(Norm::<L2>::norm).map(|i| i * i).sum())
     }
 }
 
-impl<R: Ring + EuclideanNorm> EuclideanNorm for DenseVector<R> {
-    fn euclidean_norm(&self) -> f64 {
-        libm::sqrt(
-            self.iter()
-                .map(EuclideanNorm::euclidean_norm)
-                .map(|i| i * i)
-                .sum::<f64>(),
-        )
+impl<T: Norm<L2, Length = f64>> Norm<L2> for DenseVector<T> {
+    type Length = T::Length;
+
+    fn check_norm(&self, bound: &Self::Length) -> bool {
+        self.norm() < *bound
+    }
+
+    fn norm(&self) -> Self::Length {
+        libm::sqrt(self.into_iter().map(Norm::<L2>::norm).map(|i| i * i).sum())
     }
 }
 
-impl<R: Ring + EuclideanNorm> EuclideanNorm for SparseVector<R> {
-    fn euclidean_norm(&self) -> f64 {
-        libm::sqrt(
-            self.as_ref()
-                .iter()
-                .map(EuclideanNorm::euclidean_norm)
-                .map(|i| i * i)
-                .sum::<f64>(),
-        )
-    }
-}
+impl<T: Zero + Norm<L2, Length = f64>> Norm<L2> for SparseVector<T> {
+    type Length = T::Length;
 
-impl<R: UnitalRing + EuclideanNorm> EuclideanNorm for QuaternionAlgebra<R> {
-    fn euclidean_norm(&self) -> f64 {
+    fn check_norm(&self, bound: &Self::Length) -> bool {
+        self.norm() < *bound
+    }
+
+    fn norm(&self) -> Self::Length {
         libm::sqrt(
             self.as_ref()
                 .iter()
-                .map(EuclideanNorm::euclidean_norm)
+                .map(Norm::<L2>::norm)
                 .map(|i| i * i)
-                .sum::<f64>(),
+                .sum(),
         )
     }
 }
 
-impl<R: UnitalRing + EuclideanNorm, const N: usize, C: Convolution<R, N>> EuclideanNorm
+impl<R: UnitalRing + Norm<L2, Length = f64>> Norm<L2> for QuaternionAlgebra<R> {
+    type Length = R::Length;
+
+    fn check_norm(&self, bound: &Self::Length) -> bool {
+        self.norm() < *bound
+    }
+
+    fn norm(&self) -> Self::Length {
+        libm::sqrt(self.into_iter().map(Norm::<L2>::norm).map(|i| i * i).sum())
+    }
+}
+
+impl<R: UnitalSemiring + Norm<L2, Length = f64>, const N: usize, C: Convolution<R, N>> Norm<L2>
     for UnivariateRing<R, N, C>
 {
-    fn euclidean_norm(&self) -> f64 {
-        libm::sqrt(
-            self.as_ref()
-                .iter()
-                .map(EuclideanNorm::euclidean_norm)
-                .map(|i| i * i)
-                .sum::<f64>(),
-        )
+    type Length = R::Length;
+
+    fn check_norm(&self, bound: &Self::Length) -> bool {
+        self.norm() < *bound
+    }
+
+    fn norm(&self) -> Self::Length {
+        libm::sqrt(self.into_iter().map(Norm::<L2>::norm).map(|i| i * i).sum())
     }
 }
 
-/// ℓ-∞ norm.
-pub trait InfinityNorm<Length: Ord> {
-    /// Check whether the norm is less than bound.
-    fn check_infinity_norm(&self, bound: &Length) -> bool;
+impl<Z: IntegerModRing> Norm<LInf> for Z {
+    type Length = Z::Int;
 
-    /// Compute infinity norm.
-    ///
-    /// For 0-dimensional objects returns default.
-    fn infinity_norm(&self) -> Length
-    where
-        Length: Default;
-}
-
-impl<Z: IntegerModRing> InfinityNorm<Z::Int> for Z {
-    fn check_infinity_norm(&self, bound: &Z::Int) -> bool {
+    fn check_norm(&self, bound: &Z::Int) -> bool {
         self.absolute() < *bound
     }
 
-    fn infinity_norm(&self) -> Z::Int {
+    fn norm(&self) -> Z::Int {
         self.absolute()
     }
 }
 
-impl<Length: Ord, R: Ring + InfinityNorm<Length>, const N: usize> InfinityNorm<Length>
+impl<R: Semiring + Norm<LInf, Length: Ord + Default>, const N: usize> Norm<LInf>
     for VectorRing<R, N>
 {
-    fn check_infinity_norm(&self, bound: &Length) -> bool {
-        self.into_iter().all(|i| i.check_infinity_norm(bound))
+    type Length = R::Length;
+
+    fn check_norm(&self, bound: &Self::Length) -> bool {
+        self.into_iter().all(|i| i.check_norm(bound))
     }
 
-    fn infinity_norm(&self) -> Length
-    where
-        Length: Default,
-    {
+    fn norm(&self) -> Self::Length {
         self.into_iter()
-            .map(InfinityNorm::infinity_norm)
+            .map(Norm::<LInf>::norm)
             .max()
             .unwrap_or_default()
     }
 }
 
-impl<Length: Ord, R: Ring + InfinityNorm<Length>> InfinityNorm<Length> for DenseMatrix<R> {
-    fn check_infinity_norm(&self, bound: &Length) -> bool {
-        self.as_ref().iter().all(|i| i.check_infinity_norm(bound))
+impl<T: Norm<LInf, Length: Ord + Default>> Norm<LInf> for DenseVector<T> {
+    type Length = T::Length;
+
+    fn check_norm(&self, bound: &Self::Length) -> bool {
+        self.into_iter().all(|i| i.check_norm(bound))
     }
 
-    fn infinity_norm(&self) -> Length
-    where
-        Length: Default,
-    {
+    fn norm(&self) -> Self::Length {
+        self.into_iter()
+            .map(Norm::<LInf>::norm)
+            .max()
+            .unwrap_or_default()
+    }
+}
+
+impl<T: Norm<LInf, Length: Ord + Default>> Norm<LInf> for DenseMatrix<T> {
+    type Length = T::Length;
+
+    fn check_norm(&self, bound: &Self::Length) -> bool {
+        self.as_ref().iter().all(|i| i.check_norm(bound))
+    }
+
+    fn norm(&self) -> Self::Length {
         self.as_ref()
             .iter()
-            .map(InfinityNorm::infinity_norm)
+            .map(Norm::<LInf>::norm)
             .max()
             .unwrap_or_default()
     }
 }
 
-impl<Length: Ord, R: Ring + InfinityNorm<Length>> InfinityNorm<Length> for SparseMatrix<R> {
-    fn check_infinity_norm(&self, bound: &Length) -> bool {
-        self.as_ref().iter().all(|i| i.check_infinity_norm(bound))
+impl<T: Zero + Norm<LInf, Length: Ord + Default>> Norm<LInf> for SparseMatrix<T> {
+    type Length = T::Length;
+
+    fn check_norm(&self, bound: &Self::Length) -> bool {
+        self.as_ref().iter().all(|i| i.check_norm(bound))
     }
 
-    fn infinity_norm(&self) -> Length
-    where
-        Length: Default,
-    {
+    fn norm(&self) -> Self::Length {
         self.as_ref()
             .iter()
-            .map(InfinityNorm::infinity_norm)
+            .map(Norm::<LInf>::norm)
             .max()
             .unwrap_or_default()
     }
 }
 
-impl<Length: Ord, R: Ring + InfinityNorm<Length>, const M: usize, const N: usize, const MN: usize>
-    InfinityNorm<Length> for MatrixSpace<R, M, N, MN>
+impl<
+    R: Semiring + Norm<LInf, Length: Ord + Default>,
+    const M: usize,
+    const N: usize,
+    const MN: usize,
+> Norm<LInf> for MatrixSpace<R, M, N, MN>
 {
-    fn check_infinity_norm(&self, bound: &Length) -> bool {
-        self.as_ref().iter().all(|i| i.check_infinity_norm(bound))
+    type Length = R::Length;
+
+    fn check_norm(&self, bound: &Self::Length) -> bool {
+        self.into_iter().all(|i| i.check_norm(bound))
     }
 
-    fn infinity_norm(&self) -> Length
-    where
-        Length: Default,
-    {
+    fn norm(&self) -> Self::Length {
         self.as_ref()
             .iter()
-            .map(InfinityNorm::infinity_norm)
+            .map(Norm::<LInf>::norm)
             .max()
             .unwrap_or_default()
     }
 }
 
-impl<Length: Ord, R: Ring + InfinityNorm<Length>> InfinityNorm<Length> for DenseVector<R> {
-    fn check_infinity_norm(&self, bound: &Length) -> bool {
-        self.iter().all(|i| i.check_infinity_norm(bound))
+impl<T: Zero + Norm<LInf, Length: Ord + Default>> Norm<LInf> for SparseVector<T> {
+    type Length = T::Length;
+
+    fn check_norm(&self, bound: &Self::Length) -> bool {
+        self.as_ref().iter().all(|i| i.check_norm(bound))
     }
 
-    fn infinity_norm(&self) -> Length
-    where
-        Length: Default,
-    {
-        self.iter()
-            .map(InfinityNorm::infinity_norm)
-            .max()
-            .unwrap_or_default()
-    }
-}
-
-impl<Length: Ord, R: Ring + InfinityNorm<Length>> InfinityNorm<Length> for SparseVector<R> {
-    fn check_infinity_norm(&self, bound: &Length) -> bool {
-        self.as_ref().iter().all(|i| i.check_infinity_norm(bound))
-    }
-
-    fn infinity_norm(&self) -> Length
-    where
-        Length: Default,
-    {
+    fn norm(&self) -> Self::Length {
         self.as_ref()
             .iter()
-            .map(InfinityNorm::infinity_norm)
+            .map(Norm::<LInf>::norm)
             .max()
             .unwrap_or_default()
     }
 }
 
-impl<Length: Ord, R: UnitalRing + InfinityNorm<Length>> InfinityNorm<Length>
-    for QuaternionAlgebra<R>
+impl<R: UnitalRing + Norm<LInf, Length: Ord + Default>> Norm<LInf> for QuaternionAlgebra<R> {
+    type Length = R::Length;
+
+    fn check_norm(&self, bound: &Self::Length) -> bool {
+        self.into_iter().all(|i| i.check_norm(bound))
+    }
+
+    fn norm(&self) -> Self::Length {
+        self.into_iter()
+            .map(Norm::<LInf>::norm)
+            .max()
+            .unwrap_or_default()
+    }
+}
+
+impl<R: UnitalSemiring + Norm<LInf, Length: Ord + Default>, const N: usize, C: Convolution<R, N>>
+    Norm<LInf> for UnivariateRing<R, N, C>
 {
-    fn check_infinity_norm(&self, bound: &Length) -> bool {
-        self.as_ref().iter().all(|i| i.check_infinity_norm(bound))
+    type Length = R::Length;
+
+    fn check_norm(&self, bound: &Self::Length) -> bool {
+        self.into_iter().all(|i| i.check_norm(bound))
     }
 
-    fn infinity_norm(&self) -> Length
-    where
-        Length: Default,
-    {
-        self.as_ref()
-            .iter()
-            .map(InfinityNorm::infinity_norm)
-            .max()
-            .unwrap_or_default()
-    }
-}
-
-impl<Length: Ord, R: UnitalRing + InfinityNorm<Length>, const N: usize, C: Convolution<R, N>>
-    InfinityNorm<Length> for UnivariateRing<R, N, C>
-{
-    fn check_infinity_norm(&self, bound: &Length) -> bool {
-        self.as_ref().iter().all(|i| i.check_infinity_norm(bound))
-    }
-
-    fn infinity_norm(&self) -> Length
-    where
-        Length: Default,
-    {
-        self.as_ref()
-            .iter()
-            .map(InfinityNorm::infinity_norm)
+    fn norm(&self) -> Self::Length {
+        self.into_iter()
+            .map(Norm::<LInf>::norm)
             .max()
             .unwrap_or_default()
     }

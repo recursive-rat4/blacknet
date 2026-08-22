@@ -16,7 +16,7 @@
  */
 
 use blacknet_crypto::algebra::{BalancedRepresentative, IntegerModRing, Inv, One, Square, Zero};
-use blacknet_crypto::norm::InfinityNorm;
+use blacknet_crypto::norm::{LInf, Norm};
 
 type Z = blacknet_crypto::fermat::FermatField;
 
@@ -126,8 +126,8 @@ fn infinity_norm() {
     let b = Z::with_int(30000);
     let nb = 30000;
     let ng = 30001;
-    assert!(!a.check_infinity_norm(&nb));
-    assert!(a.check_infinity_norm(&ng));
-    assert!(!b.check_infinity_norm(&nb));
-    assert!(b.check_infinity_norm(&ng));
+    assert!(!Norm::<LInf>::check_norm(&a, &nb));
+    assert!(Norm::<LInf>::check_norm(&a, &ng));
+    assert!(!Norm::<LInf>::check_norm(&b, &nb));
+    assert!(Norm::<LInf>::check_norm(&b, &ng));
 }

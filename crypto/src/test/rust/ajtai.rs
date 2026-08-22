@@ -19,7 +19,7 @@ use blacknet_crypto::ajtai::{AjtaiCommitment, AjtaiHash};
 use blacknet_crypto::algebra::IntegerModRing;
 use blacknet_crypto::commitmentscheme::{BindingCommitmentScheme, CommitmentScheme};
 use blacknet_crypto::matrix::DenseVector;
-use blacknet_crypto::norm::{L2, LInf, NormBound};
+use blacknet_crypto::norm::{L2, LInf};
 
 type Z = blacknet_crypto::uring::U64Ring;
 type DRG = blacknet_crypto::random::FastDRG;
@@ -27,11 +27,11 @@ type DRG = blacknet_crypto::random::FastDRG;
 #[test]
 fn hash() {
     let mut drg = DRG::default();
-    let setup = AjtaiHash::<Z, LInf, <Z as IntegerModRing>::Int>::sis(&mut drg, 2, 2);
-    let b_ecd = NormBound::<L2, f64>::new(7.22);
-    let b_inf = NormBound::<LInf, <Z as IntegerModRing>::Int>::new(8);
-    let cs_ecd = AjtaiHash::<Z, L2, f64>::new(setup.clone(), b_ecd);
-    let cs_inf = AjtaiHash::<Z, LInf, <Z as IntegerModRing>::Int>::new(setup, b_inf);
+    let setup = AjtaiHash::<LInf, Z>::sis(&mut drg, 2, 2);
+    let b_ecd: f64 = 7.22;
+    let b_inf: <Z as IntegerModRing>::Int = 8;
+    let cs_ecd = AjtaiHash::<L2, Z>::new(setup.clone(), b_ecd);
+    let cs_inf = AjtaiHash::<LInf, Z>::new(setup, b_inf);
     let z1 = Z::from(1);
     let z2 = Z::from(2);
     let z3 = Z::from(3);
@@ -62,11 +62,11 @@ fn hash() {
 #[test]
 fn commitment() {
     let mut drg = DRG::default();
-    let setup = AjtaiCommitment::<Z, LInf, <Z as IntegerModRing>::Int>::sis(&mut drg, 3, 2, 4);
-    let b_ecd = NormBound::<L2, f64>::new(7.22);
-    let b_inf = NormBound::<LInf, <Z as IntegerModRing>::Int>::new(8);
-    let cs_ecd = AjtaiCommitment::<Z, L2, f64>::new(setup.clone(), b_ecd);
-    let cs_inf = AjtaiCommitment::<Z, LInf, <Z as IntegerModRing>::Int>::new(setup, b_inf);
+    let setup = AjtaiCommitment::<LInf, Z>::sis(&mut drg, 3, 2, 4);
+    let b_ecd: f64 = 7.22;
+    let b_inf: <Z as IntegerModRing>::Int = 8;
+    let cs_ecd = AjtaiCommitment::<L2, Z>::new(setup.clone(), b_ecd);
+    let cs_inf = AjtaiCommitment::<LInf, Z>::new(setup, b_inf);
     let z1 = Z::from(1);
     let z2 = Z::from(2);
     let z3 = Z::from(3);
