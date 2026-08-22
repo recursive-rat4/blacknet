@@ -84,7 +84,7 @@ pub struct Node {
     block_fetcher: Arc<BlockFetcher>,
     tx_pool: Arc<RwLock<TxPool>>,
     tx_fetcher: Arc<TxFetcher>,
-    wallet_db: WalletDB,
+    wallet_db: Arc<WalletDB>,
     staker: Staker,
     agent_string: String,
     prober_agent_string: String,
@@ -123,11 +123,12 @@ impl Node {
         let fjall = Fjall::open(dirs, config)?;
         let db_version = DBVersion::new(&fjall)?;
         let block_db = BlockDB::new(dirs, fjall.clone(), &db_version, log_manager)?;
-        let coin_db = CoinDB::new(&mode, &fjall, db_version, log_manager, block_db.clone())?;
+        let (coin_db, coin_notifier) =
+            CoinDB::new(&mode, &fjall, db_version, log_manager, block_db.clone())?;
         block_db.import(&coin_db);
 
         let peer_table = PeerTable::new(&mode, dirs, log_manager, config.clone())?;
-        let (router, notifier) = Router::new(
+        let (router, router_notifier) = Router::new(
             &mode,
             dirs,
             log_manager,
@@ -156,8 +157,8 @@ impl Node {
             coin_db: coin_db.clone(),
             block_fetcher: BlockFetcher::new(log_manager, runtime, config, block_db, coin_db)?,
             tx_pool: tx_pool.clone(),
-            tx_fetcher: TxFetcher::new(runtime, tx_pool),
-            wallet_db: WalletDB::new(&mode, dirs, log_manager)?,
+            tx_fetcher: TxFetcher::new(runtime, tx_pool.clone()),
+            wallet_db: WalletDB::new(&mode, dirs, log_manager, runtime, coin_notifier, &tx_pool)?,
             staker: Staker::new(log_manager)?,
             agent_string: format!("/{agent_name}:{agent_version}/"),
             prober_agent_string: format!("/{agent_name}-prober:{agent_version}/"),
@@ -170,7 +171,7 @@ impl Node {
         for _ in 0..config.outgoing_connections {
             runtime.spawn(node.clone().connector());
         }
-        runtime.spawn(node.clone().acceptor(notifier));
+        runtime.spawn(node.clone().acceptor(router_notifier));
         runtime.spawn(node.clone().rotator());
 
         Ok(node)
@@ -319,7 +320,7 @@ impl Node {
         &self.tx_fetcher
     }
 
-    pub const fn wallet_db(&self) -> &WalletDB {
+    pub const fn wallet_db(&self) -> &Arc<WalletDB> {
         &self.wallet_db
     }
 

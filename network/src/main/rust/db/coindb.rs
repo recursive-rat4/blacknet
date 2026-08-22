@@ -21,31 +21,58 @@ use crate::db::{
 use arc_swap::ArcSwap;
 use blacknet_compat::Mode;
 use blacknet_crypto::bigint::UInt256;
-use blacknet_kernel::account::Account;
-use blacknet_kernel::amount::Amount;
-use blacknet_kernel::blake2b::Hash;
-use blacknet_kernel::block::{BLOCK_VERSION, Block};
-use blacknet_kernel::ed25519::PublicKey;
-use blacknet_kernel::error::{Error, Result};
-use blacknet_kernel::htlc::HTLC;
-use blacknet_kernel::multisig::Multisig;
-use blacknet_kernel::proofofstake::{
-    BLOCK_SIZE_SPAN, DEFAULT_MAX_BLOCK_SIZE, INITIAL_DIFFICULTY, ROLLBACK_LIMIT, UPGRADE_THRESHOLD,
-    Version as PoSVersion, cumulative_difficulty, max_block_size, mint, next_difficulty, nxtrng,
-    verify as verify_pos,
-};
-use blacknet_kernel::transaction::{
-    CoinTx, HashTimeLockContractId, MultiSignatureLockContractId, Transaction,
+use blacknet_kernel::{
+    account::Account,
+    amount::Amount,
+    blake2b::Hash,
+    block::{BLOCK_VERSION, Block},
+    ed25519::PublicKey,
+    error::{Error, Result},
+    htlc::HTLC,
+    multisig::Multisig,
+    proofofstake::{
+        BLOCK_SIZE_SPAN, DEFAULT_MAX_BLOCK_SIZE, INITIAL_DIFFICULTY, ROLLBACK_LIMIT,
+        UPGRADE_THRESHOLD, Version as PoSVersion, cumulative_difficulty, max_block_size, mint,
+        next_difficulty, nxtrng, verify as verify_pos,
+    },
+    transaction::{CoinTx, HashTimeLockContractId, MultiSignatureLockContractId, Transaction},
 };
 use blacknet_log::{LogManager, Logger, debug, error, info};
 use blacknet_serialization::format::{from_bytes, to_bytes};
 use blacknet_time::Seconds;
-use core::cmp::{max, min};
-use core::error::Error as StdError;
+use core::{
+    cmp::{max, min},
+    error::Error as StdError,
+};
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
-use std::collections::{HashMap, VecDeque, hash_map};
-use std::sync::Arc;
+use std::{
+    collections::{HashMap, VecDeque, hash_map},
+    sync::Arc,
+};
+use tokio::sync::mpsc;
+
+pub enum Notification {
+    Transaction {
+        tx_hash: Hash,
+        tx: Transaction,
+        tx_bytes: Box<[u8]>,
+        time: Seconds,
+        height: u32,
+    },
+    Mint {
+        hash: Hash,
+        time: Seconds,
+        generator: PublicKey,
+        height: u32,
+        generated: Amount,
+    },
+    Rollback {
+        hash: Hash,
+    },
+}
+pub type Notifier = mpsc::UnboundedReceiver<Notification>;
+pub type Subscriber = mpsc::UnboundedSender<Notification>;
 
 #[derive(Debug, Default, Deserialize_repr, Serialize_repr)]
 #[repr(u32)]
@@ -62,6 +89,7 @@ pub struct CoinDB {
     htlcs: DBView<HashTimeLockContractId, HTLC>,
     multisigs: DBView<MultiSignatureLockContractId, Multisig>,
     undos: DBView<Hash, UndoBlock>,
+    subscriber: Subscriber,
     block_db: Arc<BlockDB>,
 }
 
@@ -72,7 +100,7 @@ impl CoinDB {
         db_version: DBVersion,
         log_manager: &LogManager,
         block_db: Arc<BlockDB>,
-    ) -> core::result::Result<Arc<Self>, Box<dyn StdError>> {
+    ) -> core::result::Result<(Arc<Self>, Notifier), Box<dyn StdError>> {
         let logger = log_manager.logger("CoinDB")?;
 
         match db_version.get_or_err::<CoinDBVersion>(DBVersionKey::CoinDB) {
@@ -109,16 +137,22 @@ impl CoinDB {
             state.pos_version()
         );
 
-        Ok(Arc::new(Self {
-            logger,
-            state: ArcSwap::new(Arc::new(state)),
-            db_version,
-            accounts,
-            htlcs: DBView::new(fjall, "htlcs")?,
-            multisigs: DBView::new(fjall, "multisigs")?,
-            undos: DBView::new(fjall, "undos")?,
-            block_db,
-        }))
+        let (subscriber, notifier) = mpsc::unbounded_channel();
+
+        Ok((
+            Arc::new(Self {
+                logger,
+                state: ArcSwap::new(Arc::new(state)),
+                db_version,
+                accounts,
+                htlcs: DBView::new(fjall, "htlcs")?,
+                multisigs: DBView::new(fjall, "multisigs")?,
+                undos: DBView::new(fjall, "undos")?,
+                subscriber,
+                block_db,
+            }),
+            notifier,
+        ))
     }
 
     pub const fn state(&self) -> &ArcSwap<State> {
@@ -290,7 +324,13 @@ impl CoinDB {
             tx_hashes.push(tx_hash);
             fees += tx.fee();
 
-            //TODO WalletDB
+            let _ = self.subscriber.send(Notification::Transaction {
+                tx_hash,
+                tx,
+                tx_bytes: tx_bytes.clone(),
+                time: block.time(),
+                height,
+            });
         }
 
         generator = coin_tx.get_account(block.generator())?;
@@ -318,7 +358,13 @@ impl CoinDB {
         generator.debit(height, generated);
         coin_tx.set_account(block.generator(), generator);
 
-        //TODO WalletDB
+        let _ = self.subscriber.send(Notification::Mint {
+            hash,
+            time: block.time(),
+            generator: block.generator(),
+            height,
+            generated,
+        });
 
         Ok(tx_hashes)
     }
@@ -388,7 +434,7 @@ impl CoinDB {
 
         batch.remove(&self.undos, hash);
 
-        //TODO WalletDB
+        let _ = self.subscriber.send(Notification::Rollback { hash });
 
         batch.commit();
 

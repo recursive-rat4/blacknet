@@ -17,11 +17,13 @@
 
 use crate::wallet::walletdb::Error;
 use blacknet_compat::Mode;
-use blacknet_kernel::account::Lease;
-use blacknet_kernel::amount::Amount;
-use blacknet_kernel::blake2b::Hash;
-use blacknet_kernel::ed25519::PublicKey;
-use blacknet_kernel::transaction::{HashTimeLockContractId, MultiSignatureLockContractId};
+use blacknet_kernel::{
+    account::Lease,
+    amount::Amount,
+    blake2b::Hash,
+    ed25519::PublicKey,
+    transaction::{HashTimeLockContractId, MultiSignatureLockContractId},
+};
 use blacknet_time::{Seconds, SystemClock};
 use rusqlite::{Connection, OpenFlags};
 use std::{path::Path, sync::Mutex};

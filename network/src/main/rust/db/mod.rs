@@ -36,6 +36,9 @@ pub use blockdb::{
     Subscriber as BlockSubscriber,
 };
 pub use blockindex::BlockIndex;
-pub use coindb::{CoinDB, CoinDBCheck, State};
+pub use coindb::{
+    CoinDB, CoinDBCheck, Notification as CoinNotification, Notifier as CoinNotifier, State,
+    Subscriber as CoinSubscriber,
+};
 pub use dbversion::DBVersion;
 pub use fjall::Fjall;

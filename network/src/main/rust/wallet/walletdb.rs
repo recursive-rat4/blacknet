@@ -15,17 +15,24 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::wallet::{AddressCodec, Wallet};
+use crate::{
+    db::{CoinNotification, CoinNotifier},
+    txpool::{Notifier as TxPoolNotifier, TxPool},
+    wallet::{AddressCodec, Wallet},
+};
 use blacknet_compat::{Mode, XDGDirectories};
 use blacknet_kernel::{blake2b::Hash, ed25519::PublicKey};
 use blacknet_log::{LogManager, Logger, error, info};
-use core::error::Error as StdError;
-use core::fmt;
+use core::{error::Error as StdError, fmt};
 use rusqlite::Error as SqliteError;
-use std::collections::HashMap;
-use std::fs::{DirBuilder, read_dir};
-use std::io::Error as IoError;
-use std::path::PathBuf;
+use std::{
+    collections::HashMap,
+    fs::{DirBuilder, read_dir},
+    io::Error as IoError,
+    path::PathBuf,
+    sync::{Arc, RwLock},
+};
+use tokio::runtime::Runtime;
 
 #[cfg(target_family = "unix")]
 use std::os::unix::fs::DirBuilderExt;
@@ -41,7 +48,10 @@ impl WalletDB {
         mode: &Mode,
         dirs: &XDGDirectories,
         log_manager: &LogManager,
-    ) -> Result<Self, Box<dyn StdError>> {
+        runtime: &Runtime,
+        coin_notifier: CoinNotifier,
+        tx_pool: &Arc<RwLock<TxPool>>,
+    ) -> Result<Arc<Self>, Box<dyn StdError>> {
         let logger = log_manager.logger("WalletDB")?;
         info!(logger, "Driving SQLite {}", rusqlite::version());
 
@@ -69,13 +79,19 @@ impl WalletDB {
             }
         }
 
-        Ok(Self {
+        let wallet_db = Arc::new(Self {
             logger,
             address_codec: AddressCodec::new(mode)?,
             wallets,
-        })
+        });
 
-        //TODO txpool
+        runtime.spawn(WalletDB::coindb_observer(wallet_db.clone(), coin_notifier));
+        runtime.spawn(WalletDB::txpool_observer(
+            wallet_db.clone(),
+            tx_pool.read().unwrap().subscribe(),
+        ));
+
+        Ok(wallet_db)
     }
 
     fn mkdir(dirs: &XDGDirectories) -> Result<PathBuf, IoError> {
@@ -101,6 +117,36 @@ impl WalletDB {
 
     pub fn anchor(&self) -> Hash {
         todo!();
+    }
+
+    #[expect(unused_variables)]
+    async fn coindb_observer(self: Arc<Self>, mut coin_notifier: CoinNotifier) {
+        while let Some(notification) = coin_notifier.recv().await {
+            match notification {
+                CoinNotification::Transaction {
+                    tx_hash,
+                    tx,
+                    tx_bytes,
+                    time,
+                    height,
+                } => todo!(),
+                CoinNotification::Mint {
+                    hash,
+                    time,
+                    generator,
+                    height,
+                    generated,
+                } => todo!(),
+                CoinNotification::Rollback { hash } => todo!(),
+            }
+        }
+    }
+
+    #[expect(unused_variables)]
+    async fn txpool_observer(self: Arc<Self>, mut txpool_notifier: TxPoolNotifier) {
+        while let Some(notification) = txpool_notifier.recv().await {
+            todo!();
+        }
     }
 }
 
