@@ -107,12 +107,24 @@ async fn on_subscribe(
             rpc_server.subscribe_txpool(subscriber).await;
             ControlFlow::Continue(())
         }
-        "wallet" => {
-            rpc_server.subscribe_wallet(subscriber).await;
-            ControlFlow::Continue(())
-        }
+        "wallet" => on_subscribe_wallet(request, subscriber, rpc_server).await,
         _ => ControlFlow::Break(()),
     }
+}
+
+async fn on_subscribe_wallet(
+    request: &Map<String, Value>,
+    subscriber: &Subscriber,
+    rpc_server: &RPCServer,
+) -> ControlFlow<()> {
+    let Some(Value::String(address)) = request.get("address") else {
+        return ControlFlow::Break(());
+    };
+    let Ok(public_key) = rpc_server.address_codec().decode(address) else {
+        return ControlFlow::Break(());
+    };
+    rpc_server.subscribe_wallet(public_key, subscriber).await;
+    ControlFlow::Continue(())
 }
 
 async fn on_unsubscribe(
@@ -132,12 +144,24 @@ async fn on_unsubscribe(
             rpc_server.unsubscribe_txpool(subscriber).await;
             ControlFlow::Continue(())
         }
-        "wallet" => {
-            rpc_server.unsubscribe_wallet(subscriber).await;
-            ControlFlow::Continue(())
-        }
+        "wallet" => on_unsubscribe_wallet(request, subscriber, rpc_server).await,
         _ => ControlFlow::Break(()),
     }
+}
+
+async fn on_unsubscribe_wallet(
+    request: &Map<String, Value>,
+    subscriber: &Subscriber,
+    rpc_server: &RPCServer,
+) -> ControlFlow<()> {
+    let Some(Value::String(address)) = request.get("address") else {
+        return ControlFlow::Break(());
+    };
+    let Ok(public_key) = rpc_server.address_codec().decode(address) else {
+        return ControlFlow::Break(());
+    };
+    rpc_server.unsubscribe_wallet(public_key, subscriber).await;
+    ControlFlow::Continue(())
 }
 
 async fn sender(mut sink: SplitSink<WebSocket, Message>, mut receiver: mpsc::Receiver<Message>) {

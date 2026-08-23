@@ -18,15 +18,22 @@
 use crate::v2;
 use axum::{Router, extract::ws::Message, routing::get};
 use blacknet_compat::config::RPC as Config;
+use blacknet_kernel::ed25519::PublicKey;
 use blacknet_log::{LogManager, error, info};
 use blacknet_network::{
-    db::BlockNotifier, node::Node, txpool::Notifier as TxPoolNotifier, wallet::AddressCodec,
+    db::BlockNotifier,
+    node::Node,
+    txpool::Notifier as TxPoolNotifier,
+    wallet::{AddressCodec, Notifier as WalletDBNotifier},
 };
 use core::num::NonZero;
 use serde_json::to_string;
-use std::sync::{
-    Arc,
-    atomic::{AtomicU64, Ordering},
+use std::{
+    collections::HashMap,
+    sync::{
+        Arc,
+        atomic::{AtomicU64, Ordering},
+    },
 };
 use tokio::{
     net::TcpListener,
@@ -38,7 +45,7 @@ pub struct RPCServer {
     next_subscriber_id: AtomicU64,
     block_subscribers: Mutex<Vec<Subscriber>>,
     txpool_subscribers: Mutex<Vec<Subscriber>>,
-    wallet_subscribers: Mutex<Vec<Subscriber>>,
+    wallet_subscribers: Mutex<HashMap<PublicKey, Vec<Subscriber>>>,
     address_codec: AddressCodec,
 }
 
@@ -48,7 +55,7 @@ impl RPCServer {
             next_subscriber_id: AtomicU64::new(1),
             block_subscribers: Mutex::new(Vec::new()),
             txpool_subscribers: Mutex::new(Vec::new()),
-            wallet_subscribers: Mutex::new(Vec::new()),
+            wallet_subscribers: Mutex::new(HashMap::new()),
             address_codec: AddressCodec::new(node.mode()).unwrap(),
         });
         runtime.spawn(RPCServer::block_observer(
@@ -59,7 +66,10 @@ impl RPCServer {
             rpc_server.clone(),
             node.tx_pool().read().unwrap().subscribe(),
         ));
-        //TODO wallet
+        runtime.spawn(RPCServer::walletdb_observer(
+            rpc_server.clone(),
+            node.wallet_db().subscribe(),
+        ));
         rpc_server
     }
 
@@ -95,6 +105,10 @@ impl RPCServer {
         }
     }
 
+    pub(super) const fn address_codec(&self) -> &AddressCodec {
+        &self.address_codec
+    }
+
     pub(super) async fn subscribe_block(&self, subscriber: &Subscriber) {
         let mut block_subscribers = self.block_subscribers.lock().await;
         block_subscribers.push(subscriber.clone());
@@ -105,9 +119,12 @@ impl RPCServer {
         txpool_subscribers.push(subscriber.clone());
     }
 
-    pub(super) async fn subscribe_wallet(&self, subscriber: &Subscriber) {
+    pub(super) async fn subscribe_wallet(&self, public_key: PublicKey, subscriber: &Subscriber) {
         let mut wallet_subscribers = self.wallet_subscribers.lock().await;
-        wallet_subscribers.push(subscriber.clone());
+        wallet_subscribers
+            .entry(public_key)
+            .and_modify(|subscribers| subscribers.push(subscriber.clone()))
+            .or_insert(vec![subscriber.clone()]);
     }
 
     pub(super) async fn unsubscribe_block(&self, subscriber: &Subscriber) {
@@ -132,15 +149,19 @@ impl RPCServer {
         }
     }
 
-    pub(super) async fn unsubscribe_wallet(&self, subscriber: &Subscriber) {
+    pub(super) async fn unsubscribe_wallet(&self, public_key: PublicKey, subscriber: &Subscriber) {
         let mut wallet_subscribers = self.wallet_subscribers.lock().await;
-        if let Some(index) = wallet_subscribers
-            .iter()
-            .map(Subscriber::id)
-            .position(|id| id == subscriber.id)
-        {
-            wallet_subscribers.swap_remove(index);
-        }
+        wallet_subscribers
+            .entry(public_key)
+            .and_modify(|subscribers| {
+                if let Some(index) = subscribers
+                    .iter()
+                    .map(Subscriber::id)
+                    .position(|id| id == subscriber.id)
+                {
+                    subscribers.swap_remove(index);
+                }
+            });
     }
 
     pub(super) fn create_subscriber(&self) -> (Subscriber, mpsc::Receiver<Message>) {
@@ -186,6 +207,39 @@ impl RPCServer {
             }
             let notification =
                 v2::TransactionNotification::new(&notification, &self.address_codec).unwrap();
+            let notification = v2::WebSocketNotification::with_transaction(notification).unwrap();
+            let notification = to_string(&notification).unwrap();
+            let notification = Message::Text(notification.into());
+            let mut i = 0;
+            while i < subscribers.len() {
+                if subscribers[i].sender.try_send(notification.clone()).is_ok() {
+                    i += 1;
+                } else {
+                    subscribers.swap_remove(i);
+                }
+            }
+        }
+    }
+
+    async fn walletdb_observer(self: Arc<Self>, mut walletdb_notifier: WalletDBNotifier) {
+        while let Some(notification) = walletdb_notifier.recv().await {
+            let mut subscribers = self.wallet_subscribers.lock().await;
+            let Some(subscribers) = subscribers.get_mut(&notification.4) else {
+                continue;
+            };
+            if subscribers.is_empty() {
+                continue;
+            }
+            let notification = v2::TransactionNotification::new(
+                &(
+                    notification.0,
+                    notification.1,
+                    notification.2,
+                    notification.3,
+                ),
+                &self.address_codec,
+            )
+            .unwrap();
             let notification = v2::WebSocketNotification::with_transaction(notification).unwrap();
             let notification = to_string(&notification).unwrap();
             let notification = Message::Text(notification.into());

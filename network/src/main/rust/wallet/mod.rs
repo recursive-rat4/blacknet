@@ -21,4 +21,4 @@ pub mod walletdb;
 
 pub use address::{AddressCodec, AddressKind};
 pub use wallet::Wallet;
-pub use walletdb::WalletDB;
+pub use walletdb::{Notification, Notifier, Subscriber, WalletDB};

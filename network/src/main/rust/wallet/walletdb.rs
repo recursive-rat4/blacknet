@@ -21,8 +21,9 @@ use crate::{
     wallet::{AddressCodec, Wallet},
 };
 use blacknet_compat::{Mode, XDGDirectories};
-use blacknet_kernel::{blake2b::Hash, ed25519::PublicKey};
+use blacknet_kernel::{blake2b::Hash, ed25519::PublicKey, transaction::Transaction};
 use blacknet_log::{LogManager, Logger, error, info};
+use blacknet_time::Milliseconds;
 use core::{error::Error as StdError, fmt};
 use rusqlite::Error as SqliteError;
 use std::{
@@ -30,17 +31,22 @@ use std::{
     fs::{DirBuilder, read_dir},
     io::Error as IoError,
     path::PathBuf,
-    sync::{Arc, RwLock},
+    sync::{Arc, OnceLock, RwLock},
 };
-use tokio::runtime::Runtime;
+use tokio::{runtime::Runtime, sync::mpsc};
 
 #[cfg(target_family = "unix")]
 use std::os::unix::fs::DirBuilderExt;
+
+pub type Notification = (Transaction, Hash, Milliseconds, u32, PublicKey);
+pub type Notifier = mpsc::UnboundedReceiver<Notification>;
+pub type Subscriber = mpsc::UnboundedSender<Notification>;
 
 pub struct WalletDB {
     logger: Logger,
     address_codec: AddressCodec,
     wallets: HashMap<PublicKey, Wallet>,
+    subscriber: OnceLock<Subscriber>,
 }
 
 impl WalletDB {
@@ -83,6 +89,7 @@ impl WalletDB {
             logger,
             address_codec: AddressCodec::new(mode)?,
             wallets,
+            subscriber: OnceLock::new(),
         });
 
         runtime.spawn(WalletDB::coindb_observer(wallet_db.clone(), coin_notifier));
@@ -92,6 +99,12 @@ impl WalletDB {
         ));
 
         Ok(wallet_db)
+    }
+
+    pub fn subscribe(&self) -> Notifier {
+        let (sender, receiver) = mpsc::unbounded_channel();
+        self.subscriber.set(sender).expect("one subscriber");
+        receiver
     }
 
     fn mkdir(dirs: &XDGDirectories) -> Result<PathBuf, IoError> {
@@ -147,6 +160,14 @@ impl WalletDB {
         while let Some(notification) = txpool_notifier.recv().await {
             todo!();
         }
+    }
+
+    #[expect(dead_code)]
+    fn notify(&self, notification: Notification) {
+        let Some(subscriber) = self.subscriber.get() else {
+            return;
+        };
+        let _ = subscriber.send(notification);
     }
 }
 
