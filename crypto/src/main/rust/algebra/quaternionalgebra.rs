@@ -25,7 +25,6 @@ use crate::symmetric::{Absorb, Duplexer, Squeeze};
 use core::borrow::{Borrow, BorrowMut};
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
-use core::mem::{MaybeUninit, transmute_copy};
 use core::ops::{
     Add, AddAssign, Deref, DerefMut, Div, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign,
 };
@@ -50,15 +49,8 @@ impl<R: UnitalRing> QuaternionAlgebra<R> {
     }
 
     pub const fn const_from(scalar: R) -> Self {
-        let mut t = [const { MaybeUninit::<R>::uninit() }; 4];
-        t[0].write(scalar);
-        let mut i = 1;
-        while i < 4 {
-            t[i].write(R::ZERO);
-            i += 1;
-        }
-        let t: [R; 4] = unsafe { transmute_copy(&t) };
-        Self::new(Array::<R, 4>::new(t))
+        let coefficients = [scalar, R::ZERO, R::ZERO, R::ZERO];
+        Self::new(Array::<R, 4>::new(coefficients))
     }
 
     fn reduced_norm(&self) -> R

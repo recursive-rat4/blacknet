@@ -22,7 +22,6 @@ use core::array;
 use core::borrow::{Borrow, BorrowMut};
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum, zip};
-use core::mem::MaybeUninit;
 use core::ops::{
     Add, AddAssign, Deref, DerefMut, Div, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign,
 };
@@ -212,23 +211,27 @@ impl<'a, T: Send, const N: usize> IntoParallelIterator for &'a mut Array<T, N> {
     }
 }
 
-impl<T: AddAssign, const N: usize> Add for Array<T, N> {
+impl<T: Add<Output = T>, const N: usize> Add for Array<T, N> {
     type Output = Self;
 
     fn add(self, rps: Self) -> Self::Output {
-        let mut lps = self;
-        zip(&mut lps, rps).for_each(|(l, r)| *l += r);
-        lps
+        let mut rps = rps.into_iter();
+        self.map(|l| {
+            let r = rps.next().unwrap();
+            l + r
+        })
     }
 }
 
-impl<T: for<'a> AddAssign<&'a T>, const N: usize> Add<&Self> for Array<T, N> {
+impl<T: for<'a> Add<&'a T, Output = T>, const N: usize> Add<&Self> for Array<T, N> {
     type Output = Self;
 
     fn add(self, rps: &Self) -> Self::Output {
-        let mut lps = self;
-        zip(&mut lps, rps).for_each(|(l, r)| *l += r);
-        lps
+        let mut rps = rps.into_iter();
+        self.map(|l| {
+            let r = rps.next().unwrap();
+            l + r
+        })
     }
 }
 
@@ -239,12 +242,11 @@ where
     type Output = Array<T, N>;
 
     fn add(self, rps: Array<T, N>) -> Self::Output {
-        let mut values = [const { MaybeUninit::<T>::uninit() }; N];
-        zip(&mut values, zip(self, rps)).for_each(|(o, (l, r))| {
-            o.write(l + r);
-        });
-        let values = values.map(|i| unsafe { i.assume_init() });
-        Array::<T, N> { values }
+        let mut lps = self.into_iter();
+        rps.map(|r| {
+            let l = lps.next().unwrap();
+            l + r
+        })
     }
 }
 
@@ -255,7 +257,7 @@ where
     type Output = Array<T, N>;
 
     fn add(self, rps: &'a Array<T, N>) -> Self::Output {
-        Self::Output::from_fn(|i| &self.values[i] + &rps.values[i])
+        Array::from_fn(|i| &self.values[i] + &rps.values[i])
     }
 }
 
@@ -286,7 +288,7 @@ where
     type Output = Array<T, N>;
 
     fn double(self) -> Self::Output {
-        Self::Output::from_fn(|i| (&self.values[i]).double())
+        Array::from_fn(|i| (&self.values[i]).double())
     }
 }
 
@@ -305,27 +307,31 @@ where
     type Output = Array<T, N>;
 
     fn neg(self) -> Self::Output {
-        Self::Output::from_fn(|i| -&self.values[i])
+        Array::from_fn(|i| -&self.values[i])
     }
 }
 
-impl<T: SubAssign, const N: usize> Sub for Array<T, N> {
+impl<T: Sub<Output = T>, const N: usize> Sub for Array<T, N> {
     type Output = Self;
 
     fn sub(self, rps: Self) -> Self::Output {
-        let mut lps = self;
-        zip(&mut lps, rps).for_each(|(l, r)| *l -= r);
-        lps
+        let mut rps = rps.into_iter();
+        self.map(|l| {
+            let r = rps.next().unwrap();
+            l - r
+        })
     }
 }
 
-impl<T: for<'a> SubAssign<&'a T>, const N: usize> Sub<&Self> for Array<T, N> {
+impl<T: for<'a> Sub<&'a T, Output = T>, const N: usize> Sub<&Self> for Array<T, N> {
     type Output = Self;
 
     fn sub(self, rps: &Self) -> Self::Output {
-        let mut lps = self;
-        zip(&mut lps, rps).for_each(|(l, r)| *l -= r);
-        lps
+        let mut rps = rps.into_iter();
+        self.map(|l| {
+            let r = rps.next().unwrap();
+            l - r
+        })
     }
 }
 
@@ -336,12 +342,11 @@ where
     type Output = Array<T, N>;
 
     fn sub(self, rps: Array<T, N>) -> Self::Output {
-        let mut values = [const { MaybeUninit::<T>::uninit() }; N];
-        zip(&mut values, zip(self, rps)).for_each(|(o, (l, r))| {
-            o.write(l - r);
-        });
-        let values = values.map(|i| unsafe { i.assume_init() });
-        Array::<T, N> { values }
+        let mut lps = self.into_iter();
+        rps.map(|r| {
+            let l = lps.next().unwrap();
+            l - r
+        })
     }
 }
 
@@ -352,7 +357,7 @@ where
     type Output = Array<T, N>;
 
     fn sub(self, rps: &'a Array<T, N>) -> Self::Output {
-        Self::Output::from_fn(|i| &self.values[i] - &rps.values[i])
+        Array::from_fn(|i| &self.values[i] - &rps.values[i])
     }
 }
 
@@ -368,23 +373,27 @@ impl<T: for<'a> SubAssign<&'a T>, const N: usize> SubAssign<&Self> for Array<T, 
     }
 }
 
-impl<T: MulAssign, const N: usize> Mul for Array<T, N> {
+impl<T: Mul<Output = T>, const N: usize> Mul for Array<T, N> {
     type Output = Self;
 
     fn mul(self, rps: Self) -> Self::Output {
-        let mut lps = self;
-        zip(&mut lps, rps).for_each(|(l, r)| *l *= r);
-        lps
+        let mut rps = rps.into_iter();
+        self.map(|l| {
+            let r = rps.next().unwrap();
+            l * r
+        })
     }
 }
 
-impl<T: for<'a> MulAssign<&'a T>, const N: usize> Mul<&Self> for Array<T, N> {
+impl<T: for<'a> Mul<&'a T, Output = T>, const N: usize> Mul<&Self> for Array<T, N> {
     type Output = Self;
 
     fn mul(self, rps: &Self) -> Self::Output {
-        let mut lps = self;
-        zip(&mut lps, rps).for_each(|(l, r)| *l *= r);
-        lps
+        let mut rps = rps.into_iter();
+        self.map(|l| {
+            let r = rps.next().unwrap();
+            l * r
+        })
     }
 }
 
@@ -395,12 +404,11 @@ where
     type Output = Array<T, N>;
 
     fn mul(self, rps: Array<T, N>) -> Self::Output {
-        let mut values = [const { MaybeUninit::<T>::uninit() }; N];
-        zip(&mut values, zip(self, rps)).for_each(|(o, (l, r))| {
-            o.write(l * r);
-        });
-        let values = values.map(|i| unsafe { i.assume_init() });
-        Array::<T, N> { values }
+        let mut lps = self.into_iter();
+        rps.map(|r| {
+            let l = lps.next().unwrap();
+            l * r
+        })
     }
 }
 
@@ -411,7 +419,7 @@ where
     type Output = Array<T, N>;
 
     fn mul(self, rps: &'a Array<T, N>) -> Self::Output {
-        Self::Output::from_fn(|i| &self.values[i] * &rps.values[i])
+        Array::from_fn(|i| &self.values[i] * &rps.values[i])
     }
 }
 
@@ -442,11 +450,11 @@ where
     type Output = Array<T, N>;
 
     fn square(self) -> Self::Output {
-        Self::Output::from_fn(|i| (&self.values[i]).square())
+        Array::from_fn(|i| (&self.values[i]).square())
     }
 }
 
-impl<T: for<'a> MulAssign<&'a T>, const N: usize> Mul<T> for Array<T, N> {
+impl<T: for<'a> Mul<&'a T, Output = T>, const N: usize> Mul<T> for Array<T, N> {
     type Output = Self;
 
     #[inline]
@@ -455,13 +463,11 @@ impl<T: for<'a> MulAssign<&'a T>, const N: usize> Mul<T> for Array<T, N> {
     }
 }
 
-impl<T: for<'a> MulAssign<&'a T>, const N: usize> Mul<&T> for Array<T, N> {
+impl<T: for<'a> Mul<&'a T, Output = T>, const N: usize> Mul<&T> for Array<T, N> {
     type Output = Self;
 
     fn mul(self, rps: &T) -> Self::Output {
-        let mut lps = self;
-        lps.values.iter_mut().for_each(|l| *l *= rps);
-        lps
+        self.map(|l| l * rps)
     }
 }
 
@@ -484,7 +490,7 @@ where
     type Output = Array<T, N>;
 
     fn mul(self, rps: &T) -> Self::Output {
-        Self::Output::from_fn(|i| &self.values[i] * rps)
+        Array::from_fn(|i| &self.values[i] * rps)
     }
 }
 
@@ -501,7 +507,7 @@ impl<T: for<'a> MulAssign<&'a T>, const N: usize> MulAssign<&T> for Array<T, N> 
     }
 }
 
-impl<T: for<'a> MulAssign<&'a T> + Inv<Output = BlOption<T>>, const N: usize> Div<T>
+impl<T: for<'a> Mul<&'a T, Output = T> + Inv<Output = BlOption<T>>, const N: usize> Div<T>
     for Array<T, N>
 {
     type Output = BlOption<Self>;
@@ -511,7 +517,7 @@ impl<T: for<'a> MulAssign<&'a T> + Inv<Output = BlOption<T>>, const N: usize> Di
     }
 }
 
-impl<T: for<'a> MulAssign<&'a T>, const N: usize> Div<&T> for Array<T, N>
+impl<T: for<'a> Mul<&'a T, Output = T>, const N: usize> Div<&T> for Array<T, N>
 where
     for<'a> &'a T: Inv<Output = BlOption<T>>,
 {
@@ -544,13 +550,13 @@ where
     }
 }
 
-impl<T: LeftZero + AddAssign, const N: usize> Sum for Array<T, N> {
+impl<T: LeftZero + Add<Output = T>, const N: usize> Sum for Array<T, N> {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
         iter.reduce(|lps, rps| lps + rps).unwrap_or(Self::LEFT_ZERO)
     }
 }
 
-impl<'a, T: LeftZero + for<'b> AddAssign<&'b T> + Clone, const N: usize> Sum<&'a Self>
+impl<'a, T: LeftZero + for<'b> Add<&'b T, Output = T> + Clone, const N: usize> Sum<&'a Self>
     for Array<T, N>
 {
     fn sum<I: Iterator<Item = &'a Self>>(mut iter: I) -> Self {
@@ -562,13 +568,13 @@ impl<'a, T: LeftZero + for<'b> AddAssign<&'b T> + Clone, const N: usize> Sum<&'a
     }
 }
 
-impl<T: LeftOne + MulAssign, const N: usize> Product for Array<T, N> {
+impl<T: LeftOne + Mul<Output = T>, const N: usize> Product for Array<T, N> {
     fn product<I: Iterator<Item = Self>>(iter: I) -> Self {
         iter.reduce(|lps, rps| lps * rps).unwrap_or(Self::LEFT_ONE)
     }
 }
 
-impl<'a, T: LeftOne + for<'b> MulAssign<&'b T> + Clone, const N: usize> Product<&'a Self>
+impl<'a, T: LeftOne + for<'b> Mul<&'b T, Output = T> + Clone, const N: usize> Product<&'a Self>
     for Array<T, N>
 {
     fn product<I: Iterator<Item = &'a Self>>(mut iter: I) -> Self {
