@@ -19,7 +19,7 @@ use crate::algebra::{Concat, Double, Inv, One, SemifieldOps, Square, Tensor, Uni
 use crate::matrix::{DenseVector, IdentityMatrix};
 use alloc::vec;
 use alloc::vec::Vec;
-use core::iter::{Sum, zip};
+use core::iter::{Sum, repeat_with, zip};
 use core::ops::{Add, AddAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign};
 #[cfg(feature = "rayon")]
 use rayon::slice::ParallelSlice;
@@ -75,6 +75,18 @@ impl<T> DenseMatrix<T> {
             rows,
             columns,
             elements: vec![element; rows as usize * columns as usize],
+        }
+    }
+
+    /// Fill a new `m × n` matrix by calling `f`.
+    #[inline]
+    pub fn fill_with<F: FnMut() -> T>(rows: u32, columns: u32, f: F) -> Self {
+        Self {
+            rows,
+            columns,
+            elements: repeat_with(f)
+                .take(rows as usize * columns as usize)
+                .collect(),
         }
     }
 

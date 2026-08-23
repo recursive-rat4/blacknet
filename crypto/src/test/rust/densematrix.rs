@@ -18,7 +18,7 @@
 use blacknet_crypto::algebra::{Concat, Double, Inv, One, Square, Tensor, Zero};
 use blacknet_crypto::matrix::{DenseMatrix, DenseVector};
 use blacknet_crypto::norm::{LInf, Norm};
-use core::iter::zip;
+use core::iter::{successors, zip};
 
 type R = blacknet_crypto::pervushin::PervushinField;
 
@@ -28,6 +28,30 @@ fn eq() {
     let b = DenseMatrix::<R>::new(2, 1, vec![R::ZERO; 2]);
     assert_eq!(a, a);
     assert_ne!(a, b);
+}
+
+#[test]
+fn fill() {
+    let a = DenseMatrix::<R>::new(2, 3, vec![R::ONE; 6]);
+    let b = DenseMatrix::<R>::fill(2, 3, R::ONE);
+    assert_eq!(b, a);
+}
+
+#[test]
+fn fill_with() {
+    let a = DenseMatrix::<R>::new(
+        2,
+        3,
+        successors(Some(R::ONE), |i| Some(i + R::ONE))
+            .take(6)
+            .collect(),
+    );
+    let mut i = R::ZERO;
+    let b = DenseMatrix::<R>::fill_with(2, 3, || {
+        i += R::ONE;
+        i
+    });
+    assert_eq!(b, a);
 }
 
 #[test]

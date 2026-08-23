@@ -15,11 +15,34 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_crypto::algebra::{Concat, Dot, Tensor};
+use blacknet_crypto::algebra::{Concat, Dot, One, Tensor, Zero};
 use blacknet_crypto::matrix::{DenseMatrix, DenseVector};
 use blacknet_crypto::norm::{LInf, Norm};
+use core::iter::successors;
 
-type R = blacknet_crypto::pervushin::PervushinField;
+type R = blacknet_crypto::uring::U32Ring;
+
+#[test]
+fn fill() {
+    let a = DenseVector::<R>::new(vec![R::ONE; 2]);
+    let b = DenseVector::<R>::fill(2, R::ONE);
+    assert_eq!(b, a);
+}
+
+#[test]
+fn fill_with() {
+    let a = DenseVector::<R>::new(
+        successors(Some(R::ONE), |i| Some(i + R::ONE))
+            .take(3)
+            .collect(),
+    );
+    let mut i = R::ZERO;
+    let b = DenseVector::<R>::fill_with(3, || {
+        i += R::ONE;
+        i
+    });
+    assert_eq!(b, a);
+}
 
 #[test]
 fn add() {
@@ -59,8 +82,8 @@ fn sub() {
 
 #[test]
 fn neg() {
-    let a = DenseVector::<R>::from([7, 0, -1].map(R::from));
-    let b = DenseVector::<R>::from([-7, 0, 1].map(R::from));
+    let a = DenseVector::<R>::from([7, 0, -1].map(|i| R::from(i as u32)));
+    let b = DenseVector::<R>::from([-7, 0, 1].map(|i| R::from(i as u32)));
     assert_eq!(-&a, b);
     assert_eq!(-(-&a), a);
 }
@@ -77,8 +100,8 @@ fn concat() {
 
 #[test]
 fn dot() {
-    let a = DenseVector::<R>::from([1, 3, -5].map(R::from));
-    let b = DenseVector::<R>::from([4, -2, -1].map(R::from));
+    let a = DenseVector::<R>::from([1, 3, -5].map(|i| R::from(i as u32)));
+    let b = DenseVector::<R>::from([4, -2, -1].map(|i| R::from(i as u32)));
     let c = R::from(3);
     let d = R::from(35);
     assert_eq!((&a).dot(&b), c);

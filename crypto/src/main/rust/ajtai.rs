@@ -24,7 +24,6 @@ use crate::random::{
     BinaryUniformDistribution, Distribution, UniformBitGenerator, UniformModDistribution,
 };
 use core::array;
-use core::iter::repeat_with;
 use core::ops::Mul;
 
 /// Ajtai hash.
@@ -50,13 +49,7 @@ impl<Lp, R: UnitalRing + Norm<Lp>> AjtaiHash<Lp, R> {
         R: IntegerModRing,
     {
         let mut umd = UniformModDistribution::<R>::new();
-        DenseMatrix::<R>::new(
-            m,
-            n,
-            repeat_with(|| umd.sample(g))
-                .take(m as usize * n as usize)
-                .collect(),
-        )
+        DenseMatrix::<R>::fill_with(m, n, || umd.sample(g))
     }
 
     /// Module Short Integer Solution
@@ -69,13 +62,7 @@ impl<Lp, R: UnitalRing + Norm<Lp>> AjtaiHash<Lp, R> {
         R: PolynomialRing<Z> + From<[Z; N]>,
     {
         let mut umd = UniformModDistribution::<Z>::new();
-        DenseMatrix::<R>::new(
-            m,
-            n,
-            repeat_with(|| R::from(array::from_fn(|_| umd.sample(g))))
-                .take(m as usize * n as usize)
-                .collect(),
-        )
+        DenseMatrix::<R>::fill_with(m, n, || R::from(array::from_fn(|_| umd.sample(g))))
     }
 }
 
@@ -130,20 +117,8 @@ impl<Lp, R: UnitalRing + Norm<Lp>> AjtaiCommitment<Lp, R> {
     {
         let mut umd = UniformModDistribution::<R>::new();
         (
-            DenseMatrix::<R>::new(
-                m,
-                n,
-                repeat_with(|| umd.sample(g))
-                    .take(m as usize * n as usize)
-                    .collect(),
-            ),
-            DenseMatrix::<R>::new(
-                m,
-                k,
-                repeat_with(|| umd.sample(g))
-                    .take(m as usize * k as usize)
-                    .collect(),
-            ),
+            DenseMatrix::<R>::fill_with(m, n, || umd.sample(g)),
+            DenseMatrix::<R>::fill_with(m, k, || umd.sample(g)),
         )
     }
 
@@ -159,20 +134,8 @@ impl<Lp, R: UnitalRing + Norm<Lp>> AjtaiCommitment<Lp, R> {
     {
         let mut umd = UniformModDistribution::<Z>::new();
         (
-            DenseMatrix::<R>::new(
-                m,
-                n,
-                repeat_with(|| R::from(array::from_fn(|_| umd.sample(g))))
-                    .take(m as usize * n as usize)
-                    .collect(),
-            ),
-            DenseMatrix::<R>::new(
-                m,
-                k,
-                repeat_with(|| R::from(array::from_fn(|_| umd.sample(g))))
-                    .take(m as usize * k as usize)
-                    .collect(),
-            ),
+            DenseMatrix::<R>::fill_with(m, n, || R::from(array::from_fn(|_| umd.sample(g)))),
+            DenseMatrix::<R>::fill_with(m, k, || R::from(array::from_fn(|_| umd.sample(g)))),
         )
     }
 }
@@ -196,9 +159,7 @@ where
         rng: &mut RNG,
     ) -> (DenseVector<R>, DenseVector<R>) {
         let mut bud = BinaryUniformDistribution::new();
-        let r: DenseVector<R> = repeat_with(|| bud.sample(rng))
-            .take(self.b.columns() as usize)
-            .collect();
+        let r = DenseVector::<R>::fill_with(self.b.columns(), || bud.sample(rng));
         (&self.a * m + &self.b * &r, r)
     }
 

@@ -22,7 +22,7 @@ use alloc::borrow::{Borrow, BorrowMut};
 use alloc::vec;
 use alloc::vec::Vec;
 use core::fmt::{Debug, Formatter, Result};
-use core::iter::{Sum, repeat_n, zip};
+use core::iter::{Sum, repeat_n, repeat_with, zip};
 use core::ops::{
     Add, AddAssign, Deref, DerefMut, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign,
 };
@@ -52,6 +52,12 @@ impl<T> DenseVector<T> {
         Self {
             elements: vec![element; n as usize],
         }
+    }
+
+    /// Fill a new `n`-dimensional vector by calling `f`.
+    #[inline]
+    pub fn fill_with<F: FnMut() -> T>(n: u32, f: F) -> Self {
+        repeat_with(f).take(n as usize).collect()
     }
 
     pub fn pad_to_power_of_two(&self) -> Self
