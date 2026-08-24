@@ -19,10 +19,12 @@ use crate::random::UniformBitGenerator;
 
 /// Commitment scheme is a cryptographic protocol that binds to a message and hides it.
 pub trait CommitmentScheme<Message> {
-    /// Result type.
+    /// Output type.
     type Commitment;
     /// Type to open commitment.
     type Opening;
+    /// Error type.
+    type Error;
 
     /// Commit to a message.
     fn commit<RNG: UniformBitGenerator>(
@@ -37,15 +39,17 @@ pub trait CommitmentScheme<Message> {
         commitment: &Self::Commitment,
         message: &Message,
         opening: &Self::Opening,
-    ) -> bool;
+    ) -> Result<(), Self::Error>;
 }
 
 /// Binding commitment scheme is a cryptographic protocol that binds to a message but can't hide it.
 pub trait BindingCommitmentScheme<Message> {
-    /// Result type.
+    /// Output type.
     type Commitment;
     /// Type to open commitment.
     type Opening;
+    /// Error type.
+    type Error;
 
     /// Commit to a message.
     fn commit(&self, message: &Message) -> (Self::Commitment, Self::Opening);
@@ -56,5 +60,5 @@ pub trait BindingCommitmentScheme<Message> {
         commitment: &Self::Commitment,
         message: &Message,
         opening: &Self::Opening,
-    ) -> bool;
+    ) -> Result<(), Self::Error>;
 }

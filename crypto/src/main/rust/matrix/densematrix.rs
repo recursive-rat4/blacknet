@@ -675,13 +675,13 @@ where
     }
 }
 
-impl<T: Sum> Mul<&DenseVector<T>> for &DenseMatrix<T>
+impl<'a, T: Sum> Mul<&'a DenseVector<T>> for &DenseMatrix<T>
 where
-    for<'a> &'a T: Mul<Output = T>,
+    for<'b> &'b T: Mul<Output = T>,
 {
     type Output = DenseVector<T>;
 
-    fn mul(self, rps: &DenseVector<T>) -> Self::Output {
+    fn mul(self, rps: &'a DenseVector<T>) -> Self::Output {
         debug_assert!(self.columns == rps.dimension());
         self.iter_row()
             .map(|row| zip(row, rps).map(|(l, r)| l * r).sum())
@@ -725,13 +725,13 @@ where
     }
 }
 
-impl<T: Sum> Mul<&DenseMatrix<T>> for &DenseVector<T>
+impl<'a, T: Sum> Mul<&'a DenseMatrix<T>> for &DenseVector<T>
 where
-    for<'a> &'a T: Mul<Output = T>,
+    for<'b> &'b T: Mul<Output = T>,
 {
     type Output = DenseVector<T>;
 
-    fn mul(self, rps: &DenseMatrix<T>) -> Self::Output {
+    fn mul(self, rps: &'a DenseMatrix<T>) -> Self::Output {
         debug_assert!(self.dimension() == rps.rows);
         (0..rps.columns)
             .map(|j| {

@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{IntegerModRing, PolynomialRing, UnitalRing};
+use crate::algebra::{IntegerModRing, PolynomialRing, RingOps, UnitalRing};
 use crate::branchless::BlSelect;
 use crate::commitmentscheme::{BindingCommitmentScheme, CommitmentScheme};
 use crate::matrix::{DenseMatrix, DenseVector};
@@ -24,7 +24,7 @@ use crate::random::{
     BinaryUniformDistribution, Distribution, UniformBitGenerator, UniformModDistribution,
 };
 use core::array;
-use core::ops::Mul;
+use core::fmt;
 
 /// Ajtai hash.
 pub struct AjtaiHash<Lp, R: UnitalRing + Norm<Lp>> {
@@ -66,20 +66,30 @@ impl<Lp, R: UnitalRing + Norm<Lp>> AjtaiHash<Lp, R> {
     }
 }
 
-impl<Lp, R: UnitalRing + Norm<Lp> + Eq, Message: Norm<Lp, Length = R::Length>>
-    BindingCommitmentScheme<Message> for AjtaiHash<Lp, R>
+impl<Lp, R: UnitalRing + Norm<Lp> + Eq> BindingCommitmentScheme<DenseVector<R>> for AjtaiHash<Lp, R>
 where
-    for<'a, 'b> &'a DenseMatrix<R>: Mul<&'b Message, Output = DenseVector<R>>,
+    for<'a> &'a R: RingOps<R>,
+    DenseVector<R>: Norm<Lp, Length = R::Length>,
 {
     type Commitment = DenseVector<R>;
     type Opening = ();
+    type Error = Error;
 
-    fn commit(&self, m: &Message) -> (DenseVector<R>, ()) {
+    fn commit(&self, m: &DenseVector<R>) -> (DenseVector<R>, ()) {
         (&self.a * m, ())
     }
 
-    fn open(&self, c: &DenseVector<R>, m: &Message, _o: &()) -> bool {
-        m.check_norm(&self.bound) && &self.a * m == *c
+    fn open(&self, c: &DenseVector<R>, m: &DenseVector<R>, _o: &()) -> Result<(), Error> {
+        if self.a.columns() != m.dimension() {
+            return Err(Error::Dimension);
+        }
+        if !m.check_norm(&self.bound) {
+            return Err(Error::Norm);
+        }
+        if &self.a * m != *c {
+            return Err(Error::Solution);
+        }
+        Ok(())
     }
 }
 
@@ -140,22 +150,19 @@ impl<Lp, R: UnitalRing + Norm<Lp>> AjtaiCommitment<Lp, R> {
     }
 }
 
-impl<
-    Lp,
-    R: UnitalRing + Norm<Lp> + Eq + BlSelect<Output = R>,
-    Message: Norm<Lp, Length = R::Length>,
-> CommitmentScheme<Message> for AjtaiCommitment<Lp, R>
+impl<Lp, R: UnitalRing + Norm<Lp> + Eq + BlSelect<Output = R>> CommitmentScheme<DenseVector<R>>
+    for AjtaiCommitment<Lp, R>
 where
-    for<'a, 'b> &'a DenseMatrix<R>: Mul<&'b Message, Output = DenseVector<R>>,
-    for<'a, 'b> &'a DenseMatrix<R>: Mul<&'b DenseVector<R>, Output = DenseVector<R>>,
+    for<'a> &'a R: RingOps<R>,
     DenseVector<R>: Norm<Lp, Length = R::Length>,
 {
     type Commitment = DenseVector<R>;
     type Opening = DenseVector<R>;
+    type Error = Error;
 
     fn commit<RNG: UniformBitGenerator>(
         &self,
-        m: &Message,
+        m: &DenseVector<R>,
         rng: &mut RNG,
     ) -> (DenseVector<R>, DenseVector<R>) {
         let mut bud = BinaryUniformDistribution::new();
@@ -163,7 +170,40 @@ where
         (&self.a * m + &self.b * &r, r)
     }
 
-    fn open(&self, c: &DenseVector<R>, m: &Message, o: &DenseVector<R>) -> bool {
-        m.check_norm(&self.bound) && o.check_norm(&self.bound) && &self.a * m + &self.b * o == *c
+    fn open(
+        &self,
+        c: &DenseVector<R>,
+        m: &DenseVector<R>,
+        o: &DenseVector<R>,
+    ) -> Result<(), Error> {
+        if self.a.columns() != m.dimension() || self.b.columns() != o.dimension() {
+            return Err(Error::Dimension);
+        }
+        if !m.check_norm(&self.bound) || !o.check_norm(&self.bound) {
+            return Err(Error::Norm);
+        }
+        if &self.a * m + &self.b * o != *c {
+            return Err(Error::Solution);
+        }
+        Ok(())
     }
 }
+
+#[derive(Debug)]
+pub enum Error {
+    Dimension,
+    Norm,
+    Solution,
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Error::Dimension => f.write_str("Dimension mismath"),
+            Error::Norm => f.write_str("Norm is out of bound"),
+            Error::Solution => f.write_str("Not a solution"),
+        }
+    }
+}
+
+impl core::error::Error for Error {}

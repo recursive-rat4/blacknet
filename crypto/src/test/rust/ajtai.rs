@@ -15,11 +15,12 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_crypto::ajtai::{AjtaiCommitment, AjtaiHash};
+use blacknet_crypto::ajtai::{AjtaiCommitment, AjtaiHash, Error};
 use blacknet_crypto::algebra::IntegerModRing;
 use blacknet_crypto::commitmentscheme::{BindingCommitmentScheme, CommitmentScheme};
 use blacknet_crypto::matrix::DenseVector;
 use blacknet_crypto::norm::{L2, LInf};
+use core::assert_matches;
 
 type Z = blacknet_crypto::uring::U64Ring;
 type DRG = blacknet_crypto::random::FastDRG;
@@ -36,26 +37,57 @@ fn hash() {
     let z2 = Z::from(2);
     let z3 = Z::from(3);
     let z4 = Z::from(4);
+    let z8 = Z::from(8);
     let m12 = DenseVector::from([z1, z2]);
     let m21 = DenseVector::from([z2, z1]);
     let m34 = DenseVector::from([z3, z4]);
+    let m18 = DenseVector::from([z1, z8]);
     let (c12, _) = cs_inf.commit(&m12);
     let (c34, _) = cs_inf.commit(&m34);
+    let (c18, _) = cs_inf.commit(&m34);
 
-    assert!(cs_inf.open(&c12, &m12, &()), "Opening");
-    assert!(!cs_inf.open(&c34, &m12, &()), "Binding");
-    assert!(!cs_inf.open(&c12, &m21, &()), "Positional binding");
-    assert!(
+    assert_matches!(cs_inf.open(&c12, &m12, &()), Ok(()), "Opening");
+    assert_matches!(
         cs_inf.open(&(&c12 + &c34), &(&m12 + &m34), &()),
+        Ok(()),
         "Bounded homomorphism"
     );
+    assert_matches!(
+        cs_inf.open(&c12, &DenseVector::default(), &()),
+        Err(Error::Dimension),
+    );
+    assert_matches!(cs_inf.open(&c18, &m18, &()), Err(Error::Norm), "Large norm",);
+    assert_matches!(
+        cs_inf.open(&c34, &m12, &()),
+        Err(Error::Solution),
+        "Binding"
+    );
+    assert_matches!(
+        cs_inf.open(&c12, &m21, &()),
+        Err(Error::Solution),
+        "Positional binding"
+    );
 
-    assert!(cs_ecd.open(&c12, &m12, &()), "Opening");
-    assert!(!cs_ecd.open(&c34, &m12, &()), "Binding");
-    assert!(!cs_ecd.open(&c12, &m21, &()), "Positional binding");
-    assert!(
+    assert_matches!(cs_ecd.open(&c12, &m12, &()), Ok(()), "Opening");
+    assert_matches!(
         cs_ecd.open(&(&c12 + &c34), &(&m12 + &m34), &()),
+        Ok(()),
         "Bounded homomorphism"
+    );
+    assert_matches!(
+        cs_inf.open(&c12, &DenseVector::default(), &()),
+        Err(Error::Dimension),
+    );
+    assert_matches!(cs_inf.open(&c18, &m18, &()), Err(Error::Norm), "Large norm",);
+    assert_matches!(
+        cs_ecd.open(&c34, &m12, &()),
+        Err(Error::Solution),
+        "Binding"
+    );
+    assert_matches!(
+        cs_ecd.open(&c12, &m21, &()),
+        Err(Error::Solution),
+        "Positional binding"
     );
 }
 
@@ -71,25 +103,64 @@ fn commitment() {
     let z2 = Z::from(2);
     let z3 = Z::from(3);
     let z4 = Z::from(4);
+    let z8 = Z::from(8);
     let m12 = DenseVector::from([z1, z2]);
     let m21 = DenseVector::from([z2, z1]);
     let m34 = DenseVector::from([z3, z4]);
+    let m18 = DenseVector::from([z1, z8]);
     let (c12, o12) = cs_inf.commit(&m12, &mut drg);
     let (c34, o34) = cs_inf.commit(&m34, &mut drg);
+    let (c18, o18) = cs_inf.commit(&m34, &mut drg);
 
-    assert!(cs_inf.open(&c12, &m12, &o12), "Opening");
-    assert!(!cs_inf.open(&c34, &m12, &o34), "Binding");
-    assert!(!cs_inf.open(&c12, &m21, &o12), "Positional binding");
-    assert!(
+    assert_matches!(cs_inf.open(&c12, &m12, &o12), Ok(()), "Opening");
+    assert_matches!(
         cs_inf.open(&(&c12 + &c34), &(&m12 + &m34), &(&o12 + &o34)),
+        Ok(()),
         "Bounded homomorphism"
     );
+    assert_matches!(
+        cs_inf.open(&c12, &DenseVector::default(), &o12),
+        Err(Error::Dimension),
+    );
+    assert_matches!(
+        cs_inf.open(&c18, &m18, &o18),
+        Err(Error::Norm),
+        "Large norm",
+    );
+    assert_matches!(
+        cs_inf.open(&c34, &m12, &o34),
+        Err(Error::Solution),
+        "Binding"
+    );
+    assert_matches!(
+        cs_inf.open(&c12, &m21, &o12),
+        Err(Error::Solution),
+        "Positional binding"
+    );
 
-    assert!(cs_ecd.open(&c12, &m12, &o12), "Opening");
-    assert!(!cs_ecd.open(&c34, &m12, &o34), "Binding");
-    assert!(!cs_ecd.open(&c12, &m21, &o12), "Positional binding");
-    assert!(
+    assert_matches!(cs_ecd.open(&c12, &m12, &o12), Ok(()), "Opening");
+    assert_matches!(
         cs_ecd.open(&(&c12 + &c34), &(&m12 + &m34), &(&o12 + &o34)),
+        Ok(()),
         "Bounded homomorphism"
+    );
+    assert_matches!(
+        cs_inf.open(&c12, &DenseVector::default(), &o12),
+        Err(Error::Dimension),
+    );
+    assert_matches!(
+        cs_inf.open(&c18, &m18, &o18),
+        Err(Error::Norm),
+        "Large norm",
+    );
+    assert_matches!(
+        cs_ecd.open(&c34, &m12, &o34),
+        Err(Error::Solution),
+        "Binding"
+    );
+    assert_matches!(
+        cs_ecd.open(&c12, &m21, &o12),
+        Err(Error::Solution),
+        "Positional binding"
     );
 }
