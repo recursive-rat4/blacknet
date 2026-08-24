@@ -26,7 +26,7 @@ use alloc::vec::Vec;
 use core::iter::zip;
 use core::ops::{Add, AddAssign, Deref, DerefMut, Div, Index, IndexMut, Mul, MulAssign, Neg};
 #[cfg(feature = "rayon")]
-use rayon::iter::IntoParallelIterator;
+use rayon::iter::{FromParallelIterator, IntoParallelIterator, ParallelIterator};
 use serde::{Deserialize, Serialize};
 
 /// A polynomial in one indeterminate.
@@ -130,6 +130,25 @@ impl<R: UnitalSemiring> IndexMut<u32> for UnivariatePolynomial<R> {
     }
 }
 
+impl<R: UnitalSemiring> FromIterator<R> for UnivariatePolynomial<R> {
+    #[inline]
+    fn from_iter<I: IntoIterator<Item = R>>(iter: I) -> Self {
+        Self {
+            coefficients: iter.into_iter().collect(),
+        }
+    }
+}
+
+#[cfg(feature = "rayon")]
+impl<R: UnitalSemiring + Send> FromParallelIterator<R> for UnivariatePolynomial<R> {
+    #[inline]
+    fn from_par_iter<I: IntoParallelIterator<Item = R>>(par_iter: I) -> Self {
+        Self {
+            coefficients: par_iter.into_par_iter().collect(),
+        }
+    }
+}
+
 impl<R: UnitalSemiring> IntoIterator for UnivariatePolynomial<R> {
     type Item = R;
     type IntoIter = alloc::vec::IntoIter<R>;
@@ -229,11 +248,10 @@ where
         if n == 1 {
             return powers.into();
         }
-        let point = point.clone();
         powers.push(point.clone());
         let mut power = point.clone();
         for _ in 2..n {
-            power *= &point;
+            power *= point;
             powers.push(power.clone());
         }
         powers.into()
@@ -279,18 +297,54 @@ impl<R: UnitalSemiring> Add for UnivariatePolynomial<R> {
 
     fn add(self, rps: Self) -> Self::Output {
         debug_assert_eq!(self.coefficients.len(), rps.coefficients.len());
-        Self {
-            coefficients: zip(self.coefficients, rps.coefficients)
-                .map(|(l, r)| l + r)
-                .collect(),
-        }
+        zip(self, rps).map(|(l, r)| l + r).collect()
+    }
+}
+
+impl<R: UnitalSemiring> Add<&Self> for UnivariatePolynomial<R> {
+    type Output = Self;
+
+    fn add(self, rps: &Self) -> Self::Output {
+        debug_assert_eq!(self.coefficients.len(), rps.coefficients.len());
+        zip(self, rps).map(|(l, r)| l + r).collect()
+    }
+}
+
+impl<R: UnitalSemiring> Add<UnivariatePolynomial<R>> for &UnivariatePolynomial<R>
+where
+    for<'a> &'a R: SemiringOps<R>,
+{
+    type Output = UnivariatePolynomial<R>;
+
+    fn add(self, rps: UnivariatePolynomial<R>) -> Self::Output {
+        debug_assert_eq!(self.coefficients.len(), rps.coefficients.len());
+        zip(self, rps).map(|(l, r)| l + r).collect()
+    }
+}
+
+impl<R: UnitalSemiring> Add for &UnivariatePolynomial<R>
+where
+    for<'a> &'a R: SemiringOps<R>,
+{
+    type Output = UnivariatePolynomial<R>;
+
+    fn add(self, rps: Self) -> Self::Output {
+        debug_assert_eq!(self.coefficients.len(), rps.coefficients.len());
+        zip(self, rps).map(|(l, r)| l + r).collect()
     }
 }
 
 impl<R: UnitalSemiring> AddAssign for UnivariatePolynomial<R> {
     fn add_assign(&mut self, rps: Self) {
         debug_assert_eq!(self.coefficients.len(), rps.coefficients.len());
-        zip(self.coefficients.iter_mut(), rps.coefficients).for_each(|(l, r)| *l += r);
+        zip(self, rps).for_each(|(l, r)| *l += r);
+    }
+}
+
+impl<R: UnitalSemiring> AddAssign<&Self> for UnivariatePolynomial<R> {
+    fn add_assign(&mut self, rps: &Self) {
+        debug_assert_eq!(self.coefficients.len(), rps.coefficients.len());
+        zip(self, rps).for_each(|(l, r)| *l += r);
     }
 }
 
@@ -298,9 +352,7 @@ impl<R: UnitalSemiring> Double for UnivariatePolynomial<R> {
     type Output = Self;
 
     fn double(self) -> Self::Output {
-        Self {
-            coefficients: self.coefficients.into_iter().map(Double::double).collect(),
-        }
+        self.into_iter().map(Double::double).collect()
     }
 }
 
@@ -311,9 +363,7 @@ where
     type Output = UnivariatePolynomial<R>;
 
     fn double(self) -> Self::Output {
-        Self::Output {
-            coefficients: self.coefficients.iter().map(Double::double).collect(),
-        }
+        self.into_iter().map(Double::double).collect()
     }
 }
 
@@ -321,9 +371,7 @@ impl<R: UnitalRing> Neg for UnivariatePolynomial<R> {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
-        Self {
-            coefficients: self.coefficients.into_iter().map(Neg::neg).collect(),
-        }
+        self.into_iter().map(Neg::neg).collect()
     }
 }
 
@@ -334,9 +382,7 @@ where
     type Output = UnivariatePolynomial<R>;
 
     fn neg(self) -> Self::Output {
-        Self::Output {
-            coefficients: self.coefficients.iter().map(Neg::neg).collect(),
-        }
+        self.into_iter().map(Neg::neg).collect()
     }
 }
 
