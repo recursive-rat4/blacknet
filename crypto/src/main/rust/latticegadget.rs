@@ -18,99 +18,107 @@
 use crate::algebra::{AlgebraOps, IntegerModRing, PolynomialRing, Tensor, UnitalAlgebra};
 use crate::integer::Integer;
 use crate::matrix::{DenseMatrix, DenseVector, IdentityMatrix, ScalarMatrix};
-use alloc::vec;
-use alloc::vec::Vec;
+use alloc::{vec, vec::Vec};
 use core::iter::zip;
 
 // https://eprint.iacr.org/2018/946
 
+pub struct Params<Z: IntegerModRing> {
+    radix: Z,
+    mask: <Z::Int as Integer>::Limb,
+    shift: <Z::Int as Integer>::Limb,
+    digits: u32,
+}
+
+impl<Z: IntegerModRing> Params<Z> {
+    pub const fn new(
+        radix: Z,
+        mask: <Z::Int as Integer>::Limb,
+        shift: <Z::Int as Integer>::Limb,
+        digits: u32,
+    ) -> Self {
+        Self {
+            radix,
+            mask,
+            shift,
+            digits,
+        }
+    }
+}
+
 fn decompose_impl<Z: IntegerModRing, R: PolynomialRing<Z>>(
     polynomial: &R,
-    radix_mask: <Z::Int as Integer>::Limb,
-    radix_shift: <Z::Int as Integer>::Limb,
+    params: &Params<Z>,
     pieces: &mut [R],
 ) {
     for (i, coefficient) in polynomial.borrow().iter().enumerate() {
         let mut representative = coefficient.canonical();
         for piece in pieces.iter_mut() {
-            piece[i] = Z::with_limb(representative & radix_mask);
-            representative >>= radix_shift;
+            piece[i] = Z::with_limb(representative & params.mask);
+            representative >>= params.shift;
         }
     }
 }
 
 fn decompose_slice<Z: IntegerModRing, R: PolynomialRing<Z> + Clone>(
     slice: &[R],
-    radix_mask: <Z::Int as Integer>::Limb,
-    radix_shift: <Z::Int as Integer>::Limb,
-    digits: u32,
+    params: &Params<Z>,
 ) -> Vec<R> {
-    let mut pieces = vec![R::ZERO; slice.len() * digits as usize];
-    for (polynomial, pieces) in zip(slice, pieces.chunks_exact_mut(digits as usize)) {
-        decompose_impl(polynomial, radix_mask, radix_shift, pieces)
+    let mut pieces = vec![R::ZERO; slice.len() * params.digits as usize];
+    for (polynomial, pieces) in zip(slice, pieces.chunks_exact_mut(params.digits as usize)) {
+        decompose_impl(polynomial, params, pieces)
     }
     pieces
 }
 
-pub fn decompose_integer<Z: IntegerModRing>(
-    integer: &Z,
-    radix_mask: <Z::Int as Integer>::Limb,
-    radix_shift: <Z::Int as Integer>::Limb,
-    digits: u32,
-) -> DenseVector<Z> {
+pub fn decompose_integer<Z: IntegerModRing>(integer: &Z, params: &Params<Z>) -> DenseVector<Z> {
     let mut representative = integer.canonical();
-    let mut pieces = Vec::<Z>::with_capacity(digits as usize);
-    for _ in 0..digits {
-        let piece = Z::with_limb(representative & radix_mask);
+    let mut pieces = Vec::<Z>::with_capacity(params.digits as usize);
+    for _ in 0..params.digits {
+        let piece = Z::with_limb(representative & params.mask);
         pieces.push(piece);
-        representative >>= radix_shift;
+        representative >>= params.shift;
     }
     pieces.into()
 }
 
 pub fn decompose_polynomial<Z: IntegerModRing, R: PolynomialRing<Z> + Clone>(
     polynomial: &R,
-    radix_mask: <Z::Int as Integer>::Limb,
-    radix_shift: <Z::Int as Integer>::Limb,
-    digits: u32,
+    params: &Params<Z>,
 ) -> DenseVector<R> {
-    let mut pieces = vec![R::ZERO; digits as usize];
-    decompose_impl(polynomial, radix_mask, radix_shift, &mut pieces);
+    let mut pieces = vec![R::ZERO; params.digits as usize];
+    decompose_impl(polynomial, params, &mut pieces);
     pieces.into()
 }
 
 pub fn decompose_vector<Z: IntegerModRing, R: PolynomialRing<Z> + Clone>(
     vector: &DenseVector<R>,
-    radix_mask: <Z::Int as Integer>::Limb,
-    radix_shift: <Z::Int as Integer>::Limb,
-    digits: u32,
+    params: &Params<Z>,
 ) -> DenseVector<R> {
-    let pieces = decompose_slice(vector, radix_mask, radix_shift, digits);
+    let pieces = decompose_slice(vector, params);
     pieces.into()
 }
 
 pub fn decompose_matrix<Z: IntegerModRing, R: PolynomialRing<Z> + Clone>(
     matrix: &DenseMatrix<R>,
-    radix_mask: <Z::Int as Integer>::Limb,
-    radix_shift: <Z::Int as Integer>::Limb,
-    digits: u32,
+    params: &Params<Z>,
 ) -> DenseMatrix<R> {
-    let pieces = decompose_slice(matrix.as_ref(), radix_mask, radix_shift, digits);
-    DenseMatrix::new(matrix.rows(), matrix.columns() * digits, pieces)
+    let pieces = decompose_slice(matrix.as_ref(), params);
+    DenseMatrix::new(matrix.rows(), matrix.columns() * params.digits, pieces)
 }
 
 pub fn matrix<Z: IntegerModRing + Clone, R: PolynomialRing<Z> + Clone>(
-    radix: &Z,
     m: u32,
     n: u32,
+    params: &Params<Z>,
 ) -> ScalarMatrix<DenseMatrix<R>> {
     debug_assert!(n >= 2);
     let mut powers = Vec::<R>::with_capacity(n as usize);
     powers.push(R::ONE);
-    powers.push(radix.clone().into());
-    let mut power = radix.clone();
+    powers.push(params.radix.clone().into());
+    let mut power = params.radix.clone();
     for _ in 2..n {
-        power *= radix;
+        power *= &params.radix;
         powers.push(power.clone().into());
     }
 
@@ -121,18 +129,17 @@ pub fn matrix<Z: IntegerModRing + Clone, R: PolynomialRing<Z> + Clone>(
 
 pub fn vector<Z: IntegerModRing + Clone, A: UnitalAlgebra<Z> + Clone>(
     algebra: A,
-    radix: &Z,
-    digits: u32,
+    params: &Params<Z>,
 ) -> DenseVector<A>
 where
     for<'a> &'a A: AlgebraOps<Z, A>,
 {
-    let mut powers = Vec::<A>::with_capacity(digits as usize);
+    let mut powers = Vec::<A>::with_capacity(params.digits as usize);
     powers.push(algebra.clone());
-    let mut power = radix.clone();
-    for _ in 1..digits - 1 {
+    let mut power = params.radix.clone();
+    for _ in 1..params.digits - 1 {
         powers.push(&algebra * &power);
-        power *= radix;
+        power *= &params.radix;
     }
     powers.push(algebra * power);
     powers.into()

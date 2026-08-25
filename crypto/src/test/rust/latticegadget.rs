@@ -25,6 +25,7 @@ type R = blacknet_crypto::pervushin::PervushinField2;
 #[test]
 #[rustfmt::skip]
 fn matrix() {
+    let params = latticegadget::Params::new(Z::from(65536), 65535, 16, 4);
     let a = DenseMatrix::new(2, 8, [
             3, 2, 1, 0,
             4, 2, 1, 0,
@@ -37,36 +38,39 @@ fn matrix() {
             R::from([4295098373, 0].map(Z::with_int)),
             R::from([4295098374, 0].map(Z::with_int)),
      ].into());
-    let g = latticegadget::matrix::<Z, R>(&Z::from(65536), 2, 4);
+    let g = latticegadget::matrix::<Z, R>(2, 4, &params);
     assert_eq!(&a * &g.transpose(), b);
-    let c = latticegadget::decompose_matrix(&b, 65535, 16, 4);
+    let c = latticegadget::decompose_matrix(&b, &params);
     assert_eq!(c, a);
 }
 
 #[test]
 fn vector() {
+    let params = latticegadget::Params::new(Z::from(65536), 65535, 16, 4);
     let a = DenseVector::from([3, 2, 1, 0, 4, 2, 1, 0].map(Z::from).map(R::from));
     let b = DenseVector::from([4295098371, 4295098372].map(Z::with_int).map(R::from));
-    let g = latticegadget::matrix::<Z, R>(&Z::from(65536), 2, 4);
+    let g = latticegadget::matrix::<Z, R>(2, 4, &params);
     assert_eq!(&g * &a, b);
-    let c = latticegadget::decompose_vector(&b, 65535, 16, 4);
+    let c = latticegadget::decompose_vector(&b, &params);
     assert_eq!(c, a);
 }
 
 #[test]
 fn polynomial() {
+    let params = latticegadget::Params::new(Z::from(65536), 65535, 16, 4);
     let a = R::from([4444, 7789].map(Z::from));
     let b = R::from([34010, -59023].map(Z::from));
-    let d = latticegadget::decompose_polynomial(&a, 65535, 16, 4);
-    let p = latticegadget::vector::<Z, R>(b, &Z::from(65536), 4);
+    let d = latticegadget::decompose_polynomial(&a, &params);
+    let p = latticegadget::vector::<Z, R>(b, &params);
     assert_eq!(d.dot(p), a * b);
 }
 
 #[test]
 fn integer() {
+    let params = latticegadget::Params::new(Z::from(65536), 65535, 16, 4);
     let a = Z::from(78844277);
     let b = Z::from(-59023);
-    let d = latticegadget::decompose_integer(&a, 65535, 16, 4);
-    let p = latticegadget::vector::<Z, Z>(b, &Z::from(65536), 4);
+    let d = latticegadget::decompose_integer(&a, &params);
+    let p = latticegadget::vector::<Z, Z>(b, &params);
     assert_eq!(d.dot(p), a * b);
 }
