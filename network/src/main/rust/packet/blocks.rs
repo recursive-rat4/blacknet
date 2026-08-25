@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2025 Pavel Vasin
+ * Copyright (c) 2018-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -53,12 +53,12 @@ impl Blocks {
         }
     }
 
-    pub const fn hashes(&self) -> &Vec<Hash> {
-        &self.hashes
+    pub const fn hashes(&self) -> &[Hash] {
+        self.hashes.as_slice()
     }
 
-    pub const fn blocks(&self) -> &Vec<Box<[u8]>> {
-        &self.blocks
+    pub const fn blocks(&self) -> &[Box<[u8]>] {
+        self.blocks.as_slice()
     }
 }
 
