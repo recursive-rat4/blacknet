@@ -18,7 +18,7 @@
 //! Univariate interpolation.
 
 use crate::algebra::{Inv, SemifieldOps, SemiringOps, UnitalRing};
-use crate::matrix::{DenseMatrix, DenseVector};
+use crate::matrix::DenseMatrix;
 use crate::polynomial::UnivariatePolynomial;
 use alloc::vec::Vec;
 
@@ -77,8 +77,8 @@ where
     for<'a> &'a R: SemiringOps<R>,
 {
     pub fn interpolate(&self, ys: &[R]) -> UnivariatePolynomial<R> {
-        let y = DenseVector::from(ys);
-        let coefficients: Vec<R> = (&self.m * y).into();
+        let coefficients = self.m.mul_by_vec(ys);
+        let coefficients: Vec<R> = coefficients.into();
         coefficients.into()
     }
 }

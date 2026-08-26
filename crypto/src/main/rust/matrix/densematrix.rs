@@ -237,6 +237,18 @@ impl<T> DenseMatrix<T> {
             elements,
         }
     }
+
+    /// Multiply by vector.
+    pub fn mul_by_vec(&self, rps: &[T]) -> DenseVector<T>
+    where
+        T: Sum,
+        for<'a> &'a T: Mul<Output = T>,
+    {
+        debug_assert!(self.columns == rps.len() as u32);
+        self.iter_row()
+            .map(|row| zip(row, rps).map(|(l, r)| l * r).sum())
+            .collect()
+    }
 }
 
 impl<T: PartialEq> PartialEq for DenseMatrix<T> {
@@ -647,7 +659,7 @@ where
 
     #[inline]
     fn mul(self, rps: DenseVector<T>) -> Self::Output {
-        &self * &rps
+        self.mul_by_vec(&rps)
     }
 }
 
@@ -659,7 +671,7 @@ where
 
     #[inline]
     fn mul(self, rps: &DenseVector<T>) -> Self::Output {
-        &self * rps
+        self.mul_by_vec(rps)
     }
 }
 
@@ -671,7 +683,7 @@ where
 
     #[inline]
     fn mul(self, rps: DenseVector<T>) -> Self::Output {
-        self * &rps
+        self.mul_by_vec(&rps)
     }
 }
 
@@ -681,11 +693,9 @@ where
 {
     type Output = DenseVector<T>;
 
+    #[inline]
     fn mul(self, rps: &'a DenseVector<T>) -> Self::Output {
-        debug_assert!(self.columns == rps.dimension());
-        self.iter_row()
-            .map(|row| zip(row, rps).map(|(l, r)| l * r).sum())
-            .collect()
+        self.mul_by_vec(rps)
     }
 }
 
