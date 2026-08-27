@@ -560,6 +560,20 @@ fn clmul(a: u8, b: u8) -> u16 {
                 c as u16
             }
         }
+        all(target_feature = "neon", target_arch = "aarch64") => {
+            //RUST https://github.com/rust-lang/rust/issues/111800
+            unsafe {
+                #[cfg(target_arch = "arm")]
+                use core::arch::arm::*;
+                #[cfg(target_arch = "aarch64")]
+                use core::arch::aarch64::*;
+
+                let a = vmov_n_p8(a);
+                let b = vmov_n_p8(b);
+                let c = vmull_p8(a, b);
+                vgetq_lane_p16(c, 0)
+            }
+        }
         _ => {
             let mut a = a as u16;
             let mut b = b as u16;
@@ -588,6 +602,19 @@ fn clsqr(a: u8) -> u16 {
                 let a = a as u32;
                 let c = _pdep_u32(a, 0x5555);
                 c as u16
+            }
+        }
+        all(target_feature = "neon", target_arch = "aarch64") => {
+            //RUST https://github.com/rust-lang/rust/issues/111800
+            unsafe {
+                #[cfg(target_arch = "arm")]
+                use core::arch::arm::*;
+                #[cfg(target_arch = "aarch64")]
+                use core::arch::aarch64::*;
+
+                let a = vmov_n_p8(a);
+                let c = vmull_p8(a, a);
+                vgetq_lane_p16(c, 0)
             }
         }
         _ => {
