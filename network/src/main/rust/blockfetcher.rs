@@ -42,6 +42,7 @@ use tokio_util::sync::CancellationToken;
 
 pub struct BlockFetcher {
     logger: Logger,
+    staker_sender: mpsc::UnboundedSender<(Hash, Box<[u8]>, oneshot::Sender<Result<()>>)>,
     announces_sender: mpsc::Sender<(Arc<Connection>, BlockAnnounce)>,
     deferred_sender: mpsc::Sender<(Arc<Connection>, Blocks)>,
     request: RwLock<Option<RequestSender>>,
@@ -58,10 +59,12 @@ impl BlockFetcher {
         coin_db: Arc<CoinDB>,
     ) -> Result<Arc<Self>, LogError> {
         let size = config.incoming_connections as usize + config.outgoing_connections as usize;
+        let (staker_sender, staker_receiver) = mpsc::unbounded_channel();
         let (announces_sender, announces_receiver) = mpsc::channel(size);
         let (deferred_sender, deferred_receiver) = mpsc::channel(size);
         let block_fetcher = Arc::new(Self {
             logger: log_manager.logger("BlockFetcher")?,
+            staker_sender,
             announces_sender,
             deferred_sender,
             block_db,
@@ -69,11 +72,11 @@ impl BlockFetcher {
             request: RwLock::new(None),
         });
 
-        runtime.spawn(
-            block_fetcher
-                .clone()
-                .implementation(announces_receiver, deferred_receiver),
-        );
+        runtime.spawn(block_fetcher.clone().run(
+            staker_receiver,
+            announces_receiver,
+            deferred_receiver,
+        ));
 
         Ok(block_fetcher)
     }
@@ -106,8 +109,13 @@ impl BlockFetcher {
             .try_send((connection.clone(), block_announce));
     }
 
-    pub async fn staked_block(&self, _hash: Hash, _bytes: Vec<u8>) -> Result<usize> {
-        todo!();
+    pub async fn staked_block(&self, hash: Hash, bytes: Box<[u8]>) -> Result<()> {
+        let (sender, receiver) = oneshot::channel();
+        let _ = self.staker_sender.send((hash, bytes, sender));
+        if let Some(ref request) = *self.request.read().unwrap() {
+            request.cancel(RequestError::Staked);
+        }
+        receiver.await.unwrap()
     }
 
     pub fn consensus_fault(&self, connection: &Connection, _consensus_fault: ConsensusFault) {
@@ -152,15 +160,24 @@ impl BlockFetcher {
         }
     }
 
-    async fn implementation(
+    async fn run(
         self: Arc<Self>,
+        mut staker_receiver: mpsc::UnboundedReceiver<(
+            Hash,
+            Box<[u8]>,
+            oneshot::Sender<Result<()>>,
+        )>,
         mut announces_receiver: mpsc::Receiver<(Arc<Connection>, BlockAnnounce)>,
         mut deferred_receiver: mpsc::Receiver<(Arc<Connection>, Blocks)>,
     ) {
         loop {
             select! {
                 biased;
-                //TODO staked
+                Some(
+                    (hash, bytes, sender)
+                ) = staker_receiver.recv() => self.process_staked(
+                    hash, bytes, sender
+                ).await,
                 Some(
                     (connection, blocks)
                 ) = deferred_receiver.recv() => self.process_deferred(
@@ -174,6 +191,17 @@ impl BlockFetcher {
                 else => break,
             }
         }
+        info!(self.logger, "Interrupting BlockFetcher");
+    }
+
+    async fn process_staked(
+        &self,
+        hash: Hash,
+        bytes: Box<[u8]>,
+        sender: oneshot::Sender<Result<()>>,
+    ) {
+        let result = self.block_db.process(&self.coin_db, hash, bytes);
+        let _ = sender.send(result);
     }
 
     /// Blocks were received after timeout. During lags, processing these helps to stay in sync.
@@ -325,7 +353,7 @@ impl BlockFetcher {
             connection.node().announce_block(
                 state.block_hash(),
                 state.cumulative_difficulty(),
-                connection.id(),
+                Some(connection.id()),
             );
             connection.set_last_block_time(connection.last_packet_time());
         }
@@ -464,6 +492,7 @@ impl RequestReceiver {
 enum RequestError {
     ConnectionClosed,
     LongerThanCheckpoint,
+    Staked,
     TimedOut,
     Dropped,
 }
@@ -479,6 +508,7 @@ impl fmt::Display for RequestError {
         match self {
             Self::ConnectionClosed => f.write_str("Connection closed"),
             Self::LongerThanCheckpoint => f.write_str("Dipath longer than the rolling checkpoint"),
+            Self::Staked => f.write_str("Staked new block"),
             Self::TimedOut => f.write_str("Request timed out"),
             Self::Dropped => f.write_str("Request already dropped"),
         }

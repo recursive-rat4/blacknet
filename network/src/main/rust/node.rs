@@ -359,13 +359,15 @@ impl Node {
         &self,
         hash: Hash,
         cumulative_difficulty: UInt256,
-        source: ConnectionId,
+        source: Option<ConnectionId>,
     ) -> usize {
-        //TODO Staker
+        if source.is_some() {
+            //TODO Staker
+        }
         self.broadcast_packet(
             &BlockAnnounce::new(hash, cumulative_difficulty),
             |connection| {
-                connection.id() != source
+                Some(connection.id()) != source
                     && connection.state().is_established()
                     && connection.last_block().load().cumulative_difficulty()
                         < cumulative_difficulty
@@ -373,9 +375,14 @@ impl Node {
         )
     }
 
-    pub async fn broadcast_block(&self, hash: Hash, bytes: Vec<u8>) -> bool {
+    pub async fn broadcast_block(&self, hash: Hash, bytes: Box<[u8]>) -> bool {
         match self.block_fetcher.staked_block(hash, bytes).await {
-            Ok(n) => {
+            Ok(()) => {
+                let n = self.announce_block(
+                    hash,
+                    self.coin_db.state().load().cumulative_difficulty(),
+                    None,
+                );
                 if self.mode().requires_network() {
                     info!(self.logger, "Announced to {n} peers");
                 }
