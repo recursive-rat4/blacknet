@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2025 Pavel Vasin
+ * Copyright (c) 2023-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -24,11 +24,11 @@ fn serialization() {
     let empty_bytes: &[u8] = &[128];
 
     let mut hello = Hello::default();
-    hello.set_magic(1).unwrap();
-    hello.set_version(2).unwrap();
-    hello.set_nonce(3).unwrap();
-    hello.set_agent("4").unwrap();
-    hello.set_fee_filter(5.into()).unwrap();
+    hello.set_magic(1);
+    hello.set_version(2);
+    hello.set_nonce(3);
+    hello.set_agent("4");
+    hello.set_fee_filter(5.into());
     #[rustfmt::skip]
     let hello_bytes: &[u8] = &[
         128 + 5,

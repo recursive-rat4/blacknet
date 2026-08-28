@@ -15,12 +15,13 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::connection::{Connection, State};
-use crate::node::{MIN_PROTOCOL_VERSION, PROTOCOL_VERSION};
-use crate::packet::{BlockAnnounce, Packet, PacketKind};
+use crate::{
+    connection::{Connection, State},
+    node::{MIN_PROTOCOL_VERSION, PROTOCOL_VERSION},
+    packet::{BlockAnnounce, Packet, PacketKind},
+};
 use blacknet_kernel::amount::Amount;
 use blacknet_log::{error, info};
-use blacknet_serialization::error::Error as SerializationError;
 use blacknet_serialization::format::{from_bytes, to_bytes};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -52,10 +53,9 @@ impl Hello {
         }
     }
 
-    pub fn set_magic(&mut self, magic: u32) -> Result<(), SerializationError> {
-        let bytes = to_bytes::<u32>(&magic)?;
+    pub fn set_magic(&mut self, magic: u32) {
+        let bytes = to_bytes::<u32>(&magic).expect("serialization");
         self.data.insert(MAGIC, bytes);
-        Ok(())
     }
 
     pub fn version(&self) -> Option<u32> {
@@ -66,10 +66,9 @@ impl Hello {
         }
     }
 
-    pub fn set_version(&mut self, version: u32) -> Result<(), SerializationError> {
-        let bytes = to_bytes::<u32>(&version)?;
+    pub fn set_version(&mut self, version: u32) {
+        let bytes = to_bytes::<u32>(&version).expect("serialization");
         self.data.insert(VERSION, bytes);
-        Ok(())
     }
 
     pub fn nonce(&self) -> Option<u64> {
@@ -80,10 +79,9 @@ impl Hello {
         }
     }
 
-    pub fn set_nonce(&mut self, nonce: u64) -> Result<(), SerializationError> {
-        let bytes = to_bytes::<u64>(&nonce)?;
+    pub fn set_nonce(&mut self, nonce: u64) {
+        let bytes = to_bytes::<u64>(&nonce).expect("serialization");
         self.data.insert(NONCE, bytes);
-        Ok(())
     }
 
     pub fn agent(&self) -> Option<String> {
@@ -94,10 +92,9 @@ impl Hello {
         }
     }
 
-    pub fn set_agent(&mut self, agent: &str) -> Result<(), SerializationError> {
-        let bytes = to_bytes::<&str>(&agent)?;
+    pub fn set_agent(&mut self, agent: &str) {
+        let bytes = to_bytes::<&str>(&agent).expect("serialization");
         self.data.insert(AGENT, bytes);
-        Ok(())
     }
 
     pub fn fee_filter(&self) -> Option<Amount> {
@@ -108,10 +105,9 @@ impl Hello {
         }
     }
 
-    pub fn set_fee_filter(&mut self, fee_filter: Amount) -> Result<(), SerializationError> {
-        let bytes = to_bytes::<Amount>(&fee_filter)?;
+    pub fn set_fee_filter(&mut self, fee_filter: Amount) {
+        let bytes = to_bytes::<Amount>(&fee_filter).expect("serialization");
         self.data.insert(FEE_FILTER, bytes);
-        Ok(())
     }
 }
 
@@ -164,11 +160,7 @@ impl Packet for Hello {
                     connection.close();
                     return;
                 }
-                if let Err(err) = send_hello(connection) {
-                    error!(connection.logger(), "Send handshake error: {err}");
-                    connection.close();
-                    return;
-                }
+                send_hello(connection);
                 info!(
                     connection.logger(),
                     "Accepted connection from {}",
@@ -215,27 +207,27 @@ impl Packet for Hello {
     }
 }
 
-fn send_hello(connection: &Connection) -> Result<(), SerializationError> {
+fn send_hello(connection: &Connection) {
     let state = connection.state();
     let node = connection.node();
 
     let mut hello = Hello::new();
-    hello.set_magic(node.mode().network_magic())?;
-    hello.set_version(PROTOCOL_VERSION)?;
+    hello.set_magic(node.mode().network_magic());
+    hello.set_version(PROTOCOL_VERSION);
     if !connection.remote_endpoint().is_permissionless() && state == State::OutgoingWaiting {
-        hello.set_nonce(node.nonce())?;
+        hello.set_nonce(node.nonce());
     }
     hello.set_agent(if state == State::ProberWaiting {
         node.prober_agent_string()
     } else {
         node.agent_string()
-    })?;
+    });
     hello.set_fee_filter(if state == State::ProberWaiting {
         Amount::MAX
     } else {
         let tx_pool = node.tx_pool().read().unwrap();
         tx_pool.min_fee_rate()
-    })?;
+    });
     connection.send_packet(&hello);
 
     if state != State::ProberWaiting {
@@ -243,6 +235,4 @@ fn send_hello(connection: &Connection) -> Result<(), SerializationError> {
         let block_announce = BlockAnnounce::new(state.block_hash(), state.cumulative_difficulty());
         connection.send_packet(&block_announce);
     }
-
-    Ok(())
 }
