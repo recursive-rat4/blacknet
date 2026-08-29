@@ -39,22 +39,19 @@ impl Config {
 
     pub fn load_or_create(mode: &Mode, config_dir: &Path) -> Result<Self> {
         let config_file = config_dir.join("blacknet.conf");
-        let conf = fs::read_to_string(&config_file)?;
-        match Self::parse(&conf) {
-            Ok(config) => Ok(config),
-            Err(err) => match err {
-                Error::Io(err) => {
-                    if err.kind() == ErrorKind::NotFound {
-                        let conf = mode.blacknet_conf();
-                        fs::write(config_file, conf)?;
-                        Self::parse(conf)
-                    } else {
-                        Err(Error::Io(err))
-                    }
+        let conf = match fs::read_to_string(&config_file) {
+            Ok(conf) => conf,
+            Err(err) => {
+                if err.kind() == ErrorKind::NotFound {
+                    let conf = mode.blacknet_conf();
+                    fs::write(config_file, conf)?;
+                    conf.to_owned()
+                } else {
+                    return Err(Error::Io(err));
                 }
-                err => Err(err),
-            },
-        }
+            }
+        };
+        Self::parse(&conf)
     }
 
     pub fn parse(string: &str) -> Result<Self> {

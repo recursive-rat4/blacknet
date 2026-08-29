@@ -25,7 +25,7 @@ use axum::{
     routing::post,
 };
 use blacknet_kernel::ed25519::{PublicKey, to_secret_key};
-use blacknet_network::node::Node;
+use blacknet_network::network::Network;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use zeroize::ZeroizeOnDrop;
@@ -36,7 +36,7 @@ pub struct StartStakingRequest {
 }
 
 async fn start_staking(
-    State(node): State<Arc<Node>>,
+    State(network): State<Arc<Network>>,
     Form(request): Form<StartStakingRequest>,
 ) -> Response<String> {
     let secret_key = if let Some(secret_key) = to_secret_key(&request.mnemonic) {
@@ -44,7 +44,7 @@ async fn start_staking(
     } else {
         return respond_error("Invalid mnemonic");
     };
-    respond_bool(node.staker().start_staking(&secret_key))
+    respond_bool(network.staker().start_staking(&secret_key))
 }
 
 #[derive(Deserialize, Serialize, ZeroizeOnDrop)]
@@ -53,7 +53,7 @@ pub struct StopStakingRequest {
 }
 
 async fn stop_staking(
-    State(node): State<Arc<Node>>,
+    State(network): State<Arc<Network>>,
     Form(request): Form<StopStakingRequest>,
 ) -> Response<String> {
     let secret_key = if let Some(secret_key) = to_secret_key(&request.mnemonic) {
@@ -61,7 +61,7 @@ async fn stop_staking(
     } else {
         return respond_error("Invalid mnemonic");
     };
-    respond_bool(node.staker().stop_staking(&secret_key))
+    respond_bool(network.staker().stop_staking(&secret_key))
 }
 
 #[derive(Deserialize, Serialize, ZeroizeOnDrop)]
@@ -70,7 +70,7 @@ pub struct IsStakingRequest {
 }
 
 async fn is_staking(
-    State(node): State<Arc<Node>>,
+    State(network): State<Arc<Network>>,
     Form(request): Form<IsStakingRequest>,
 ) -> Response<String> {
     let secret_key = if let Some(secret_key) = to_secret_key(&request.mnemonic) {
@@ -78,14 +78,14 @@ async fn is_staking(
     } else {
         return respond_error("Invalid mnemonic");
     };
-    respond_bool(node.staker().is_staking(&secret_key))
+    respond_bool(network.staker().is_staking(&secret_key))
 }
 
 async fn staking(
-    State(node): State<Arc<Node>>,
+    State(network): State<Arc<Network>>,
     Path(address): Path<Option<String>>,
 ) -> Response<String> {
-    let address_codec = node.wallet_db().address_codec();
+    let address_codec = network.wallet_db().address_codec();
     let public_key: Option<PublicKey> = match address {
         Some(address) => match address_codec.decode(&address) {
             Ok(public_key) => Some(public_key),
@@ -95,12 +95,12 @@ async fn staking(
         },
         None => None,
     };
-    let stats = node.staker().stats(&public_key);
+    let stats = network.staker().stats(&public_key);
     let info = StakingInfo::new(&stats);
     respond_json(&info)
 }
 
-pub fn routes() -> Router<Arc<Node>> {
+pub fn routes() -> Router<Arc<Network>> {
     Router::new()
         .route("/api/v2/startstaking", post(start_staking))
         .route("/api/v2/stopstaking", post(stop_staking))

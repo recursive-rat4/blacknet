@@ -30,7 +30,7 @@ use blacknet_kernel::{
 };
 use blacknet_log::{Error as LogError, LogManager, Logger, debug, error, info};
 use blacknet_time::{Milliseconds, SystemClock};
-use core::fmt;
+use core::{cmp::max, fmt};
 use std::sync::{Arc, OnceLock, RwLock};
 use tokio::{
     runtime::Runtime,
@@ -59,6 +59,7 @@ impl BlockFetcher {
         coin_db: Arc<CoinDB>,
     ) -> Result<Arc<Self>, LogError> {
         let size = config.incoming_connections as usize + config.outgoing_connections as usize;
+        let size = max(size, 1); // mpsc bounded channel requires buffer > 0
         let (staker_sender, staker_receiver) = mpsc::unbounded_channel();
         let (announces_sender, announces_receiver) = mpsc::channel(size);
         let (deferred_sender, deferred_receiver) = mpsc::channel(size);

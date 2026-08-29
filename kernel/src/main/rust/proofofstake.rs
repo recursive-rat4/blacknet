@@ -26,12 +26,21 @@ use blacknet_crypto::{
     symmetric::Blake2b256,
 };
 use blacknet_time::Seconds;
-use core::cmp::min;
+use core::{cmp::min, fmt};
 
 #[derive(Clone, Copy, Debug)]
 pub enum Version {
     V4,
     V4_1,
+}
+
+impl fmt::Display for Version {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::V4 => f.write_str("v4"),
+            Self::V4_1 => f.write_str("v4.1"),
+        }
+    }
 }
 
 pub fn mint(version: Version, supply: Amount) -> Amount {

@@ -132,7 +132,7 @@ impl CoinDB {
 
         info!(
             logger,
-            "Consensus height {} PoS {:?}",
+            "Consensus height {} PoS {}",
             state.height(),
             state.pos_version()
         );

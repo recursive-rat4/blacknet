@@ -31,7 +31,7 @@ use blacknet_kernel::{
     timelock::{TimeKind, TimeLock},
     transaction::*,
 };
-use blacknet_network::{node::Node, wallet::AddressKind};
+use blacknet_network::{network::Network, wallet::AddressKind};
 use blacknet_serialization::format::to_bytes;
 use data_encoding::HEXUPPER_PERMISSIVE as HEX;
 use serde::{Deserialize, Serialize};
@@ -54,7 +54,7 @@ impl Drop for BundleRequest {
 }
 
 async fn bundle(
-    State(node): State<Arc<Node>>,
+    State(network): State<Arc<Network>>,
     Form(request): Form<BundleRequest>,
 ) -> Response<String> {
     let message = match HEX.decode(request.data.as_bytes()) {
@@ -71,16 +71,16 @@ async fn bundle(
     let anchor = if let Some(anchor) = request.referenceChain {
         anchor
     } else {
-        node.wallet_db().anchor()
+        network.wallet_db().anchor()
     };
     let from = to_public_key(secret_key);
-    let seq = match node.wallet_db().sequence(from) {
+    let seq = match network.wallet_db().sequence(from) {
         Ok(seq) => seq,
         Err(err) => {
             return respond_error(err.to_string());
         }
     };
-    let tag = match node
+    let tag = match network
         .wallet_db()
         .address_codec()
         .decode_with_kind(AddressKind::Blob, &request.id)
@@ -103,7 +103,7 @@ async fn bundle(
     let mut tx = Transaction::new(from, seq, anchor, request.fee, TxKind::Blob, data.into());
     let (hash, bytes) = tx.sign(secret_key);
 
-    match node.broadcast_tx(hash, &bytes) {
+    match network.node().broadcast_tx(hash, &bytes) {
         Ok(()) => respond_text(hash.to_string()),
         Err(msg) => respond_error(format!("Transaction rejected: {msg}")),
     }
@@ -124,7 +124,10 @@ impl Drop for BurnRequest {
     }
 }
 
-async fn burn(State(node): State<Arc<Node>>, Form(request): Form<BurnRequest>) -> Response<String> {
+async fn burn(
+    State(network): State<Arc<Network>>,
+    Form(request): Form<BurnRequest>,
+) -> Response<String> {
     let message = match HEX.decode(request.message.as_bytes()) {
         Ok(message) => message,
         Err(err) => {
@@ -139,10 +142,10 @@ async fn burn(State(node): State<Arc<Node>>, Form(request): Form<BurnRequest>) -
     let anchor = if let Some(anchor) = request.referenceChain {
         anchor
     } else {
-        node.wallet_db().anchor()
+        network.wallet_db().anchor()
     };
     let from = to_public_key(secret_key);
-    let seq = match node.wallet_db().sequence(from) {
+    let seq = match network.wallet_db().sequence(from) {
         Ok(seq) => seq,
         Err(err) => {
             return respond_error(err.to_string());
@@ -157,7 +160,7 @@ async fn burn(State(node): State<Arc<Node>>, Form(request): Form<BurnRequest>) -
     let mut tx = Transaction::new(from, seq, anchor, request.fee, TxKind::Burn, data.into());
     let (hash, bytes) = tx.sign(secret_key);
 
-    match node.broadcast_tx(hash, &bytes) {
+    match network.node().broadcast_tx(hash, &bytes) {
         Ok(()) => respond_text(hash.to_string()),
         Err(msg) => respond_error(format!("Transaction rejected: {msg}")),
     }
@@ -180,7 +183,7 @@ impl Drop for CancelLeaseRequest {
 }
 
 async fn cancel_lease(
-    State(node): State<Arc<Node>>,
+    State(network): State<Arc<Network>>,
     Form(request): Form<CancelLeaseRequest>,
 ) -> Response<String> {
     let secret_key = if let Some(secret_key) = to_secret_key(&request.mnemonic) {
@@ -191,16 +194,16 @@ async fn cancel_lease(
     let anchor = if let Some(anchor) = request.referenceChain {
         anchor
     } else {
-        node.wallet_db().anchor()
+        network.wallet_db().anchor()
     };
     let from = to_public_key(secret_key);
-    let seq = match node.wallet_db().sequence(from) {
+    let seq = match network.wallet_db().sequence(from) {
         Ok(seq) => seq,
         Err(err) => {
             return respond_error(err.to_string());
         }
     };
-    let to = match node.wallet_db().address_codec().decode(&request.to) {
+    let to = match network.wallet_db().address_codec().decode(&request.to) {
         Ok(to) => to,
         Err(err) => {
             return respond_error(format!("Invalid to: {err}"));
@@ -222,7 +225,7 @@ async fn cancel_lease(
     );
     let (hash, bytes) = tx.sign(secret_key);
 
-    match node.broadcast_tx(hash, &bytes) {
+    match network.node().broadcast_tx(hash, &bytes) {
         Ok(()) => respond_text(hash.to_string()),
         Err(msg) => respond_error(format!("Transaction rejected: {msg}")),
     }
@@ -244,7 +247,7 @@ impl Drop for ClaimSwapRequest {
 }
 
 async fn claim_swap(
-    State(node): State<Arc<Node>>,
+    State(network): State<Arc<Network>>,
     Form(request): Form<ClaimSwapRequest>,
 ) -> Response<String> {
     let preimage = match HEX.decode(request.preimage.as_bytes()) {
@@ -261,16 +264,16 @@ async fn claim_swap(
     let anchor = if let Some(anchor) = request.referenceChain {
         anchor
     } else {
-        node.wallet_db().anchor()
+        network.wallet_db().anchor()
     };
     let from = to_public_key(secret_key);
-    let seq = match node.wallet_db().sequence(from) {
+    let seq = match network.wallet_db().sequence(from) {
         Ok(seq) => seq,
         Err(err) => {
             return respond_error(err.to_string());
         }
     };
-    let id = match node
+    let id = match network
         .wallet_db()
         .address_codec()
         .decode_with_kind(AddressKind::HTLC, &request.id)
@@ -300,7 +303,7 @@ async fn claim_swap(
     );
     let (hash, bytes) = tx.sign(secret_key);
 
-    match node.broadcast_tx(hash, &bytes) {
+    match network.node().broadcast_tx(hash, &bytes) {
         Ok(()) => respond_text(hash.to_string()),
         Err(msg) => respond_error(format!("Transaction rejected: {msg}")),
     }
@@ -326,7 +329,7 @@ impl Drop for CreateSwapRequest {
 }
 
 async fn create_swap(
-    State(node): State<Arc<Node>>,
+    State(network): State<Arc<Network>>,
     Form(request): Form<CreateSwapRequest>,
 ) -> Response<String> {
     let image = match HEX.decode(request.hashLockData.as_bytes()) {
@@ -343,16 +346,16 @@ async fn create_swap(
     let anchor = if let Some(anchor) = request.referenceChain {
         anchor
     } else {
-        node.wallet_db().anchor()
+        network.wallet_db().anchor()
     };
     let from = to_public_key(secret_key);
-    let seq = match node.wallet_db().sequence(from) {
+    let seq = match network.wallet_db().sequence(from) {
         Ok(seq) => seq,
         Err(err) => {
             return respond_error(err.to_string());
         }
     };
-    let to = match node.wallet_db().address_codec().decode(&request.to) {
+    let to = match network.wallet_db().address_codec().decode(&request.to) {
         Ok(to) => to,
         Err(err) => {
             return respond_error(format!("Invalid to: {err}"));
@@ -376,7 +379,7 @@ async fn create_swap(
     );
     let (hash, bytes) = tx.sign(secret_key);
 
-    match node.broadcast_tx(hash, &bytes) {
+    match network.node().broadcast_tx(hash, &bytes) {
         Ok(()) => respond_text(hash.to_string()),
         Err(msg) => respond_error(format!("Transaction rejected: {msg}")),
     }
@@ -398,7 +401,7 @@ impl Drop for LeaseRequest {
 }
 
 async fn lease(
-    State(node): State<Arc<Node>>,
+    State(network): State<Arc<Network>>,
     Form(request): Form<LeaseRequest>,
 ) -> Response<String> {
     let secret_key = if let Some(secret_key) = to_secret_key(&request.mnemonic) {
@@ -409,16 +412,16 @@ async fn lease(
     let anchor = if let Some(anchor) = request.referenceChain {
         anchor
     } else {
-        node.wallet_db().anchor()
+        network.wallet_db().anchor()
     };
     let from = to_public_key(secret_key);
-    let seq = match node.wallet_db().sequence(from) {
+    let seq = match network.wallet_db().sequence(from) {
         Ok(seq) => seq,
         Err(err) => {
             return respond_error(err.to_string());
         }
     };
-    let to = match node.wallet_db().address_codec().decode(&request.to) {
+    let to = match network.wallet_db().address_codec().decode(&request.to) {
         Ok(to) => to,
         Err(err) => {
             return respond_error(format!("Invalid to: {err}"));
@@ -433,7 +436,7 @@ async fn lease(
     let mut tx = Transaction::new(from, seq, anchor, request.fee, TxKind::Lease, data.into());
     let (hash, bytes) = tx.sign(secret_key);
 
-    match node.broadcast_tx(hash, &bytes) {
+    match network.node().broadcast_tx(hash, &bytes) {
         Ok(()) => respond_text(hash.to_string()),
         Err(msg) => respond_error(format!("Transaction rejected: {msg}")),
     }
@@ -454,7 +457,7 @@ impl Drop for RefundSwapRequest {
 }
 
 async fn refund_swap(
-    State(node): State<Arc<Node>>,
+    State(network): State<Arc<Network>>,
     Form(request): Form<RefundSwapRequest>,
 ) -> Response<String> {
     let secret_key = if let Some(secret_key) = to_secret_key(&request.mnemonic) {
@@ -465,16 +468,16 @@ async fn refund_swap(
     let anchor = if let Some(anchor) = request.referenceChain {
         anchor
     } else {
-        node.wallet_db().anchor()
+        network.wallet_db().anchor()
     };
     let from = to_public_key(secret_key);
-    let seq = match node.wallet_db().sequence(from) {
+    let seq = match network.wallet_db().sequence(from) {
         Ok(seq) => seq,
         Err(err) => {
             return respond_error(err.to_string());
         }
     };
-    let id = match node
+    let id = match network
         .wallet_db()
         .address_codec()
         .decode_with_kind(AddressKind::HTLC, &request.id)
@@ -504,7 +507,7 @@ async fn refund_swap(
     );
     let (hash, bytes) = tx.sign(secret_key);
 
-    match node.broadcast_tx(hash, &bytes) {
+    match network.node().broadcast_tx(hash, &bytes) {
         Ok(()) => respond_text(hash.to_string()),
         Err(msg) => respond_error(format!("Transaction rejected: {msg}")),
     }
@@ -528,7 +531,7 @@ impl Drop for TransferRequest {
 }
 
 async fn transfer(
-    State(node): State<Arc<Node>>,
+    State(network): State<Arc<Network>>,
     Form(mut request): Form<TransferRequest>,
 ) -> Response<String> {
     let secret_key = if let Some(secret_key) = to_secret_key(&request.mnemonic) {
@@ -539,16 +542,16 @@ async fn transfer(
     let anchor = if let Some(anchor) = request.referenceChain {
         anchor
     } else {
-        node.wallet_db().anchor()
+        network.wallet_db().anchor()
     };
     let from = to_public_key(secret_key);
-    let seq = match node.wallet_db().sequence(from) {
+    let seq = match network.wallet_db().sequence(from) {
         Ok(seq) => seq,
         Err(err) => {
             return respond_error(err.to_string());
         }
     };
-    let to = match node.wallet_db().address_codec().decode(&request.to) {
+    let to = match network.wallet_db().address_codec().decode(&request.to) {
         Ok(to) => to,
         Err(err) => {
             return respond_error(format!("Invalid to: {err}"));
@@ -577,7 +580,7 @@ async fn transfer(
     );
     let (hash, bytes) = tx.sign(secret_key);
 
-    match node.broadcast_tx(hash, &bytes) {
+    match network.node().broadcast_tx(hash, &bytes) {
         Ok(()) => respond_text(hash.to_string()),
         Err(msg) => respond_error(format!("Transaction rejected: {msg}")),
     }
@@ -601,7 +604,7 @@ impl Drop for WithdrawFromLeaseRequest {
 }
 
 async fn withdraw_from_lease(
-    State(node): State<Arc<Node>>,
+    State(network): State<Arc<Network>>,
     Form(request): Form<WithdrawFromLeaseRequest>,
 ) -> Response<String> {
     let secret_key = if let Some(secret_key) = to_secret_key(&request.mnemonic) {
@@ -612,16 +615,16 @@ async fn withdraw_from_lease(
     let anchor = if let Some(anchor) = request.referenceChain {
         anchor
     } else {
-        node.wallet_db().anchor()
+        network.wallet_db().anchor()
     };
     let from = to_public_key(secret_key);
-    let seq = match node.wallet_db().sequence(from) {
+    let seq = match network.wallet_db().sequence(from) {
         Ok(seq) => seq,
         Err(err) => {
             return respond_error(err.to_string());
         }
     };
-    let to = match node.wallet_db().address_codec().decode(&request.to) {
+    let to = match network.wallet_db().address_codec().decode(&request.to) {
         Ok(to) => to,
         Err(err) => {
             return respond_error(format!("Invalid to: {err}"));
@@ -648,14 +651,14 @@ async fn withdraw_from_lease(
     );
     let (hash, bytes) = tx.sign(secret_key);
 
-    match node.broadcast_tx(hash, &bytes) {
+    match network.node().broadcast_tx(hash, &bytes) {
         Ok(()) => respond_text(hash.to_string()),
         Err(msg) => respond_error(format!("Transaction rejected: {msg}")),
     }
 }
 
 async fn send_raw_transaction(
-    State(node): State<Arc<Node>>,
+    State(network): State<Arc<Network>>,
     Path(hex): Path<String>,
 ) -> Response<String> {
     let bytes = match HEX.decode(hex.as_bytes()) {
@@ -670,13 +673,13 @@ async fn send_raw_transaction(
         return respond_error("Invalid transaction bytes");
     };
 
-    match node.broadcast_tx(hash, &bytes) {
+    match network.node().broadcast_tx(hash, &bytes) {
         Ok(()) => respond_text(hash.to_string()),
         Err(msg) => respond_error(format!("Transaction rejected: {msg}")),
     }
 }
 
-pub fn routes() -> Router<Arc<Node>> {
+pub fn routes() -> Router<Arc<Network>> {
     Router::new()
         .route("/api/v2/bundle", post(bundle))
         .route("/api/v2/burn", post(burn))

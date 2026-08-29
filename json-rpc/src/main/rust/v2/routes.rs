@@ -17,16 +17,16 @@
 
 use crate::{RPCServer, v2};
 use axum::Router;
-use blacknet_network::node::Node;
+use blacknet_network::network::Network;
 use std::sync::Arc;
 
-pub fn routes(node: Arc<Node>, rpc_server: Arc<RPCServer>) -> Router<()> {
+pub fn routes(network: Arc<Network>, rpc_server: Arc<RPCServer>) -> Router<()> {
     Router::new()
         .merge(v2::database::routes())
         .merge(v2::node::routes())
         .merge(v2::sendtransaction::routes())
         .merge(v2::staking::routes())
-        .with_state(node)
+        .with_state(network)
         .merge(v2::websocket::routes())
         .with_state(rpc_server)
 }

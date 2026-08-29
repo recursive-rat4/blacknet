@@ -16,7 +16,7 @@
  */
 
 use crate::v2::EndpointInfo;
-use blacknet_network::node::{Node, PROTOCOL_VERSION};
+use blacknet_network::{network::Network, node::PROTOCOL_VERSION};
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]
@@ -32,7 +32,8 @@ pub struct NodeInfo {
 }
 
 impl NodeInfo {
-    pub fn new(node: &Node) -> Self {
+    pub fn new(network: &Network) -> Self {
+        let node = network.node();
         let listening = node.listening().read().unwrap();
         Self {
             agent: node.agent_string().to_owned(),
@@ -42,7 +43,7 @@ impl NodeInfo {
             outgoing: node.outgoing() as u32,
             incoming: node.incoming() as u32,
             listening: listening.iter().copied().map(EndpointInfo::from).collect(),
-            warnings: node.all_warnings(),
+            warnings: network.warnings(),
         }
     }
 }

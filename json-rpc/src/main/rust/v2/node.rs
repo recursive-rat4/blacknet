@@ -27,11 +27,12 @@ use blacknet_kernel::blake2b::Hash;
 use blacknet_kernel::transaction::Transaction;
 use blacknet_network::connection::ConnectionId;
 use blacknet_network::endpoint::Endpoint;
-use blacknet_network::node::Node;
+use blacknet_network::network::Network;
 use blacknet_serialization::format::from_bytes;
 use std::sync::Arc;
 
-async fn peers(State(node): State<Arc<Node>>) -> Json<Vec<PeerInfo>> {
+async fn peers(State(network): State<Arc<Network>>) -> Json<Vec<PeerInfo>> {
+    let node = network.node();
     let block_db = node.block_db();
     let connections = node.connections().read().unwrap();
     let mut fork_cache = fork_cache_new();
@@ -43,21 +44,21 @@ async fn peers(State(node): State<Arc<Node>>) -> Json<Vec<PeerInfo>> {
     )
 }
 
-async fn node(State(node): State<Arc<Node>>) -> Json<NodeInfo> {
-    Json(NodeInfo::new(&node))
+async fn node(State(network): State<Arc<Network>>) -> Json<NodeInfo> {
+    Json(NodeInfo::new(&network))
 }
 
-async fn tx_pool(State(node): State<Arc<Node>>) -> Json<TxPoolInfo> {
-    let tx_pool = node.tx_pool().read().unwrap();
+async fn tx_pool(State(network): State<Arc<Network>>) -> Json<TxPoolInfo> {
+    let tx_pool = network.node().tx_pool().read().unwrap();
     Json(TxPoolInfo::new(&tx_pool))
 }
 
 async fn tx_pool_transaction(
     Path((hash, raw)): Path<(Hash, Option<bool>)>,
-    State(node): State<Arc<Node>>,
+    State(network): State<Arc<Network>>,
 ) -> Response<String> {
-    let address_codec = node.wallet_db().address_codec();
-    let tx_pool = node.tx_pool().read().unwrap();
+    let address_codec = network.wallet_db().address_codec();
+    let tx_pool = network.node().tx_pool().read().unwrap();
     if let Some(bytes) = tx_pool.get_raw(hash) {
         if let Some(raw) = raw
             && raw
@@ -75,11 +76,11 @@ async fn tx_pool_transaction(
 
 async fn add_peer(
     Path((address, port, _force)): Path<(String, Option<u16>, Option<bool>)>,
-    State(node): State<Arc<Node>>,
+    State(network): State<Arc<Network>>,
 ) -> Response<String> {
     let _endpoint = if let Some(endpoint) = Endpoint::parse(
         &address,
-        port.unwrap_or_else(|| node.mode().default_p2p_port()),
+        port.unwrap_or_else(|| network.mode().default_p2p_port()),
     ) {
         endpoint
     } else {
@@ -91,18 +92,18 @@ async fn add_peer(
 
 async fn disconnect_peer_by_address(
     Path((address, port, _force)): Path<(String, Option<u16>, Option<bool>)>,
-    State(node): State<Arc<Node>>,
+    State(network): State<Arc<Network>>,
 ) -> Response<String> {
     let endpoint = if let Some(endpoint) = Endpoint::parse(
         &address,
-        port.unwrap_or_else(|| node.mode().default_p2p_port()),
+        port.unwrap_or_else(|| network.mode().default_p2p_port()),
     ) {
         endpoint
     } else {
         return respond_error("Invalid endpoint");
     };
 
-    let connections = node.connections().read().unwrap();
+    let connections = network.node().connections().read().unwrap();
     if let Some(connection) = connections
         .iter()
         .find(|connection| connection.remote_endpoint() == endpoint)
@@ -116,9 +117,9 @@ async fn disconnect_peer_by_address(
 
 async fn disconnect_peer(
     Path((id, _force)): Path<(ConnectionId, Option<bool>)>,
-    State(node): State<Arc<Node>>,
+    State(network): State<Arc<Network>>,
 ) -> Response<String> {
-    let connections = node.connections().read().unwrap();
+    let connections = network.node().connections().read().unwrap();
     if let Some(connection) = connections.iter().find(|connection| connection.id() == id) {
         connection.close();
         respond_text("true")
@@ -127,7 +128,7 @@ async fn disconnect_peer(
     }
 }
 
-pub fn routes() -> Router<Arc<Node>> {
+pub fn routes() -> Router<Arc<Network>> {
     Router::new()
         .route("/api/v2/peers", get(peers))
         .route("/api/v2/node", get(node))

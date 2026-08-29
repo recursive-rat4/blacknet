@@ -18,19 +18,17 @@
 use crate::{
     blockfetcher::BlockFetcher,
     connection::{Connection, ConnectionId, State},
-    db::{BlockDB, CoinDB, DBVersion, Fjall},
+    db::{BlockDB, CoinDB, CoinNotifier, DBVersion, Fjall},
     endpoint::Endpoint,
     packet::{BlockAnnounce, Packet, PacketKind, UnfilteredInvList},
     peertable::PeerTable,
     router::{Notifier, Router},
-    staker::Staker,
     txfetcher::TxFetcher,
     txpool::TxPool,
-    wallet::WalletDB,
 };
 use blacknet_compat::{
     config::Network as Config,
-    {Mode, XDGDirectories, getuid, uname},
+    {Mode, XDGDirectories},
 };
 use blacknet_crypto::{
     bigint::UInt256,
@@ -44,7 +42,7 @@ use blacknet_kernel::{
         BLOCK_RESERVED_SIZE, DEFAULT_MAX_BLOCK_SIZE, guess_initial_synchronization, time_slot,
     },
 };
-use blacknet_log::{LogManager, Logger, error, info, warn};
+use blacknet_log::{LogManager, Logger, error, info};
 use blacknet_serialization::format::to_write;
 use blacknet_time::{Milliseconds, Seconds, SystemClock};
 use core::{error::Error as StdError, ops::Deref};
@@ -84,8 +82,6 @@ pub struct Node {
     block_fetcher: Arc<BlockFetcher>,
     tx_pool: Arc<RwLock<TxPool>>,
     tx_fetcher: Arc<TxFetcher>,
-    wallet_db: Arc<WalletDB>,
-    staker: Staker,
     agent_string: String,
     prober_agent_string: String,
     agent_name: String,
@@ -95,30 +91,16 @@ pub struct Node {
 }
 
 impl Node {
-    pub fn new(
+    pub(super) fn new(
         mode: Mode,
         dirs: &XDGDirectories,
         log_manager: &LogManager,
         runtime: &Runtime,
         config: &Arc<Config>,
-    ) -> Result<Arc<Self>, Box<dyn StdError>> {
-        let (os_name, os_version, os_machine) = uname();
+    ) -> Result<(Arc<Self>, CoinNotifier), Box<dyn StdError>> {
         let (agent_name, agent_version) = (mode.agent_name(), env!("CARGO_PKG_VERSION"));
 
         let logger = log_manager.logger("Node")?;
-        info!(logger, "Starting up {agent_name} node {agent_version}");
-        match std::thread::available_parallelism() {
-            Ok(cpu_cores) => info!(logger, "CPU: {cpu_cores} cores {os_machine}"),
-            Err(err) => warn!(logger, "CPU: {os_machine} ({err})"),
-        }
-        info!(logger, "OS: {os_name} version {os_version}");
-        info!(logger, "Using config directory {}", dirs.config().display());
-        info!(logger, "Using data directory {}", dirs.data().display());
-        info!(logger, "Using state directory {}", dirs.state().display());
-
-        if getuid() == 0 {
-            warn!(logger, "Running as root");
-        }
 
         let fjall = Fjall::open(dirs, config)?;
         let db_version = DBVersion::new(&fjall)?;
@@ -158,8 +140,6 @@ impl Node {
             block_fetcher: BlockFetcher::new(log_manager, runtime, config, block_db, coin_db)?,
             tx_pool: tx_pool.clone(),
             tx_fetcher: TxFetcher::new(runtime, tx_pool.clone()),
-            wallet_db: WalletDB::new(&mode, dirs, log_manager, runtime, coin_notifier, &tx_pool)?,
-            staker: Staker::new(log_manager)?,
             agent_string: format!("/{agent_name}:{agent_version}/"),
             prober_agent_string: format!("/{agent_name}-prober:{agent_version}/"),
             agent_name: agent_name.to_owned(),
@@ -174,7 +154,7 @@ impl Node {
         runtime.spawn(node.clone().acceptor(router_notifier));
         runtime.spawn(node.clone().rotator());
 
-        Ok(node)
+        Ok((node, coin_notifier))
     }
 
     fn next_connection_id(&self) -> ConnectionId {
@@ -191,7 +171,7 @@ impl Node {
         &self.agent_string
     }
 
-    pub fn prober_agent_string(&self) -> &str {
+    pub(super) fn prober_agent_string(&self) -> &str {
         &self.prober_agent_string
     }
 
@@ -203,11 +183,11 @@ impl Node {
         &self.agent_version
     }
 
-    pub const fn nonce(&self) -> u64 {
+    pub(super) const fn nonce(&self) -> u64 {
         self.nonce
     }
 
-    pub fn is_online(&self) -> bool {
+    pub(super) fn is_online(&self) -> bool {
         let connections = self.connections.read().unwrap();
         connections
             .iter()
@@ -252,15 +232,10 @@ impl Node {
         self.router.listening()
     }
 
-    pub fn all_warnings(&self) -> Vec<String> {
-        let mut warnings = Vec::<String>::new();
-        self.block_db.warnings(&mut warnings);
-        self.coin_db.warnings(&mut warnings);
-        self.warnings(&mut warnings);
-        warnings
-    }
+    pub(super) fn warnings(&self, warnings: &mut Vec<String>) {
+        self.block_db.warnings(warnings);
+        self.coin_db.warnings(warnings);
 
-    pub fn warnings(&self, warnings: &mut Vec<String>) {
         let time_offset = self.time_offset();
         let state = self.coin_db.state().load();
         let pos_version = state.pos_version();
@@ -273,22 +248,22 @@ impl Node {
         }
     }
 
-    pub fn max_packet_size(&self) -> u32 {
+    pub(super) fn max_packet_size(&self) -> u32 {
         self.coin_db.state().load().max_block_size() + BLOCK_RESERVED_SIZE
     }
 
-    pub const fn min_packet_size(&self) -> u32 {
+    pub(super) const fn min_packet_size(&self) -> u32 {
         DEFAULT_MAX_BLOCK_SIZE + BLOCK_RESERVED_SIZE
     }
 
-    pub fn is_initial_synchronization(&self) -> bool {
+    pub(super) fn is_initial_synchronization(&self) -> bool {
         let state = self.coin_db.state().load();
         let pos_version = state.pos_version();
         self.block_fetcher.is_synchronizing()
             && guess_initial_synchronization(pos_version, SystemClock::secs(), state.block_time())
     }
 
-    pub const fn config(&self) -> &Arc<Config> {
+    pub(super) const fn config(&self) -> &Arc<Config> {
         &self.config
     }
 
@@ -300,7 +275,7 @@ impl Node {
         &self.block_db
     }
 
-    pub const fn block_fetcher(&self) -> &Arc<BlockFetcher> {
+    pub(super) const fn block_fetcher(&self) -> &Arc<BlockFetcher> {
         &self.block_fetcher
     }
 
@@ -316,19 +291,11 @@ impl Node {
         &self.tx_pool
     }
 
-    pub const fn tx_fetcher(&self) -> &Arc<TxFetcher> {
+    pub(super) const fn tx_fetcher(&self) -> &Arc<TxFetcher> {
         &self.tx_fetcher
     }
 
-    pub const fn wallet_db(&self) -> &Arc<WalletDB> {
-        &self.wallet_db
-    }
-
-    pub const fn staker(&self) -> &Staker {
-        &self.staker
-    }
-
-    pub const fn mode(&self) -> &Mode {
+    pub(super) const fn mode(&self) -> &Mode {
         &self.mode
     }
 
@@ -355,7 +322,7 @@ impl Node {
         }
     }
 
-    pub fn announce_block(
+    pub(super) fn announce_block(
         &self,
         hash: Hash,
         cumulative_difficulty: UInt256,
@@ -375,7 +342,8 @@ impl Node {
         )
     }
 
-    pub async fn broadcast_block(&self, hash: Hash, bytes: Box<[u8]>) -> bool {
+    #[expect(dead_code)]
+    pub(super) async fn broadcast_block(&self, hash: Hash, bytes: Box<[u8]>) -> bool {
         match self.block_fetcher.staked_block(hash, bytes).await {
             Ok(()) => {
                 let n = self.announce_block(
@@ -414,7 +382,7 @@ impl Node {
         result.map(|_| ())
     }
 
-    pub fn broadcast_inv(
+    pub(super) fn broadcast_inv(
         &self,
         unfiltered: &UnfilteredInvList,
         source: Option<ConnectionId>,
@@ -580,7 +548,7 @@ impl Node {
         }
     }
 
-    pub fn dispose(self: Arc<Self>) {
+    pub(super) fn dispose(&self) {
         let mut connections = self.connections.write().unwrap();
         info!(self.logger, "Closing {} p2p connections", connections.len());
         let mut peers = Vec::with_capacity(connections.len());

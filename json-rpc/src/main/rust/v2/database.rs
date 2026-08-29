@@ -23,25 +23,25 @@ use axum::{
     response::Response,
     routing::get,
 };
-use blacknet_kernel::blake2b::Hash;
-use blacknet_kernel::proofofstake::DEFAULT_CONFIRMATIONS;
-use blacknet_network::db::{BlockDBCheck, CoinDBCheck};
-use blacknet_network::node::Node;
-use std::path::absolute;
-use std::sync::Arc;
+use blacknet_kernel::{blake2b::Hash, proofofstake::DEFAULT_CONFIRMATIONS};
+use blacknet_network::{
+    db::{BlockDBCheck, CoinDBCheck},
+    network::Network,
+};
+use std::{path::absolute, sync::Arc};
 
-async fn peer_table(State(node): State<Arc<Node>>) -> Json<PeerTableInfo> {
-    let peer_table = node.peer_table();
+async fn peer_table(State(network): State<Arc<Network>>) -> Json<PeerTableInfo> {
+    let peer_table = network.node().peer_table();
     Json(PeerTableInfo::new(peer_table))
 }
 
-async fn peer_table_stat(State(node): State<Arc<Node>>) -> Json<PeerTableInfo> {
-    let peer_table = node.peer_table();
+async fn peer_table_stat(State(network): State<Arc<Network>>) -> Json<PeerTableInfo> {
+    let peer_table = network.node().peer_table();
     Json(PeerTableInfo::with_stat(peer_table))
 }
 
-async fn kv_store_stat(State(node): State<Arc<Node>>) -> Response<String> {
-    let db = node.fjall().database();
+async fn kv_store_stat(State(network): State<Arc<Network>>) -> Response<String> {
+    let db = network.node().fjall().database();
     respond_text(format!(
         "disk_space: {}\njournal_count: {}\nkeyspace_count: {}",
         match db.disk_space() {
@@ -55,11 +55,11 @@ async fn kv_store_stat(State(node): State<Arc<Node>>) -> Response<String> {
 
 async fn block(
     Path((hash, txdetail)): Path<(Hash, Option<bool>)>,
-    State(node): State<Arc<Node>>,
+    State(network): State<Arc<Network>>,
 ) -> Response<String> {
-    let block_db = node.block_db();
+    let block_db = network.node().block_db();
     if let Some((block, size)) = block_db.get(hash) {
-        let address_codec = node.wallet_db().address_codec();
+        let address_codec = network.wallet_db().address_codec();
         match BlockInfo::new(
             &block,
             hash,
@@ -75,14 +75,19 @@ async fn block(
     }
 }
 
-async fn block_db_check(State(node): State<Arc<Node>>) -> Json<BlockDBCheck> {
+async fn block_db_check(State(network): State<Arc<Network>>) -> Json<BlockDBCheck> {
+    let node = network.node();
     let block_db = node.block_db();
     let coin_db = node.coin_db();
     let state = coin_db.state().load();
     Json(block_db.check(&state))
 }
 
-async fn block_hash(Path(height): Path<u32>, State(node): State<Arc<Node>>) -> Response<String> {
+async fn block_hash(
+    Path(height): Path<u32>,
+    State(network): State<Arc<Network>>,
+) -> Response<String> {
+    let node = network.node();
     let block_db = node.block_db();
     let coin_db = node.coin_db();
     let state = coin_db.state().load();
@@ -93,8 +98,11 @@ async fn block_hash(Path(height): Path<u32>, State(node): State<Arc<Node>>) -> R
     }
 }
 
-async fn block_index(Path(hash): Path<Hash>, State(node): State<Arc<Node>>) -> Response<String> {
-    let block_db = node.block_db();
+async fn block_index(
+    Path(hash): Path<Hash>,
+    State(network): State<Arc<Network>>,
+) -> Response<String> {
+    let block_db = network.node().block_db();
     if let Some(index) = block_db.index(hash) {
         respond_json(&BlockIndexInfo::new(index))
     } else {
@@ -102,7 +110,8 @@ async fn block_index(Path(hash): Path<Hash>, State(node): State<Arc<Node>>) -> R
     }
 }
 
-async fn make_bootstrap(State(node): State<Arc<Node>>) -> Response<String> {
+async fn make_bootstrap(State(network): State<Arc<Network>>) -> Response<String> {
+    let node = network.node();
     let block_db = node.block_db();
     let coin_db = node.coin_db();
     let state = coin_db.state().load();
@@ -115,22 +124,22 @@ async fn make_bootstrap(State(node): State<Arc<Node>>) -> Response<String> {
     }
 }
 
-async fn coin_db(State(node): State<Arc<Node>>) -> Json<CoinDBInfo> {
-    let coin_db = node.coin_db();
+async fn coin_db(State(network): State<Arc<Network>>) -> Json<CoinDBInfo> {
+    let coin_db = network.node().coin_db();
     let state = coin_db.state().load();
     Json(CoinDBInfo::new(&state))
 }
 
-async fn coin_db_check(State(node): State<Arc<Node>>) -> Json<CoinDBCheck> {
-    let coin_db = node.coin_db();
+async fn coin_db_check(State(network): State<Arc<Network>>) -> Json<CoinDBCheck> {
+    let coin_db = network.node().coin_db();
     Json(coin_db.check())
 }
 
 async fn account(
     Path((address, confirmations)): Path<(String, Option<u32>)>,
-    State(node): State<Arc<Node>>,
+    State(network): State<Arc<Network>>,
 ) -> Response<String> {
-    let address_codec = node.wallet_db().address_codec();
+    let address_codec = network.wallet_db().address_codec();
     let public_key = {
         match address_codec.decode(&address) {
             Ok(public_key) => public_key,
@@ -141,7 +150,7 @@ async fn account(
     };
     let confirmations = confirmations.unwrap_or(DEFAULT_CONFIRMATIONS);
 
-    let coin_db = node.coin_db();
+    let coin_db = network.node().coin_db();
     if let Some(account) = coin_db.account(public_key) {
         let state = coin_db.state().load();
         match AccountInfo::new(&account, state.height(), confirmations, address_codec) {
@@ -153,7 +162,7 @@ async fn account(
     }
 }
 
-pub fn routes() -> Router<Arc<Node>> {
+pub fn routes() -> Router<Arc<Network>> {
     Router::new()
         .route("/api/v2/peerdb", get(peer_table))
         .route("/api/v2/peerdb/networkstat", get(peer_table_stat))

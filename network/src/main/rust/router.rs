@@ -28,7 +28,12 @@ use blacknet_compat::{
     {Mode, XDGDirectories},
 };
 use blacknet_log::{LogManager, Logger, info, warn};
-use core::{cmp::min, error::Error, net::SocketAddr, ops::ControlFlow};
+use core::{
+    cmp::{max, min},
+    error::Error,
+    net::SocketAddr,
+    ops::ControlFlow,
+};
 use std::{
     collections::HashSet,
     sync::{Arc, RwLock},
@@ -75,7 +80,10 @@ impl Router {
         config: &Arc<Config>,
         peer_table: Arc<PeerTable>,
     ) -> Result<(Arc<Self>, Notifier), Box<dyn Error>> {
-        let (subscriber, notifier) = mpsc::channel(config.incoming_connections as usize);
+        // mpsc bounded channel requires buffer > 0
+        let incoming_connections = max(config.incoming_connections, 1);
+
+        let (subscriber, notifier) = mpsc::channel(incoming_connections as usize);
 
         let router = Arc::new(Self {
             logger: log_manager.logger("Router")?,

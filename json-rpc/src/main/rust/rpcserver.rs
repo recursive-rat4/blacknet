@@ -22,7 +22,7 @@ use blacknet_kernel::ed25519::PublicKey;
 use blacknet_log::{LogManager, error, info};
 use blacknet_network::{
     db::BlockNotifier,
-    node::Node,
+    network::Network,
     txpool::Notifier as TxPoolNotifier,
     wallet::{AddressCodec, Notifier as WalletDBNotifier},
 };
@@ -50,14 +50,15 @@ pub struct RPCServer {
 }
 
 impl RPCServer {
-    pub fn new(runtime: &Runtime, node: &Node) -> Arc<Self> {
+    pub fn new(runtime: &Runtime, network: &Network) -> Arc<Self> {
         let rpc_server = Arc::new(Self {
             next_subscriber_id: AtomicU64::new(1),
             block_subscribers: Mutex::new(Vec::new()),
             txpool_subscribers: Mutex::new(Vec::new()),
             wallet_subscribers: Mutex::new(HashMap::new()),
-            address_codec: AddressCodec::new(node.mode()).unwrap(),
+            address_codec: AddressCodec::new(network.mode()).unwrap(),
         });
+        let node = network.node();
         runtime.spawn(RPCServer::block_observer(
             rpc_server.clone(),
             node.block_db().subscribe(),
@@ -68,7 +69,7 @@ impl RPCServer {
         ));
         runtime.spawn(RPCServer::walletdb_observer(
             rpc_server.clone(),
-            node.wallet_db().subscribe(),
+            network.wallet_db().subscribe(),
         ));
         rpc_server
     }
@@ -77,7 +78,7 @@ impl RPCServer {
         self: Arc<Self>,
         config: &Config,
         log_manager: &LogManager,
-        node: Arc<Node>,
+        network: Arc<Network>,
         shutdown_send: mpsc::UnboundedSender<()>,
     ) {
         let logger = log_manager.logger("RPCServer").unwrap();
@@ -90,7 +91,7 @@ impl RPCServer {
                     let _ = shutdown_send.send(());
                 }),
             )
-            .merge(v2::routes(node, self));
+            .merge(v2::routes(network, self));
 
         let addr = format!("{}:{}", config.bind.host, config.bind.port);
         match TcpListener::bind(&addr).await {

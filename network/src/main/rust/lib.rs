@@ -21,6 +21,7 @@ pub mod db;
 pub mod endpoint;
 pub mod i2psam;
 pub mod natpmp;
+pub mod network;
 pub mod node;
 pub mod packet;
 pub mod peertable;
