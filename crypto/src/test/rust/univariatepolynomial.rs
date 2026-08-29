@@ -106,13 +106,14 @@ fn basis() {
 #[test]
 fn tensor_basis() {
     let point = R::from(2);
-    let p = UnivariatePolynomial::from([1, 1, 1, 1].map(R::from));
-    let l = DenseVector::from([1, 4].map(R::from));
-    let r = DenseVector::from([1, 2].map(R::from));
-    let (left, right) = p.tensor_basis(&point);
+    let p = UnivariatePolynomial::from([1, 1, 1, 1, 1, 1].map(R::from));
+    let l23 = DenseVector::from([1, 8].map(R::from));
+    let r23 = DenseVector::from([1, 2, 4].map(R::from));
+    let l32 = DenseVector::from([1, 4, 16].map(R::from));
+    let r32 = DenseVector::from([1, 2].map(R::from));
 
-    assert_eq!(left, l);
-    assert_eq!(right, r);
+    assert_eq!(p.tensor_basis(&point, 2, 3), (l23, r23));
+    assert_eq!(p.tensor_basis(&point, 3, 2), (l32, r32));
 }
 
 #[test]

@@ -51,9 +51,14 @@ pub trait InBasis: Polynomial + AsRef<[Self::Coefficient]> {
 /// Tensor structured basis.
 pub trait TensorBasis: InBasis {
     /// Tensor basis coordinates of a point.
+    ///
+    /// # Safety
+    /// Polynomial length is `m * n`.
     fn tensor_basis(
         &self,
         point: &Self::Point,
+        m: usize,
+        n: usize,
     ) -> (
         DenseVector<Self::Coefficient>,
         DenseVector<Self::Coefficient>,

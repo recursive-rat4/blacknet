@@ -336,9 +336,15 @@ impl<R: UnitalRing + Clone> TensorBasis for MultilinearExtension<R>
 where
     for<'a> &'a R: RingOps<R>,
 {
-    fn tensor_basis(&self, point: &Point<R>) -> (DenseVector<R>, DenseVector<R>) {
-        debug_assert_eq!(self.coefficients.len(), 1 << point.dimension());
-        let (left, right) = point.split_at(point.dimension() as usize >> 1);
+    fn tensor_basis(
+        &self,
+        point: &Point<R>,
+        m: usize,
+        n: usize,
+    ) -> (DenseVector<R>, DenseVector<R>) {
+        debug_assert!(self.coefficients.len() == 1 << point.dimension());
+        debug_assert!(self.coefficients.len() == m * n);
+        let (left, right) = point.split_at(m.trailing_zeros() as usize);
         (
             EqExtension::<R>::basis(left).into(),
             EqExtension::<R>::basis(right).into(),

@@ -262,10 +262,9 @@ impl<R: UnitalSemiring + Clone> TensorBasis for UnivariatePolynomial<R>
 where
     for<'a> &'a R: SemiringOps<R>,
 {
-    fn tensor_basis(&self, point: &R) -> (DenseVector<R>, DenseVector<R>) {
-        let n = self.coefficients.len().isqrt();
-        debug_assert!(self.coefficients.len() == n * n);
-        debug_assert!(n > 1);
+    fn tensor_basis(&self, point: &R, m: usize, n: usize) -> (DenseVector<R>, DenseVector<R>) {
+        debug_assert!(self.coefficients.len() == m * n);
+        debug_assert!(m > 1 && n > 1);
         let mut point = point.clone();
 
         let mut power = point.clone();
@@ -280,10 +279,10 @@ where
         point *= power;
         power = point.clone();
 
-        let mut left = Vec::<R>::with_capacity(n);
+        let mut left = Vec::<R>::with_capacity(m);
         left.push(R::ONE);
         left.push(point.clone());
-        for _ in 2..n {
+        for _ in 2..m {
             power *= &point;
             left.push(power.clone());
         }

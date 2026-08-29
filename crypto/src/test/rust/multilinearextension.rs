@@ -160,10 +160,11 @@ fn basis() {
 fn tensor_basis() {
     let point = Point::from([1, 0, 0].map(R::from));
     let mle = MultilinearExtension::from([0, 1, 2, 3, 4, 5, 6, 7].map(R::from));
-    let l = DenseVector::from([0, 1].map(R::from));
-    let r = DenseVector::from([1, 0, 0, 0].map(R::from));
-    let (left, right) = mle.tensor_basis(&point);
+    let l24 = DenseVector::from([0, 1].map(R::from));
+    let r24 = DenseVector::from([1, 0, 0, 0].map(R::from));
+    let l42 = DenseVector::from([0, 0, 1, 0].map(R::from));
+    let r42 = DenseVector::from([1, 0].map(R::from));
 
-    assert_eq!(left, l);
-    assert_eq!(right, r);
+    assert_eq!(mle.tensor_basis(&point, 2, 4), (l24, r24));
+    assert_eq!(mle.tensor_basis(&point, 4, 2), (l42, r42));
 }
