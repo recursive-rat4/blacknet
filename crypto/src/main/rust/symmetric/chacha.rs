@@ -20,7 +20,7 @@ use core::mem::{transmute, transmute_copy};
 use zeroize::DefaultIsZeroes;
 
 pub const KEY_SIZE: usize = 32;
-const IV_SIZE: usize = 12;
+pub const IV_SIZE: usize = 12;
 pub const BLOCK_SIZE: usize = 64;
 pub const BLOCK_LEN: usize = 16;
 const SIGMA: [u32; 4] = [0x61707865, 0x3320646E, 0x79622D32, 0x6B206574];
