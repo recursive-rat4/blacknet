@@ -21,6 +21,8 @@ use crate::algebra::{
     RightZero, Set, Square, Zero,
 };
 use crate::branchless::{BlAbs, BlAssign, BlEq, BlSelect};
+use crate::symmetric::{Absorb, Duplexer, Squeeze};
+use core::array;
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
 use core::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
@@ -411,6 +413,21 @@ macro_rules! impl_uring {
 
                 fn bl_ne(&self, rps: &$x) -> bool {
                     self.n.bl_ne(&rps.n)
+                }
+            }
+
+            impl Absorb<u8> for $x {
+                fn absorb_into<D: Duplexer<Msg = u8>>(self, duplex: &mut D) {
+                    duplex.absorb_iter(self.n.to_le_bytes())
+                }
+            }
+
+            impl Squeeze<u8> for $x {
+                fn squeeze_from<D: Duplexer<Msg = u8>>(duplex: &mut D) -> Self {
+                    const BYTES: usize = <$int>::BITS as usize >> 3;
+                    let bytes: [u8; BYTES] = array::from_fn(|_| duplex.squeeze_msg());
+                    let n = <$int>::from_le_bytes(bytes);
+                    $x { n }
                 }
             }
 
