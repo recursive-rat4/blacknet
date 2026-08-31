@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025-2026 Pavel Vasin
+ * Copyright (c) 2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,16 +15,9 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-mod error;
-mod errorhandler;
-mod logmanager;
-mod macros;
-mod utc;
+use core::error::Error;
+use std::io::{Write, stderr};
 
-use errorhandler::handle_error;
-
-pub use error::{Error, Result};
-pub use logmanager::{LogManager, Strategy};
-pub use utc::UTC;
-
-pub use spdlog::Logger;
+pub fn handle_error<E: Error>(error: E) {
+    let _ = writeln!(stderr(), "blacknet-log error: {}", error);
+}

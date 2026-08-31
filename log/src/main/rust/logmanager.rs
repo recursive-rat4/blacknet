@@ -15,20 +15,18 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::error::{Error, Result};
-use crate::{UTC, info};
-use spdlog::Level;
-use spdlog::formatter::{Formatter, PatternFormatter, pattern};
-use spdlog::sink::RotatingFileSink;
-use spdlog::sink::RotationPolicy;
-use spdlog::sink::Sink;
-use spdlog::sink::StdStreamSink;
-use spdlog::terminal_style::StyleMode;
-use spdlog::{LevelFilter, Logger};
-use std::env::VarError;
-use std::path::Path;
-use std::str::FromStr;
-use std::sync::Arc;
+use crate::{
+    UTC,
+    error::{Error, Result},
+    handle_error, info,
+};
+use spdlog::{
+    Level, LevelFilter, Logger,
+    formatter::{Formatter, PatternFormatter, pattern},
+    sink::{RotatingFileSink, RotationPolicy, Sink, StdStreamSink},
+    terminal_style::StyleMode,
+};
+use std::{env::VarError, path::Path, str::FromStr, sync::Arc};
 
 #[derive(Clone, Copy)]
 pub enum Strategy {
@@ -104,6 +102,7 @@ impl LogManager {
             .stdout()
             .style_mode(StyleMode::Auto)
             .formatter(Self::formatter())
+            .error_handler(handle_error)
             .build()
             .map(Arc::new)?)
     }
@@ -115,6 +114,7 @@ impl LogManager {
             .max_files(2)
             .rotate_on_open(false)
             .formatter(Self::formatter())
+            .error_handler(handle_error)
             .build()
             .map(Arc::new)?)
     }
@@ -131,6 +131,10 @@ impl LogManager {
 impl Drop for LogManager {
     fn drop(&mut self) {
         info!(self.logger, "Shutting down logging");
-        self.sinks.clear()
+        for sink in &self.sinks {
+            if let Err(err) = sink.flush() {
+                handle_error(err)
+            }
+        }
     }
 }
