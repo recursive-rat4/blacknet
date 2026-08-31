@@ -45,7 +45,7 @@ use tokio::{
         tcp::{OwnedReadHalf, OwnedWriteHalf},
     },
     runtime::{Handle, Runtime},
-    sync::{Mutex, mpsc},
+    sync::mpsc,
     time::{Duration, sleep},
 };
 
@@ -67,7 +67,7 @@ pub struct Router {
     socks_proxy: Option<Endpoint>,
     tor_proxy: Option<Endpoint>,
     i2p_sam: SAM,
-    tor_controller: Mutex<TorController>,
+    tor_controller: TorController,
     subscriber: Subscriber,
 }
 
@@ -97,7 +97,7 @@ impl Router {
                 .and_then(|proxy| Endpoint::parse(&proxy.host, proxy.port)),
             tor_proxy: Endpoint::parse(&config.tor_proxy.host, config.tor_proxy.port),
             i2p_sam: SAM::new(mode, dirs, log_manager, config.clone())?,
-            tor_controller: Mutex::new(TorController::new(dirs, log_manager, config.clone())?),
+            tor_controller: TorController::new(dirs, log_manager, config.clone())?,
             subscriber,
         });
 
@@ -306,9 +306,8 @@ impl Router {
 
     async fn listen_tor(self: Arc<Self>) {
         let mut timeout = Self::INIT_TIMEOUT;
-        let mut tor_controller = self.tor_controller.lock().await;
         loop {
-            match tor_controller.create_session().await {
+            match self.tor_controller.create_session().await {
                 Ok(mut session) => {
                     timeout = Self::INIT_TIMEOUT;
                     self.add_listener(session.endpoint());

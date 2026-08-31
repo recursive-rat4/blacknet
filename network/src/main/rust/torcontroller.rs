@@ -16,17 +16,21 @@
  */
 
 use crate::endpoint::Endpoint;
-use blacknet_compat::XDGDirectories;
-use blacknet_compat::config::Network as Config;
+use arc_swap::ArcSwap;
+use blacknet_compat::{XDGDirectories, config::Network as Config};
 use blacknet_io::file::replace;
 use blacknet_log::{Error as LogError, LogManager, Logger, error, info, warn};
 use core::fmt;
-use std::borrow::Cow;
-use std::io::{Error as IoError, Write};
-use std::path::{Path, PathBuf};
-use std::sync::Arc;
-use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufStream};
-use tokio::net::TcpStream;
+use std::{
+    borrow::Cow,
+    io::{Error as IoError, Write},
+    path::{Path, PathBuf},
+    sync::Arc,
+};
+use tokio::{
+    io::{AsyncBufReadExt, AsyncWriteExt, BufStream},
+    net::TcpStream,
+};
 
 // https://spec.torproject.org/control-spec/
 
@@ -37,7 +41,7 @@ pub struct TorController {
     logger: Logger,
     config: Arc<Config>,
     data_dir: PathBuf,
-    private_key: String,
+    private_key: ArcSwap<String>,
     endpoint: Endpoint,
 }
 
@@ -59,21 +63,20 @@ impl TorController {
             logger: log_manager.logger("TorController")?,
             config,
             data_dir,
-            private_key,
+            private_key: ArcSwap::new(Arc::new(private_key)),
             endpoint,
         })
     }
 
-    pub async fn create_session(&mut self) -> Result<TorSession> {
+    pub async fn create_session(&self) -> Result<TorSession> {
         let mut connection = TorConnection::new(self.logger.clone(), self.endpoint).await?;
         connection.authenticate().await?;
         //XXX port
-        let (service_id, new_key) = connection
-            .add_onion(&self.private_key, self.config.port)
-            .await?;
+        let private_key = self.private_key.load();
+        let (service_id, new_key) = connection.add_onion(&private_key, self.config.port).await?;
         let local_endpoint = Endpoint::parse(&(service_id + ".onion"), self.config.port)
             .ok_or("Failed to parse Onion Service ID")?;
-        if self.private_key.starts_with("NEW:") {
+        if private_key.starts_with("NEW:") {
             if !new_key.is_empty() {
                 self.save_private_key(new_key);
             } else {
@@ -98,11 +101,12 @@ impl TorController {
         TRANSIENT_KEY.to_string()
     }
 
-    fn save_private_key(&mut self, new_key: String) {
-        self.private_key = new_key;
+    fn save_private_key(&self, new_key: String) {
+        let new_key = Arc::new(new_key);
+        self.private_key.store(new_key.clone());
         info!(self.logger, "Saving Tor private key");
         if let Err(err) = replace(&self.data_dir, FILE_NAME, |buffered| {
-            buffered.write_all(self.private_key.as_bytes())
+            buffered.write_all(new_key.as_bytes())
         }) {
             error!(self.logger, "Can't write {FILE_NAME}: {err}");
         }
