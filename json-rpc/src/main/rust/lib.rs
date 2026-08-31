@@ -15,6 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#[cfg(target_has_atomic = "64")]
+pub mod debug;
 mod rpcserver;
 pub mod v2;
 

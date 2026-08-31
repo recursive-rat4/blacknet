@@ -37,9 +37,12 @@ use std::{
 };
 use tokio::{
     net::TcpListener,
-    runtime::Runtime,
+    runtime::{Handle, Runtime},
     sync::{Mutex, mpsc},
 };
+
+#[cfg(target_has_atomic = "64")]
+use crate::debug;
 
 pub struct RPCServer {
     next_subscriber_id: AtomicU64,
@@ -78,6 +81,7 @@ impl RPCServer {
         self: Arc<Self>,
         config: &Config,
         log_manager: &LogManager,
+        runtime: Handle,
         network: Arc<Network>,
         shutdown_send: mpsc::UnboundedSender<()>,
     ) {
@@ -92,6 +96,9 @@ impl RPCServer {
                 }),
             )
             .merge(v2::routes(network, self));
+
+        #[cfg(target_has_atomic = "64")]
+        let router = router.merge(debug::routes(runtime));
 
         let addr = format!("{}:{}", config.bind.host, config.bind.port);
         match TcpListener::bind(&addr).await {
