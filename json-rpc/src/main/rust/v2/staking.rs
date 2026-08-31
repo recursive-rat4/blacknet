@@ -83,7 +83,7 @@ async fn is_staking(
 
 async fn staking(
     State(network): State<Arc<Network>>,
-    Path(address): Path<Option<String>>,
+    address: Option<Path<String>>,
 ) -> Response<String> {
     let address_codec = network.wallet_db().address_codec();
     let public_key: Option<PublicKey> = match address {
@@ -105,5 +105,6 @@ pub fn routes() -> Router<Arc<Network>> {
         .route("/api/v2/startstaking", post(start_staking))
         .route("/api/v2/stopstaking", post(stop_staking))
         .route("/api/v2/isstaking", post(is_staking))
+        .route("/api/v2/staking", get(staking))
         .route("/api/v2/staking/{address}", get(staking))
 }

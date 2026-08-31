@@ -53,20 +53,26 @@ async fn kv_store_stat(State(network): State<Arc<Network>>) -> Response<String> 
     ))
 }
 
-async fn block(
-    Path((hash, txdetail)): Path<(Hash, Option<bool>)>,
+async fn block(Path(hash): Path<String>, State(network): State<Arc<Network>>) -> Response<String> {
+    block_handler(&hash, false, &network)
+}
+
+async fn block_with_txdetail(
+    Path((hash, txdetail)): Path<(String, bool)>,
     State(network): State<Arc<Network>>,
 ) -> Response<String> {
+    block_handler(&hash, txdetail, &network)
+}
+
+fn block_handler(hash: &str, txdetail: bool, network: &Arc<Network>) -> Response<String> {
+    let hash = match Hash::try_from(hash) {
+        Ok(hash) => hash,
+        Err(err) => return respond_error(format!("Invalid hash: {err}")),
+    };
     let block_db = network.node().block_db();
     if let Some((block, size)) = block_db.get(hash) {
         let address_codec = network.wallet_db().address_codec();
-        match BlockInfo::new(
-            &block,
-            hash,
-            size as u32,
-            txdetail.unwrap_or(false),
-            address_codec,
-        ) {
+        match BlockInfo::new(&block, hash, size as u32, txdetail, address_codec) {
             Ok(info) => respond_json(&info),
             Err(err) => respond_error(format!("Internal error: {err}")),
         }
@@ -99,9 +105,13 @@ async fn block_hash(
 }
 
 async fn block_index(
-    Path(hash): Path<Hash>,
+    Path(hash): Path<String>,
     State(network): State<Arc<Network>>,
 ) -> Response<String> {
+    let hash = match Hash::try_from(hash.as_str()) {
+        Ok(hash) => hash,
+        Err(err) => return respond_error(format!("Invalid hash: {err}")),
+    };
     let block_db = network.node().block_db();
     if let Some(index) = block_db.index(hash) {
         respond_json(&BlockIndexInfo::new(index))
@@ -136,19 +146,29 @@ async fn coin_db_check(State(network): State<Arc<Network>>) -> Json<CoinDBCheck>
 }
 
 async fn account(
-    Path((address, confirmations)): Path<(String, Option<u32>)>,
+    Path(address): Path<String>,
     State(network): State<Arc<Network>>,
 ) -> Response<String> {
+    account_handler(&address, DEFAULT_CONFIRMATIONS, &network)
+}
+
+async fn account_with_confirmations(
+    Path((address, confirmations)): Path<(String, u32)>,
+    State(network): State<Arc<Network>>,
+) -> Response<String> {
+    account_handler(&address, confirmations, &network)
+}
+
+fn account_handler(address: &str, confirmations: u32, network: &Arc<Network>) -> Response<String> {
     let address_codec = network.wallet_db().address_codec();
     let public_key = {
-        match address_codec.decode(&address) {
+        match address_codec.decode(address) {
             Ok(public_key) => public_key,
             Err(err) => {
                 return respond_error(format!("Invalid address: {err}"));
             }
         }
     };
-    let confirmations = confirmations.unwrap_or(DEFAULT_CONFIRMATIONS);
 
     let coin_db = network.node().coin_db();
     if let Some(account) = coin_db.account(public_key) {
@@ -167,12 +187,17 @@ pub fn routes() -> Router<Arc<Network>> {
         .route("/api/v2/peerdb", get(peer_table))
         .route("/api/v2/peerdb/networkstat", get(peer_table_stat))
         .route("/api/v2/leveldb/stats", get(kv_store_stat))
-        .route("/api/v2/block/{hash}/{txdetail}", get(block))
+        .route("/api/v2/block/{hash}", get(block))
+        .route("/api/v2/block/{hash}/{txdetail}", get(block_with_txdetail))
         .route("/api/v2/blockdb/check", get(block_db_check))
         .route("/api/v2/blockhash/{height}", get(block_hash))
         .route("/api/v2/blockindex/{hash}", get(block_index))
         .route("/api/v2/makebootstrap", get(make_bootstrap))
         .route("/api/v2/ledger", get(coin_db))
         .route("/api/v2/ledger/check", get(coin_db_check))
-        .route("/api/v2/account/{address}/{confirmations}", get(account))
+        .route("/api/v2/account/{address}", get(account))
+        .route(
+            "/api/v2/account/{address}/{confirmations}",
+            get(account_with_confirmations),
+        )
 }

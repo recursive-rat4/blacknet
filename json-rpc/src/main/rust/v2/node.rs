@@ -54,15 +54,28 @@ async fn tx_pool(State(network): State<Arc<Network>>) -> Json<TxPoolInfo> {
 }
 
 async fn tx_pool_transaction(
-    Path((hash, raw)): Path<(Hash, Option<bool>)>,
+    Path(hash): Path<String>,
     State(network): State<Arc<Network>>,
 ) -> Response<String> {
+    tx_pool_transaction_handler(&hash, false, &network)
+}
+
+async fn tx_pool_transaction_raw(
+    Path((hash, raw)): Path<(String, bool)>,
+    State(network): State<Arc<Network>>,
+) -> Response<String> {
+    tx_pool_transaction_handler(&hash, raw, &network)
+}
+
+fn tx_pool_transaction_handler(hash: &str, raw: bool, network: &Arc<Network>) -> Response<String> {
+    let hash = match Hash::try_from(hash) {
+        Ok(hash) => hash,
+        Err(err) => return respond_error(format!("Invalid hash: {err}")),
+    };
     let address_codec = network.wallet_db().address_codec();
     let tx_pool = network.node().tx_pool().read().unwrap();
     if let Some(bytes) = tx_pool.get_raw(hash) {
-        if let Some(raw) = raw
-            && raw
-        {
+        if raw {
             respond_hex(bytes)
         } else {
             let tx = from_bytes::<Transaction>(bytes, false).unwrap();
@@ -75,15 +88,34 @@ async fn tx_pool_transaction(
 }
 
 async fn add_peer(
-    Path((address, port, _force)): Path<(String, Option<u16>, Option<bool>)>,
+    Path(address): Path<String>,
     State(network): State<Arc<Network>>,
 ) -> Response<String> {
-    let _endpoint = if let Some(endpoint) = Endpoint::parse(
-        &address,
-        port.unwrap_or_else(|| network.mode().default_p2p_port()),
-    ) {
-        endpoint
-    } else {
+    add_peer_handler(&address, network.mode().default_p2p_port(), false, &network)
+}
+
+async fn add_peer_with_port(
+    Path((address, port)): Path<(String, u16)>,
+    State(network): State<Arc<Network>>,
+) -> Response<String> {
+    add_peer_handler(&address, port, false, &network)
+}
+
+async fn add_peer_with_all(
+    Path((address, port, force)): Path<(String, u16, bool)>,
+    State(network): State<Arc<Network>>,
+) -> Response<String> {
+    add_peer_handler(&address, port, force, &network)
+}
+
+#[expect(unused_variables)]
+fn add_peer_handler(
+    address: &str,
+    port: u16,
+    _force: bool,
+    network: &Arc<Network>,
+) -> Response<String> {
+    let Some(endpoint) = Endpoint::parse(address, port) else {
         return respond_error("Invalid endpoint");
     };
 
@@ -91,15 +123,33 @@ async fn add_peer(
 }
 
 async fn disconnect_peer_by_address(
-    Path((address, port, _force)): Path<(String, Option<u16>, Option<bool>)>,
+    Path(address): Path<String>,
     State(network): State<Arc<Network>>,
 ) -> Response<String> {
-    let endpoint = if let Some(endpoint) = Endpoint::parse(
-        &address,
-        port.unwrap_or_else(|| network.mode().default_p2p_port()),
-    ) {
-        endpoint
-    } else {
+    disconnect_peer_by_address_handler(&address, network.mode().default_p2p_port(), false, &network)
+}
+
+async fn disconnect_peer_by_address_with_port(
+    Path((address, port)): Path<(String, u16)>,
+    State(network): State<Arc<Network>>,
+) -> Response<String> {
+    disconnect_peer_by_address_handler(&address, port, false, &network)
+}
+
+async fn disconnect_peer_by_address_with_all(
+    Path((address, port, force)): Path<(String, u16, bool)>,
+    State(network): State<Arc<Network>>,
+) -> Response<String> {
+    disconnect_peer_by_address_handler(&address, port, force, &network)
+}
+
+fn disconnect_peer_by_address_handler(
+    address: &str,
+    port: u16,
+    _force: bool,
+    network: &Arc<Network>,
+) -> Response<String> {
+    let Some(endpoint) = Endpoint::parse(address, port) else {
         return respond_error("Invalid endpoint");
     };
 
@@ -116,8 +166,23 @@ async fn disconnect_peer_by_address(
 }
 
 async fn disconnect_peer(
-    Path((id, _force)): Path<(ConnectionId, Option<bool>)>,
+    Path(id): Path<ConnectionId>,
     State(network): State<Arc<Network>>,
+) -> Response<String> {
+    disconnect_peer_handler(id, false, &network)
+}
+
+async fn disconnect_peer_with_force(
+    Path((id, force)): Path<(ConnectionId, bool)>,
+    State(network): State<Arc<Network>>,
+) -> Response<String> {
+    disconnect_peer_handler(id, force, &network)
+}
+
+fn disconnect_peer_handler(
+    id: ConnectionId,
+    _force: bool,
+    network: &Arc<Network>,
 ) -> Response<String> {
     let connections = network.node().connections().read().unwrap();
     if let Some(connection) = connections.iter().find(|connection| connection.id() == id) {
@@ -134,13 +199,34 @@ pub fn routes() -> Router<Arc<Network>> {
         .route("/api/v2/node", get(node))
         .route("/api/v2/txpool", get(tx_pool))
         .route(
-            "/api/v2/txpool/transaction/{hash}/{raw}",
+            "/api/v2/txpool/transaction/{hash}",
             get(tx_pool_transaction),
         )
-        .route("/api/v2/addpeer/{address}/{port}/{force}", get(add_peer))
         .route(
-            "/api/v2/disconnectpeerbyaddress/{address}/{port}/{force}",
+            "/api/v2/txpool/transaction/{hash}/{raw}",
+            get(tx_pool_transaction_raw),
+        )
+        .route("/api/v2/addpeer/{address}", get(add_peer))
+        .route("/api/v2/addpeer/{address}/{port}", get(add_peer_with_port))
+        .route(
+            "/api/v2/addpeer/{address}/{port}/{force}",
+            get(add_peer_with_all),
+        )
+        .route(
+            "/api/v2/disconnectpeerbyaddress/{address}",
             get(disconnect_peer_by_address),
         )
-        .route("/api/v2/disconnectpeer/{id}/{force}", get(disconnect_peer))
+        .route(
+            "/api/v2/disconnectpeerbyaddress/{address}/{port}",
+            get(disconnect_peer_by_address_with_port),
+        )
+        .route(
+            "/api/v2/disconnectpeerbyaddress/{address}/{port}/{force}",
+            get(disconnect_peer_by_address_with_all),
+        )
+        .route("/api/v2/disconnectpeer/{id}", get(disconnect_peer))
+        .route(
+            "/api/v2/disconnectpeer/{id}/{force}",
+            get(disconnect_peer_with_force),
+        )
 }
