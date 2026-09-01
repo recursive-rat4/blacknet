@@ -90,7 +90,7 @@ async fn staking(
         Some(address) => match address_codec.decode(&address) {
             Ok(public_key) => Some(public_key),
             Err(err) => {
-                return respond_error(format!("Invalid public key: {err}"));
+                return respond_error(format!("Invalid address: {err}"));
             }
         },
         None => None,

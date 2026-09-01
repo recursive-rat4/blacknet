@@ -15,29 +15,68 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_compat::config::Config;
-use blacknet_compat::{XDGDirectories, mode};
-use clap::Parser;
-use std::error::Error;
-use std::process::ExitCode;
+mod client;
+
+use crate::client::Client;
+use blacknet_compat::{
+    config::Config,
+    {XDGDirectories, mode},
+};
+use clap::{Parser, Subcommand};
+use core::error::Error;
+use serde_json::{Value, from_str, to_writer_pretty};
+use std::{io::stdout, process::ExitCode};
 
 #[derive(Parser)]
 #[command(version)]
 #[command(about = "Blacknet RPC client", long_about = None)]
 struct Cli {
-    /// RPC command.
-    command: String,
-    /// Arguments for the command.
-    args: Vec<String>,
+    #[command(subcommand)]
+    command: Command,
 }
 
-#[expect(unused_variables)]
+/// RPC command.
+#[derive(Subcommand)]
+enum Command {
+    /// Node info.
+    Node,
+    /// Peer info.
+    Peers,
+    /// Staking info.
+    Staking {
+        /// If not specified returns total of all node's wallets.
+        address: Option<String>,
+    },
+    /// TxPool info.
+    Txpool,
+}
+
 fn cli() -> Result<(), Box<dyn Error>> {
     let cli = Cli::parse();
     let mode = mode()?;
     let dirs = XDGDirectories::new(mode.subdirectory())?;
     let config = Config::load(dirs.config())?;
-    todo!();
+
+    let client = Client::new(&config.rpc.bind.host, config.rpc.bind.port)?;
+
+    let reply = match cli.command {
+        Command::Node => client.get("/api/v2/node"),
+        Command::Peers => client.get("/api/v2/peers"),
+        Command::Staking { address: None } => client.get("/api/v2/staking"),
+        Command::Staking {
+            address: Some(address),
+        } => client.get(&format!("/api/v2/staking/{}", address)),
+        Command::Txpool => client.get("/api/v2/txpool"),
+    }?;
+
+    if let Ok(json) = from_str::<Value>(&reply) {
+        to_writer_pretty(stdout(), &json)?;
+        println!()
+    } else {
+        println!("{reply}")
+    }
+
+    Ok(())
 }
 
 fn main() -> ExitCode {

@@ -300,7 +300,7 @@ impl Node {
     }
 
     fn time_offset(&self) -> Seconds {
-        let min = self.config.outgoing_connections;
+        let min = self.config.outgoing_connections as usize;
         let mut offsets: Vec<Seconds> = self
             .connections
             .read()
@@ -314,7 +314,8 @@ impl Node {
                 }
             })
             .collect();
-        if offsets.len() >= min.into() {
+        let n = offsets.len();
+        if n != 0 && n >= min {
             offsets.sort_unstable();
             offsets[offsets.len() >> 1] // median
         } else {
