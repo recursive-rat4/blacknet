@@ -21,16 +21,20 @@ use blacknet_kernel::{
     account::Account,
     amount::Amount,
     blake2b::Hash,
+    block::Block,
     ed25519::PublicKey,
     error::{Error, Result},
     htlc::HTLC,
     multisig::Multisig,
     transaction::{CoinTx, HashTimeLockContractId, MultiSignatureLockContractId, Transaction},
 };
-use blacknet_log::{Error as LogError, LogManager, Logger, debug, warn};
+use blacknet_log::{Error as LogError, LogManager, Logger, debug, error, warn};
 use blacknet_serialization::format::from_bytes;
 use blacknet_time::{Milliseconds, Seconds};
-use core::{cmp::max, mem::replace};
+use core::{
+    cmp::{max, min},
+    mem::replace,
+};
 use std::{
     collections::{HashMap, HashSet, hash_map::Keys},
     sync::{Arc, Mutex, RwLock},
@@ -123,6 +127,24 @@ impl TxPool {
 
     pub fn is_interesting(&self, hash: Hash) -> bool {
         !self.rejects.contains(&hash) && !self.map.contains_key(&hash)
+    }
+
+    pub fn fill(&self, block: &mut Block) {
+        let mut free_block_size = min(
+            self.coin_db.state().load().max_block_size(),
+            self.config.soft_block_size_limit,
+        ) - 176;
+        for hash in &self.transactions {
+            let Some(bytes) = self.map.get(hash) else {
+                error!(self.logger, "Inconsistent TxPool");
+                continue;
+            };
+            if bytes.len() as u32 + 4 > free_block_size {
+                break;
+            }
+            free_block_size -= bytes.len() as u32 + 4;
+            block.push(bytes.clone());
+        }
     }
 
     pub fn process(

@@ -71,6 +71,7 @@ pub struct Network {
     pub outgoing_connections: u16,
     pub log_endpoint: bool,
     pub db_cache: u64,
+    pub soft_block_size_limit: u32,
     pub tx_pool_size: usize,
     pub min_relay_fee_rate: u64,
     pub proxy: Option<HostPort>,

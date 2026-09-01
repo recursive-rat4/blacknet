@@ -15,10 +15,12 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::blake2b::Hash;
-use crate::ed25519::{PublicKey, Signature, verify};
-use crate::error::{Error, Result};
-use alloc::boxed::Box;
+use crate::{
+    blake2b::Hash,
+    ed25519::{PublicKey, Signature, verify},
+    error::{Error, Result},
+};
+use alloc::{boxed::Box, vec::Vec};
 use blacknet_crypto::symmetric::Blake2b256;
 use blacknet_time::Seconds;
 use serde::{Deserialize, Serialize};
@@ -37,7 +39,7 @@ pub struct Block {
     generator: PublicKey,
     content_hash: Hash,
     signature: Signature,
-    transactions: Box<[Box<[u8]>]>,
+    transactions: Vec<Box<[u8]>>,
 }
 
 impl Block {
@@ -49,7 +51,7 @@ impl Block {
             generator,
             content_hash: Hash::ZERO,
             signature: Default::default(),
-            transactions: Default::default(),
+            transactions: Vec::new(),
         }
     }
 
@@ -60,7 +62,7 @@ impl Block {
         generator: PublicKey,
         content_hash: Hash,
         signature: Signature,
-        transactions: Box<[Box<[u8]>]>,
+        transactions: Vec<Box<[u8]>>,
     ) -> Self {
         Self {
             version,
@@ -126,5 +128,9 @@ impl Block {
 
     pub fn verify_signature(&self, hash: Hash) -> Result<()> {
         verify(self.signature, hash, self.generator)
+    }
+
+    pub fn push(&mut self, tx: Box<[u8]>) {
+        self.transactions.push(tx)
     }
 }
