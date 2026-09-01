@@ -206,7 +206,7 @@ impl BlockDB {
             hash = index.next();
             index = self.indexes.get(hash).expect("consistent block index");
         }
-        if index.height() < state.height() - ROLLBACK_LIMIT as u32 + 1 {
+        if index.height() + (ROLLBACK_LIMIT as u32) < state.height() + 1 {
             self.cached_index.store(Some(Arc::new((hash, index))));
         }
 
