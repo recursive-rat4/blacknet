@@ -20,6 +20,7 @@ use data_encoding::{DecodeError, DecodeKind, HEXUPPER};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Copy, Default, Deserialize, Eq, Hash, PartialEq, Serialize)]
+#[repr(transparent)]
 pub struct Hash([u8; 32]);
 
 impl Hash {

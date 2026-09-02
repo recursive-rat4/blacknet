@@ -15,6 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::Milliseconds;
 use bytemuck::NoUninit;
 use core::fmt::{Debug, Display, Formatter, Result as FmtResult};
 use core::ops::{
@@ -48,6 +49,10 @@ impl Seconds {
 
     pub const fn value(self) -> i64 {
         self.n
+    }
+
+    pub const fn to_millis(self) -> Milliseconds {
+        Milliseconds::new(self.n * 1000)
     }
 
     pub const fn to_be_bytes(self) -> [u8; 8] {

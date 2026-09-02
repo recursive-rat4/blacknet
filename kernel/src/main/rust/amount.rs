@@ -138,6 +138,14 @@ impl MulAssign<u64> for Amount {
     }
 }
 
+impl Div for Amount {
+    type Output = u64;
+
+    fn div(self, rps: Self) -> Self::Output {
+        self.value / rps.value
+    }
+}
+
 impl Div<u64> for Amount {
     type Output = Self;
 

@@ -17,11 +17,12 @@
 
 use crate::{
     blake2b::Hash,
-    ed25519::{PublicKey, Signature, verify},
+    ed25519::{PublicKey, SecretKey, Signature, sign, verify},
     error::{Error, Result},
 };
 use alloc::{boxed::Box, vec::Vec};
 use blacknet_crypto::symmetric::Blake2b256;
+use blacknet_serialization::format::to_bytes;
 use blacknet_time::Seconds;
 use serde::{Deserialize, Serialize};
 
@@ -89,6 +90,19 @@ impl Block {
         } else {
             None
         }
+    }
+
+    pub fn sign(&mut self, secret_key: SecretKey) -> (Hash, Vec<u8>) {
+        let mut bytes = to_bytes(&self).expect("Block serialization");
+        let content_hash = Self::compute_content_hash(&bytes).expect("Block serialized");
+        self.content_hash = content_hash;
+        bytes[CONTENT_HASH_POS..CONTENT_HASH_POS + size_of::<Hash>()]
+            .copy_from_slice(content_hash.as_ref());
+        let hash = Self::compute_hash(&bytes).expect("Block serialized");
+        self.signature = sign(hash, secret_key);
+        bytes[SIGNATURE_POS..SIGNATURE_POS + 32].copy_from_slice(self.signature.raw_r());
+        bytes[SIGNATURE_POS + 32..SIGNATURE_POS + 64].copy_from_slice(self.signature.raw_s());
+        (hash, bytes)
     }
 
     pub const fn version(&self) -> u32 {

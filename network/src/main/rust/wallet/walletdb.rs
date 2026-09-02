@@ -121,6 +121,10 @@ impl WalletDB {
         &self.address_codec
     }
 
+    pub const fn wallets(&self) -> &HashMap<PublicKey, Wallet> {
+        &self.wallets
+    }
+
     pub fn sequence(&self, public_key: PublicKey) -> Result<u32, Error> {
         self.wallets
             .get(&public_key)
