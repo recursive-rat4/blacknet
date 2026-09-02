@@ -31,14 +31,14 @@ use serde_json::to_string;
 use std::{
     collections::HashMap,
     sync::{
-        Arc,
+        Arc, Mutex,
         atomic::{AtomicU64, Ordering},
     },
 };
 use tokio::{
     net::TcpListener,
     runtime::{Handle, Runtime},
-    sync::{Mutex, mpsc},
+    sync::mpsc,
 };
 
 #[cfg(target_has_atomic = "64")]
@@ -118,17 +118,17 @@ impl RPCServer {
     }
 
     pub(super) async fn subscribe_block(&self, subscriber: &Subscriber) {
-        let mut block_subscribers = self.block_subscribers.lock().await;
+        let mut block_subscribers = self.block_subscribers.lock().unwrap();
         block_subscribers.push(subscriber.clone());
     }
 
     pub(super) async fn subscribe_txpool(&self, subscriber: &Subscriber) {
-        let mut txpool_subscribers = self.txpool_subscribers.lock().await;
+        let mut txpool_subscribers = self.txpool_subscribers.lock().unwrap();
         txpool_subscribers.push(subscriber.clone());
     }
 
     pub(super) async fn subscribe_wallet(&self, public_key: PublicKey, subscriber: &Subscriber) {
-        let mut wallet_subscribers = self.wallet_subscribers.lock().await;
+        let mut wallet_subscribers = self.wallet_subscribers.lock().unwrap();
         wallet_subscribers
             .entry(public_key)
             .and_modify(|subscribers| subscribers.push(subscriber.clone()))
@@ -136,7 +136,7 @@ impl RPCServer {
     }
 
     pub(super) async fn unsubscribe_block(&self, subscriber: &Subscriber) {
-        let mut block_subscribers = self.block_subscribers.lock().await;
+        let mut block_subscribers = self.block_subscribers.lock().unwrap();
         if let Some(index) = block_subscribers
             .iter()
             .map(Subscriber::id)
@@ -147,7 +147,7 @@ impl RPCServer {
     }
 
     pub(super) async fn unsubscribe_txpool(&self, subscriber: &Subscriber) {
-        let mut txpool_subscribers = self.txpool_subscribers.lock().await;
+        let mut txpool_subscribers = self.txpool_subscribers.lock().unwrap();
         if let Some(index) = txpool_subscribers
             .iter()
             .map(Subscriber::id)
@@ -158,7 +158,7 @@ impl RPCServer {
     }
 
     pub(super) async fn unsubscribe_wallet(&self, public_key: PublicKey, subscriber: &Subscriber) {
-        let mut wallet_subscribers = self.wallet_subscribers.lock().await;
+        let mut wallet_subscribers = self.wallet_subscribers.lock().unwrap();
         wallet_subscribers
             .entry(public_key)
             .and_modify(|subscribers| {
@@ -187,7 +187,7 @@ impl RPCServer {
 
     async fn block_observer(self: Arc<Self>, mut block_notifier: BlockNotifier) {
         while let Some(notification) = block_notifier.recv().await {
-            let mut subscribers = self.block_subscribers.lock().await;
+            let mut subscribers = self.block_subscribers.lock().unwrap();
             if subscribers.is_empty() {
                 continue;
             }
@@ -209,7 +209,7 @@ impl RPCServer {
 
     async fn txpool_observer(self: Arc<Self>, mut txpool_notifier: TxPoolNotifier) {
         while let Some(notification) = txpool_notifier.recv().await {
-            let mut subscribers = self.txpool_subscribers.lock().await;
+            let mut subscribers = self.txpool_subscribers.lock().unwrap();
             if subscribers.is_empty() {
                 continue;
             }
@@ -231,7 +231,7 @@ impl RPCServer {
 
     async fn walletdb_observer(self: Arc<Self>, mut walletdb_notifier: WalletDBNotifier) {
         while let Some(notification) = walletdb_notifier.recv().await {
-            let mut subscribers = self.wallet_subscribers.lock().await;
+            let mut subscribers = self.wallet_subscribers.lock().unwrap();
             let Some(subscribers) = subscribers.get_mut(&notification.4) else {
                 continue;
             };
