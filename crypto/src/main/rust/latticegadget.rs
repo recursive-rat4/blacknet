@@ -15,11 +15,14 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{AlgebraOps, IntegerModRing, PolynomialRing, Tensor, UnitalAlgebra};
+use crate::algebra::{AlgebraOps, IntegerModRing, PolynomialRing, RingOps, Tensor, UnitalAlgebra};
 use crate::integer::Integer;
 use crate::matrix::{DenseMatrix, DenseVector, IdentityMatrix, ScalarMatrix};
 use alloc::{vec, vec::Vec};
-use core::iter::zip;
+use core::{
+    cell::OnceCell,
+    iter::{once, zip},
+};
 
 // https://eprint.iacr.org/2018/946
 
@@ -28,6 +31,7 @@ pub struct Gadget<Z: IntegerModRing> {
     mask: <Z::Int as Integer>::Limb,
     shift: <Z::Int as Integer>::Limb,
     digits: u32,
+    powers: OnceCell<Vec<Z>>,
 }
 
 impl<Z: IntegerModRing> Gadget<Z> {
@@ -42,11 +46,30 @@ impl<Z: IntegerModRing> Gadget<Z> {
             mask,
             shift,
             digits,
+            powers: OnceCell::new(),
         }
     }
 
     pub const fn digits(&self) -> u32 {
         self.digits
+    }
+
+    fn powers(&self) -> &[Z]
+    where
+        Z: Clone,
+    {
+        self.powers.get_or_init(|| {
+            let mut powers = Vec::<Z>::with_capacity(self.digits as usize);
+            let mut power = self.radix.clone();
+            for _ in 2..self.digits {
+                powers.push(power.clone());
+                power *= &self.radix;
+            }
+            if self.digits > 1 {
+                powers.push(power);
+            }
+            powers
+        })
     }
 
     fn decompose_impl<R: PolynomialRing<Z>>(&self, polynomial: &R, pieces: &mut [R]) {
@@ -103,6 +126,79 @@ impl<Z: IntegerModRing> Gadget<Z> {
         DenseMatrix::new(matrix.rows(), matrix.columns() * self.digits, pieces)
     }
 
+    fn compose_impl<R: PolynomialRing<Z> + Clone>(&self, pieces: &[R]) -> R
+    where
+        Z: Clone,
+        for<'a> &'a R: AlgebraOps<Z, R>,
+    {
+        debug_assert!(pieces.len() == self.digits as usize);
+        let mut pieces = pieces.iter();
+        let Some(polynomial) = pieces.next().cloned() else {
+            return R::ZERO;
+        };
+        once(polynomial)
+            .chain(zip(pieces, self.powers()).map(|(piece, power)| piece * power))
+            .sum()
+    }
+
+    pub fn compose_sequence<R: PolynomialRing<Z> + Clone>(&self, sequence: &[R]) -> Vec<R>
+    where
+        Z: Clone,
+        for<'a> &'a R: AlgebraOps<Z, R>,
+    {
+        debug_assert!(sequence.len().is_multiple_of(self.digits as usize));
+        sequence
+            .chunks_exact(self.digits as usize)
+            .map(|pieces| self.compose_impl::<R>(pieces))
+            .collect()
+    }
+
+    pub fn compose_integer(&self, pieces: &DenseVector<Z>) -> Z
+    where
+        Z: Clone,
+        for<'a> &'a Z: RingOps<Z>,
+    {
+        debug_assert!(pieces.dimension() == self.digits);
+        let mut pieces = pieces.into_iter();
+        let Some(integer) = pieces.next().cloned() else {
+            return Z::ZERO;
+        };
+        once(integer)
+            .chain(zip(pieces, self.powers()).map(|(piece, power)| piece * power))
+            .sum()
+    }
+
+    pub fn compose_polynomial<R: PolynomialRing<Z> + Clone>(&self, pieces: &DenseVector<R>) -> R
+    where
+        Z: Clone,
+        for<'a> &'a R: AlgebraOps<Z, R>,
+    {
+        self.compose_impl::<R>(pieces)
+    }
+
+    pub fn compose_vector<R: PolynomialRing<Z> + Clone>(
+        &self,
+        pieces: &DenseVector<R>,
+    ) -> DenseVector<R>
+    where
+        Z: Clone,
+        for<'a> &'a R: AlgebraOps<Z, R>,
+    {
+        self.compose_sequence::<R>(pieces).into()
+    }
+
+    pub fn compose_matrix<R: PolynomialRing<Z> + Clone>(
+        &self,
+        matrix: &DenseMatrix<R>,
+    ) -> DenseMatrix<R>
+    where
+        Z: Clone,
+        for<'a> &'a R: AlgebraOps<Z, R>,
+    {
+        let elements = self.compose_sequence::<R>(matrix.as_ref());
+        DenseMatrix::new(matrix.rows(), matrix.columns() / self.digits, elements)
+    }
+
     pub fn matrix<R: PolynomialRing<Z> + Clone>(
         &self,
         m: u32,
@@ -111,34 +207,21 @@ impl<Z: IntegerModRing> Gadget<Z> {
     where
         Z: Clone,
     {
-        debug_assert!(n >= 2);
-        let mut powers = Vec::<R>::with_capacity(n as usize);
-        powers.push(R::ONE);
-        powers.push(self.radix.clone().into());
-        let mut power = self.radix.clone();
-        for _ in 2..n {
-            power *= &self.radix;
-            powers.push(power.clone().into());
-        }
-
+        let powers = once(R::ONE)
+            .chain(self.powers().iter().map(|power| R::from(power.clone())))
+            .collect();
         let powers = DenseMatrix::<R>::new(1, n, powers);
         let identity = IdentityMatrix::new(m);
         identity.tensor(powers)
     }
 
-    pub fn vector<A: UnitalAlgebra<Z> + Clone>(&self, algebra: A) -> DenseVector<A>
+    pub fn vector<A: UnitalAlgebra<Z> + Clone>(&self, algebra: &A) -> DenseVector<A>
     where
         Z: Clone,
         for<'a> &'a A: AlgebraOps<Z, A>,
     {
-        let mut powers = Vec::<A>::with_capacity(self.digits as usize);
-        powers.push(algebra.clone());
-        let mut power = self.radix.clone();
-        for _ in 1..self.digits - 1 {
-            powers.push(&algebra * &power);
-            power *= &self.radix;
-        }
-        powers.push(algebra * power);
-        powers.into()
+        once(algebra.clone())
+            .chain(self.powers().iter().map(|power| algebra * power))
+            .collect()
     }
 }

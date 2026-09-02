@@ -15,9 +15,9 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_crypto::algebra::{Dot, IntegerModRing};
+use blacknet_crypto::algebra::IntegerModRing;
 use blacknet_crypto::latticegadget::Gadget;
-use blacknet_crypto::matrix::{DenseMatrix, DenseVector};
+use blacknet_crypto::matrix::{DenseMatrix, DenseVector, ScalarMatrix};
 
 type Z = blacknet_crypto::pervushin::PervushinField;
 type R = blacknet_crypto::pervushin::PervushinField2;
@@ -26,51 +26,78 @@ type R = blacknet_crypto::pervushin::PervushinField2;
 #[rustfmt::skip]
 fn matrix() {
     let gadget = Gadget::new(Z::from(65536), 65535, 16, 4);
-    let a = DenseMatrix::new(2, 8, [
-            3, 2, 1, 0,
-            4, 2, 1, 0,
-            5, 2, 1, 0,
-            6, 2, 1, 0,
-    ].map(Z::from).map(R::from).into());
-    let b = DenseMatrix::new(2, 2, [
+    let a = DenseMatrix::new(2, 2, [
             R::from([4295098371, 0].map(Z::with_int)),
             R::from([4295098372, 0].map(Z::with_int)),
             R::from([4295098373, 0].map(Z::with_int)),
             R::from([4295098374, 0].map(Z::with_int)),
      ].into());
-    let g = gadget.matrix::<R>(2, 4);
-    assert_eq!(&a * &g.transpose(), b);
-    let c = gadget.decompose_matrix(&b);
+    let b = DenseMatrix::new(2, 8, [
+            3, 2, 1, 0,
+            4, 2, 1, 0,
+            5, 2, 1, 0,
+            6, 2, 1, 0,
+    ].map(Z::from).map(R::from).into());
+    let g = ScalarMatrix::new(2, DenseMatrix::new(4, 1,
+        [1, 65536, 4294967296, 281474976710656]
+        .map(Z::with_int).map(R::from).into()
+    ));
+    let c = gadget.compose_matrix::<R>(&b);
+    let d = gadget.decompose_matrix(&a);
+    let m = gadget.matrix::<R>(2, 4).transpose();
     assert_eq!(c, a);
+    assert_eq!(d, b);
+    assert_eq!(m, g);
 }
 
 #[test]
 fn vector() {
     let gadget = Gadget::new(Z::from(65536), 65535, 16, 4);
-    let a = DenseVector::from([3, 2, 1, 0, 4, 2, 1, 0].map(Z::from).map(R::from));
-    let b = DenseVector::from([4295098371, 4295098372].map(Z::with_int).map(R::from));
-    let g = gadget.matrix::<R>(2, 4);
-    assert_eq!(&g * &a, b);
-    let c = gadget.decompose_vector(&b);
+    let a = DenseVector::from([4295098371, 4295098372].map(Z::with_int).map(R::from));
+    let b = DenseVector::from([3, 2, 1, 0, 4, 2, 1, 0].map(Z::from).map(R::from));
+    let g = DenseVector::from(
+        [
+            [3, 5].map(Z::with_int),
+            [196608, 327680].map(Z::with_int),
+            [12884901888, 21474836480].map(Z::with_int),
+            [844424930131968, 1407374883553280].map(Z::with_int),
+        ]
+        .map(R::from),
+    );
+    let c = gadget.compose_vector::<R>(&b);
+    let d = gadget.decompose_vector(&a);
+    let v = gadget.vector::<R>(&R::from([3, 5].map(Z::from)));
     assert_eq!(c, a);
+    assert_eq!(d, b);
+    assert_eq!(v, g);
 }
 
 #[test]
 fn polynomial() {
     let gadget = Gadget::new(Z::from(65536), 65535, 16, 4);
-    let a = R::from([4444, 7789].map(Z::from));
-    let b = R::from([34010, -59023].map(Z::from));
+    let a = R::from([340102, -590231].map(Z::from));
+    let b = DenseVector::from(
+        [
+            [12422, 65128].map(Z::from),
+            [5, 65526].map(Z::from),
+            [0, 65535].map(Z::from),
+            [0, 8191].map(Z::from),
+        ]
+        .map(R::from),
+    );
+    let c = gadget.compose_polynomial::<R>(&b);
     let d = gadget.decompose_polynomial(&a);
-    let p = gadget.vector::<R>(b);
-    assert_eq!(d.dot(p), a * b);
+    assert_eq!(c, a);
+    assert_eq!(d, b);
 }
 
 #[test]
 fn integer() {
     let gadget = Gadget::new(Z::from(65536), 65535, 16, 4);
     let a = Z::from(78844277);
-    let b = Z::from(-59023);
+    let b = DenseVector::from([4469, 1203, 0, 0].map(Z::from));
+    let c = gadget.compose_integer(&b);
     let d = gadget.decompose_integer(&a);
-    let p = gadget.vector::<Z>(b);
-    assert_eq!(d.dot(p), a * b);
+    assert_eq!(c, a);
+    assert_eq!(d, b);
 }
