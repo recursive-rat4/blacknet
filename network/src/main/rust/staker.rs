@@ -27,7 +27,7 @@ pub struct Staker {
 }
 
 impl Staker {
-    pub fn new(log_manager: &LogManager) -> core::result::Result<Self, LogError> {
+    pub fn new(log_manager: &LogManager) -> Result<Self, LogError> {
         Ok(Self {
             logger: log_manager.logger("Staker")?,
             state: State::Initializing,

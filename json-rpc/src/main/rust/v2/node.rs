@@ -15,19 +15,17 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::v2::response::*;
-use crate::v2::{NodeInfo, PeerInfo, TransactionInfo, TxPoolInfo, fork_cache_new};
+use crate::v2::{NodeInfo, PeerInfo, TransactionInfo, TxPoolInfo, fork_cache_new, response::*};
 use axum::{
     Json, Router,
     extract::{Path, State},
     response::Response,
     routing::get,
 };
-use blacknet_kernel::blake2b::Hash;
-use blacknet_kernel::transaction::Transaction;
-use blacknet_network::connection::ConnectionId;
-use blacknet_network::endpoint::Endpoint;
-use blacknet_network::network::Network;
+use blacknet_kernel::{blake2b::Hash, transaction::Transaction};
+use blacknet_network::{
+    connection::ConnectionId, endpoint::Endpoint, network::Network, txpool::TxPoolCheck,
+};
 use blacknet_serialization::format::from_bytes;
 use std::sync::Arc;
 
@@ -85,6 +83,12 @@ fn tx_pool_transaction_handler(hash: &str, raw: bool, network: &Arc<Network>) ->
     } else {
         respond_error("Transaction not found")
     }
+}
+
+async fn tx_pool_check(State(network): State<Arc<Network>>) -> Json<TxPoolCheck> {
+    let node = network.node();
+    let mut tx_pool = node.tx_pool().write().unwrap();
+    Json(tx_pool.check())
 }
 
 async fn add_peer(
@@ -206,6 +210,7 @@ pub fn routes() -> Router<Arc<Network>> {
             "/api/v2/txpool/transaction/{hash}/{raw}",
             get(tx_pool_transaction_raw),
         )
+        .route("/api/v2/txpool/check", get(tx_pool_check))
         .route("/api/v2/addpeer/{address}", get(add_peer))
         .route("/api/v2/addpeer/{address}/{port}", get(add_peer_with_port))
         .route(

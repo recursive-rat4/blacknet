@@ -35,6 +35,7 @@ use core::{
     cmp::{max, min},
     mem::replace,
 };
+use serde::{Deserialize, Serialize};
 use std::{
     collections::{HashMap, HashSet, hash_map::Keys},
     sync::{Arc, Mutex, RwLock},
@@ -70,7 +71,7 @@ impl TxPool {
         config: Arc<Config>,
         block_db: &BlockDB,
         coin_db: Arc<CoinDB>,
-    ) -> core::result::Result<Arc<RwLock<Self>>, LogError> {
+    ) -> Result<Arc<RwLock<Self>>, LogError> {
         let tx_pool = Arc::new(RwLock::new(Self {
             logger: log_manager.logger("TxPool")?,
             config,
@@ -101,12 +102,12 @@ impl TxPool {
         receiver
     }
 
-    pub fn is_empty(&self) -> bool {
-        self.map.is_empty()
+    pub const fn is_empty(&self) -> bool {
+        self.transactions.is_empty()
     }
 
-    pub fn len(&self) -> usize {
-        self.map.len()
+    pub const fn len(&self) -> usize {
+        self.transactions.len()
     }
 
     pub const fn data_size(&self) -> usize {
@@ -127,6 +128,34 @@ impl TxPool {
 
     pub fn is_interesting(&self, hash: Hash) -> bool {
         !self.rejects.contains(&hash) && !self.map.contains_key(&hash)
+    }
+
+    pub fn check(&mut self) -> TxPoolCheck {
+        let mut check = TxPoolCheck {
+            result: false,
+            remain: 0,
+            removed: 0,
+        };
+        let (txs, map) = self.steal();
+        let n = max(txs.len(), map.len());
+        for hash in txs {
+            let Some(bytes) = map.get(&hash) else {
+                continue;
+            };
+            let _ = self.process_impl(hash, bytes);
+        }
+        if n == self.transactions.len() && self.transactions.len() == self.map.len() {
+            check.result = true;
+            check.remain = n as u32;
+        } else {
+            check.remain = min(self.transactions.len(), self.map.len()) as u32;
+            check.removed = n as u32 - check.remain;
+            warn!(
+                self.logger,
+                "Removed {} transactions, {} remain in pool", check.removed, check.remain
+            );
+        }
+        check
     }
 
     pub fn fill(&self, block: &mut Block) {
@@ -388,4 +417,11 @@ impl CoinTx for TxPool {
     fn remove_multisig(&mut self, id: MultiSignatureLockContractId) {
         self.multisigs.insert(id, None);
     }
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct TxPoolCheck {
+    result: bool,
+    remain: u32,
+    removed: u32,
 }

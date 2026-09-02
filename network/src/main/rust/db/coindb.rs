@@ -100,7 +100,7 @@ impl CoinDB {
         db_version: DBVersion,
         log_manager: &LogManager,
         block_db: Arc<BlockDB>,
-    ) -> core::result::Result<(Arc<Self>, Notifier), Box<dyn StdError>> {
+    ) -> Result<(Arc<Self>, Notifier), Box<dyn StdError>> {
         let logger = log_manager.logger("CoinDB")?;
 
         match db_version.get_or_err::<CoinDBVersion>(DBVersionKey::CoinDB) {

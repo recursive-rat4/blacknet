@@ -129,8 +129,8 @@ impl Block {
         self.signature
     }
 
-    pub fn raw_transactions(&self) -> &[Box<[u8]>] {
-        &self.transactions
+    pub const fn raw_transactions(&self) -> &[Box<[u8]>] {
+        self.transactions.as_slice()
     }
 
     pub fn verify_content_hash(&self, bytes: &[u8]) -> Result<()> {
@@ -144,7 +144,15 @@ impl Block {
         verify(self.signature, hash, self.generator)
     }
 
+    pub const fn is_empty(&self) -> bool {
+        self.transactions.is_empty()
+    }
+
     pub fn push(&mut self, tx: Box<[u8]>) {
         self.transactions.push(tx)
+    }
+
+    pub fn clear(&mut self) {
+        self.transactions.clear()
     }
 }
