@@ -21,7 +21,7 @@ use blacknet_kernel::{
     account::Lease,
     amount::Amount,
     blake2b::Hash,
-    ed25519::PublicKey,
+    ed25519::{PublicKey, SecretKey},
     transaction::{HashTimeLockContractId, MultiSignatureLockContractId},
 };
 use blacknet_time::{Seconds, SystemClock};
@@ -141,11 +141,19 @@ impl Wallet {
         Ok(Seconds::new(num))
     }
 
+    pub fn is_staking(&self) -> Result<bool> {
+        todo!();
+    }
+
     pub fn public_key(&self) -> Result<PublicKey> {
         let connection = self.connection.lock().unwrap();
         let mut statement = connection.prepare_cached("SELECT public_key FROM wallet;")?;
         let bytes: [u8; 32] = statement.query_one((), |row| row.get(0))?;
         Ok(PublicKey::from(bytes))
+    }
+
+    pub fn secret_key(&self) -> Result<SecretKey> {
+        todo!();
     }
 
     pub fn sequence(&self) -> Result<u32> {

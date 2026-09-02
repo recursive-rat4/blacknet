@@ -108,7 +108,6 @@ impl Node {
         let (coin_db, coin_notifier) =
             CoinDB::new(&mode, &fjall, db_version, log_manager, block_db.clone())?;
         block_db.import(&coin_db);
-
         let peer_table = PeerTable::new(&mode, dirs, log_manager, config.clone())?;
         let (router, router_notifier) = Router::new(
             &mode,
@@ -329,9 +328,6 @@ impl Node {
         cumulative_difficulty: UInt256,
         source: Option<ConnectionId>,
     ) -> usize {
-        if source.is_some() {
-            //TODO Staker
-        }
         self.broadcast_packet(
             &BlockAnnounce::new(hash, cumulative_difficulty),
             |connection| {
@@ -343,7 +339,6 @@ impl Node {
         )
     }
 
-    #[expect(dead_code)]
     pub(super) async fn broadcast_block(&self, hash: Hash, bytes: Box<[u8]>) -> bool {
         match self.block_fetcher.staked_block(hash, bytes).await {
             Ok(()) => {

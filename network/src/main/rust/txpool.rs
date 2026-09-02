@@ -425,3 +425,9 @@ pub struct TxPoolCheck {
     remain: u32,
     removed: u32,
 }
+
+impl TxPoolCheck {
+    pub const fn is_err(&self) -> bool {
+        !self.result
+    }
+}

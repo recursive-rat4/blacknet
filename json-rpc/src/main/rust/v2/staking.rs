@@ -24,7 +24,7 @@ use axum::{
     routing::get,
     routing::post,
 };
-use blacknet_kernel::ed25519::{PublicKey, to_secret_key};
+use blacknet_kernel::ed25519::{PublicKey, to_public_key, to_secret_key};
 use blacknet_network::network::Network;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -44,7 +44,8 @@ async fn start_staking(
     } else {
         return respond_error("Invalid mnemonic");
     };
-    respond_bool(network.staker().start_staking(&secret_key))
+    let public_key = to_public_key(secret_key);
+    respond_bool(network.staker().start_staking(&public_key, &secret_key))
 }
 
 #[derive(Deserialize, Serialize, ZeroizeOnDrop)]
@@ -61,7 +62,8 @@ async fn stop_staking(
     } else {
         return respond_error("Invalid mnemonic");
     };
-    respond_bool(network.staker().stop_staking(&secret_key))
+    let public_key = to_public_key(secret_key);
+    respond_bool(network.staker().stop_staking(&public_key))
 }
 
 #[derive(Deserialize, Serialize, ZeroizeOnDrop)]
@@ -78,7 +80,8 @@ async fn is_staking(
     } else {
         return respond_error("Invalid mnemonic");
     };
-    respond_bool(network.staker().is_staking(&secret_key))
+    let public_key = to_public_key(secret_key);
+    respond_bool(network.staker().is_staking(&public_key))
 }
 
 async fn staking(

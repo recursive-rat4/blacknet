@@ -28,7 +28,7 @@ use tokio::runtime::Runtime;
 pub struct Network {
     node: Arc<Node>,
     wallet_db: Arc<WalletDB>,
-    staker: Staker,
+    staker: Arc<Staker>,
 }
 
 impl Network {
@@ -66,7 +66,7 @@ impl Network {
             coin_notifier,
             node.tx_pool(),
         )?;
-        let staker = Staker::new(log_manager)?;
+        let staker = Staker::new(log_manager, runtime, node.clone(), &wallet_db)?;
 
         let network = Arc::new(Self {
             node,
@@ -89,7 +89,7 @@ impl Network {
         &self.wallet_db
     }
 
-    pub const fn staker(&self) -> &Staker {
+    pub const fn staker(&self) -> &Arc<Staker> {
         &self.staker
     }
 
