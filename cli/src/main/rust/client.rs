@@ -21,17 +21,23 @@ use core::{
     str::Utf8Error,
     task::{Context, Poll},
 };
+use futures_util::{SinkExt, StreamExt};
 use hyper::{
     Error as HyperError, Request,
     body::{Body, Bytes, Frame, Incoming},
     client::conn::http1,
     rt::{Read, ReadBufCursor, Write},
 };
-use std::io::{Error as IoError, IoSlice};
+use serde_json::{Error as JsonError, Value, from_str, to_writer_pretty};
+use std::io::{Error as IoError, IoSlice, stdout};
 use tokio::{
     io::{AsyncRead, AsyncWrite, ReadBuf},
     net::{TcpStream, ToSocketAddrs},
     runtime::Runtime,
+};
+use tokio_tungstenite::{
+    connect_async,
+    tungstenite::{Error as TungsteniteError, Message},
 };
 
 pub struct Client {
@@ -66,6 +72,36 @@ impl Client {
                 }
             }
             Ok(buffer)
+        })
+    }
+
+    pub fn subscribe(&self, route: &str) -> Result<String, Error> {
+        let url = format!("ws://{}/api/v2/websocket", self.endpoint);
+        let message = format!("{{\"command\":\"subscribe\",\"route\":\"{route}\"}}");
+        self.runtime.block_on(async {
+            let (mut stream, _) = connect_async(url).await?;
+            stream.send(Message::Text(message.into())).await?;
+
+            while let Some(message) = stream.next().await {
+                match message? {
+                    Message::Text(message) => {
+                        let json = from_str::<Value>(&message)?;
+                        to_writer_pretty(stdout(), &json)?;
+                        println!();
+                    }
+                    Message::Binary(_) => return Ok(String::from("Message::Binary")),
+                    Message::Close(frame) => {
+                        if let Some(frame) = frame {
+                            return Ok(format!("Message::Close {}", frame));
+                        } else {
+                            return Ok(String::from("Message::Close"));
+                        }
+                    }
+                    Message::Ping(_) | Message::Pong(_) | Message::Frame(_) => continue,
+                }
+            }
+
+            Ok(String::from("WebSocketStream closed"))
         })
     }
 }
@@ -159,9 +195,17 @@ impl<'a> Future for HyperFrame<'a> {
 
 #[derive(Debug)]
 pub enum Error {
-    Io(IoError),
     Hyper(HyperError),
+    Io(IoError),
+    Json(JsonError),
+    Tungstenite(TungsteniteError),
     Utf8(Utf8Error),
+}
+
+impl From<HyperError> for Error {
+    fn from(error: HyperError) -> Self {
+        Self::Hyper(error)
+    }
 }
 
 impl From<IoError> for Error {
@@ -170,9 +214,15 @@ impl From<IoError> for Error {
     }
 }
 
-impl From<HyperError> for Error {
-    fn from(error: HyperError) -> Self {
-        Self::Hyper(error)
+impl From<JsonError> for Error {
+    fn from(error: JsonError) -> Self {
+        Self::Json(error)
+    }
+}
+
+impl From<TungsteniteError> for Error {
+    fn from(error: TungsteniteError) -> Self {
+        Self::Tungstenite(error)
     }
 }
 
@@ -185,8 +235,10 @@ impl From<Utf8Error> for Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Io(err) => write!(f, "{err}"),
             Self::Hyper(err) => write!(f, "{err}"),
+            Self::Io(err) => write!(f, "{err}"),
+            Self::Json(err) => write!(f, "{err}"),
+            Self::Tungstenite(err) => write!(f, "{err}"),
             Self::Utf8(err) => write!(f, "{err}"),
         }
     }

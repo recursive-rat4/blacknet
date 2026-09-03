@@ -59,6 +59,9 @@ enum Command {
         /// Hex-encoded transaction bytes.
         hex: String,
     },
+    /// Watch notifications.
+    #[command(subcommand)]
+    Watch(Watch),
     /// Make bootstrap file (slow).
     MakeBootstrap,
     /// Shut down node.
@@ -130,6 +133,15 @@ enum Db {
     },
 }
 
+/// Watch command.
+#[derive(Subcommand)]
+enum Watch {
+    /// BlockDB events.
+    Block,
+    /// TxPool events.
+    Txpool,
+}
+
 /// Debug command.
 #[derive(Subcommand)]
 enum Debug {
@@ -192,6 +204,8 @@ fn cli() -> Result<(), Box<dyn Error>> {
         Command::SendRawTransaction { hex } => {
             client.get(&format!("/api/v2/sendrawtransaction/{hex}"))
         }
+        Command::Watch(Watch::Block) => client.subscribe("block"),
+        Command::Watch(Watch::Txpool) => client.subscribe("txpool"),
         Command::MakeBootstrap => client.get("/api/v2/makebootstrap"),
         Command::Shutdown => client.get("/api/shutdown"),
         Command::Debug(Debug::Fjall) => client.get("/api/v2/leveldb/stats"),
