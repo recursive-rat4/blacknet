@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use core::cmp::min;
+use core::{cmp::min, mem::MaybeUninit};
 
 #[cfg(target_family = "unix")]
 use crate::errno::Errno;
@@ -24,7 +24,7 @@ use crate::errno::Errno;
 const GETENTROPY_MAX: usize = 256;
 
 #[cfg(target_family = "unix")]
-pub fn getentropy(buf: &mut [u8]) -> Result<(), Errno> {
+pub fn getentropy(buf: &mut [MaybeUninit<u8>]) -> Result<(), Errno> {
     let mut offset = 0;
     let mut remain = buf.len();
     while remain > 0 {
@@ -54,7 +54,7 @@ use windows_sys::Win32::Security::Cryptography::{
 const GETENTROPY_MAX: usize = u32::MAX as usize;
 
 #[cfg(target_family = "windows")]
-pub fn getentropy(buf: &mut [u8]) -> Result<(), Error> {
+pub fn getentropy(buf: &mut [MaybeUninit<u8>]) -> Result<(), Error> {
     let bcrypt_alg_handle: BCRYPT_ALG_HANDLE = core::ptr::null_mut();
     let mut offset = 0;
     let mut remain = buf.len();

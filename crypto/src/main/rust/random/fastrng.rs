@@ -17,10 +17,14 @@
 
 use crate::random::{FastDRG, StrongDRG, UniformGenerator, drg::SEED_SIZE};
 use blacknet_compat::getentropy;
-use core::cell::RefCell;
-use core::ops::DerefMut;
-use std::sync::{LazyLock, Mutex};
-use std::thread_local;
+use core::{
+    cell::RefCell,
+    mem::{MaybeUninit, transmute},
+};
+use std::{
+    sync::{LazyLock, Mutex},
+    thread_local,
+};
 use zeroize::Zeroizing;
 
 pub struct StrongSeeder {
@@ -32,15 +36,18 @@ impl StrongSeeder {
     ///
     /// If initial entropy can't be obtained.
     fn new() -> Self {
-        let mut seed: Zeroizing<[u8; SEED_SIZE]> = Default::default();
-        getentropy(seed.deref_mut()).expect("source of entropy");
+        let mut seed = [MaybeUninit::<u8>::uninit(); SEED_SIZE];
+        getentropy(&mut seed).expect("source of entropy");
+        let seed: Zeroizing<[u8; SEED_SIZE]> = unsafe { transmute(seed) };
         Self {
             drg: StrongDRG::new(&seed),
         }
     }
 
-    pub fn generate(&mut self, buf: &mut [u8]) {
-        self.drg.fill(buf)
+    pub fn generate(&mut self, buf: &mut [MaybeUninit<u8>]) {
+        for i in buf {
+            i.write(self.drg.generate());
+        }
     }
 }
 
@@ -53,8 +60,9 @@ pub struct FastRNG {
 
 impl FastRNG {
     fn new() -> Self {
-        let mut seed: Zeroizing<[u8; SEED_SIZE]> = Default::default();
-        STRONG_SEEDER.lock().unwrap().generate(seed.deref_mut());
+        let mut seed = [MaybeUninit::<u8>::uninit(); SEED_SIZE];
+        STRONG_SEEDER.lock().unwrap().generate(&mut seed);
+        let seed: [u8; SEED_SIZE] = unsafe { transmute(seed) };
         Self {
             drg: FastDRG::new(&seed),
         }

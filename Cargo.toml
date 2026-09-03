@@ -83,7 +83,7 @@ windows-sys = { version = "0.61.2", features = [
     "Win32_Storage_FileSystem",
     "Win32_System_Diagnostics_Debug",
 ] }
-zeroize = { version = "1.8.2", default-features = false, features = ["derive"] }
+zeroize = { version = "1.9.0", default-features = false, features = ["derive"] }
 
 [workspace.lints.clippy]
 module_inception = "allow"
