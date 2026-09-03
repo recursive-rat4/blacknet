@@ -16,6 +16,7 @@
  */
 
 pub mod config;
+#[cfg(target_family = "unix")]
 mod errno;
 mod getentropy;
 mod getuid;
@@ -28,12 +29,13 @@ mod ulimit;
 mod uname;
 mod xdgdirectories;
 
-pub use errno::*;
+#[cfg(target_family = "unix")]
+pub use errno::Errno;
 pub use getentropy::*;
 pub use getuid::*;
 pub use mode::*;
 #[cfg(target_family = "windows")]
-pub use ntstatus::*;
+pub use ntstatus::{Error, NtStatus, Win32Error};
 pub use statvfs::*;
 pub use ulimit::*;
 pub use uname::*;

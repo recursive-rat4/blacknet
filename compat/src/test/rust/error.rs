@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025-2026 Pavel Vasin
+ * Copyright (c) 2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,32 +15,20 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use core::ffi::c_long;
+#[cfg(target_family = "unix")]
+#[test]
+fn errno() {
+    use blacknet_compat::Errno;
 
-#[cfg(target_family = "unix")]
-use crate::errno::Errno;
-#[cfg(target_family = "unix")]
-use core::cmp::min;
-#[cfg(target_family = "unix")]
-use core::mem::MaybeUninit;
-
-#[cfg(target_family = "unix")]
-pub fn ulimit() -> Result<c_long, Errno> {
-    let mut rlimit = MaybeUninit::<libc::rlimit>::uninit();
-    unsafe {
-        if libc::getrlimit(libc::RLIMIT_NOFILE, rlimit.as_mut_ptr()) == 0 {
-            let rlimit = rlimit.assume_init();
-            Ok(min(rlimit.rlim_cur, c_long::MAX as libc::rlim_t) as c_long)
-        } else {
-            Err(Errno::get())
-        }
-    }
+    let error = Errno::get();
+    let _ = format!("{error}");
 }
 
 #[cfg(target_family = "windows")]
-use crate::Error;
+#[test]
+fn win32() {
+    use blacknet_compat::Win32Error;
 
-#[cfg(target_family = "windows")]
-pub fn ulimit() -> Result<c_long, Error> {
-    Ok(512)
+    let error = Win32Error::last();
+    let _ = format!("{error}");
 }

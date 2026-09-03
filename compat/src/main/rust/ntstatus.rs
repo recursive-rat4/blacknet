@@ -15,10 +15,33 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use core::fmt;
-use windows_sys::Win32::Foundation::{
-    ERROR_SUCCESS, GetLastError, NTSTATUS, RtlNtStatusToDosError, STATUS_SUCCESS, WIN32_ERROR,
+use core::{ffi::c_void, fmt, ptr, slice};
+use windows_sys::Win32::{
+    Foundation::{
+        ERROR_SUCCESS, GetLastError, LocalFree, NTSTATUS, RtlNtStatusToDosError, STATUS_SUCCESS,
+        WIN32_ERROR,
+    },
+    System::Diagnostics::Debug::{
+        FORMAT_MESSAGE_ALLOCATE_BUFFER, FORMAT_MESSAGE_FROM_SYSTEM, FormatMessageW,
+    },
 };
+
+#[derive(Debug)]
+pub enum Error {
+    NtStatus(NtStatus),
+    Win32(Win32Error),
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Error::NtStatus(nt_status) => write!(f, "{nt_status}"),
+            Error::Win32(win32) => write!(f, "{win32}"),
+        }
+    }
+}
+
+impl core::error::Error for Error {}
 
 #[derive(Debug)]
 pub struct NtStatus {
@@ -60,6 +83,31 @@ impl Win32Error {
             error: unsafe { GetLastError() },
         }
     }
+
+    fn format_message(&self) -> String {
+        let ret: String;
+        unsafe {
+            let flags = FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM;
+            let mut buffer: *mut u16 = ptr::null_mut();
+            let n = FormatMessageW(
+                flags,
+                ptr::null(),
+                self.error,
+                0,
+                &mut buffer as *mut _ as *mut u16,
+                0,
+                ptr::null(),
+            );
+            if n != 0 {
+                let v = slice::from_raw_parts(buffer as *const u8, n as usize * size_of::<u16>());
+                ret = String::from_utf16le_lossy(v);
+            } else {
+                ret = format!("WIN32 ERROR (0x{:08X})", self.error);
+            }
+            LocalFree(buffer as *mut c_void);
+        }
+        ret
+    }
 }
 
 impl From<NtStatus> for Win32Error {
@@ -72,6 +120,6 @@ impl From<NtStatus> for Win32Error {
 
 impl fmt::Display for Win32Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "WIN32 ERROR (0x{:08X})", self.error)
+        write!(f, "{}", self.format_message())
     }
 }

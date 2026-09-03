@@ -81,6 +81,7 @@ windows-sys = { version = "0.61.2", features = [
     "Win32_Foundation",
     "Win32_Security_Cryptography",
     "Win32_Storage_FileSystem",
+    "Win32_System_Diagnostics_Debug",
 ] }
 zeroize = { version = "1.8.2", default-features = false, features = ["derive"] }
 
@@ -101,7 +102,7 @@ unused_must_use = "deny"
 version = "0.3.0"
 authors = ["Blacknet Team"]
 edition = "2024"
-rust-version = "1.97.0"
+rust-version = "1.98.0"
 description = "Decentralized peer-to-peer network that secures a public zero-knowledge platform with the proof of stake consensus"
 documentation = "https://blacknet.ninja/documentation.html"
 readme = "README.md"

@@ -15,19 +15,18 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::errno::Error;
 use core::mem::MaybeUninit;
 use std::path::Path;
 
 #[cfg(target_family = "unix")]
-use crate::errno::errno;
+use crate::errno::Errno;
 #[cfg(target_family = "unix")]
 use core::ffi::c_char;
 #[cfg(target_family = "unix")]
 use std::os::unix::ffi::OsStrExt;
 
 #[cfg(target_family = "unix")]
-pub fn statvfs(path: &Path) -> Result<u64, Error> {
+pub fn statvfs(path: &Path) -> Result<u64, Errno> {
     let path = path.as_os_str().as_bytes().as_ptr() as *const c_char;
     let mut statvfs = MaybeUninit::<libc::statvfs>::uninit();
     loop {
@@ -37,17 +36,17 @@ pub fn statvfs(path: &Path) -> Result<u64, Error> {
             let available = statvfs.f_bsize.saturating_mul(statvfs.f_bavail);
             return Ok(available);
         } else {
-            let errno = errno();
-            if errno == libc::EINTR {
+            let errno = Errno::get();
+            if errno.is_interrupted() {
                 continue;
             }
-            return Err(Error::Errno(errno));
+            return Err(errno);
         }
     }
 }
 
 #[cfg(target_family = "windows")]
-use crate::Win32Error;
+use crate::{Error, Win32Error};
 #[cfg(target_family = "windows")]
 use std::os::windows::ffi::OsStrExt;
 #[cfg(target_family = "windows")]

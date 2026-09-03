@@ -15,49 +15,47 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#[cfg(target_family = "windows")]
-use crate::{NtStatus, Win32Error};
-#[cfg(target_family = "unix")]
-use core::ffi::CStr;
-use core::fmt;
-
-#[cfg(all(target_family = "unix", not(target_os = "macos")))]
-pub fn errno() -> libc::c_int {
-    unsafe { *libc::__errno_location() }
-}
-
-#[cfg(target_os = "macos")]
-pub fn errno() -> libc::c_int {
-    unsafe { *libc::__error() }
-}
-
-#[cfg(target_family = "unix")]
-pub fn strerror<T, F: FnOnce(&CStr) -> T>(errno: libc::c_int, f: F) -> T {
-    let s = unsafe { CStr::from_ptr(libc::strerror(errno)) };
-    f(s)
-}
+use core::{ffi::CStr, fmt};
 
 #[derive(Debug)]
-pub enum Error {
-    #[cfg(target_family = "unix")]
-    Errno(libc::c_int),
-    #[cfg(target_family = "windows")]
-    NtStatus(NtStatus),
-    #[cfg(target_family = "windows")]
-    Win32(Win32Error),
+pub struct Errno {
+    errno: libc::c_int,
 }
 
-impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            #[cfg(target_family = "unix")]
-            Error::Errno(errno) => strerror(*errno, |s| f.write_str(&s.to_string_lossy())),
-            #[cfg(target_family = "windows")]
-            Error::NtStatus(status) => write!(f, "{status}"),
-            #[cfg(target_family = "windows")]
-            Error::Win32(win32) => write!(f, "{win32}"),
+impl Errno {
+    pub fn get() -> Self {
+        let ptr = Self::location();
+        let errno = unsafe { *ptr };
+        Self { errno }
+    }
+
+    pub const fn is_interrupted(&self) -> bool {
+        self.errno == libc::EINTR
+    }
+
+    fn location() -> *mut libc::c_int {
+        cfg_select! {
+            target_os = "android" => unsafe { libc::__errno() },
+            target_os = "illumos" => unsafe { libc::___errno() },
+            target_os = "freebsd" => unsafe { libc::__error() },
+            target_os = "haiku" => unsafe { libc::_errnop() },
+            target_os = "macos" => unsafe { libc::__error() },
+            target_os = "netbsd" => unsafe { libc::__errno() },
+            target_os = "openbsd" => unsafe { libc::__errno() },
+            _ => unsafe { libc::__errno_location() },
         }
+    }
+
+    fn strerror<T, F: FnOnce(&CStr) -> T>(&self, f: F) -> T {
+        let s = unsafe { CStr::from_ptr(libc::strerror(self.errno)) };
+        f(s)
     }
 }
 
-impl core::error::Error for Error {}
+impl fmt::Display for Errno {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.strerror(|s| f.write_str(&s.to_string_lossy()))
+    }
+}
+
+impl core::error::Error for Errno {}
