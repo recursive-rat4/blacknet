@@ -17,7 +17,7 @@
 #
 
 .rust-llvm:
-  image: rust:1.97.0@sha256:44637ff22d0a6571a221bfaf137849711ad02ff4723dbb4736e297538f6a3e60
+  image: rust:1.98.0@sha256:620dbcd124499c59e2406d3741574b5c5838cf9eb9656f0c3a03948f79b02959
   variables:
     CARGO_HOME: ".cargo"
     CARGO_TERM_COLOR: always
