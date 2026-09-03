@@ -84,7 +84,7 @@ impl Transaction {
         }
     }
 
-    pub fn sign(&mut self, secret_key: SecretKey) -> (Hash, Vec<u8>) {
+    pub fn sign(&mut self, secret_key: &SecretKey) -> (Hash, Vec<u8>) {
         let mut bytes = to_bytes(&self).expect("Transaction serialization");
         let hash = Self::compute_hash(&bytes).expect("Transaction serialized");
         self.signature = sign(hash, secret_key);

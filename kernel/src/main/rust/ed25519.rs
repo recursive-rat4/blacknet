@@ -15,8 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::blake2b::Hash;
-use crate::error::Error;
+use crate::{blake2b::Hash, error::Error};
 use alloc::vec::Vec;
 use blacknet_crypto::{
     algebra::{IntegerModRing, One},
@@ -24,12 +23,14 @@ use blacknet_crypto::{
     ed25519::{Edwards25519Affine, Edwards25519Extended, Field25519, Scalar25519},
     symmetric::{Blake2b256, Blake2b512},
 };
-use core::array::TryFromSliceError;
-use core::fmt::{Debug, Formatter, Result as FmtResult};
-use core::mem::transmute;
+use core::{
+    array::TryFromSliceError,
+    fmt::{Debug, Formatter, Result as FmtResult},
+    mem::transmute,
+};
 use data_encoding::{DecodeError, DecodeKind, HEXUPPER};
 use serde::{Deserialize, Serialize};
-use zeroize::Zeroize;
+use zeroize::ZeroizeOnDrop;
 
 // For compatibility, implementation follows eddsa-java 0.3.0
 // https://eprint.iacr.org/2020/1244
@@ -158,13 +159,13 @@ impl TryFrom<&str> for PublicKey {
     }
 }
 
-pub fn to_public_key(secret_key: SecretKey) -> PublicKey {
+pub fn to_public_key(secret_key: &SecretKey) -> PublicKey {
     let (scalar, _) = parse_secret_key(secret_key);
     let bytes = mul_base_encode(scalar);
     PublicKey(bytes)
 }
 
-#[derive(Clone, Copy, Default, Zeroize)]
+#[derive(ZeroizeOnDrop)]
 pub struct SecretKey([u8; 32]);
 
 impl AsRef<[u8]> for SecretKey {
@@ -205,7 +206,7 @@ pub fn to_secret_key(mnemonic: &str) -> Option<SecretKey> {
     }
 }
 
-pub fn sign(hash: Hash, secret_key: SecretKey) -> Signature {
+pub fn sign(hash: Hash, secret_key: &SecretKey) -> Signature {
     let (scalar, h) = parse_secret_key(secret_key);
 
     let mut hasher = Blake2b512::new();
@@ -253,7 +254,7 @@ pub fn verify(signature: Signature, hash: Hash, public_key: PublicKey) -> Result
     }
 }
 
-fn parse_secret_key(secret_key: SecretKey) -> (Scalar25519, [u8; 32]) {
+fn parse_secret_key(secret_key: &SecretKey) -> (Scalar25519, [u8; 32]) {
     let mut hash: [u8; 64] = Blake2b512::digest(secret_key);
     hash[0] &= 0xF8;
     hash[31] &= 0x7F;

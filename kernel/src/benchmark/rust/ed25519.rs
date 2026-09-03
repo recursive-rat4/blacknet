@@ -37,7 +37,7 @@ fn criterion_benchmark(crit: &mut Criterion) {
     );
     let signature = black_box(Signature::try_from("6D5D4F6A81C601B1834701BDE84785470F92DFA517975BED9AAEA035FBDB0072327EFD207195B7202B5A72BB9CC37443A011C35137E1DF1C11BB5E9C60125B04").unwrap());
 
-    grp.bench_function("sign", |bench| bench.iter(|| sign(hash, secret_key)));
+    grp.bench_function("sign", |bench| bench.iter(|| sign(hash, &secret_key)));
     grp.bench_function("verify", |bench| {
         bench.iter(|| verify(signature, hash, public_key))
     });

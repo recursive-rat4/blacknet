@@ -44,8 +44,12 @@ async fn start_staking(
     } else {
         return respond_error("Invalid mnemonic");
     };
-    let public_key = to_public_key(secret_key);
-    respond_bool(network.staker().start_staking(&public_key, &secret_key))
+    let public_key = to_public_key(&secret_key);
+    respond_bool(
+        network
+            .staker()
+            .start_staking(&public_key, Arc::new(secret_key)),
+    )
 }
 
 #[derive(Deserialize, Serialize, ZeroizeOnDrop)]
@@ -62,7 +66,7 @@ async fn stop_staking(
     } else {
         return respond_error("Invalid mnemonic");
     };
-    let public_key = to_public_key(secret_key);
+    let public_key = to_public_key(&secret_key);
     respond_bool(network.staker().stop_staking(&public_key))
 }
 
@@ -80,7 +84,7 @@ async fn is_staking(
     } else {
         return respond_error("Invalid mnemonic");
     };
-    let public_key = to_public_key(secret_key);
+    let public_key = to_public_key(&secret_key);
     respond_bool(network.staker().is_staking(&public_key))
 }
 

@@ -92,7 +92,7 @@ impl Block {
         }
     }
 
-    pub fn sign(&mut self, secret_key: SecretKey) -> (Hash, Vec<u8>) {
+    pub fn sign(&mut self, secret_key: &SecretKey) -> (Hash, Vec<u8>) {
         let mut bytes = to_bytes(&self).expect("Block serialization");
         let content_hash = Self::compute_content_hash(&bytes).expect("Block serialized");
         self.content_hash = content_hash;

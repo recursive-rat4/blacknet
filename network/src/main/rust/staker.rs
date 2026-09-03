@@ -63,7 +63,7 @@ impl Staker {
             match wallet.is_staking() {
                 Ok(true) => match wallet.secret_key() {
                     Ok(secret_key) => {
-                        staker.start_staking(public_key, &secret_key);
+                        staker.start_staking(public_key, secret_key.clone());
                     }
                     Err(err) => error!(staker.logger, "{err}"),
                 },
@@ -80,7 +80,11 @@ impl Staker {
         Ok(staker)
     }
 
-    pub fn start_staking(self: &Arc<Self>, public_key: &PublicKey, secret_key: &SecretKey) -> bool {
+    pub fn start_staking(
+        self: &Arc<Self>,
+        public_key: &PublicKey,
+        secret_key: Arc<SecretKey>,
+    ) -> bool {
         let mut inner = self.inner.lock().unwrap();
 
         if inner
@@ -92,7 +96,7 @@ impl Staker {
             return false;
         }
 
-        let mut holder = Holder::new(*public_key, *secret_key);
+        let mut holder = Holder::new(*public_key, secret_key);
         let coin_db = self.node.coin_db();
         holder.update(coin_db, &coin_db.state().load());
         if holder.stake == Amount::ZERO {
@@ -190,7 +194,7 @@ impl Staker {
                 continue;
             };
             self.node.tx_pool().read().unwrap().fill(&mut block);
-            let (hash, bytes) = block.sign(signer);
+            let (hash, bytes) = block.sign(&signer);
             info!(self.logger, "Staked {hash}");
             if self.node.broadcast_block(hash, bytes.into()).await {
                 continue;
@@ -206,7 +210,7 @@ impl Staker {
                 if self.node.tx_pool().write().unwrap().check().is_err() {
                     self.node.tx_pool().read().unwrap().fill(&mut block);
                     if !block.is_empty() {
-                        let (hash, bytes) = block.sign(signer);
+                        let (hash, bytes) = block.sign(&signer);
                         warn!(self.logger, "Retry {hash}");
                         if self.node.broadcast_block(hash, bytes.into()).await {
                             continue;
@@ -215,14 +219,14 @@ impl Staker {
                         }
                     }
                 }
-                let (hash, bytes) = block.sign(signer);
+                let (hash, bytes) = block.sign(&signer);
                 warn!(self.logger, "Empty {hash}");
                 self.node.broadcast_block(hash, bytes.into()).await;
             }
         }
     }
 
-    fn search(&self) -> Option<(Block, SecretKey)> {
+    fn search(&self) -> Option<(Block, Arc<SecretKey>)> {
         let mut inner = self.inner.lock().unwrap();
         inner.waiter = None;
 
@@ -265,7 +269,7 @@ impl Staker {
             {
                 return Some((
                     Block::new(state.block_hash(), curr_time_slot, holder.public_key),
-                    holder.secret_key,
+                    holder.secret_key.clone(),
                 ));
             }
         }
@@ -344,7 +348,7 @@ impl Inner {
 
 struct Holder {
     public_key: PublicKey,
-    secret_key: SecretKey,
+    secret_key: Arc<SecretKey>,
     start_time: Seconds,
     hash_counter: u64,
     last_block: Hash,
@@ -352,7 +356,7 @@ struct Holder {
 }
 
 impl Holder {
-    fn new(public_key: PublicKey, secret_key: SecretKey) -> Self {
+    fn new(public_key: PublicKey, secret_key: Arc<SecretKey>) -> Self {
         Self {
             public_key,
             secret_key,

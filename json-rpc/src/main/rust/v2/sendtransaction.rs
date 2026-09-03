@@ -73,7 +73,7 @@ async fn bundle(
     } else {
         network.wallet_db().anchor()
     };
-    let from = to_public_key(secret_key);
+    let from = to_public_key(&secret_key);
     let seq = match network.wallet_db().sequence(from) {
         Ok(seq) => seq,
         Err(err) => {
@@ -101,7 +101,7 @@ async fn bundle(
         }
     };
     let mut tx = Transaction::new(from, seq, anchor, request.fee, TxKind::Blob, data.into());
-    let (hash, bytes) = tx.sign(secret_key);
+    let (hash, bytes) = tx.sign(&secret_key);
 
     match network.node().broadcast_tx(hash, &bytes) {
         Ok(()) => respond_text(hash.to_string()),
@@ -144,7 +144,7 @@ async fn burn(
     } else {
         network.wallet_db().anchor()
     };
-    let from = to_public_key(secret_key);
+    let from = to_public_key(&secret_key);
     let seq = match network.wallet_db().sequence(from) {
         Ok(seq) => seq,
         Err(err) => {
@@ -158,7 +158,7 @@ async fn burn(
         }
     };
     let mut tx = Transaction::new(from, seq, anchor, request.fee, TxKind::Burn, data.into());
-    let (hash, bytes) = tx.sign(secret_key);
+    let (hash, bytes) = tx.sign(&secret_key);
 
     match network.node().broadcast_tx(hash, &bytes) {
         Ok(()) => respond_text(hash.to_string()),
@@ -196,7 +196,7 @@ async fn cancel_lease(
     } else {
         network.wallet_db().anchor()
     };
-    let from = to_public_key(secret_key);
+    let from = to_public_key(&secret_key);
     let seq = match network.wallet_db().sequence(from) {
         Ok(seq) => seq,
         Err(err) => {
@@ -223,7 +223,7 @@ async fn cancel_lease(
         TxKind::CancelLease,
         data.into(),
     );
-    let (hash, bytes) = tx.sign(secret_key);
+    let (hash, bytes) = tx.sign(&secret_key);
 
     match network.node().broadcast_tx(hash, &bytes) {
         Ok(()) => respond_text(hash.to_string()),
@@ -266,7 +266,7 @@ async fn claim_swap(
     } else {
         network.wallet_db().anchor()
     };
-    let from = to_public_key(secret_key);
+    let from = to_public_key(&secret_key);
     let seq = match network.wallet_db().sequence(from) {
         Ok(seq) => seq,
         Err(err) => {
@@ -301,7 +301,7 @@ async fn claim_swap(
         TxKind::ClaimHTLC,
         data.into(),
     );
-    let (hash, bytes) = tx.sign(secret_key);
+    let (hash, bytes) = tx.sign(&secret_key);
 
     match network.node().broadcast_tx(hash, &bytes) {
         Ok(()) => respond_text(hash.to_string()),
@@ -348,7 +348,7 @@ async fn create_swap(
     } else {
         network.wallet_db().anchor()
     };
-    let from = to_public_key(secret_key);
+    let from = to_public_key(&secret_key);
     let seq = match network.wallet_db().sequence(from) {
         Ok(seq) => seq,
         Err(err) => {
@@ -377,7 +377,7 @@ async fn create_swap(
         TxKind::CreateHTLC,
         data.into(),
     );
-    let (hash, bytes) = tx.sign(secret_key);
+    let (hash, bytes) = tx.sign(&secret_key);
 
     match network.node().broadcast_tx(hash, &bytes) {
         Ok(()) => respond_text(hash.to_string()),
@@ -414,7 +414,7 @@ async fn lease(
     } else {
         network.wallet_db().anchor()
     };
-    let from = to_public_key(secret_key);
+    let from = to_public_key(&secret_key);
     let seq = match network.wallet_db().sequence(from) {
         Ok(seq) => seq,
         Err(err) => {
@@ -434,7 +434,7 @@ async fn lease(
         }
     };
     let mut tx = Transaction::new(from, seq, anchor, request.fee, TxKind::Lease, data.into());
-    let (hash, bytes) = tx.sign(secret_key);
+    let (hash, bytes) = tx.sign(&secret_key);
 
     match network.node().broadcast_tx(hash, &bytes) {
         Ok(()) => respond_text(hash.to_string()),
@@ -470,7 +470,7 @@ async fn refund_swap(
     } else {
         network.wallet_db().anchor()
     };
-    let from = to_public_key(secret_key);
+    let from = to_public_key(&secret_key);
     let seq = match network.wallet_db().sequence(from) {
         Ok(seq) => seq,
         Err(err) => {
@@ -505,7 +505,7 @@ async fn refund_swap(
         TxKind::RefundHTLC,
         data.into(),
     );
-    let (hash, bytes) = tx.sign(secret_key);
+    let (hash, bytes) = tx.sign(&secret_key);
 
     match network.node().broadcast_tx(hash, &bytes) {
         Ok(()) => respond_text(hash.to_string()),
@@ -544,7 +544,7 @@ async fn transfer(
     } else {
         network.wallet_db().anchor()
     };
-    let from = to_public_key(secret_key);
+    let from = to_public_key(&secret_key);
     let seq = match network.wallet_db().sequence(from) {
         Ok(seq) => seq,
         Err(err) => {
@@ -578,7 +578,7 @@ async fn transfer(
         TxKind::Transfer,
         data.into(),
     );
-    let (hash, bytes) = tx.sign(secret_key);
+    let (hash, bytes) = tx.sign(&secret_key);
 
     match network.node().broadcast_tx(hash, &bytes) {
         Ok(()) => respond_text(hash.to_string()),
@@ -617,7 +617,7 @@ async fn withdraw_from_lease(
     } else {
         network.wallet_db().anchor()
     };
-    let from = to_public_key(secret_key);
+    let from = to_public_key(&secret_key);
     let seq = match network.wallet_db().sequence(from) {
         Ok(seq) => seq,
         Err(err) => {
@@ -649,7 +649,7 @@ async fn withdraw_from_lease(
         TxKind::WithdrawFromLease,
         data.into(),
     );
-    let (hash, bytes) = tx.sign(secret_key);
+    let (hash, bytes) = tx.sign(&secret_key);
 
     match network.node().broadcast_tx(hash, &bytes) {
         Ok(()) => respond_text(hash.to_string()),

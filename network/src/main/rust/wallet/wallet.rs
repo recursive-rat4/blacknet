@@ -26,7 +26,10 @@ use blacknet_kernel::{
 };
 use blacknet_time::{Seconds, SystemClock};
 use rusqlite::{Connection, OpenFlags};
-use std::{path::Path, sync::Mutex};
+use std::{
+    path::Path,
+    sync::{Arc, Mutex},
+};
 
 #[derive(Debug)]
 pub struct Wallet {
@@ -152,7 +155,7 @@ impl Wallet {
         Ok(PublicKey::from(bytes))
     }
 
-    pub fn secret_key(&self) -> Result<SecretKey> {
+    pub fn secret_key(&self) -> Result<&Arc<SecretKey>> {
         todo!();
     }
 
