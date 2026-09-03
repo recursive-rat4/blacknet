@@ -16,14 +16,16 @@
  */
 
 use blacknet_log::UTC;
-use chrono::DateTime;
+use core::time::Duration;
+use std::time::SystemTime;
 
 #[test]
 fn format() {
     let utc = UTC::new();
     let a = "2097-12-31 23:59:59.999";
     let mut b = String::with_capacity(a.len());
-    let dt = DateTime::from_timestamp_millis(4039372799999).unwrap();
-    utc.format(&dt, &mut b).unwrap();
+    let d = Duration::from_millis(4039372799999);
+    let st = SystemTime::UNIX_EPOCH + d;
+    utc.format(st, &mut b).unwrap();
     assert_eq!(b, a);
 }

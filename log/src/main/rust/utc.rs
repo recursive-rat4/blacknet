@@ -17,9 +17,12 @@
 
 use chrono::{DateTime, Datelike, Timelike, Utc};
 use core::fmt::{Error as FmtError, Write};
-use spdlog::error::Error as LogError;
-use spdlog::formatter::{Pattern, PatternContext};
-use spdlog::{Record, StringBuf};
+use spdlog::{
+    error::Error as LogError,
+    formatter::{Pattern, PatternContext},
+    {Record, StringBuf},
+};
+use std::time::SystemTime;
 
 #[derive(Clone, Copy, Default)]
 pub struct UTC;
@@ -29,7 +32,8 @@ impl UTC {
         Self
     }
 
-    pub fn format<W: Write>(&self, dt: &DateTime<Utc>, write: &mut W) -> Result<(), FmtError> {
+    pub fn format<W: Write>(&self, st: SystemTime, write: &mut W) -> Result<(), FmtError> {
+        let dt: DateTime<Utc> = st.into();
         let millisecond = dt.nanosecond() / 1000000;
         write!(
             write,
@@ -52,7 +56,7 @@ impl Pattern for UTC {
         dest: &mut StringBuf,
         _ctx: &mut PatternContext,
     ) -> Result<(), LogError> {
-        self.format(&record.time().into(), dest)
+        self.format(record.time(), dest)
             .map_err(LogError::FormatRecord)
     }
 }
