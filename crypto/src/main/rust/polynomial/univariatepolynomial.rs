@@ -212,10 +212,7 @@ impl<'a, R: UnitalSemiring + Send> IntoParallelIterator for &'a mut UnivariatePo
     }
 }
 
-impl<R: UnitalSemiring + Clone> Polynomial for UnivariatePolynomial<R>
-where
-    for<'a> &'a R: SemiringOps<R>,
-{
+impl<R: UnitalSemiring + Clone> Polynomial for UnivariatePolynomial<R> {
     type Coefficient = R;
     type Point = R;
 
@@ -234,10 +231,7 @@ where
 }
 
 /// In monomial basis.
-impl<R: UnitalSemiring + Clone> InBasis for UnivariatePolynomial<R>
-where
-    for<'a> &'a R: SemiringOps<R>,
-{
+impl<R: UnitalSemiring + Clone> InBasis for UnivariatePolynomial<R> {
     fn basis(&self, point: &R) -> DenseVector<R> {
         let n = self.coefficients.len();
         let mut powers = Vec::<R>::with_capacity(n);
@@ -258,10 +252,7 @@ where
     }
 }
 
-impl<R: UnitalSemiring + Clone> TensorBasis for UnivariatePolynomial<R>
-where
-    for<'a> &'a R: SemiringOps<R>,
-{
+impl<R: UnitalSemiring + Clone> TensorBasis for UnivariatePolynomial<R> {
     fn tensor_basis(&self, point: &R, m: usize, n: usize) -> (DenseVector<R>, DenseVector<R>) {
         debug_assert!(self.coefficients.len() == m * n);
         debug_assert!(m > 1 && n > 1);
@@ -445,10 +436,7 @@ where
     }
 }
 
-impl<R: UnitalSemiring> Mul<R> for UnivariatePolynomial<R>
-where
-    for<'a> &'a R: SemiringOps<R>,
-{
+impl<R: UnitalSemiring> Mul<R> for UnivariatePolynomial<R> {
     type Output = Self;
 
     fn mul(self, rps: R) -> Self::Output {
@@ -456,10 +444,7 @@ where
     }
 }
 
-impl<R: UnitalSemiring> Mul<&R> for UnivariatePolynomial<R>
-where
-    for<'a> &'a R: SemiringOps<R>,
-{
+impl<R: UnitalSemiring> Mul<&R> for UnivariatePolynomial<R> {
     type Output = Self;
 
     fn mul(self, rps: &R) -> Self::Output {
@@ -469,10 +454,19 @@ where
     }
 }
 
-impl<R: UnitalSemiring + Inv<Output = BlOption<R>>> Div<R> for UnivariatePolynomial<R>
-where
-    for<'a> &'a R: SemiringOps<R>,
-{
+impl<R: UnitalSemiring> MulAssign<R> for UnivariatePolynomial<R> {
+    fn mul_assign(&mut self, rps: R) {
+        *self *= &rps
+    }
+}
+
+impl<R: UnitalSemiring> MulAssign<&R> for UnivariatePolynomial<R> {
+    fn mul_assign(&mut self, rps: &R) {
+        self.into_iter().for_each(|l| *l *= rps);
+    }
+}
+
+impl<R: UnitalSemiring + Inv<Output = BlOption<R>>> Div<R> for UnivariatePolynomial<R> {
     type Output = BlOption<Self>;
 
     fn div(self, rps: R) -> Self::Output {
