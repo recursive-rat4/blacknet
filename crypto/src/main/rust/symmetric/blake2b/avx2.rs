@@ -15,12 +15,13 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::symmetric::blake2b::blake2b::IV;
+use core::{array, mem::transmute};
+
 #[cfg(target_arch = "x86")]
 use core::arch::x86::*;
 #[cfg(target_arch = "x86_64")]
 use core::arch::x86_64::*;
-use core::array;
-use core::mem::transmute;
 
 //RUST https://github.com/rust-lang/rust/issues/111147
 #[inline(always)]
@@ -167,7 +168,7 @@ fn r_2_2(
 }
 
 #[inline(always)]
-fn broadcast_input(input: &[u64; 16]) -> [__m256i; 8] {
+fn broadcast_input(input: &[u8; 128]) -> [__m256i; 8] {
     let ptr = input.as_ptr() as *const __m128i;
     array::from_fn(|i| unsafe { _mm256_broadcastsi128_si256(_mm_loadu_si128(ptr.add(i))) })
 }
@@ -653,16 +654,15 @@ fn input_12_2_2(input: &[__m256i; 8]) -> __m256i {
 }
 
 #[inline(always)]
-fn load16x64(state: &[u64; 16]) -> (__m256i, __m256i, __m256i, __m256i) {
-    let ptr = state.as_ptr() as *const __m256i;
-    unsafe {
-        (
-            _mm256_loadu_si256(ptr),
-            _mm256_loadu_si256(ptr.add(1)),
-            _mm256_loadu_si256(ptr.add(2)),
-            _mm256_loadu_si256(ptr.add(3)),
-        )
-    }
+fn load4x64(x: &[u64; 4]) -> __m256i {
+    let ptr = x.as_ptr() as *const __m256i;
+    unsafe { _mm256_loadu_si256(ptr) }
+}
+
+#[inline(always)]
+fn load8x64(x: &[u64; 8]) -> (__m256i, __m256i) {
+    let ptr = x.as_ptr() as *const __m256i;
+    unsafe { (_mm256_loadu_si256(ptr), _mm256_loadu_si256(ptr.add(1))) }
 }
 
 #[inline(always)]
@@ -674,11 +674,13 @@ fn store8x64(output: &mut [u64; 8], a: __m256i, b: __m256i) {
     }
 }
 
-#[allow(clippy::needless_pass_by_ref_mut)]
-pub(super) fn compress(output: &mut [u64; 8], state: &mut [u64; 16], input: &[u64; 16]) {
-    let (a, b, c, d) = load16x64(&*state);
-    let (a0, b0) = (a, b);
+pub(super) fn compress(output: &mut [u64; 8], input: &[u8; 128], flags: &[u64; 4]) {
+    let (a, b) = load8x64(output);
+    let (c, d) = load8x64(&IV);
+    let d = unsafe { _mm256_xor_si256(d, load4x64(flags)) };
     let input = broadcast_input(input);
+
+    let (a0, b0) = (a, b);
 
     let x = input_1_1_1(&input);
     let (a, b, c, d) = r_1_1(a, b, c, d, x);

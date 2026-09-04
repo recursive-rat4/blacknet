@@ -15,16 +15,13 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::symmetric::CompressionFunction;
-use crate::symmetric::blake2b::compress;
-use core::cmp::min;
-use core::mem::transmute;
+use crate::symmetric::{CompressionFunction, blake2b::compress};
+use core::{cmp::min, mem::transmute};
 use zeroize::Zeroize;
 
-type Word = u64;
 const BLOCK_SIZE: usize = 128;
 const STATE_LEN: usize = 8;
-const IV: [Word; STATE_LEN] = [
+pub(super) const IV: [u64; STATE_LEN] = [
     0x6A09E667F3BCC908,
     0xBB67AE8584CAA73B,
     0x3C6EF372FE94F82B,
@@ -37,7 +34,7 @@ const IV: [Word; STATE_LEN] = [
 
 #[derive(Clone, Copy, Zeroize)]
 pub struct Blake2b<const BYTES: usize> {
-    state: [Word; STATE_LEN],
+    state: [u64; STATE_LEN],
     counter: u128,
     buffer: [u8; BLOCK_SIZE],
     position: usize,
@@ -68,7 +65,7 @@ impl<const BYTES: usize> Blake2b<BYTES> {
         const {
             assert!(BYTES > 0 && BYTES <= 64);
         }
-        let mut personalization: [Word; 2] = unsafe { transmute(personalization) };
+        let mut personalization: [u64; 2] = unsafe { transmute(personalization) };
         let mut i = 0;
         while i < 2 {
             personalization[i] = personalization[i].to_le();
@@ -76,13 +73,13 @@ impl<const BYTES: usize> Blake2b<BYTES> {
         }
 
         let mut state = IV;
-        state[0] ^= BYTES as Word;
-        state[0] ^= (fanout as Word) << 16;
-        state[0] ^= (depth as Word) << 24;
-        state[0] ^= (leaf_length as Word) << 32;
-        state[1] ^= node_offset as Word;
-        state[1] ^= (xof_length as Word) << 32;
-        state[2] ^= (inner_length as Word) << 8;
+        state[0] ^= BYTES as u64;
+        state[0] ^= (fanout as u64) << 16;
+        state[0] ^= (depth as u64) << 24;
+        state[0] ^= (leaf_length as u64) << 32;
+        state[1] ^= node_offset as u64;
+        state[1] ^= (xof_length as u64) << 32;
+        state[2] ^= (inner_length as u64) << 8;
         state[6] ^= personalization[0];
         state[7] ^= personalization[1];
 
@@ -95,19 +92,13 @@ impl<const BYTES: usize> Blake2b<BYTES> {
     }
 
     fn compress(&mut self, finalize: bool) {
-        let mut state = [0; STATE_LEN * 2];
-        state[..STATE_LEN].copy_from_slice(&self.state);
-        state[STATE_LEN..].copy_from_slice(&IV);
-        state[12] ^= self.counter as Word;
-        state[13] ^= (self.counter >> Word::BITS) as Word;
-        if finalize {
-            state[14] = !state[14];
-        }
-
-        let mut input: [Word; STATE_LEN * 2] = unsafe { transmute(self.buffer) };
-        input = input.map(Word::from_le);
-
-        compress(&mut self.state, &mut state, &input);
+        let flags = [
+            self.counter as u64,
+            (self.counter >> u64::BITS) as u64,
+            (finalize as u64).wrapping_neg(),
+            0,
+        ];
+        compress(&mut self.state, &self.buffer, &flags);
     }
 
     pub(super) fn update_impl(&mut self, input: &[u8]) {
@@ -139,8 +130,8 @@ impl<const BYTES: usize> Blake2b<BYTES> {
         self.counter += self.position as u128;
         self.buffer[self.position..].fill(0);
         self.compress(true);
-        let state = self.state.map(Word::to_le_bytes);
-        let state: [u8; size_of::<Word>() * STATE_LEN] = unsafe { transmute(state) };
+        let state = self.state.map(u64::to_le_bytes);
+        let state: [u8; STATE_LEN * size_of::<u64>()] = unsafe { transmute(state) };
         let mut hash = [0u8; BYTES];
         hash.copy_from_slice(&state[..BYTES]);
         hash
