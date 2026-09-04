@@ -51,6 +51,23 @@ fn hex() {
 }
 
 #[test]
+fn bits() {
+    let a = UInt128::from_hex("355B5C58E23AF09639BC6B1FC3BF5C25");
+    let b = [
+        true, false, true, false, false, true, false, false, false, false, true, true, true, false,
+        true, false, true, true, true, true, true, true, false, true, true, true, false, false,
+        false, false, true, true, true, true, true, true, true, false, false, false, true, true,
+        false, true, false, true, true, false, false, false, true, true, true, true, false, true,
+        true, false, false, true, true, true, false, false, false, true, true, false, true, false,
+        false, true, false, false, false, false, true, true, true, true, false, true, false, true,
+        true, true, false, false, false, true, false, false, false, true, true, true, false, false,
+        false, true, true, false, true, false, false, false, true, true, true, false, true, false,
+        true, true, false, true, true, false, true, false, true, false, true, false, true, true,
+    ];
+    assert_eq!(a.bits(), b);
+}
+
+#[test]
 fn decimal() {
     let a = UInt256::from_hex("000000000000000000000000000000000000000000015E6B7FEE4E21DF56BDAE");
     let b = "1654811289011657408691630";

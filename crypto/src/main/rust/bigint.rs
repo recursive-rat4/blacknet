@@ -15,18 +15,22 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::branchless::{BlAssign, BlEq, BlOrd, BlSelect, BlSwap};
-use alloc::string::String;
-use alloc::vec::Vec;
+use crate::{
+    branchless::{BlAssign, BlEq, BlOrd, BlSelect, BlSwap},
+    integer::bits_u64,
+};
+use alloc::{string::String, vec::Vec};
 use bytemuck::NoUninit;
-use core::array;
-use core::cmp::Ordering;
-use core::fmt;
-use core::iter::zip;
-use core::mem::transmute_copy;
-use core::ops::{
-    Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, Div, DivAssign, Mul, Neg, Rem,
-    RemAssign, Shl, ShlAssign, Shr, ShrAssign, Sub, SubAssign,
+use core::{
+    array,
+    cmp::{Ordering, min},
+    fmt,
+    iter::zip,
+    mem::transmute_copy,
+    ops::{
+        Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, Div, DivAssign, Mul, Neg, Rem,
+        RemAssign, Shl, ShlAssign, Shr, ShrAssign, Sub, SubAssign,
+    },
 };
 use serde::{Deserialize, Serialize};
 use zeroize::DefaultIsZeroes;
@@ -153,19 +157,19 @@ impl<const N: usize> BigInt<N> {
         n
     }
 
-    pub const fn bits<const M: usize>(self) -> [bool; M] {
+    pub fn bits<const M: usize>(self) -> [bool; M] {
+        const {
+            assert!(N != 0 && M <= N * u64::BITS as usize);
+        }
         let mut bits = [false; M];
         let mut i = 0;
-        let mut j = 0;
-        let mut k = 0;
+        let mut limbs = self.limbs.into_iter();
         while i < M {
-            bits[i] = self.limbs[j] >> k & 1 == 1;
-            i += 1;
-            k += 1;
-            if k == u64::BITS {
-                k = 0;
-                j += 1;
-            }
+            let limb = unsafe { limbs.next().unwrap_unchecked() };
+            let limb_bits = bits_u64::<64>(limb);
+            let j = min(M - i, u64::BITS as usize);
+            bits[i..i + j].copy_from_slice(&limb_bits[..j]);
+            i += j;
         }
         bits
     }
