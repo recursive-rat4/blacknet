@@ -308,7 +308,6 @@ dependencies = [
 name = "blacknet-log"
 version = "0.3.0"
 dependencies = [
- "chrono",
  "log",
  "spdlog-rs",
 ]

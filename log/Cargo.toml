@@ -31,7 +31,6 @@ keywords.workspace = true
 categories.workspace = true
 
 [dependencies]
-chrono.workspace = true
 log = { workspace = true, optional = true }
 spdlog-rs.workspace = true
 
