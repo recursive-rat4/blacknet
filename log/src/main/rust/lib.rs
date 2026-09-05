@@ -19,12 +19,13 @@ mod error;
 mod errorhandler;
 mod logmanager;
 mod macros;
+mod panic;
 mod utc;
 
 use errorhandler::handle_error;
+use panic::set_panic_hook;
 
 pub use error::{Error, Result};
 pub use logmanager::{LogManager, Strategy};
-pub use utc::UTC;
-
 pub use spdlog::Logger;
+pub use utc::UTC;

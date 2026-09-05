@@ -18,7 +18,7 @@
 use crate::{
     UTC,
     error::{Error, Result},
-    handle_error, info,
+    handle_error, info, set_panic_hook,
 };
 use spdlog::{
     Level, LevelFilter, Logger,
@@ -69,12 +69,14 @@ impl LogManager {
         }
 
         let logger = Self::factory(Some("LogManager"), filter_level, &sinks)?;
-        info!(logger, "Initialized logging");
-        Ok(Self {
+        let log_manager = Self {
             logger,
             filter_level,
             sinks,
-        })
+        };
+        set_panic_hook(log_manager.logger("Panic")?);
+        info!(log_manager.logger, "Initialized logging");
+        Ok(log_manager)
     }
 
     pub fn logger(&self, name: &'static str) -> Result<Logger> {

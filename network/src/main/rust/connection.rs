@@ -225,7 +225,7 @@ impl Connection {
     }
 
     pub fn close(&self) {
-        if !self.closed.fetch_or(true, Ordering::AcqRel) {
+        if !self.closed.swap(true, Ordering::AcqRel) {
             if let Ok(mut connections) = self.node().connections().write() {
                 if let Some(index) = connections
                     .iter()
