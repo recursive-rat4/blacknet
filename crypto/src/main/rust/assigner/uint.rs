@@ -18,6 +18,7 @@
 use crate::algebra::{Algebra, AlgebraOps};
 use crate::assigner::assigment::Assigment;
 use crate::gf2::GF2;
+use crate::integer::{bits_u8, bits_u16, bits_u32, bits_u64};
 use core::array;
 
 pub struct UInt<'a, A: Algebra<GF2>, const N: usize> {
@@ -116,7 +117,22 @@ where
     }
 }
 
-pub type UInt8<'a, A> = UInt<'a, A, 8>;
-pub type UInt16<'a, A> = UInt<'a, A, 16>;
-pub type UInt32<'a, A> = UInt<'a, A, 32>;
-pub type UInt64<'a, A> = UInt<'a, A, 64>;
+macro_rules! impl_uint {
+    ( $($x:tt, $y:ty, $w:ident, $b:ident, $n:literal),+ ) => {
+        $(
+            pub type $x<'a, A> = UInt<'a, A, $n>;
+
+            impl<'a, A: Algebra<GF2>> UInt<'a, A, $n> {
+                pub fn $w(int: $y, assigment: &'a Assigment<A>) -> Self {
+                    let bits = $b(int).map(GF2::from).map(A::from);
+                    Self { bits, assigment }
+                }
+            }
+        )+
+    };
+}
+
+impl_uint!(
+    UInt8, u8, with_u8, bits_u8, 8, UInt16, u16, with_u16, bits_u16, 16, UInt32, u32, with_u32,
+    bits_u32, 32, UInt64, u64, with_u64, bits_u64, 64
+);

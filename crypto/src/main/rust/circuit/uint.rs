@@ -16,8 +16,9 @@
  */
 
 use crate::algebra::{AlgebraOps, UnitalAlgebra};
-use crate::circuit::builder::{CircuitBuilder, LinearCombination, VariableKind};
+use crate::circuit::builder::{CircuitBuilder, Constant, LinearCombination, VariableKind};
 use crate::gf2::GF2;
+use crate::integer::{bits_u8, bits_u16, bits_u32, bits_u64};
 use core::array;
 
 /// Unsigned int over GF(2)-algebra.
@@ -147,7 +148,26 @@ impl<'a, A: UnitalAlgebra<GF2>, const N: usize> IntoIterator for &'a UInt<'_, A,
     }
 }
 
-pub type UInt8<'a, A> = UInt<'a, A, 8>;
-pub type UInt16<'a, A> = UInt<'a, A, 16>;
-pub type UInt32<'a, A> = UInt<'a, A, 32>;
-pub type UInt64<'a, A> = UInt<'a, A, 64>;
+macro_rules! impl_uint {
+    ( $($x:tt, $y:ty, $w:ident, $b:ident, $n:literal),+ ) => {
+        $(
+            pub type $x<'a, A> = UInt<'a, A, $n>;
+
+            impl<'a, A: UnitalAlgebra<GF2>> UInt<'a, A, $n> {
+                pub fn $w(circuit: &'a CircuitBuilder<A>, int: $y) -> Self {
+                    let bits = $b(int)
+                        .map(GF2::from)
+                        .map(A::from)
+                        .map(Constant::new)
+                        .map(LinearCombination::from);
+                    Self { circuit, bits }
+                }
+            }
+        )+
+    };
+}
+
+impl_uint!(
+    UInt8, u8, with_u8, bits_u8, 8, UInt16, u16, with_u16, bits_u16, 16, UInt32, u32, with_u32,
+    bits_u32, 32, UInt64, u64, with_u64, bits_u64, 64
+);

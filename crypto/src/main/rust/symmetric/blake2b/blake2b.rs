@@ -101,20 +101,21 @@ impl<const BYTES: usize> Blake2b<BYTES> {
         compress(&mut self.state, &self.buffer, &flags);
     }
 
-    pub(super) fn update_impl(&mut self, input: &[u8]) {
-        let mut offset: usize = 0;
-        let mut remain: usize = input.len();
-        while remain != 0 {
+    pub(super) fn update_impl(&mut self, mut input: &[u8]) {
+        let mut chunk: &[u8];
+        while !input.is_empty() {
             if self.position == BLOCK_SIZE {
                 self.counter += self.position as u128;
                 self.compress(false);
                 self.position = 0;
             }
-            let process = min(remain, BLOCK_SIZE - self.position);
-            self.buffer[self.position..self.position + process]
-                .copy_from_slice(&input[offset..offset + process]);
-            remain -= process;
-            offset += process;
+            let process = min(input.len(), BLOCK_SIZE - self.position);
+            (chunk, input) = input.split_at(process);
+            unsafe {
+                self.buffer
+                    .get_unchecked_mut(self.position..self.position + process)
+            }
+            .copy_from_slice(chunk);
             self.position += process;
         }
     }
@@ -128,7 +129,7 @@ impl<const BYTES: usize> Blake2b<BYTES> {
     /// Hash.
     pub fn finalize(mut self) -> [u8; BYTES] {
         self.counter += self.position as u128;
-        self.buffer[self.position..].fill(0);
+        unsafe { self.buffer.get_unchecked_mut(self.position..) }.fill(0);
         self.compress(true);
         let state = self.state.map(u64::to_le_bytes);
         let state: [u8; STATE_LEN * size_of::<u64>()] = unsafe { transmute(state) };

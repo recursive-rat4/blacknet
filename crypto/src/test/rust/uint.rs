@@ -26,6 +26,31 @@ use core::iter::zip;
 type Z = blacknet_crypto::gf2::GF2;
 
 #[test]
+fn with() {
+    let a = 12;
+    let b = [0, 0, 1, 1, 0, 0, 0, 0].map(Z::with_int);
+
+    let circuit = CircuitBuilder::<Z>::r1cs();
+    let scope = circuit.scope("test");
+    let a_const = Circuit::<Z, 8>::with_u8(&circuit, a);
+    let b_input = Circuit::<Z, 8>::allocate(&circuit, VariableKind::Public);
+    circuit.lay_out();
+    for (l, r) in zip(b_input, a_const) {
+        scope.constrain(l, r);
+    }
+    drop(scope);
+
+    let r1cs = circuit.to_r1cs();
+    let z = r1cs.assigment();
+    z.extend(b);
+
+    let _a_assigner = Assigner::<Z, 8>::with_u8(a, &z);
+    let _b_assigner = Assigner::<Z, 8>::new(b, &z);
+
+    assert_matches!(r1cs.is_satisfied(&z.finish()), Ok(()));
+}
+
+#[test]
 fn fused_add() {
     let a = [1, 0, 1, 0, 1, 1, 0, 0].map(Z::with_int);
     let b = [0, 0, 1, 1, 1, 0, 1, 1].map(Z::with_int);
