@@ -470,8 +470,40 @@ impl<R: UnitalRing> Mul<R> for MultilinearExtension<R> {
     type Output = Self;
 
     fn mul(self, rps: R) -> Self::Output {
+        self * &rps
+    }
+}
+
+impl<R: UnitalRing> Mul<&R> for MultilinearExtension<R> {
+    type Output = Self;
+
+    fn mul(self, rps: &R) -> Self::Output {
         Self {
-            coefficients: self.coefficients.into_iter().map(|l| l * &rps).collect(),
+            coefficients: self.coefficients.into_iter().map(|l| l * rps).collect(),
+        }
+    }
+}
+
+impl<R: UnitalRing> Mul<R> for &MultilinearExtension<R>
+where
+    for<'a> &'a R: RingOps<R>,
+{
+    type Output = MultilinearExtension<R>;
+
+    fn mul(self, rps: R) -> Self::Output {
+        self * &rps
+    }
+}
+
+impl<R: UnitalRing> Mul<&R> for &MultilinearExtension<R>
+where
+    for<'a> &'a R: RingOps<R>,
+{
+    type Output = MultilinearExtension<R>;
+
+    fn mul(self, rps: &R) -> Self::Output {
+        Self::Output {
+            coefficients: self.coefficients.iter().map(|l| l * rps).collect(),
         }
     }
 }
