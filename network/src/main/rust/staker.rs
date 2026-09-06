@@ -16,7 +16,7 @@
  */
 
 use crate::{
-    db::{BlockNotifier, CoinDB, State as CoinDBState},
+    db::{BlockNotifier, CoinDB, Snapshot, State as CoinDBState},
     node::Node,
     wallet::WalletDB,
 };
@@ -98,7 +98,8 @@ impl Staker {
 
         let mut holder = Holder::new(*public_key, secret_key);
         let coin_db = self.node.coin_db();
-        holder.update(coin_db, &coin_db.state().load());
+        let (ref state, ref snapshot) = **coin_db.state().load();
+        holder.update(coin_db, state, snapshot);
         if holder.stake == Amount::ZERO {
             warn!(self.logger, "Stakeholder has zero active balance");
         }
@@ -164,7 +165,7 @@ impl Staker {
             }
         }
 
-        let state = self.node.coin_db().state().load();
+        let (ref state, _) = **self.node.coin_db().state().load();
         let pos_version = state.pos_version();
         let k = (MAX_DIFFICULTY / state.difficulty()).limbs()[0];
         let target_block_time = target_block_time(pos_version).value() as u64;
@@ -181,7 +182,8 @@ impl Staker {
     async fn run(self: Arc<Self>) {
         loop {
             let enter_time = SystemClock::secs();
-            let pos_time_slot = time_slot(self.node.coin_db().state().load().pos_version());
+            let (ref state, _) = **self.node.coin_db().state().load();
+            let pos_time_slot = time_slot(state.pos_version());
             let next_time_slot = enter_time - enter_time % pos_time_slot + pos_time_slot;
             let d = next_time_slot.to_millis() - SystemClock::millis();
             if d > Milliseconds::ZERO {
@@ -199,7 +201,7 @@ impl Staker {
             if self.node.broadcast_block(hash, bytes.into()).await {
                 continue;
             } else {
-                let state = self.node.coin_db().state().load();
+                let (ref state, _) = **self.node.coin_db().state().load();
                 if block.time() <= state.block_time() {
                     continue;
                 }
@@ -243,7 +245,7 @@ impl Staker {
 
         inner.set_state(State::Staking);
 
-        let state = self.node.coin_db().state().load();
+        let (ref state, ref snapshot) = **self.node.coin_db().state().load();
         let curr_time = SystemClock::secs();
         let curr_time_slot = curr_time - curr_time % time_slot(state.pos_version());
         if curr_time_slot <= state.block_time() {
@@ -252,7 +254,7 @@ impl Staker {
 
         for holder in &mut inner.holders {
             if holder.last_block != state.block_hash() {
-                holder.update(self.node.coin_db(), &state);
+                holder.update(self.node.coin_db(), state, snapshot);
             }
             holder.hash_counter += 1;
             let pos_version = state.pos_version();
@@ -376,10 +378,10 @@ impl Holder {
         }
     }
 
-    fn update(&mut self, coin_db: &CoinDB, state: &CoinDBState) {
+    fn update(&mut self, coin_db: &CoinDB, state: &CoinDBState, snapshot: &Snapshot) {
         self.last_block = state.block_hash();
-        self.stake = coin_db
-            .account(self.public_key)
+        self.stake = snapshot
+            .get(coin_db.accounts(), self.public_key)
             .map(|account| account.staking_balance(state.height()))
             .unwrap_or(Amount::ZERO);
     }

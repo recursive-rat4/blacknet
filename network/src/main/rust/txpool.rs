@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::db::{BlockDB, BlockNotifier, CoinDB};
+use crate::db::{BlockDB, BlockNotifier, CoinDB, Snapshot, State};
 use blacknet_compat::config::Network as Config;
 use blacknet_kernel::{
     account::Account,
@@ -160,7 +160,7 @@ impl TxPool {
 
     pub fn fill(&self, block: &mut Block) {
         let mut free_block_size = min(
-            self.coin_db.state().load().max_block_size(),
+            self.coin_db.state().load().0.max_block_size(),
             self.config.soft_block_size_limit,
         ) - 176;
         for hash in &self.transactions {
@@ -207,7 +207,9 @@ impl TxPool {
         let tx = from_bytes::<Transaction>(bytes, false)?;
         let fee = tx.fee();
         self.check_fee(bytes.len() as u32, fee)?;
-        let result = self.process_transaction_impl(&tx, hash);
+        let coin_db = self.coin_db.state().load();
+        let mut update = Update::new(self, &coin_db);
+        let result = update.process_transaction_impl(&tx, hash);
         self.undo_impl(result)?;
         self.map.insert(hash, bytes.into());
         self.data_size += bytes.len();
@@ -225,7 +227,9 @@ impl TxPool {
         let fee = tx.fee();
         let bytes_len = bytes.len() as u32;
         self.check_fee(bytes_len, fee)?;
-        let result = self.process_transaction_impl(&tx, hash);
+        let coin_db = self.coin_db.state().load();
+        let mut update = Update::new(self, &coin_db);
+        let result = update.process_transaction_impl(&tx, hash);
         self.undo_impl(result)?;
         self.map.insert(hash, bytes.into());
         self.data_size += bytes.len();
@@ -319,38 +323,50 @@ impl TxPool {
     }
 }
 
-impl CoinTx for TxPool {
+struct Update<'a> {
+    tx_pool: &'a mut TxPool,
+    coin_db: &'a Arc<(State, Snapshot)>,
+}
+
+impl<'a> Update<'a> {
+    const fn new(tx_pool: &'a mut TxPool, coin_db: &'a Arc<(State, Snapshot)>) -> Self {
+        Self { tx_pool, coin_db }
+    }
+}
+
+impl CoinTx for Update<'_> {
     fn add_supply(&mut self, _amount: Amount) {}
 
     fn sub_supply(&mut self, _amount: Amount) {}
 
     fn check_anchor(&self, hash: Hash) -> Result<()> {
-        self.coin_db.check_anchor(hash)
+        self.tx_pool.coin_db.check_anchor(&self.coin_db.1, hash)
     }
 
     fn block_hash(&self) -> Hash {
-        self.coin_db.state().load().block_hash()
+        self.coin_db.0.block_hash()
     }
 
     fn block_time(&self) -> Seconds {
-        self.coin_db.state().load().block_time()
+        self.coin_db.0.block_time()
     }
 
     fn height(&self) -> u32 {
-        self.coin_db.state().load().height()
+        self.coin_db.0.height()
     }
 
     fn get_account(&mut self, key: PublicKey) -> Result<Account> {
-        match self.accounts.get(&key) {
+        match self.tx_pool.accounts.get(&key) {
             Some(account) => {
-                self.undo_accounts
+                self.tx_pool
+                    .undo_accounts
                     .entry(key)
                     .or_insert_with(|| Some(account.clone()));
                 Ok(account.clone())
             }
             None => {
-                let db_account = self.coin_db.account(key);
-                self.undo_accounts.insert(key, None);
+                let db_account = self.coin_db.1.get(self.tx_pool.coin_db.accounts(), key);
+                self.tx_pool.undo_accounts.insert(key, None);
                 db_account.ok_or(Error::invalid("Account not found"))
             }
         }
@@ -360,30 +376,32 @@ impl CoinTx for TxPool {
         match self.get_account(key) {
             Ok(account) => account,
             Err(_) => {
-                self.undo_accounts.insert(key, None);
+                self.tx_pool.undo_accounts.insert(key, None);
                 Account::new()
             }
         }
     }
 
     fn set_account(&mut self, key: PublicKey, state: Account) {
-        self.accounts.insert(key, state);
+        self.tx_pool.accounts.insert(key, state);
     }
 
     fn add_htlc(&mut self, id: HashTimeLockContractId, htlc: HTLC) {
-        self.undo_htlcs.insert(id, (false, None));
-        self.htlcs.insert(id, Some(htlc));
+        self.tx_pool.undo_htlcs.insert(id, (false, None));
+        self.tx_pool.htlcs.insert(id, Some(htlc));
     }
 
     fn get_htlc(&mut self, id: HashTimeLockContractId) -> Result<HTLC> {
-        if !self.htlcs.contains_key(&id) {
-            self.undo_htlcs.insert(id, (false, None));
+        if !self.tx_pool.htlcs.contains_key(&id) {
+            self.tx_pool.undo_htlcs.insert(id, (false, None));
             self.coin_db
-                .htlc(id)
+                .1
+                .get(self.tx_pool.coin_db.htlcs(), id)
                 .ok_or(Error::invalid("HTLC not found"))
         } else {
-            let htlc = self.htlcs.get(&id).cloned().flatten();
-            self.undo_htlcs
+            let htlc = self.tx_pool.htlcs.get(&id).cloned().flatten();
+            self.tx_pool
+                .undo_htlcs
                 .entry(id)
                 .or_insert_with(|| (true, htlc.clone()));
             htlc.ok_or(Error::invalid("HTLC not found"))
@@ -391,23 +409,25 @@ impl CoinTx for TxPool {
     }
 
     fn remove_htlc(&mut self, id: HashTimeLockContractId) {
-        self.htlcs.insert(id, None);
+        self.tx_pool.htlcs.insert(id, None);
     }
 
     fn add_multisig(&mut self, id: MultiSignatureLockContractId, multisig: Multisig) {
-        self.undo_multisigs.insert(id, (false, None));
-        self.multisigs.insert(id, Some(multisig));
+        self.tx_pool.undo_multisigs.insert(id, (false, None));
+        self.tx_pool.multisigs.insert(id, Some(multisig));
     }
 
     fn get_multisig(&mut self, id: MultiSignatureLockContractId) -> Result<Multisig> {
-        if !self.multisigs.contains_key(&id) {
-            self.undo_multisigs.insert(id, (false, None));
+        if !self.tx_pool.multisigs.contains_key(&id) {
+            self.tx_pool.undo_multisigs.insert(id, (false, None));
             self.coin_db
-                .multisig(id)
+                .1
+                .get(self.tx_pool.coin_db.multisigs(), id)
                 .ok_or(Error::invalid("Multisig not found"))
         } else {
-            let multisig = self.multisigs.get(&id).cloned().flatten();
-            self.undo_multisigs
+            let multisig = self.tx_pool.multisigs.get(&id).cloned().flatten();
+            self.tx_pool
+                .undo_multisigs
                 .entry(id)
                 .or_insert_with(|| (true, multisig.clone()));
             multisig.ok_or(Error::invalid("Multisig not found"))
@@ -415,7 +435,7 @@ impl CoinTx for TxPool {
     }
 
     fn remove_multisig(&mut self, id: MultiSignatureLockContractId) {
-        self.multisigs.insert(id, None);
+        self.tx_pool.multisigs.insert(id, None);
     }
 }
 

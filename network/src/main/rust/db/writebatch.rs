@@ -15,42 +15,42 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::db::{DBVersion, DBVersionKey, DBView};
+use crate::db::{DBVersion, DBVersionKey, View};
 use blacknet_serialization::format::to_bytes;
 use fjall::OwnedWriteBatch;
 use serde::Serialize;
 
 pub struct WriteBatch {
-    inner: OwnedWriteBatch,
+    batch: OwnedWriteBatch,
 }
 
 impl WriteBatch {
-    pub const fn new(inner: OwnedWriteBatch) -> Self {
-        Self { inner }
+    pub const fn new(batch: OwnedWriteBatch) -> Self {
+        Self { batch }
     }
 
-    pub fn insert<K: AsRef<[u8]>, V: Serialize>(&mut self, view: &DBView<K, V>, key: K, value: &V) {
-        self.inner
-            .insert(&view.keyspace, key.as_ref(), to_bytes(value).unwrap())
+    pub fn insert<K: AsRef<[u8]>, V: Serialize>(&mut self, view: &View<K, V>, key: K, value: &V) {
+        self.batch
+            .insert(view.as_ref(), key.as_ref(), to_bytes(value).unwrap())
     }
 
-    pub fn insert_bytes<K: AsRef<[u8]>, V>(&mut self, view: &DBView<K, V>, key: K, bytes: &[u8]) {
-        self.inner.insert(&view.keyspace, key.as_ref(), bytes)
+    pub fn insert_bytes<K: AsRef<[u8]>, V>(&mut self, view: &View<K, V>, key: K, bytes: &[u8]) {
+        self.batch.insert(view.as_ref(), key.as_ref(), bytes)
     }
 
     pub fn verset<V: Serialize>(&mut self, db_version: &DBVersion, key: DBVersionKey, value: &V) {
-        self.inner.insert(
-            &db_version.versions.keyspace,
+        self.batch.insert(
+            db_version.versions.as_ref(),
             DBVersion::key(key),
             to_bytes(value).unwrap(),
         )
     }
 
-    pub fn remove<K: AsRef<[u8]>, V>(&mut self, view: &DBView<K, V>, key: K) {
-        self.inner.remove(&view.keyspace, key.as_ref())
+    pub fn remove<K: AsRef<[u8]>, V>(&mut self, view: &View<K, V>, key: K) {
+        self.batch.remove(view.as_ref(), key.as_ref())
     }
 
     pub fn commit(self) {
-        self.inner.commit().unwrap()
+        self.batch.commit().unwrap()
     }
 }

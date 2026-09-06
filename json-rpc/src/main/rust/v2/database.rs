@@ -69,8 +69,10 @@ fn block_handler(hash: &str, txdetail: bool, network: &Arc<Network>) -> Response
         Ok(hash) => hash,
         Err(err) => return respond_error(format!("Invalid hash: {err}")),
     };
-    let block_db = network.node().block_db();
-    if let Some((block, size)) = block_db.get(hash) {
+    let node = network.node();
+    let block_db = node.block_db();
+    let (_, ref snapshot) = **node.coin_db().state().load();
+    if let Some((block, size)) = block_db.get(snapshot, hash) {
         let address_codec = network.wallet_db().address_codec();
         match BlockInfo::new(&block, hash, size as u32, txdetail, address_codec) {
             Ok(info) => respond_json(&info),
@@ -85,8 +87,8 @@ async fn block_db_check(State(network): State<Arc<Network>>) -> Json<BlockDBChec
     let node = network.node();
     let block_db = node.block_db();
     let coin_db = node.coin_db();
-    let state = coin_db.state().load();
-    Json(block_db.check(&state))
+    let (ref state, ref snapshot) = **coin_db.state().load();
+    Json(block_db.check(state, snapshot))
 }
 
 async fn block_hash(
@@ -96,8 +98,8 @@ async fn block_hash(
     let node = network.node();
     let block_db = node.block_db();
     let coin_db = node.coin_db();
-    let state = coin_db.state().load();
-    if let Some(hash) = block_db.hash(height, &state) {
+    let (ref state, ref snapshot) = **coin_db.state().load();
+    if let Some(hash) = block_db.hash(state, snapshot, height) {
         respond_text(hash.to_string())
     } else {
         respond_error("Block not found")
@@ -112,8 +114,10 @@ async fn block_index(
         Ok(hash) => hash,
         Err(err) => return respond_error(format!("Invalid hash: {err}")),
     };
-    let block_db = network.node().block_db();
-    if let Some(index) = block_db.index(hash) {
+    let node = network.node();
+    let block_db = node.block_db();
+    let (_, ref snapshot) = **node.coin_db().state().load();
+    if let Some(index) = block_db.index(snapshot, hash) {
         respond_json(&BlockIndexInfo::new(index))
     } else {
         respond_error("Block not found")
@@ -124,8 +128,8 @@ async fn make_bootstrap(State(network): State<Arc<Network>>) -> Response<String>
     let node = network.node();
     let block_db = node.block_db();
     let coin_db = node.coin_db();
-    let state = coin_db.state().load();
-    match block_db.export(&state) {
+    let (ref state, ref snapshot) = **coin_db.state().load();
+    match block_db.export(state, snapshot) {
         Some(path) => match absolute(&path) {
             Ok(path) => respond_text(path.display().to_string()),
             Err(_) => respond_text(path.display().to_string()),
@@ -136,8 +140,8 @@ async fn make_bootstrap(State(network): State<Arc<Network>>) -> Response<String>
 
 async fn coin_db(State(network): State<Arc<Network>>) -> Json<CoinDBInfo> {
     let coin_db = network.node().coin_db();
-    let state = coin_db.state().load();
-    Json(CoinDBInfo::new(&state))
+    let (ref state, _) = **coin_db.state().load();
+    Json(CoinDBInfo::new(state))
 }
 
 async fn coin_db_check(State(network): State<Arc<Network>>) -> Json<CoinDBCheck> {
@@ -171,8 +175,8 @@ fn account_handler(address: &str, confirmations: u32, network: &Arc<Network>) ->
     };
 
     let coin_db = network.node().coin_db();
-    if let Some(account) = coin_db.account(public_key) {
-        let state = coin_db.state().load();
+    let (ref state, ref snapshot) = **coin_db.state().load();
+    if let Some(account) = coin_db.account(snapshot, public_key) {
         match AccountInfo::new(&account, state.height(), confirmations, address_codec) {
             Ok(info) => respond_json(&info),
             Err(err) => respond_error(format!("Internal error: {err}")),

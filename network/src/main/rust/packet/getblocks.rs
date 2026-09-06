@@ -15,9 +15,12 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::connection::Connection;
-use crate::packet::{
-    Blocks, ConsensusFault, MAX_BLOCKS, MAX_HASHES, PACKET_HEADER_SIZE_BYTES, Packet, PacketKind,
+use crate::{
+    connection::Connection,
+    packet::{
+        Blocks, ConsensusFault, MAX_BLOCKS, MAX_HASHES, PACKET_HEADER_SIZE_BYTES, Packet,
+        PacketKind,
+    },
 };
 use blacknet_kernel::blake2b::Hash;
 use serde::{Deserialize, Serialize};
@@ -51,7 +54,8 @@ impl Packet for GetBlocks {
             }
         }
 
-        if let Some(mut block_index) = block_db.index(self.best) {
+        let (_, ref snapshot) = **node.coin_db().state().load();
+        if let Some(mut block_index) = block_db.index(snapshot, self.best) {
             let mut size = PACKET_HEADER_SIZE_BYTES + 2 + 1;
             let max_size = node.min_packet_size(); // actual value is unknown, minimum is assumed
             let mut response = Vec::<Box<[u8]>>::with_capacity(MAX_BLOCKS);
@@ -65,7 +69,7 @@ impl Packet for GetBlocks {
                 if !response.is_empty() && size >= max_size {
                     break;
                 }
-                if let Some(bytes) = block_db.get_bytes(hash) {
+                if let Some(bytes) = block_db.get_bytes(snapshot, hash) {
                     response.push(bytes);
                 } else {
                     break;
@@ -73,7 +77,7 @@ impl Packet for GetBlocks {
                 if response.len() == MAX_BLOCKS {
                     break;
                 }
-                if let Some(next_index) = block_db.index(hash) {
+                if let Some(next_index) = block_db.index(snapshot, hash) {
                     block_index = next_index;
                 } else {
                     break;
@@ -82,7 +86,7 @@ impl Packet for GetBlocks {
 
             connection.send_packet(&Blocks::with_blocks(response));
         } else if let Some(next_block_hashes) =
-            block_db.next_block_hashes(self.checkpoint, MAX_HASHES)
+            block_db.next_block_hashes(snapshot, self.checkpoint, MAX_HASHES)
         {
             connection.send_packet(&Blocks::with_hashes(next_block_hashes));
         } else {

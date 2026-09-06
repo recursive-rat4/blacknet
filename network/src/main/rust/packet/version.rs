@@ -155,7 +155,7 @@ fn send_version(connection: &Connection, nonce: u64) {
     let magic = node.mode().network_magic();
     let user_agent = node.agent_string();
     let min_fee_rate = node.tx_pool().read().unwrap().min_fee_rate();
-    let state = node.coin_db().state().load();
+    let (ref state, _) = **node.coin_db().state().load();
     connection.send_packet(&Version::new(
         magic,
         PROTOCOL_VERSION,

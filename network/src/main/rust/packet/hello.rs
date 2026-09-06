@@ -231,7 +231,7 @@ fn send_hello(connection: &Connection) {
     connection.send_packet(&hello);
 
     if state != State::ProberWaiting {
-        let state = node.coin_db().state().load();
+        let (ref state, _) = **node.coin_db().state().load();
         let block_announce = BlockAnnounce::new(state.block_hash(), state.cumulative_difficulty());
         connection.send_packet(&block_announce);
     }

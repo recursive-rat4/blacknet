@@ -105,8 +105,13 @@ impl Node {
         let fjall = Fjall::open(dirs, config)?;
         let db_version = DBVersion::new(&fjall)?;
         let block_db = BlockDB::new(dirs, fjall.clone(), &db_version, log_manager)?;
-        let (coin_db, coin_notifier) =
-            CoinDB::new(&mode, &fjall, db_version, log_manager, block_db.clone())?;
+        let (coin_db, coin_notifier) = CoinDB::new(
+            &mode,
+            fjall.clone(),
+            db_version,
+            log_manager,
+            block_db.clone(),
+        )?;
         block_db.import(&coin_db);
         let peer_table = PeerTable::new(&mode, dirs, log_manager, config.clone())?;
         let (router, router_notifier) = Router::new(
@@ -236,7 +241,7 @@ impl Node {
         self.coin_db.warnings(warnings);
 
         let time_offset = self.time_offset();
-        let state = self.coin_db.state().load();
+        let (ref state, _) = **self.coin_db.state().load();
         let pos_version = state.pos_version();
         let time_slot = time_slot(pos_version);
 
@@ -248,7 +253,7 @@ impl Node {
     }
 
     pub(super) fn max_packet_size(&self) -> u32 {
-        self.coin_db.state().load().max_block_size() + BLOCK_RESERVED_SIZE
+        self.coin_db.state().load().0.max_block_size() + BLOCK_RESERVED_SIZE
     }
 
     pub(super) const fn min_packet_size(&self) -> u32 {
@@ -256,7 +261,7 @@ impl Node {
     }
 
     pub(super) fn is_initial_synchronization(&self) -> bool {
-        let state = self.coin_db.state().load();
+        let (ref state, _) = **self.coin_db.state().load();
         let pos_version = state.pos_version();
         self.block_fetcher.is_synchronizing()
             && guess_initial_synchronization(pos_version, SystemClock::secs(), state.block_time())
@@ -342,11 +347,8 @@ impl Node {
     pub(super) async fn broadcast_block(&self, hash: Hash, bytes: Box<[u8]>) -> bool {
         match self.block_fetcher.staked_block(hash, bytes).await {
             Ok(()) => {
-                let n = self.announce_block(
-                    hash,
-                    self.coin_db.state().load().cumulative_difficulty(),
-                    None,
-                );
+                let (ref state, _) = **self.coin_db.state().load();
+                let n = self.announce_block(hash, state.cumulative_difficulty(), None);
                 if self.mode().requires_network() {
                     info!(self.logger, "Announced to {n} peers");
                 }

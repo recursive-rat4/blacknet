@@ -17,9 +17,11 @@
 
 use crate::v2::{AmountInfo, BigIntegerInfo, EndpointInfo, HashInfo};
 use blacknet_kernel::blake2b::Hash;
-use blacknet_network::connection::{Connection, ConnectionId};
-use blacknet_network::db::{BlockDB, genesis};
-use blacknet_network::packet::BlockAnnounce;
+use blacknet_network::{
+    connection::{Connection, ConnectionId},
+    db::{BlockDB, Snapshot, genesis},
+    packet::BlockAnnounce,
+};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -43,7 +45,12 @@ pub struct PeerInfo {
 }
 
 impl PeerInfo {
-    pub fn new(connection: &Connection, cache: &mut ForkCache, block_db: &BlockDB) -> Self {
+    pub fn new(
+        connection: &Connection,
+        cache: &mut ForkCache,
+        block_db: &BlockDB,
+        snapshot: &Snapshot,
+    ) -> Self {
         Self {
             peerId: connection.id(),
             remoteAddress: connection.remote_endpoint().into(),
@@ -56,7 +63,12 @@ impl PeerInfo {
             banScore: connection.dos_score(),
             feeFilter: connection.fee_filter().into(),
             connectedAt: Into::<i64>::into(connection.connected_at()) / 1000,
-            lastChain: ChainInfo::new(connection.last_block().load().as_ref(), cache, block_db),
+            lastChain: ChainInfo::new(
+                connection.last_block().load().as_ref(),
+                cache,
+                block_db,
+                snapshot,
+            ),
             requestedBlocks: connection.requested_blocks(),
             totalBytesRead: connection.total_bytes_read(),
             totalBytesWritten: connection.total_bytes_written(),
@@ -72,11 +84,16 @@ struct ChainInfo {
 }
 
 impl ChainInfo {
-    pub fn new(block_announce: &BlockAnnounce, cache: &mut ForkCache, block_db: &BlockDB) -> Self {
+    pub fn new(
+        block_announce: &BlockAnnounce,
+        cache: &mut ForkCache,
+        block_db: &BlockDB,
+        snapshot: &Snapshot,
+    ) -> Self {
         Self {
             chain: block_announce.hash().into(),
             cumulativeDifficulty: BigIntegerInfo::from(block_announce.cumulative_difficulty()),
-            fork: fork_cache_get_or_compute(cache, block_announce.hash(), block_db),
+            fork: fork_cache_get_or_compute(cache, block_announce.hash(), block_db, snapshot),
         }
     }
 }
@@ -89,8 +106,13 @@ pub(crate) fn fork_cache_new() -> ForkCache {
     cache
 }
 
-fn fork_cache_get_or_compute(cache: &mut ForkCache, hash: Hash, block_db: &BlockDB) -> bool {
+fn fork_cache_get_or_compute(
+    cache: &mut ForkCache,
+    hash: Hash,
+    block_db: &BlockDB,
+    snapshot: &Snapshot,
+) -> bool {
     *cache
         .entry(hash)
-        .or_insert_with(|| !block_db.contains(hash))
+        .or_insert_with(|| !block_db.contains(snapshot, hash))
 }

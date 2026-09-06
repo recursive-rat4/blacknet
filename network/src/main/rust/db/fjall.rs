@@ -15,9 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::db::WriteBatch;
-use blacknet_compat::config::Network as Config;
-use blacknet_compat::{XDGDirectories, ulimit};
+use crate::db::{Snapshot, WriteBatch};
+use blacknet_compat::{XDGDirectories, config::Network as Config, ulimit};
 use core::cmp::max;
 use fjall::{
     CompressionType, Database, KeyspaceCreateOptions, KvSeparationOptions, Result,
@@ -65,6 +64,10 @@ impl Fjall {
 
     pub const fn database(&self) -> &Database {
         &self.database
+    }
+
+    pub fn snapshot(&self) -> Snapshot {
+        Snapshot::new(self.database.snapshot())
     }
 
     pub fn create_write_batch(&self) -> WriteBatch {

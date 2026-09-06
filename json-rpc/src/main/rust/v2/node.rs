@@ -32,12 +32,13 @@ use std::sync::Arc;
 async fn peers(State(network): State<Arc<Network>>) -> Json<Vec<PeerInfo>> {
     let node = network.node();
     let block_db = node.block_db();
+    let (_, ref snapshot) = **node.coin_db().state().load();
     let connections = node.connections().read().unwrap();
     let mut fork_cache = fork_cache_new();
     Json(
         connections
             .iter()
-            .map(|connection| PeerInfo::new(connection, &mut fork_cache, block_db))
+            .map(|connection| PeerInfo::new(connection, &mut fork_cache, block_db, snapshot))
             .collect(),
     )
 }

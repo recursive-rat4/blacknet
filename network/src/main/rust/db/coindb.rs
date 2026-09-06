@@ -16,7 +16,8 @@
  */
 
 use crate::db::{
-    BlockDB, BlockIndex, DBVersion, DBVersionKey, DBView, Fjall, UndoBlock, WriteBatch, genesis,
+    BlockDB, BlockIndex, DBVersion, DBVersionKey, Fjall, Snapshot, UndoBlock, View, WriteBatch,
+    genesis,
 };
 use arc_swap::ArcSwap;
 use blacknet_compat::Mode;
@@ -83,27 +84,29 @@ enum CoinDBVersion {
 
 pub struct CoinDB {
     logger: Logger,
-    state: ArcSwap<State>,
+    state: ArcSwap<(State, Snapshot)>,
     db_version: DBVersion,
-    accounts: DBView<PublicKey, Account>,
-    htlcs: DBView<HashTimeLockContractId, HTLC>,
-    multisigs: DBView<MultiSignatureLockContractId, Multisig>,
-    undos: DBView<Hash, UndoBlock>,
+    accounts: View<PublicKey, Account>,
+    htlcs: View<HashTimeLockContractId, HTLC>,
+    multisigs: View<MultiSignatureLockContractId, Multisig>,
+    undos: View<Hash, UndoBlock>,
     subscriber: Subscriber,
+    fjall: Arc<Fjall>,
     block_db: Arc<BlockDB>,
 }
 
 impl CoinDB {
     pub fn new(
         mode: &Mode,
-        fjall: &Fjall,
+        fjall: Arc<Fjall>,
         db_version: DBVersion,
         log_manager: &LogManager,
         block_db: Arc<BlockDB>,
     ) -> Result<(Arc<Self>, Notifier), Box<dyn StdError>> {
         let logger = log_manager.logger("CoinDB")?;
 
-        match db_version.get_or_err::<CoinDBVersion>(DBVersionKey::CoinDB) {
+        let snapshot = fjall.snapshot();
+        match db_version.get_or_err::<CoinDBVersion>(&snapshot, DBVersionKey::CoinDB) {
             Some(Ok(version)) => debug!(logger, "Open {version:?}"),
             Some(Err(err)) => {
                 debug!(logger, "{err:?}");
@@ -118,17 +121,18 @@ impl CoinDB {
             }
         }
 
-        let accounts = DBView::new(fjall, "accounts")?;
+        let accounts = View::new(&fjall, "accounts")?;
 
         let state = db_version
-            .get::<State>(DBVersionKey::CoinDBState)
+            .get::<State>(&snapshot, DBVersionKey::CoinDBState)
             .map_or_else(
-                || State::genesis(mode, fjall, &db_version, &accounts, &block_db.indexes),
+                || State::genesis(mode, &fjall, &db_version, &accounts, &block_db.indexes),
                 |mut state| {
                     state.requires_network = mode.requires_network();
                     state
                 },
             );
+        let snapshot = fjall.snapshot();
 
         info!(
             logger,
@@ -142,73 +146,87 @@ impl CoinDB {
         Ok((
             Arc::new(Self {
                 logger,
-                state: ArcSwap::new(Arc::new(state)),
+                state: ArcSwap::new(Arc::new((state, snapshot))),
                 db_version,
                 accounts,
-                htlcs: DBView::new(fjall, "htlcs")?,
-                multisigs: DBView::new(fjall, "multisigs")?,
-                undos: DBView::new(fjall, "undos")?,
+                htlcs: View::new(&fjall, "htlcs")?,
+                multisigs: View::new(&fjall, "multisigs")?,
+                undos: View::new(&fjall, "undos")?,
                 subscriber,
+                fjall,
                 block_db,
             }),
             notifier,
         ))
     }
 
-    pub const fn state(&self) -> &ArcSwap<State> {
+    pub const fn state(&self) -> &ArcSwap<(State, Snapshot)> {
         &self.state
     }
 
-    pub fn account(&self, public_key: PublicKey) -> Option<Account> {
-        self.accounts.get(public_key)
+    pub const fn accounts(&self) -> &View<PublicKey, Account> {
+        &self.accounts
     }
 
-    pub fn htlc(&self, id: HashTimeLockContractId) -> Option<HTLC> {
-        self.htlcs.get(id)
+    pub const fn htlcs(&self) -> &View<HashTimeLockContractId, HTLC> {
+        &self.htlcs
     }
 
-    pub fn multisig(&self, id: MultiSignatureLockContractId) -> Option<Multisig> {
-        self.multisigs.get(id)
+    pub const fn multisigs(&self) -> &View<MultiSignatureLockContractId, Multisig> {
+        &self.multisigs
+    }
+
+    pub fn account(&self, snapshot: &Snapshot, public_key: PublicKey) -> Option<Account> {
+        snapshot.get(&self.accounts, public_key)
+    }
+
+    pub fn htlc(&self, snapshot: &Snapshot, id: HashTimeLockContractId) -> Option<HTLC> {
+        snapshot.get(&self.htlcs, id)
+    }
+
+    pub fn multisig(
+        &self,
+        snapshot: &Snapshot,
+        id: MultiSignatureLockContractId,
+    ) -> Option<Multisig> {
+        snapshot.get(&self.multisigs, id)
     }
 
     pub fn prune(&self) {
-        let mut batch = self.block_db.fjall.create_write_batch();
+        let mut batch = self.fjall.create_write_batch();
         self.prune_batched(&mut batch);
         batch.commit();
     }
 
     pub fn prune_batched(&self, batch: &mut WriteBatch) {
-        let mut block_index = self
-            .block_db
-            .indexes
-            .get(self.state.load().rolling_checkpoint)
+        let (ref state, ref snapshot) = **self.state.load();
+        let mut block_index = snapshot
+            .get(&self.block_db.indexes, state.rolling_checkpoint)
             .expect("consistent block index");
         loop {
             let hash = block_index.previous();
-            if !self.undos.contains(hash) {
+            if !snapshot.contains(&self.undos, hash) {
                 break;
             }
             batch.remove(&self.undos, hash);
             if hash == Hash::ZERO {
                 break;
             }
-            block_index = self
-                .block_db
-                .indexes
-                .get(hash)
+            block_index = snapshot
+                .get(&self.block_db.indexes, hash)
                 .expect("consistent block index");
         }
     }
 
     pub fn warnings(&self, warnings: &mut Vec<String>) {
-        let state = self.state.load();
+        let (ref state, _) = **self.state.load();
         if state.upgraded >= UPGRADE_THRESHOLD / 2 {
             warnings.push("This version is obsolete, upgrade required!".to_owned())
         }
     }
 
     pub fn check(&self) -> CoinDBCheck {
-        let state = self.state.load();
+        let (ref state, ref snapshot) = **self.state.load();
         let mut check = CoinDBCheck {
             result: false,
             accounts: 0,
@@ -217,15 +235,15 @@ impl CoinDB {
             expected_supply: state.supply,
             actual_supply: Amount::ZERO,
         };
-        for (_, account) in self.accounts.iter() {
+        for (_, account) in snapshot.iter(&self.accounts) {
             check.actual_supply += account.total_balance();
             check.accounts += 1;
         }
-        for (_, htlc) in self.htlcs.iter() {
+        for (_, htlc) in snapshot.iter(&self.htlcs) {
             check.actual_supply += htlc.amount;
             check.htlcs += 1;
         }
-        for (_, multisig) in self.multisigs.iter() {
+        for (_, multisig) in snapshot.iter(&self.multisigs) {
             check.actual_supply += multisig.amount();
             check.multisigs += 1;
         }
@@ -235,8 +253,8 @@ impl CoinDB {
         check
     }
 
-    pub fn check_anchor(&self, hash: Hash) -> Result<()> {
-        if hash == genesis::hash() || self.block_db.indexes.contains(hash) {
+    pub fn check_anchor(&self, snapshot: &Snapshot, hash: Hash) -> Result<()> {
+        if hash == genesis::hash() || snapshot.contains(&self.block_db.indexes, hash) {
             Ok(())
         } else {
             Err(Error::not_reachable_vertex(hash.to_string()))
@@ -244,12 +262,10 @@ impl CoinDB {
     }
 
     fn next_rolling_checkpoint(&self) -> Hash {
-        let state = self.state.load();
+        let (ref state, ref snapshot) = **self.state.load();
         if state.rolling_checkpoint != genesis::hash() {
-            let block_index = self
-                .block_db
-                .indexes
-                .get(state.rolling_checkpoint)
+            let block_index = snapshot
+                .get(&self.block_db.indexes, state.rolling_checkpoint)
                 .expect("consistent block index");
             block_index.next()
         } else {
@@ -257,16 +273,12 @@ impl CoinDB {
                 return genesis::hash();
             }
             let checkpoint = state.height - ROLLBACK_LIMIT as u32;
-            let mut block_index = self
-                .block_db
-                .indexes
-                .get(state.block_hash)
+            let mut block_index = snapshot
+                .get(&self.block_db.indexes, state.block_hash)
                 .expect("consistent block index");
             while block_index.height() != checkpoint + 1 {
-                block_index = self
-                    .block_db
-                    .indexes
-                    .get(block_index.previous())
+                block_index = snapshot
+                    .get(&self.block_db.indexes, block_index.previous())
                     .expect("consistent block index");
             }
             block_index.previous()
@@ -280,37 +292,36 @@ impl CoinDB {
         block: &Block,
         size: u32,
     ) -> Result<Vec<Hash>> {
-        let state = self.state.load();
-        if block.previous() != state.block_hash {
+        if block.previous() != coin_tx.state.block_hash {
             error!(
                 self.logger,
                 "{hash} not adjacent to {} edge {}",
-                state.block_hash,
+                coin_tx.state.block_hash,
                 block.previous()
             );
             return Err(Error::not_reachable_vertex(block.previous().to_string()));
         }
-        if size > state.max_block_size {
+        if size > coin_tx.state.max_block_size {
             return Err(Error::invalid(format!(
                 "Too large block {size} bytes, maximum {}",
-                state.max_block_size
+                coin_tx.state.max_block_size
             )));
         }
-        if block.time() <= state.block_time {
+        if block.time() <= coin_tx.state.block_time {
             return Err(Error::invalid("Timestamp is too early"));
         }
         let mut generator = coin_tx.get_account(block.generator())?;
         let height = coin_tx.height();
         let mut tx_hashes = Vec::<Hash>::with_capacity(block.raw_transactions().len());
-        let pos_version = state.pos_version();
+        let pos_version = coin_tx.state.pos_version();
 
         verify_pos(
             pos_version,
             block.time(),
             block.generator(),
-            state.nxtrng(),
-            state.difficulty(),
-            state.block_time(),
+            coin_tx.state.nxtrng(),
+            coin_tx.state.difficulty(),
+            coin_tx.state.block_time(),
             generator.staking_balance(height),
         )?;
 
@@ -335,13 +346,12 @@ impl CoinDB {
 
         generator = coin_tx.get_account(block.generator())?;
 
-        let mint = mint(pos_version, state.supply);
+        let mint = mint(pos_version, coin_tx.state.supply);
         let generated = mint + fees;
 
-        let mut prev_index = self
-            .block_db
-            .indexes
-            .get(block.previous())
+        let mut prev_index = coin_tx
+            .snapshot
+            .get(&self.block_db.indexes, block.previous())
             .expect("Previous block index");
         prev_index.set_next(hash);
         prev_index.set_next_size(size);
@@ -370,15 +380,13 @@ impl CoinDB {
     }
 
     fn undo_block(&self) -> Hash {
-        let mut batch = self.block_db.fjall.create_write_batch();
-        let state = self.state.load();
+        let mut batch = self.fjall.create_write_batch();
+        let (ref state, ref snapshot) = **self.state.load();
         let hash = state.block_hash;
-        let block_index = self
-            .block_db
-            .indexes
-            .get(hash)
+        let block_index = snapshot
+            .get(&self.block_db.indexes, hash)
             .expect("consistent index for undo");
-        let undo = self.undos.get(hash).expect("consistent undo");
+        let undo = snapshot.get(&self.undos, hash).expect("consistent undo");
 
         let mut block_sizes = state.block_sizes.clone();
         block_sizes.pop_back();
@@ -400,12 +408,9 @@ impl CoinDB {
             requires_network: state.requires_network,
         };
         batch.verset(&self.db_version, DBVersionKey::CoinDBState, &new_state);
-        self.state.store(Arc::new(new_state));
 
-        let mut prev_index = self
-            .block_db
-            .indexes
-            .get(block_index.previous())
+        let mut prev_index = snapshot
+            .get(&self.block_db.indexes, block_index.previous())
             .expect("consistent index for undo");
         prev_index.next = Hash::ZERO;
         prev_index.next_size = 0;
@@ -434,9 +439,11 @@ impl CoinDB {
 
         batch.remove(&self.undos, hash);
 
-        let _ = self.subscriber.send(Notification::Rollback { hash });
-
         batch.commit();
+        let snapshot = self.fjall.snapshot();
+        self.state.store(Arc::new((new_state, snapshot)));
+
+        let _ = self.subscriber.send(Notification::Rollback { hash });
 
         hash
     }
@@ -445,7 +452,7 @@ impl CoinDB {
         let mut hashes = Vec::new();
         loop {
             hashes.push(self.undo_block());
-            if self.state.load().block_hash() == hash {
+            if self.state.load().0.block_hash() == hash {
                 break;
             }
         }
@@ -457,21 +464,25 @@ impl CoinDB {
         rollback_to: Hash,
         undo_rollback: Vec<Hash>,
     ) -> Vec<Hash> {
-        let to_remove = if self.state.load().block_hash() != rollback_to {
+        let (ref state, ref snapshot) = **self.state.load();
+        let to_remove = if state.block_hash() != rollback_to {
             self.rollback_to(rollback_to)
         } else {
             Vec::new()
         };
 
         for hash in undo_rollback.into_iter().rev() {
-            let Some((block, size)) = self.block_db.blocks.get_with_size(hash) else {
+            let Some((block, size)) = snapshot.get_with_size(&self.block_db.blocks, hash) else {
                 error!(self.logger, "{hash} not found");
                 return to_remove;
             };
 
-            let batch = self.block_db.fjall.create_write_batch();
+            let batch = self.fjall.create_write_batch();
+            let (state, snapshot) = Arc::unwrap_or_clone(self.state.load_full());
             let mut coin_tx = Update::new(
                 self.clone(),
+                state,
+                snapshot,
                 batch,
                 block.version(),
                 hash,
@@ -514,8 +525,8 @@ impl State {
         mode: &Mode,
         fjall: &Fjall,
         db_version: &DBVersion,
-        accounts: &DBView<PublicKey, Account>,
-        indexes: &DBView<Hash, BlockIndex>,
+        accounts: &View<PublicKey, Account>,
+        indexes: &View<Hash, BlockIndex>,
     ) -> Self {
         let mut supply = Amount::ZERO;
         let mut batch = fjall.create_write_batch();
@@ -611,6 +622,8 @@ impl State {
 
 pub struct Update {
     coin_db: Arc<CoinDB>,
+    state: State,
+    snapshot: Snapshot,
     write_batch: WriteBatch,
     block_version: u32,
     block_hash: Hash,
@@ -618,7 +631,6 @@ pub struct Update {
     block_time: Seconds,
     block_size: u32,
     block_generator: PublicKey,
-    state: State,
     height: u32,
     supply: Amount,
     rolling_checkpoint: Hash,
@@ -633,6 +645,8 @@ pub struct Update {
 impl Update {
     pub fn new(
         coin_db: Arc<CoinDB>,
+        state: State,
+        snapshot: Snapshot,
         write_batch: WriteBatch,
         block_version: u32,
         block_hash: Hash,
@@ -641,7 +655,6 @@ impl Update {
         block_size: u32,
         block_generator: PublicKey,
     ) -> Self {
-        let state = coin_db.state().load_full();
         let height = state.height() + 1;
         let supply = state.supply();
         let rolling_checkpoint = coin_db.next_rolling_checkpoint();
@@ -658,6 +671,8 @@ impl Update {
         );
         Self {
             coin_db,
+            state,
+            snapshot,
             write_batch,
             block_version,
             block_hash,
@@ -665,7 +680,6 @@ impl Update {
             block_time,
             block_size,
             block_generator,
-            state: Arc::unwrap_or_clone(state),
             height,
             supply,
             rolling_checkpoint,
@@ -726,7 +740,6 @@ impl Update {
             DBVersionKey::CoinDBState,
             &new_state,
         );
-        self.coin_db.state.store(Arc::new(new_state));
         batch.insert(&self.coin_db.undos, self.block_hash, &self.undo);
         batch.insert(
             &self.coin_db.block_db.indexes,
@@ -754,6 +767,8 @@ impl Update {
             }
         }
         batch.commit();
+        let snapshot = self.coin_db.fjall.snapshot();
+        self.coin_db.state.store(Arc::new((new_state, snapshot)));
     }
 }
 
@@ -767,7 +782,7 @@ impl CoinTx for Update {
     }
 
     fn check_anchor(&self, hash: Hash) -> Result<()> {
-        self.coin_db.check_anchor(hash)
+        self.coin_db.check_anchor(&self.snapshot, hash)
     }
 
     fn block_hash(&self) -> Hash {
@@ -785,7 +800,7 @@ impl CoinTx for Update {
     fn get_account(&mut self, key: PublicKey) -> Result<Account> {
         match self.accounts.get(&key) {
             Some(account) => Ok(account.clone()),
-            None => match self.coin_db.accounts.get_bytes(key) {
+            None => match self.snapshot.get_bytes(&self.coin_db.accounts, key) {
                 Some(bytes) => {
                     let mut db_account = from_bytes::<Account>(&bytes, false)?;
                     if !db_account.prune(self.height) {
@@ -826,7 +841,7 @@ impl CoinTx for Update {
                 .clone()
                 .ok_or_else(|| Error::invalid("HTLC not found")),
             hash_map::Entry::Vacant(_) => {
-                let maybe_bytes = self.coin_db.htlcs.get_bytes(id);
+                let maybe_bytes = self.snapshot.get_bytes(&self.coin_db.htlcs, id);
                 self.undo.add_htlc(id, maybe_bytes.clone());
                 match maybe_bytes {
                     Some(bytes) => Ok(from_bytes::<HTLC>(&bytes, false)?),
@@ -852,7 +867,7 @@ impl CoinTx for Update {
                 .clone()
                 .ok_or_else(|| Error::invalid("Multisig not found")),
             hash_map::Entry::Vacant(_) => {
-                let maybe_bytes = self.coin_db.multisigs.get_bytes(id);
+                let maybe_bytes = self.snapshot.get_bytes(&self.coin_db.multisigs, id);
                 self.undo.add_multisig(id, maybe_bytes.clone());
                 match maybe_bytes {
                     Some(bytes) => Ok(from_bytes::<Multisig>(&bytes, false)?),

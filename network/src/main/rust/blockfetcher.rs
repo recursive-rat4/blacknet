@@ -99,9 +99,9 @@ impl BlockFetcher {
     }
 
     pub fn offer(&self, connection: &Arc<Connection>, block_announce: BlockAnnounce) {
-        if block_announce.cumulative_difficulty()
-            <= self.coin_db.state().load().cumulative_difficulty()
-        {
+        let (ref state, _) = **self.coin_db.state().load();
+
+        if block_announce.cumulative_difficulty() <= state.cumulative_difficulty() {
             return;
         }
 
@@ -259,7 +259,7 @@ impl BlockFetcher {
         }
 
         let mut state = self.coin_db.state().load();
-        if announce.cumulative_difficulty() <= state.cumulative_difficulty() {
+        if announce.cumulative_difficulty() <= state.0.cumulative_difficulty() {
             return;
         }
 
@@ -269,23 +269,23 @@ impl BlockFetcher {
         }
 
         info!(self.logger, "Fetching {}", announce.hash());
-        let mut session = Session::new(state.block_hash());
+        let mut session = Session::new(state.0.block_hash());
 
         'request_loop: loop {
             let receiver = self.request_blocks(
                 &session,
-                &state,
+                &state.0,
                 &connection,
                 announce.cumulative_difficulty(),
             );
             match receiver.run().await {
                 Ok(answer) => {
                     if !answer.blocks().is_empty() {
-                        if !self.process_blocks(answer, &state, &mut session, &connection) {
+                        if !self.process_blocks(answer, &state.0, &mut session, &connection) {
                             break;
                         }
                         state = self.coin_db.state().load();
-                        if announce.cumulative_difficulty() > state.cumulative_difficulty() {
+                        if announce.cumulative_difficulty() > state.0.cumulative_difficulty() {
                             continue;
                         } else {
                             break;
@@ -295,16 +295,17 @@ impl BlockFetcher {
                             connection.dos("Unexpected rollback");
                             break;
                         }
-                        let mut prev = state.rolling_checkpoint();
+                        let mut prev = state.0.rolling_checkpoint();
                         for &hash in answer.hashes() {
                             if self.block_db.is_rejected(hash) {
                                 connection.dos("Rejected block");
                                 break 'request_loop;
                             }
-                            let Some(block_index) = self.block_db.indexes.get(hash) else {
+                            let Some(block_index) = state.1.get(&self.block_db.indexes, hash)
+                            else {
                                 break;
                             };
-                            if block_index.height() < state.height() - ROLLBACK_LIMIT as u32 {
+                            if block_index.height() < state.0.height() - ROLLBACK_LIMIT as u32 {
                                 connection.dos(&format!("Rollback to {}", block_index.height()));
                                 break 'request_loop;
                             }
@@ -329,7 +330,7 @@ impl BlockFetcher {
 
         state = self.coin_db.state().load();
         if !session.undo_rollback.is_empty() {
-            if session.undo_difficulty >= state.cumulative_difficulty() {
+            if session.undo_difficulty >= state.0.cumulative_difficulty() {
                 info!(
                     self.logger,
                     "Reconnecting {} blocks",
@@ -350,10 +351,10 @@ impl BlockFetcher {
         }
 
         state = self.coin_db.state().load();
-        if state.block_hash() != session.original_chain {
+        if state.0.block_hash() != session.original_chain {
             connection.node().announce_block(
-                state.block_hash(),
-                state.cumulative_difficulty(),
+                state.0.block_hash(),
+                state.0.cumulative_difficulty(),
                 Some(connection.id()),
             );
             connection.set_last_block_time(connection.last_packet_time());

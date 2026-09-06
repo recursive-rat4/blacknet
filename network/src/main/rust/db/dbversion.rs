@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::db::{DBView, Fjall};
+use crate::db::{Fjall, Snapshot, View};
 use blacknet_serialization::{error::Result, format::from_bytes};
 use fjall::Error as FjallError;
 use serde::Deserialize;
@@ -28,28 +28,36 @@ pub enum DBVersionKey {
 }
 
 pub struct DBVersion {
-    pub(super) versions: DBView<[u8; 4], Box<[u8]>>,
+    pub(super) versions: View<[u8; 4], Box<[u8]>>,
 }
 
 impl DBVersion {
     pub fn new(fjall: &Fjall) -> Result<Self, FjallError> {
         Ok(Self {
-            versions: DBView::new(fjall, "versions")?,
+            versions: View::new(fjall, "versions")?,
         })
     }
 
-    pub fn get<V: for<'a> Deserialize<'a>>(&self, key: DBVersionKey) -> Option<V> {
-        self.get_or_err(key).and_then(Result::ok)
+    pub fn get<V: for<'a> Deserialize<'a>>(
+        &self,
+        snapshot: &Snapshot,
+        key: DBVersionKey,
+    ) -> Option<V> {
+        self.get_or_err(snapshot, key).and_then(Result::ok)
     }
 
-    pub fn get_or_err<V: for<'a> Deserialize<'a>>(&self, key: DBVersionKey) -> Option<Result<V>> {
-        self.get_bytes(key)
+    pub fn get_or_err<V: for<'a> Deserialize<'a>>(
+        &self,
+        snapshot: &Snapshot,
+        key: DBVersionKey,
+    ) -> Option<Result<V>> {
+        self.get_bytes(snapshot, key)
             .map(|bytes| from_bytes::<V>(&bytes, false))
     }
 
-    fn get_bytes(&self, key: DBVersionKey) -> Option<Box<[u8]>> {
+    fn get_bytes(&self, snapshot: &Snapshot, key: DBVersionKey) -> Option<Box<[u8]>> {
         let key = Self::key(key);
-        self.versions.get_bytes(key)
+        snapshot.get_bytes(&self.versions, key)
     }
 
     pub(super) const fn key(key: DBVersionKey) -> [u8; 4] {

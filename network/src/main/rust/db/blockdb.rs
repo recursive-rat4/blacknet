@@ -16,7 +16,9 @@
  */
 
 use crate::{
-    db::{BlockIndex, CoinDB, DBVersion, DBVersionKey, DBView, Fjall, State, Update, genesis},
+    db::{
+        BlockIndex, CoinDB, DBVersion, DBVersionKey, Fjall, Snapshot, State, Update, View, genesis,
+    },
     rollinghashset::RollingHashSet,
 };
 use arc_swap::ArcSwapOption;
@@ -63,9 +65,9 @@ pub struct BlockDB {
     cached_index: ArcSwapOption<(Hash, BlockIndex)>,
     rejects: Mutex<RollingHashSet<Hash>>,
     subscribers: Mutex<Vec<Subscriber>>,
-    pub(super) blocks: DBView<Hash, Block>,
-    pub(crate) indexes: DBView<Hash, BlockIndex>,
-    pub(super) fjall: Arc<Fjall>,
+    pub(super) blocks: View<Hash, Block>,
+    pub(crate) indexes: View<Hash, BlockIndex>,
+    fjall: Arc<Fjall>,
     data_dir: PathBuf,
 }
 
@@ -78,7 +80,8 @@ impl BlockDB {
     ) -> Result<Arc<Self>, Box<dyn StdError>> {
         let logger = log_manager.logger("BlockDB")?;
 
-        match db_version.get_or_err::<BlockDBVersion>(DBVersionKey::BlockDB) {
+        let snapshot = fjall.snapshot();
+        match db_version.get_or_err::<BlockDBVersion>(&snapshot, DBVersionKey::BlockDB) {
             Some(Ok(version)) => debug!(logger, "Open {version:?}"),
             Some(Err(err)) => {
                 debug!(logger, "{err:?}");
@@ -99,8 +102,8 @@ impl BlockDB {
             cached_index: ArcSwapOption::empty(),
             rejects: Mutex::new(RollingHashSet::new(ROLLBACK_LIMIT)),
             subscribers: Mutex::new(Vec::new()),
-            blocks: DBView::with_blob(&fjall, "blocks")?,
-            indexes: DBView::new(&fjall, "indexes")?,
+            blocks: View::with_blob(&fjall, "blocks")?,
+            indexes: View::new(&fjall, "indexes")?,
             fjall,
             data_dir: dirs.data().to_owned(),
         }))
@@ -129,24 +132,29 @@ impl BlockDB {
         batch.commit();
     }
 
-    pub fn contains(&self, hash: Hash) -> bool {
-        self.indexes.contains(hash)
+    pub fn contains(&self, snapshot: &Snapshot, hash: Hash) -> bool {
+        snapshot.contains(&self.indexes, hash)
     }
 
-    pub fn index(&self, hash: Hash) -> Option<BlockIndex> {
-        self.indexes.get(hash)
+    pub fn index(&self, snapshot: &Snapshot, hash: Hash) -> Option<BlockIndex> {
+        snapshot.get(&self.indexes, hash)
     }
 
-    pub fn get(&self, hash: Hash) -> Option<(Block, usize)> {
-        self.blocks.get_with_size(hash)
+    pub fn get(&self, snapshot: &Snapshot, hash: Hash) -> Option<(Block, usize)> {
+        snapshot.get_with_size(&self.blocks, hash)
     }
 
-    pub fn get_bytes(&self, hash: Hash) -> Option<Box<[u8]>> {
-        self.blocks.get_bytes(hash)
+    pub fn get_bytes(&self, snapshot: &Snapshot, hash: Hash) -> Option<Box<[u8]>> {
+        snapshot.get_bytes(&self.blocks, hash)
     }
 
-    pub fn next_block_hashes(&self, start: Hash, max: usize) -> Option<Vec<Hash>> {
-        let mut index = self.indexes.get(start)?;
+    pub fn next_block_hashes(
+        &self,
+        snapshot: &Snapshot,
+        start: Hash,
+        max: usize,
+    ) -> Option<Vec<Hash>> {
+        let mut index = snapshot.get(&self.indexes, start)?;
         let mut result = Vec::<Hash>::with_capacity(max);
         loop {
             let hash = index.next();
@@ -157,7 +165,7 @@ impl BlockDB {
             if result.len() == max {
                 break;
             }
-            index = match self.indexes.get(index.next()) {
+            index = match snapshot.get(&self.indexes, index.next()) {
                 Some(index) => index,
                 None => break,
             };
@@ -165,7 +173,7 @@ impl BlockDB {
         Some(result)
     }
 
-    pub fn hash(&self, height: u32, state: &State) -> Option<Hash> {
+    pub fn hash(&self, state: &State, snapshot: &Snapshot, height: u32) -> Option<Hash> {
         if height > state.height() {
             return None;
         } else if height == 0 {
@@ -185,10 +193,14 @@ impl BlockDB {
         let mut index: BlockIndex;
         if height < state.height() / 2 {
             hash = genesis::hash();
-            index = self.indexes.get(hash).expect("consistent block index");
+            index = snapshot
+                .get(&self.indexes, hash)
+                .expect("consistent block index");
         } else {
             hash = state.block_hash();
-            index = self.indexes.get(hash).expect("consistent block index");
+            index = snapshot
+                .get(&self.indexes, hash)
+                .expect("consistent block index");
         }
         if let Some(cached_index) = self.cached_index.load_full() {
             let (cached_hash, cached_index) = *cached_index;
@@ -200,11 +212,15 @@ impl BlockDB {
 
         while index.height() > height {
             hash = index.previous();
-            index = self.indexes.get(hash).expect("consistent block index");
+            index = snapshot
+                .get(&self.indexes, hash)
+                .expect("consistent block index");
         }
         while index.height() < height {
             hash = index.next();
-            index = self.indexes.get(hash).expect("consistent block index");
+            index = snapshot
+                .get(&self.indexes, hash)
+                .expect("consistent block index");
         }
         if index.height() + (ROLLBACK_LIMIT as u32) < state.height() + 1 {
             self.cached_index.store(Some(Arc::new((hash, index))));
@@ -272,7 +288,7 @@ impl BlockDB {
     /**
      * Return `Some` path of written data or `None` if not synchronized
      */
-    pub fn export(&self, state: &State) -> Option<PathBuf> {
+    pub fn export(&self, state: &State, snapshot: &Snapshot) -> Option<PathBuf> {
         let checkpoint = state.rolling_checkpoint();
         if checkpoint == genesis::hash() {
             return None;
@@ -283,11 +299,11 @@ impl BlockDB {
         let mut buffered = BufWriter::new(file);
 
         let mut hash = genesis::hash();
-        let mut index = self.indexes.get(hash)?;
+        let mut index = snapshot.get(&self.indexes, hash)?;
         while hash != checkpoint {
             hash = index.next;
-            index = self.indexes.get(hash)?;
-            let bytes = self.blocks.get_bytes(hash)?;
+            index = snapshot.get(&self.indexes, hash)?;
+            let bytes = snapshot.get_bytes(&self.blocks, hash)?;
             buffered
                 .write_all(&(bytes.len() as u32).to_be_bytes())
                 .ok()?;
@@ -310,15 +326,15 @@ impl BlockDB {
         }
     }
 
-    pub fn check(&self, state: &State) -> BlockDBCheck {
+    pub fn check(&self, state: &State, snapshot: &Snapshot) -> BlockDBCheck {
         let mut check = BlockDBCheck {
             result: false,
             height: state.height(),
             indexes: 0,
             blocks: 0,
         };
-        check.indexes = self.indexes.count() as u32;
-        check.blocks = self.blocks.count() as u32;
+        check.indexes = snapshot.count(&self.indexes) as u32;
+        check.blocks = snapshot.count(&self.blocks) as u32;
         // genesis is not in blocks, but is in indexes
         if check.height + 1 == check.indexes && check.height == check.blocks {
             check.result = true;
@@ -331,19 +347,26 @@ impl BlockDB {
         if rejects.contains(&hash) {
             return Err(Error::invalid("Already rejected block"));
         }
-        if self.contains(hash) {
+        let (state, snapshot) = Arc::unwrap_or_clone(coin_db.state().load_full());
+        if self.contains(&snapshot, hash) {
             return Err(Error::already_have(hash.to_string()));
         }
-        let result = self.process_block(coin_db, hash, bytes);
+        let result = self.process_block(coin_db, state, snapshot, hash, bytes);
         if matches!(result, Err(Error::Invalid(_))) {
             rejects.insert(hash);
         }
         result
     }
 
-    fn process_block(&self, coin_db: &Arc<CoinDB>, hash: Hash, bytes: Box<[u8]>) -> Result<()> {
+    fn process_block(
+        &self,
+        coin_db: &Arc<CoinDB>,
+        state: State,
+        snapshot: Snapshot,
+        hash: Hash,
+        bytes: Box<[u8]>,
+    ) -> Result<()> {
         let block = from_bytes::<Block>(&bytes, false)?;
-        let state = coin_db.state().load();
         if block.version() > BLOCK_VERSION {
             let percent = 100 * state.upgraded() / UPGRADE_THRESHOLD;
             if percent > 9 {
@@ -373,10 +396,13 @@ impl BlockDB {
             return Err(Error::not_reachable_vertex(block.previous().to_string()));
         }
         let bytes_len = bytes.len() as u32;
+        let new_height = state.height() + 1;
         let mut batch = self.fjall.create_write_batch();
         batch.insert_bytes(&self.blocks, hash, &bytes);
         let mut coin_tx = Update::new(
             coin_db.clone(),
+            state,
+            snapshot,
             batch,
             block.version(),
             hash,
@@ -389,7 +415,7 @@ impl BlockDB {
         coin_tx.commit_impl();
         self.cached_block
             .store(Some(Arc::new((block.previous(), bytes))));
-        self.notify((block, hash, state.height() + 1, bytes_len, tx_hashes));
+        self.notify((block, hash, new_height, bytes_len, tx_hashes));
         Ok(())
     }
 
