@@ -26,6 +26,7 @@ pub fn routes(network: Arc<Network>, rpc_server: Arc<RPCServer>) -> Router<()> {
         .merge(v2::node::routes())
         .merge(v2::sendtransaction::routes())
         .merge(v2::staking::routes())
+        .merge(v2::wallet::routes())
         .with_state(network)
         .merge(v2::websocket::routes())
         .with_state(rpc_server)

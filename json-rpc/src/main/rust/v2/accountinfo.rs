@@ -52,14 +52,14 @@ impl AccountInfo {
 }
 
 #[derive(Deserialize, Serialize)]
-struct LeaseInfo {
-    publicKey: PublicKeyInfo,
-    height: u32,
-    amount: AmountInfo,
+pub struct LeaseInfo {
+    pub publicKey: PublicKeyInfo,
+    pub height: u32,
+    pub amount: AmountInfo,
 }
 
 impl LeaseInfo {
-    fn new(lease: Lease, address_codec: &AddressCodec) -> Result<Self> {
+    pub fn new(lease: Lease, address_codec: &AddressCodec) -> Result<Self> {
         Ok(Self {
             publicKey: PublicKeyInfo::new(lease.public_key(), address_codec)?,
             height: lease.height(),

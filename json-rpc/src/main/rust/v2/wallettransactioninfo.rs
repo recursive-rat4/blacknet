@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025-2026 Pavel Vasin
+ * Copyright (c) 2020-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,12 +15,27 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-pub mod address;
-mod transactiondata;
-mod wallet;
-pub mod walletdb;
+use crate::v2::TransactionInfo;
+use blacknet_time::Seconds;
+use serde::{Deserialize, Serialize};
 
-pub use address::{AddressCodec, AddressKind};
-pub use transactiondata::{TransactionData, TransactionDataType};
-pub use wallet::Wallet;
-pub use walletdb::{Notification, Notifier, Subscriber, WalletDB};
+#[derive(Deserialize, Serialize)]
+pub struct WalletTransactionInfo {
+    transaction: TransactionInfo,
+    confirmations: u32,
+    receiveTime: Seconds,
+}
+
+impl WalletTransactionInfo {
+    pub const fn new(
+        transaction: TransactionInfo,
+        confirmations: u32,
+        receive_time: Seconds,
+    ) -> Self {
+        Self {
+            transaction,
+            confirmations,
+            receiveTime: receive_time,
+        }
+    }
+}

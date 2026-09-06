@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025-2026 Pavel Vasin
+ * Copyright (c) 2019-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,12 +15,23 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-pub mod address;
-mod transactiondata;
-mod wallet;
-pub mod walletdb;
+use crate::v2::Result;
+use blacknet_network::wallet::AddressCodec;
+use core::fmt::Write;
+use serde::{Deserialize, Serialize};
 
-pub use address::{AddressCodec, AddressKind};
-pub use transactiondata::{TransactionData, TransactionDataType};
-pub use wallet::Wallet;
-pub use walletdb::{Notification, Notifier, Subscriber, WalletDB};
+#[derive(Deserialize, Serialize)]
+pub struct AddressInfo {
+    publicKey: String,
+}
+
+impl AddressInfo {
+    pub fn new(string: &str, address_codec: &AddressCodec) -> Result<Self> {
+        let public_key = address_codec.decode(string)?;
+        let mut hex = String::with_capacity(64);
+        for byte in public_key.as_ref() {
+            write!(hex, "{byte:02X}").expect("hex format");
+        }
+        Ok(Self { publicKey: hex })
+    }
+}
