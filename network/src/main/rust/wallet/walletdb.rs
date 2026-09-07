@@ -16,14 +16,17 @@
  */
 
 use crate::{
-    db::{CoinNotification, CoinNotifier},
+    db::{CoinNotification, CoinNotifier, State, genesis},
     txpool::{Notifier as TxPoolNotifier, TxPool},
     wallet::{AddressCodec, Wallet},
 };
 use blacknet_compat::{Mode, XDGDirectories};
-use blacknet_kernel::{blake2b::Hash, ed25519::PublicKey, transaction::Transaction};
+use blacknet_kernel::{
+    blake2b::Hash, ed25519::PublicKey, proofofstake::guess_initial_synchronization,
+    transaction::Transaction,
+};
 use blacknet_log::{LogManager, Logger, error, info};
-use blacknet_time::Milliseconds;
+use blacknet_time::{Milliseconds, SystemClock};
 use core::{error::Error as StdError, fmt};
 use rusqlite::Error as SqliteError;
 use std::{
@@ -132,8 +135,16 @@ impl WalletDB {
             .sequence()
     }
 
-    pub fn anchor(&self) -> Hash {
-        todo!();
+    pub fn anchor(&self, state: &State) -> Hash {
+        if !guess_initial_synchronization(
+            state.pos_version(),
+            SystemClock::secs(),
+            state.block_time(),
+        ) {
+            state.rolling_checkpoint()
+        } else {
+            genesis::hash()
+        }
     }
 
     #[expect(unused_variables)]

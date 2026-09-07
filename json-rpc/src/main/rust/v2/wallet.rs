@@ -17,7 +17,7 @@
 
 use crate::v2::{
     AddressInfo, HashInfo, LeaseInfo, MnemonicInfo, NewMnemonicInfo, TransactionDataInfo,
-    WalletTransactionInfo,
+    WalletTransactionInfo, response::*,
 };
 use axum::{
     Form, Json, Router,
@@ -151,9 +151,10 @@ async fn confirmations(
     todo!();
 }
 
-#[expect(unused_variables)]
-async fn anchor(State(network): State<Arc<Network>>, address: Path<String>) -> Response<String> {
-    todo!();
+async fn anchor(State(network): State<Arc<Network>>, _address: Path<String>) -> Response<String> {
+    let (ref state, _) = **network.node().coin_db().state().load();
+    let anchor = network.wallet_db().anchor(state);
+    respond_text(anchor.to_string())
 }
 
 #[expect(unused_variables)]

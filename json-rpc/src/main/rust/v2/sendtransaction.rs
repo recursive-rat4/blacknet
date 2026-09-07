@@ -71,7 +71,8 @@ async fn bundle(
     let anchor = if let Some(anchor) = request.referenceChain {
         anchor
     } else {
-        network.wallet_db().anchor()
+        let (ref state, _) = **network.node().coin_db().state().load();
+        network.wallet_db().anchor(state)
     };
     let from = to_public_key(&secret_key);
     let seq = match network.wallet_db().sequence(from) {
@@ -142,7 +143,8 @@ async fn burn(
     let anchor = if let Some(anchor) = request.referenceChain {
         anchor
     } else {
-        network.wallet_db().anchor()
+        let (ref state, _) = **network.node().coin_db().state().load();
+        network.wallet_db().anchor(state)
     };
     let from = to_public_key(&secret_key);
     let seq = match network.wallet_db().sequence(from) {
@@ -194,7 +196,8 @@ async fn cancel_lease(
     let anchor = if let Some(anchor) = request.referenceChain {
         anchor
     } else {
-        network.wallet_db().anchor()
+        let (ref state, _) = **network.node().coin_db().state().load();
+        network.wallet_db().anchor(state)
     };
     let from = to_public_key(&secret_key);
     let seq = match network.wallet_db().sequence(from) {
@@ -264,7 +267,8 @@ async fn claim_swap(
     let anchor = if let Some(anchor) = request.referenceChain {
         anchor
     } else {
-        network.wallet_db().anchor()
+        let (ref state, _) = **network.node().coin_db().state().load();
+        network.wallet_db().anchor(state)
     };
     let from = to_public_key(&secret_key);
     let seq = match network.wallet_db().sequence(from) {
@@ -346,7 +350,8 @@ async fn create_swap(
     let anchor = if let Some(anchor) = request.referenceChain {
         anchor
     } else {
-        network.wallet_db().anchor()
+        let (ref state, _) = **network.node().coin_db().state().load();
+        network.wallet_db().anchor(state)
     };
     let from = to_public_key(&secret_key);
     let seq = match network.wallet_db().sequence(from) {
@@ -412,7 +417,8 @@ async fn lease(
     let anchor = if let Some(anchor) = request.referenceChain {
         anchor
     } else {
-        network.wallet_db().anchor()
+        let (ref state, _) = **network.node().coin_db().state().load();
+        network.wallet_db().anchor(state)
     };
     let from = to_public_key(&secret_key);
     let seq = match network.wallet_db().sequence(from) {
@@ -468,7 +474,8 @@ async fn refund_swap(
     let anchor = if let Some(anchor) = request.referenceChain {
         anchor
     } else {
-        network.wallet_db().anchor()
+        let (ref state, _) = **network.node().coin_db().state().load();
+        network.wallet_db().anchor(state)
     };
     let from = to_public_key(&secret_key);
     let seq = match network.wallet_db().sequence(from) {
@@ -542,7 +549,8 @@ async fn transfer(
     let anchor = if let Some(anchor) = request.referenceChain {
         anchor
     } else {
-        network.wallet_db().anchor()
+        let (ref state, _) = **network.node().coin_db().state().load();
+        network.wallet_db().anchor(state)
     };
     let from = to_public_key(&secret_key);
     let seq = match network.wallet_db().sequence(from) {
@@ -615,7 +623,8 @@ async fn withdraw_from_lease(
     let anchor = if let Some(anchor) = request.referenceChain {
         anchor
     } else {
-        network.wallet_db().anchor()
+        let (ref state, _) = **network.node().coin_db().state().load();
+        network.wallet_db().anchor(state)
     };
     let from = to_public_key(&secret_key);
     let seq = match network.wallet_db().sequence(from) {
