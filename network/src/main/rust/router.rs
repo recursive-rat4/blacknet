@@ -17,20 +17,21 @@
 
 use crate::{
     endpoint::{Endpoint, ipv4_any, ipv6_any},
-    i2psam::SAM,
+    i2psam::{Error as I2PError, SAM},
     natpmp::natpmp_forward,
     peertable::PeerTable,
-    socks5::socks5,
-    torcontroller::TorController,
+    socks5::{Error as Socks5Error, socks5},
+    torcontroller::{Error as TorError, TorController},
 };
 use blacknet_compat::{
     config::Network as Config,
     {Mode, XDGDirectories},
 };
-use blacknet_log::{LogManager, Logger, info, warn};
+use blacknet_io::Error as IoError;
+use blacknet_log::{Error as LogError, LogManager, Logger, info, warn};
 use core::{
     cmp::{max, min},
-    error::Error,
+    fmt,
     net::SocketAddr,
     ops::ControlFlow,
 };
@@ -79,7 +80,7 @@ impl Router {
         runtime: &Runtime,
         config: &Arc<Config>,
         peer_table: Arc<PeerTable>,
-    ) -> Result<(Arc<Self>, Notifier), Box<dyn Error>> {
+    ) -> Result<(Arc<Self>, Notifier), Error> {
         // mpsc bounded channel requires buffer > 0
         let incoming_connections = max(config.incoming_connections, 1);
 
@@ -120,28 +121,31 @@ impl Router {
     pub async fn connect(
         &self,
         endpoint: Endpoint,
-    ) -> Option<(
-        BufReader<OwnedReadHalf>,
-        BufWriter<OwnedWriteHalf>,
-        Endpoint,
-    )> {
+    ) -> Result<
+        (
+            BufReader<OwnedReadHalf>,
+            BufWriter<OwnedWriteHalf>,
+            Endpoint,
+        ),
+        Error,
+    > {
         match endpoint {
             Endpoint::IPv4 {
                 port: _,
                 address: _,
             } => {
                 if !self.config.ipv4 {
-                    return None;
+                    return Err(Error::Disabled);
                 }
                 match self.socks_proxy {
                     Some(proxy) => {
-                        let (buf_reader, buf_writer) = socks5(proxy, endpoint).await.ok()?;
-                        Some((buf_reader, buf_writer, proxy))
+                        let (buf_reader, buf_writer) = socks5(proxy, endpoint).await?;
+                        Ok((buf_reader, buf_writer, proxy))
                     }
                     None => {
-                        let endpoint = endpoint.to_rust()?;
-                        let socket = TcpStream::connect(endpoint).await.ok()?;
-                        let local_endpoint = Endpoint::from(socket.local_addr().ok()?);
+                        let endpoint = endpoint.to_rust().unwrap();
+                        let socket = TcpStream::connect(endpoint).await?;
+                        let local_endpoint = Endpoint::from(socket.local_addr()?);
                         let (tcp_read, tcp_write) = socket.into_split();
                         let (buf_reader, buf_writer) =
                             (BufReader::new(tcp_read), BufWriter::new(tcp_write));
@@ -150,7 +154,7 @@ impl Router {
                             local_endpoint.set_port(self.config.port);
                             self.add_listener(local_endpoint);
                         }
-                        Some((buf_reader, buf_writer, local_endpoint))
+                        Ok((buf_reader, buf_writer, local_endpoint))
                     }
                 }
             }
@@ -159,17 +163,17 @@ impl Router {
                 address: _,
             } => {
                 if !self.config.ipv6 {
-                    return None;
+                    return Err(Error::Disabled);
                 }
                 match self.socks_proxy {
                     Some(proxy) => {
-                        let (buf_reader, buf_writer) = socks5(proxy, endpoint).await.ok()?;
-                        Some((buf_reader, buf_writer, proxy))
+                        let (buf_reader, buf_writer) = socks5(proxy, endpoint).await?;
+                        Ok((buf_reader, buf_writer, proxy))
                     }
                     None => {
-                        let endpoint = endpoint.to_rust()?;
-                        let socket = TcpStream::connect(endpoint).await.ok()?;
-                        let local_endpoint = Endpoint::from(socket.local_addr().ok()?);
+                        let endpoint = endpoint.to_rust().unwrap();
+                        let socket = TcpStream::connect(endpoint).await?;
+                        let local_endpoint = Endpoint::from(socket.local_addr()?);
                         let (tcp_read, tcp_write) = socket.into_split();
                         let (buf_reader, buf_writer) =
                             (BufReader::new(tcp_read), BufWriter::new(tcp_write));
@@ -178,7 +182,7 @@ impl Router {
                             local_endpoint.set_port(self.config.port);
                             self.add_listener(local_endpoint);
                         }
-                        Some((buf_reader, buf_writer, local_endpoint))
+                        Ok((buf_reader, buf_writer, local_endpoint))
                     }
                 }
             }
@@ -187,14 +191,14 @@ impl Router {
                 address: _,
             } => {
                 if !self.config.tor {
-                    return None;
+                    return Err(Error::Disabled);
                 }
                 match self.tor_proxy {
                     Some(proxy) => {
-                        let (buf_reader, buf_writer) = socks5(proxy, endpoint).await.ok()?;
-                        Some((buf_reader, buf_writer, proxy))
+                        let (buf_reader, buf_writer) = socks5(proxy, endpoint).await?;
+                        Ok((buf_reader, buf_writer, proxy))
                     }
-                    None => None,
+                    None => Err(Error::Unconfigured),
                 }
             }
             Endpoint::I2P {
@@ -202,17 +206,14 @@ impl Router {
                 address: _,
             } => {
                 if !self.config.i2p {
-                    return None;
+                    return Err(Error::Disabled);
                 }
-                self.i2p_sam.connect(endpoint).await.ok()
+                Ok(self.i2p_sam.connect(endpoint).await?)
             }
             Endpoint::TORv2 {
                 port: _,
                 address: _,
-            } => {
-                // obsolete
-                None
-            }
+            } => Err(Error::Obsolete),
         }
     }
 
@@ -394,3 +395,62 @@ impl Router {
     const INIT_TIMEOUT: Duration = Duration::from_secs(60);
     const MAX_TIMEOUT: Duration = Duration::from_secs(2 * 60 * 60);
 }
+
+#[derive(Debug)]
+pub enum Error {
+    Disabled,
+    Obsolete,
+    Unconfigured,
+    Io(IoError),
+    I2P(I2PError),
+    Socks5(Socks5Error),
+    Tor(TorError),
+    Log(LogError),
+}
+
+impl From<IoError> for Error {
+    fn from(err: IoError) -> Self {
+        Self::Io(err)
+    }
+}
+
+impl From<I2PError> for Error {
+    fn from(err: I2PError) -> Self {
+        Self::I2P(err)
+    }
+}
+
+impl From<Socks5Error> for Error {
+    fn from(err: Socks5Error) -> Self {
+        Self::Socks5(err)
+    }
+}
+
+impl From<TorError> for Error {
+    fn from(err: TorError) -> Self {
+        Self::Tor(err)
+    }
+}
+
+impl From<LogError> for Error {
+    fn from(err: LogError) -> Self {
+        Self::Log(err)
+    }
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Disabled => f.write_str("Disabled transport"),
+            Self::Obsolete => f.write_str("Obsolete transport"),
+            Self::Unconfigured => f.write_str("Unconfigured transport"),
+            Self::Io(err) => write!(f, "{err}"),
+            Self::I2P(err) => write!(f, "{err}"),
+            Self::Socks5(err) => write!(f, "{err}"),
+            Self::Tor(err) => write!(f, "{err}"),
+            Self::Log(err) => write!(f, "{err}"),
+        }
+    }
+}
+
+impl core::error::Error for Error {}
