@@ -127,9 +127,16 @@ async fn out_leases(
     todo!();
 }
 
-#[expect(unused_variables)]
 async fn sequence(State(network): State<Arc<Network>>, address: Path<String>) -> Response<String> {
-    todo!();
+    let wallet_db = network.wallet_db();
+    let public_key = match wallet_db.address_codec().decode(&address) {
+        Ok(public_key) => public_key,
+        Err(err) => return respond_error(format!("Invalid address: {err}")),
+    };
+    match network.wallet_db().sequence(public_key) {
+        Ok(sequence) => respond_text(sequence.to_string()),
+        Err(err) => respond_error(err.to_string()),
+    }
 }
 
 #[expect(unused_variables)]
