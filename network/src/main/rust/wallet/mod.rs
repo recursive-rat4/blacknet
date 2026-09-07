@@ -15,12 +15,12 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-pub mod address;
+mod address;
 mod transactiondata;
 mod wallet;
-pub mod walletdb;
+mod walletdb;
 
 pub use address::{AddressCodec, AddressKind};
 pub use transactiondata::{TransactionData, TransactionDataType};
-pub use wallet::Wallet;
+pub use wallet::{Error, Wallet};
 pub use walletdb::{Notification, Notifier, Subscriber, WalletDB};

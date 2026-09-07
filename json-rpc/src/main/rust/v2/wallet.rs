@@ -25,7 +25,9 @@ use axum::{
     response::Response,
     routing::{get, post},
 };
-use blacknet_network::network::Network;
+use blacknet_kernel::blake2b::Hash;
+use blacknet_network::{db::genesis, network::Network};
+use core::str::FromStr;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, sync::Arc};
 use zeroize::{Zeroize, ZeroizeOnDrop};
@@ -133,25 +135,48 @@ async fn sequence(State(network): State<Arc<Network>>, address: Path<String>) ->
         Ok(public_key) => public_key,
         Err(err) => return respond_error(format!("Invalid address: {err}")),
     };
-    match network.wallet_db().sequence(public_key) {
+    let Some(wallet) = network.wallet_db().wallet(public_key) else {
+        return respond_error("Wallet not found");
+    };
+    match wallet.sequence() {
         Ok(sequence) => respond_text(sequence.to_string()),
         Err(err) => respond_error(err.to_string()),
     }
 }
 
-#[expect(unused_variables)]
 async fn transaction(
     State(network): State<Arc<Network>>,
     Path((address, hash)): Path<(String, String)>,
 ) -> Response<String> {
-    todo!();
+    transaction_handler(network, address, hash, false)
 }
 
-#[expect(unused_variables)]
 async fn transaction_raw(
     State(network): State<Arc<Network>>,
     Path((address, hash, raw)): Path<(String, String, bool)>,
 ) -> Response<String> {
+    transaction_handler(network, address, hash, raw)
+}
+
+#[expect(unused_variables, clippy::needless_pass_by_value)]
+fn transaction_handler(
+    network: Arc<Network>,
+    address: String,
+    hash: String,
+    raw: bool,
+) -> Response<String> {
+    let wallet_db = network.wallet_db();
+    let public_key = match wallet_db.address_codec().decode(&address) {
+        Ok(public_key) => public_key,
+        Err(err) => return respond_error(format!("Invalid address: {err}")),
+    };
+    let hash = match Hash::from_str(hash.as_str()) {
+        Ok(hash) => hash,
+        Err(err) => return respond_error(format!("Invalid hash: {err}")),
+    };
+    let Some(wallet) = wallet_db.wallet(public_key) else {
+        return respond_error("Wallet not found");
+    };
     todo!();
 }
 
@@ -169,9 +194,19 @@ async fn anchor(State(network): State<Arc<Network>>, _address: Path<String>) -> 
     respond_text(anchor.to_string())
 }
 
-#[expect(unused_variables)]
 async fn tx_count(State(network): State<Arc<Network>>, address: Path<String>) -> Response<String> {
-    todo!();
+    let wallet_db = network.wallet_db();
+    let public_key = match wallet_db.address_codec().decode(&address) {
+        Ok(public_key) => public_key,
+        Err(err) => return respond_error(format!("Invalid address: {err}")),
+    };
+    let Some(wallet) = network.wallet_db().wallet(public_key) else {
+        return respond_error("Wallet not found");
+    };
+    match wallet.count_transactions() {
+        Ok(count) => respond_text(count.to_string()),
+        Err(err) => respond_error(err.to_string()),
+    }
 }
 
 #[expect(unused_variables)]
@@ -212,19 +247,30 @@ pub struct ListSinceBlockInfo {
     pub lastBlockHash: HashInfo,
 }
 
-#[expect(unused_variables)]
 async fn list_since_block(
     State(network): State<Arc<Network>>,
-    address: Path<String>,
-) -> Json<ListSinceBlockInfo> {
-    todo!();
+    Path(address): Path<String>,
+) -> Response<String> {
+    list_since_block_handler(network, address, genesis::hash())
 }
 
-#[expect(unused_variables)]
 async fn list_since_block_with_hash(
     State(network): State<Arc<Network>>,
     Path((address, hash)): Path<(String, String)>,
-) -> Json<ListSinceBlockInfo> {
+) -> Response<String> {
+    let hash = match Hash::from_str(hash.as_str()) {
+        Ok(hash) => hash,
+        Err(err) => return respond_error(format!("Invalid hash: {err}")),
+    };
+    list_since_block_handler(network, address, hash)
+}
+
+#[expect(unused_variables, clippy::needless_pass_by_value)]
+fn list_since_block_handler(
+    network: Arc<Network>,
+    address: String,
+    hash: Hash,
+) -> Response<String> {
     todo!();
 }
 

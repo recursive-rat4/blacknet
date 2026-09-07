@@ -83,7 +83,10 @@ async fn bundle(
         Err(err) => return respond_error(format!("Invalid fee: {err}")),
     };
     let from = to_public_key(&secret_key);
-    let seq = match network.wallet_db().sequence(from) {
+    let Some(wallet) = network.wallet_db().wallet(from) else {
+        return respond_error("Wallet not found");
+    };
+    let seq = match wallet.sequence() {
         Ok(seq) => seq,
         Err(err) => {
             return respond_error(err.to_string());
@@ -166,7 +169,10 @@ async fn burn(
         Err(err) => return respond_error(format!("Invalid amount: {err}")),
     };
     let from = to_public_key(&secret_key);
-    let seq = match network.wallet_db().sequence(from) {
+    let Some(wallet) = network.wallet_db().wallet(from) else {
+        return respond_error("Wallet not found");
+    };
+    let seq = match wallet.sequence() {
         Ok(seq) => seq,
         Err(err) => {
             return respond_error(err.to_string());
@@ -230,7 +236,10 @@ async fn cancel_lease(
         Ok(amount) => amount,
         Err(err) => return respond_error(format!("Invalid amount: {err}")),
     };
-    let seq = match network.wallet_db().sequence(from) {
+    let Some(wallet) = network.wallet_db().wallet(from) else {
+        return respond_error("Wallet not found");
+    };
+    let seq = match wallet.sequence() {
         Ok(seq) => seq,
         Err(err) => {
             return respond_error(err.to_string());
@@ -301,7 +310,10 @@ async fn claim_swap(
         Err(err) => return respond_error(format!("Invalid fee: {err}")),
     };
     let from = to_public_key(&secret_key);
-    let seq = match network.wallet_db().sequence(from) {
+    let Some(wallet) = network.wallet_db().wallet(from) else {
+        return respond_error("Wallet not found");
+    };
+    let seq = match wallet.sequence() {
         Ok(seq) => seq,
         Err(err) => {
             return respond_error(err.to_string());
@@ -388,7 +400,10 @@ async fn create_swap(
         Err(err) => return respond_error(format!("Invalid amount: {err}")),
     };
     let from = to_public_key(&secret_key);
-    let seq = match network.wallet_db().sequence(from) {
+    let Some(wallet) = network.wallet_db().wallet(from) else {
+        return respond_error("Wallet not found");
+    };
+    let seq = match wallet.sequence() {
         Ok(seq) => seq,
         Err(err) => {
             return respond_error(err.to_string());
@@ -459,7 +474,10 @@ async fn lease(
         Err(err) => return respond_error(format!("Invalid amount: {err}")),
     };
     let from = to_public_key(&secret_key);
-    let seq = match network.wallet_db().sequence(from) {
+    let Some(wallet) = network.wallet_db().wallet(from) else {
+        return respond_error("Wallet not found");
+    };
+    let seq = match wallet.sequence() {
         Ok(seq) => seq,
         Err(err) => {
             return respond_error(err.to_string());
@@ -523,7 +541,10 @@ async fn refund_swap(
         Err(err) => return respond_error(format!("Invalid fee: {err}")),
     };
     let from = to_public_key(&secret_key);
-    let seq = match network.wallet_db().sequence(from) {
+    let Some(wallet) = network.wallet_db().wallet(from) else {
+        return respond_error("Wallet not found");
+    };
+    let seq = match wallet.sequence() {
         Ok(seq) => seq,
         Err(err) => {
             return respond_error(err.to_string());
@@ -602,7 +623,10 @@ async fn transfer(
         Err(err) => return respond_error(format!("Invalid amount: {err}")),
     };
     let from = to_public_key(&secret_key);
-    let seq = match network.wallet_db().sequence(from) {
+    let Some(wallet) = network.wallet_db().wallet(from) else {
+        return respond_error("Wallet not found");
+    };
+    let seq = match wallet.sequence() {
         Ok(seq) => seq,
         Err(err) => {
             return respond_error(err.to_string());
@@ -684,7 +708,10 @@ async fn withdraw_from_lease(
         Err(err) => return respond_error(format!("Invalid amount: {err}")),
     };
     let from = to_public_key(&secret_key);
-    let seq = match network.wallet_db().sequence(from) {
+    let Some(wallet) = network.wallet_db().wallet(from) else {
+        return respond_error("Wallet not found");
+    };
+    let seq = match wallet.sequence() {
         Ok(seq) => seq,
         Err(err) => {
             return respond_error(err.to_string());

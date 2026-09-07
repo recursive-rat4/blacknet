@@ -15,7 +15,6 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::wallet::walletdb::Error;
 use blacknet_compat::Mode;
 use blacknet_kernel::{
     account::Lease,
@@ -25,7 +24,8 @@ use blacknet_kernel::{
     transaction::{HashTimeLockContractId, MultiSignatureLockContractId},
 };
 use blacknet_time::{Seconds, SystemClock};
-use rusqlite::{Connection, OpenFlags};
+use core::fmt;
+use rusqlite::{Connection, Error as SqliteError, OpenFlags};
 use std::{
     path::Path,
     sync::{Arc, Mutex},
@@ -183,6 +183,13 @@ impl Wallet {
         Ok(())
     }
 
+    pub fn count_transactions(&self) -> Result<usize> {
+        let connection = self.connection.lock().unwrap();
+        let mut statement = connection.prepare_cached("SELECT COUNT(*) FROM transactions;")?;
+        let n = statement.query_one((), |row| row.get(0))?;
+        Ok(n)
+    }
+
     pub fn has_htlc(&self, id: HashTimeLockContractId) -> Result<bool> {
         let connection = self.connection.lock().unwrap();
         let mut statement =
@@ -296,5 +303,30 @@ impl Wallet {
         Ok(())
     }
 }
+
+#[derive(Debug)]
+pub enum Error {
+    WrongMagic(String),
+    Sqlite(SqliteError),
+}
+
+impl From<SqliteError> for Error {
+    fn from(error: SqliteError) -> Self {
+        Self::Sqlite(error)
+    }
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::WrongMagic(name) => {
+                write!(f, "This SQLite database doesn't look like {name} wallet")
+            }
+            Self::Sqlite(err) => write!(f, "{err}"),
+        }
+    }
+}
+
+impl core::error::Error for Error {}
 
 pub type Result<T> = core::result::Result<T, Error>;

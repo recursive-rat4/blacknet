@@ -27,8 +27,7 @@ use blacknet_kernel::{
 };
 use blacknet_log::{LogManager, Logger, error, info};
 use blacknet_time::{Milliseconds, SystemClock};
-use core::{error::Error as StdError, fmt};
-use rusqlite::Error as SqliteError;
+use core::error::Error;
 use std::{
     collections::HashMap,
     fs::{DirBuilder, read_dir},
@@ -60,7 +59,7 @@ impl WalletDB {
         runtime: &Runtime,
         coin_notifier: CoinNotifier,
         tx_pool: &Arc<RwLock<TxPool>>,
-    ) -> Result<Arc<Self>, Box<dyn StdError>> {
+    ) -> Result<Arc<Self>, Box<dyn Error>> {
         let logger = log_manager.logger("WalletDB")?;
         info!(logger, "Driving SQLite {}", rusqlite::version());
 
@@ -124,15 +123,12 @@ impl WalletDB {
         &self.address_codec
     }
 
-    pub const fn wallets(&self) -> &HashMap<PublicKey, Wallet> {
-        &self.wallets
+    pub fn wallet(&self, public_key: PublicKey) -> Option<&Wallet> {
+        self.wallets.get(&public_key)
     }
 
-    pub fn sequence(&self, public_key: PublicKey) -> Result<u32, Error> {
-        self.wallets
-            .get(&public_key)
-            .ok_or(Error::UnknownWallet)?
-            .sequence()
+    pub const fn wallets(&self) -> &HashMap<PublicKey, Wallet> {
+        &self.wallets
     }
 
     pub fn anchor(&self, state: &State) -> Hash {
@@ -191,30 +187,3 @@ impl Drop for WalletDB {
         info!(self.logger, "Braking SQLite");
     }
 }
-
-#[derive(Debug)]
-pub enum Error {
-    UnknownWallet,
-    WrongMagic(String),
-    Sqlite(SqliteError),
-}
-
-impl From<SqliteError> for Error {
-    fn from(error: SqliteError) -> Self {
-        Self::Sqlite(error)
-    }
-}
-
-impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::UnknownWallet => write!(f, "Requested wallet not found"),
-            Self::WrongMagic(name) => {
-                write!(f, "This SQLite database doesn't look like {name} wallet")
-            }
-            Self::Sqlite(err) => write!(f, "{err}"),
-        }
-    }
-}
-
-impl StdError for Error {}

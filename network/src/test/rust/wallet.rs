@@ -23,7 +23,7 @@ use blacknet_kernel::{
     ed25519::PublicKey,
     transaction::{HashTimeLockContractId, MultiSignatureLockContractId},
 };
-use blacknet_network::wallet::{Wallet, walletdb::Error};
+use blacknet_network::wallet::{Error, Wallet};
 use core::assert_matches;
 use rusqlite::Connection;
 
@@ -32,6 +32,7 @@ fn ephemeral() {
     let mode = Mode::regtest();
     let public_key = PublicKey::default();
     let wallet = Wallet::ephemeral(public_key, &mode).unwrap();
+
     assert_matches!(wallet.created_at(), Ok(_));
     assert_eq!(wallet.public_key().unwrap(), public_key);
     assert_matches!(wallet.sequence(), Ok(0));
@@ -41,6 +42,7 @@ fn ephemeral() {
 fn magic() {
     let mode = Mode::regtest();
     let connection = Connection::open_in_memory().unwrap();
+
     assert_matches!(Wallet::attach(connection, &mode), Err(Error::WrongMagic(_)));
 }
 
@@ -49,6 +51,7 @@ fn htlc() {
     let mode = Mode::regtest();
     let wallet = Wallet::ephemeral(PublicKey::default(), &mode).unwrap();
     let htlc_id = HashTimeLockContractId::default();
+
     assert_matches!(wallet.put_htlc(htlc_id), Ok(()));
     assert_matches!(wallet.has_htlc(htlc_id), Ok(true));
     assert_matches!(wallet.remove_htlc(htlc_id), Ok(()));
@@ -60,6 +63,7 @@ fn multisig() {
     let mode = Mode::regtest();
     let wallet = Wallet::ephemeral(PublicKey::default(), &mode).unwrap();
     let multisig_id = MultiSignatureLockContractId::default();
+
     assert_matches!(wallet.put_multisig(multisig_id), Ok(()));
     assert_matches!(wallet.has_multisig(multisig_id), Ok(true));
     assert_matches!(wallet.remove_multisig(multisig_id), Ok(()));
@@ -73,6 +77,7 @@ fn out_lease() {
     let lease1 = Lease::new(PublicKey::default(), 1, Amount::new(123));
     let lease2 = Lease::new(PublicKey::default(), 2, Amount::new(123));
     let lease3 = Lease::new(PublicKey::default(), 2, Amount::new(100));
+
     assert_matches!(wallet.put_out_lease(lease1), Ok(()));
     assert_matches!(wallet.set_out_lease_height(lease1, lease2.height()), Ok(()));
     assert_matches!(
@@ -88,7 +93,14 @@ fn transaction() {
     let wallet = Wallet::ephemeral(PublicKey::default(), &mode).unwrap();
     let tx_id = Hash::ZERO;
     let tx_bytes: [u8; 4] = [10, 11, 12, 13];
+
+    assert_matches!(wallet.count_transactions(), Ok(0));
     assert_matches!(wallet.put_transaction(tx_id, &tx_bytes), Ok(()));
+    assert_matches!(
+        wallet.put_transaction(tx_id, &tx_bytes),
+        Err(Error::Sqlite(_))
+    );
+    assert_matches!(wallet.count_transactions(), Ok(1));
     let bytes = wallet.get_transaction(tx_id).unwrap();
     assert_eq!(tx_bytes, *bytes);
 }
