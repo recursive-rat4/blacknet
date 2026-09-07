@@ -16,12 +16,33 @@
  */
 
 use blacknet_kernel::amount::Amount;
+use core::{assert_matches, str::FromStr};
+
+#[test]
+fn display() {
+    let a = Amount::COIN;
+    let b = "100000000";
+
+    assert_eq!(a.to_string(), b);
+}
+
+#[test]
+fn from_str() {
+    let a = "100000000";
+    let b = "1.00000000";
+    let c = "+100000000";
+
+    assert_matches!(Amount::from_str(a), Ok(Amount::COIN));
+    assert_matches!(Amount::from_str(b), Err(_));
+    assert_matches!(Amount::from_str(c), Err(_));
+}
 
 #[test]
 fn checked_sum() {
     let a = [0, 1, 2, 3].map(Amount::new).into_iter();
     let b = [1, 0, u64::MAX].map(Amount::new).into_iter();
     let c = Amount::new(6);
+
     assert_eq!(Amount::checked_sum(a), Some(c));
     assert_eq!(Amount::checked_sum(b), None);
 }

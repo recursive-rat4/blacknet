@@ -28,6 +28,7 @@ use blacknet_network::{
     db::{BlockDBCheck, CoinDBCheck},
     network::Network,
 };
+use core::str::FromStr;
 use std::{path::absolute, sync::Arc};
 
 async fn peer_table(State(network): State<Arc<Network>>) -> Json<PeerTableInfo> {
@@ -65,7 +66,7 @@ async fn block_with_txdetail(
 }
 
 fn block_handler(hash: &str, txdetail: bool, network: &Arc<Network>) -> Response<String> {
-    let hash = match Hash::try_from(hash) {
+    let hash = match Hash::from_str(hash) {
         Ok(hash) => hash,
         Err(err) => return respond_error(format!("Invalid hash: {err}")),
     };
@@ -110,7 +111,7 @@ async fn block_index(
     Path(hash): Path<String>,
     State(network): State<Arc<Network>>,
 ) -> Response<String> {
-    let hash = match Hash::try_from(hash.as_str()) {
+    let hash = match Hash::from_str(hash.as_str()) {
         Ok(hash) => hash,
         Err(err) => return respond_error(format!("Invalid hash: {err}")),
     };

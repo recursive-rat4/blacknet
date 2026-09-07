@@ -16,6 +16,7 @@
  */
 
 use core::fmt::{Debug, Display, Formatter, Result as FmtResult};
+use core::str::FromStr;
 use data_encoding::{DecodeError, DecodeKind, HEXUPPER};
 use serde::{Deserialize, Serialize};
 
@@ -57,10 +58,10 @@ impl From<Hash> for [u8; 32] {
     }
 }
 
-impl TryFrom<&str> for Hash {
-    type Error = DecodeError;
+impl FromStr for Hash {
+    type Err = DecodeError;
 
-    fn try_from(hex: &str) -> Result<Self, Self::Error> {
+    fn from_str(hex: &str) -> Result<Self, Self::Err> {
         if hex.len() == 64 {
             let mut buf = [0_u8; 32];
             match HEXUPPER.decode_mut(hex.as_bytes(), &mut buf) {

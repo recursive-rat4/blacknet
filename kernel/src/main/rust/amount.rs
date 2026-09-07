@@ -16,9 +16,11 @@
  */
 
 use bytemuck::NoUninit;
-use core::fmt::{Debug, Display, Formatter, Result};
+use core::fmt;
 use core::iter::Sum;
+use core::num::ParseIntError;
 use core::ops::{Add, AddAssign, Div, Mul, MulAssign, Sub, SubAssign};
+use core::str::FromStr;
 use serde::{Deserialize, Serialize};
 
 #[derive(
@@ -64,14 +66,14 @@ impl Amount {
     }
 }
 
-impl Debug for Amount {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+impl fmt::Debug for Amount {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.value)
     }
 }
 
-impl Display for Amount {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+impl fmt::Display for Amount {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.value)
     }
 }
@@ -85,6 +87,20 @@ impl From<u64> for Amount {
 impl From<Amount> for u64 {
     fn from(amount: Amount) -> Self {
         amount.value
+    }
+}
+
+impl FromStr for Amount {
+    type Err = ParseAmountError;
+
+    fn from_str(string: &str) -> Result<Self, Self::Err> {
+        if !string.starts_with('+') {
+            Ok(Self {
+                value: u64::from_str(string)?,
+            })
+        } else {
+            Err(ParseAmountError::SignPrefix)
+        }
     }
 }
 
@@ -169,3 +185,26 @@ impl<'a> Sum<&'a Self> for Amount {
         iter.fold(first, |lps, rps| lps + rps)
     }
 }
+
+#[derive(Debug)]
+pub enum ParseAmountError {
+    SignPrefix,
+    ParseInt(ParseIntError),
+}
+
+impl From<ParseIntError> for ParseAmountError {
+    fn from(err: ParseIntError) -> Self {
+        Self::ParseInt(err)
+    }
+}
+
+impl fmt::Display for ParseAmountError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::SignPrefix => f.write_str("Sign prefix is not allowed"),
+            Self::ParseInt(err) => write!(f, "{err}"),
+        }
+    }
+}
+
+impl core::error::Error for ParseAmountError {}

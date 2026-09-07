@@ -17,7 +17,7 @@
 
 use blacknet_crypto::symmetric::Blake2b256;
 use blacknet_kernel::ed25519::*;
-use core::assert_matches;
+use core::{assert_matches, str::FromStr};
 
 #[test]
 fn public_key() {
@@ -25,7 +25,7 @@ fn public_key() {
     let secret_key = to_secret_key(mnemonic).unwrap();
     let public_key = to_public_key(&secret_key);
     let bytes =
-        PublicKey::try_from("27A2C7CE9EE9AF0458832079017A5FBBB1F1551932C4CB901396BAE95F7D0F0A")
+        PublicKey::from_str("27A2C7CE9EE9AF0458832079017A5FBBB1F1551932C4CB901396BAE95F7D0F0A")
             .unwrap();
     assert_eq!(public_key, bytes);
 }
@@ -37,7 +37,7 @@ fn signing() {
     let message = "Blacknet Signed Message:\nBlacknet test message 2";
     let hash = Blake2b256::digest(message).into();
     let signature = sign(hash, &secret_key);
-    let bytes = Signature::try_from("6D5D4F6A81C601B1834701BDE84785470F92DFA517975BED9AAEA035FBDB0072327EFD207195B7202B5A72BB9CC37443A011C35137E1DF1C11BB5E9C60125B04")
+    let bytes = Signature::from_str("6D5D4F6A81C601B1834701BDE84785470F92DFA517975BED9AAEA035FBDB0072327EFD207195B7202B5A72BB9CC37443A011C35137E1DF1C11BB5E9C60125B04")
         .unwrap();
     assert_eq!(signature, bytes);
 }
@@ -45,9 +45,9 @@ fn signing() {
 #[test]
 fn verifying() {
     let public_key =
-        PublicKey::try_from("27A2C7CE9EE9AF0458832079017A5FBBB1F1551932C4CB901396BAE95F7D0F0A")
+        PublicKey::from_str("27A2C7CE9EE9AF0458832079017A5FBBB1F1551932C4CB901396BAE95F7D0F0A")
             .unwrap();
-    let signature = Signature::try_from("6D5D4F6A81C601B1834701BDE84785470F92DFA517975BED9AAEA035FBDB0072327EFD207195B7202B5A72BB9CC37443A011C35137E1DF1C11BB5E9C60125B04")
+    let signature = Signature::from_str("6D5D4F6A81C601B1834701BDE84785470F92DFA517975BED9AAEA035FBDB0072327EFD207195B7202B5A72BB9CC37443A011C35137E1DF1C11BB5E9C60125B04")
         .unwrap();
 
     let message = "Blacknet Signed Message:\nBlacknet test message 1";

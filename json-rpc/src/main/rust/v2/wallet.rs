@@ -25,7 +25,6 @@ use axum::{
     response::Response,
     routing::{get, post},
 };
-use blacknet_kernel::ed25519::PublicKey;
 use blacknet_network::network::Network;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, sync::Arc};
@@ -60,7 +59,7 @@ async fn mnemonic(
 #[derive(Deserialize, Serialize)]
 pub struct DecryptPaymentIdRequest {
     pub mnemonic: String,
-    pub from: PublicKey,
+    pub from: String,
     pub message: String,
 }
 
@@ -75,6 +74,12 @@ async fn decrypt_payment_id(
     State(network): State<Arc<Network>>,
     Form(request): Form<DecryptPaymentIdRequest>,
 ) -> Response<String> {
+    let from = match network.wallet_db().address_codec().decode(&request.from) {
+        Ok(from) => from,
+        Err(err) => {
+            return respond_error(format!("Invalid from: {err}"));
+        }
+    };
     todo!();
 }
 

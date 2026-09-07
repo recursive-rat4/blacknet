@@ -27,6 +27,7 @@ use blacknet_network::{
     connection::ConnectionId, endpoint::Endpoint, network::Network, txpool::TxPoolCheck,
 };
 use blacknet_serialization::format::from_bytes;
+use core::str::FromStr;
 use std::sync::Arc;
 
 async fn peers(State(network): State<Arc<Network>>) -> Json<Vec<PeerInfo>> {
@@ -67,7 +68,7 @@ async fn tx_pool_transaction_raw(
 }
 
 fn tx_pool_transaction_handler(hash: &str, raw: bool, network: &Arc<Network>) -> Response<String> {
-    let hash = match Hash::try_from(hash) {
+    let hash = match Hash::from_str(hash) {
         Ok(hash) => hash,
         Err(err) => return respond_error(format!("Invalid hash: {err}")),
     };

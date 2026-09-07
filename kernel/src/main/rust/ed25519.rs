@@ -27,6 +27,7 @@ use core::{
     array::TryFromSliceError,
     fmt::{Debug, Formatter, Result as FmtResult},
     mem::transmute,
+    str::FromStr,
 };
 use data_encoding::{DecodeError, DecodeKind, HEXUPPER};
 use serde::{Deserialize, Serialize};
@@ -77,10 +78,10 @@ impl Debug for Signature {
     }
 }
 
-impl TryFrom<&str> for Signature {
-    type Error = DecodeError;
+impl FromStr for Signature {
+    type Err = DecodeError;
 
-    fn try_from(hex: &str) -> Result<Self, Self::Error> {
+    fn from_str(hex: &str) -> Result<Self, Self::Err> {
         if hex.len() == 128 {
             let (left, right) = hex.as_bytes().split_at(64);
             let mut r = [0_u8; 32];
@@ -140,10 +141,10 @@ impl TryFrom<Vec<u8>> for PublicKey {
     }
 }
 
-impl TryFrom<&str> for PublicKey {
-    type Error = DecodeError;
+impl FromStr for PublicKey {
+    type Err = DecodeError;
 
-    fn try_from(hex: &str) -> Result<Self, Self::Error> {
+    fn from_str(hex: &str) -> Result<Self, Self::Err> {
         if hex.len() == 64 {
             let mut buf = [0_u8; 32];
             match HEXUPPER.decode_mut(hex.as_bytes(), &mut buf) {

@@ -33,6 +33,7 @@ use blacknet_kernel::{
 };
 use blacknet_network::{network::Network, wallet::AddressKind};
 use blacknet_serialization::format::to_bytes;
+use core::str::FromStr;
 use data_encoding::HEXUPPER_PERMISSIVE as HEX;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -41,10 +42,10 @@ use zeroize::Zeroize;
 #[derive(Deserialize, Serialize)]
 pub struct BundleRequest {
     pub mnemonic: String,
-    pub fee: Amount,
+    pub fee: String,
     pub id: String,
     pub data: String,
-    pub referenceChain: Option<Hash>,
+    pub referenceChain: Option<String>,
 }
 
 impl Drop for BundleRequest {
@@ -68,11 +69,18 @@ async fn bundle(
     } else {
         return respond_error("Invalid mnemonic");
     };
-    let anchor = if let Some(anchor) = request.referenceChain {
-        anchor
+    let anchor = if let Some(ref anchor) = request.referenceChain {
+        match Hash::from_str(anchor) {
+            Ok(anchor) => anchor,
+            Err(err) => return respond_error(format!("Invalid anchor: {err}")),
+        }
     } else {
         let (ref state, _) = **network.node().coin_db().state().load();
         network.wallet_db().anchor(state)
+    };
+    let fee = match Amount::from_str(request.fee.as_str()) {
+        Ok(fee) => fee,
+        Err(err) => return respond_error(format!("Invalid fee: {err}")),
     };
     let from = to_public_key(&secret_key);
     let seq = match network.wallet_db().sequence(from) {
@@ -101,7 +109,7 @@ async fn bundle(
             return respond_error(format!("Serialization error: {err}"));
         }
     };
-    let mut tx = Transaction::new(from, seq, anchor, request.fee, TxKind::Blob, data.into());
+    let mut tx = Transaction::new(from, seq, anchor, fee, TxKind::Blob, data.into());
     let (hash, bytes) = tx.sign(&secret_key);
 
     match network.node().broadcast_tx(hash, &bytes) {
@@ -113,10 +121,10 @@ async fn bundle(
 #[derive(Deserialize, Serialize)]
 pub struct BurnRequest {
     pub mnemonic: String,
-    pub fee: Amount,
-    pub amount: Amount,
+    pub fee: String,
+    pub amount: String,
     pub message: String,
-    pub referenceChain: Option<Hash>,
+    pub referenceChain: Option<String>,
 }
 
 impl Drop for BurnRequest {
@@ -140,11 +148,22 @@ async fn burn(
     } else {
         return respond_error("Invalid mnemonic");
     };
-    let anchor = if let Some(anchor) = request.referenceChain {
-        anchor
+    let anchor = if let Some(ref anchor) = request.referenceChain {
+        match Hash::from_str(anchor) {
+            Ok(anchor) => anchor,
+            Err(err) => return respond_error(format!("Invalid anchor: {err}")),
+        }
     } else {
         let (ref state, _) = **network.node().coin_db().state().load();
         network.wallet_db().anchor(state)
+    };
+    let fee = match Amount::from_str(request.fee.as_str()) {
+        Ok(fee) => fee,
+        Err(err) => return respond_error(format!("Invalid fee: {err}")),
+    };
+    let amount = match Amount::from_str(request.amount.as_str()) {
+        Ok(amount) => amount,
+        Err(err) => return respond_error(format!("Invalid amount: {err}")),
     };
     let from = to_public_key(&secret_key);
     let seq = match network.wallet_db().sequence(from) {
@@ -153,13 +172,13 @@ async fn burn(
             return respond_error(err.to_string());
         }
     };
-    let data = match to_bytes(&Burn::new(request.amount, message.into())) {
+    let data = match to_bytes(&Burn::new(amount, message.into())) {
         Ok(data) => data,
         Err(err) => {
             return respond_error(format!("Serialization error: {err}"));
         }
     };
-    let mut tx = Transaction::new(from, seq, anchor, request.fee, TxKind::Burn, data.into());
+    let mut tx = Transaction::new(from, seq, anchor, fee, TxKind::Burn, data.into());
     let (hash, bytes) = tx.sign(&secret_key);
 
     match network.node().broadcast_tx(hash, &bytes) {
@@ -171,11 +190,11 @@ async fn burn(
 #[derive(Deserialize, Serialize)]
 pub struct CancelLeaseRequest {
     pub mnemonic: String,
-    pub fee: Amount,
-    pub amount: Amount,
+    pub fee: String,
+    pub amount: String,
     pub to: String,
     pub height: u32,
-    pub referenceChain: Option<Hash>,
+    pub referenceChain: Option<String>,
 }
 
 impl Drop for CancelLeaseRequest {
@@ -193,13 +212,24 @@ async fn cancel_lease(
     } else {
         return respond_error("Invalid mnemonic");
     };
-    let anchor = if let Some(anchor) = request.referenceChain {
-        anchor
+    let anchor = if let Some(ref anchor) = request.referenceChain {
+        match Hash::from_str(anchor) {
+            Ok(anchor) => anchor,
+            Err(err) => return respond_error(format!("Invalid anchor: {err}")),
+        }
     } else {
         let (ref state, _) = **network.node().coin_db().state().load();
         network.wallet_db().anchor(state)
     };
+    let fee = match Amount::from_str(request.fee.as_str()) {
+        Ok(fee) => fee,
+        Err(err) => return respond_error(format!("Invalid fee: {err}")),
+    };
     let from = to_public_key(&secret_key);
+    let amount = match Amount::from_str(request.amount.as_str()) {
+        Ok(amount) => amount,
+        Err(err) => return respond_error(format!("Invalid amount: {err}")),
+    };
     let seq = match network.wallet_db().sequence(from) {
         Ok(seq) => seq,
         Err(err) => {
@@ -212,20 +242,13 @@ async fn cancel_lease(
             return respond_error(format!("Invalid to: {err}"));
         }
     };
-    let data = match to_bytes(&CancelLease::new(request.amount, to, request.height)) {
+    let data = match to_bytes(&CancelLease::new(amount, to, request.height)) {
         Ok(data) => data,
         Err(err) => {
             return respond_error(format!("Serialization error: {err}"));
         }
     };
-    let mut tx = Transaction::new(
-        from,
-        seq,
-        anchor,
-        request.fee,
-        TxKind::CancelLease,
-        data.into(),
-    );
+    let mut tx = Transaction::new(from, seq, anchor, fee, TxKind::CancelLease, data.into());
     let (hash, bytes) = tx.sign(&secret_key);
 
     match network.node().broadcast_tx(hash, &bytes) {
@@ -237,10 +260,10 @@ async fn cancel_lease(
 #[derive(Deserialize, Serialize)]
 pub struct ClaimSwapRequest {
     pub mnemonic: String,
-    pub fee: Amount,
+    pub fee: String,
     pub id: String,
     pub preimage: String,
-    pub referenceChain: Option<Hash>,
+    pub referenceChain: Option<String>,
 }
 
 impl Drop for ClaimSwapRequest {
@@ -264,11 +287,18 @@ async fn claim_swap(
     } else {
         return respond_error("Invalid mnemonic");
     };
-    let anchor = if let Some(anchor) = request.referenceChain {
-        anchor
+    let anchor = if let Some(ref anchor) = request.referenceChain {
+        match Hash::from_str(anchor) {
+            Ok(anchor) => anchor,
+            Err(err) => return respond_error(format!("Invalid anchor: {err}")),
+        }
     } else {
         let (ref state, _) = **network.node().coin_db().state().load();
         network.wallet_db().anchor(state)
+    };
+    let fee = match Amount::from_str(request.fee.as_str()) {
+        Ok(fee) => fee,
+        Err(err) => return respond_error(format!("Invalid fee: {err}")),
     };
     let from = to_public_key(&secret_key);
     let seq = match network.wallet_db().sequence(from) {
@@ -297,14 +327,7 @@ async fn claim_swap(
             return respond_error(format!("Serialization error: {err}"));
         }
     };
-    let mut tx = Transaction::new(
-        from,
-        seq,
-        anchor,
-        request.fee,
-        TxKind::ClaimHTLC,
-        data.into(),
-    );
+    let mut tx = Transaction::new(from, seq, anchor, fee, TxKind::ClaimHTLC, data.into());
     let (hash, bytes) = tx.sign(&secret_key);
 
     match network.node().broadcast_tx(hash, &bytes) {
@@ -316,14 +339,14 @@ async fn claim_swap(
 #[derive(Deserialize, Serialize)]
 pub struct CreateSwapRequest {
     pub mnemonic: String,
-    pub fee: Amount,
-    pub amount: Amount,
+    pub fee: String,
+    pub amount: String,
     pub to: String,
     pub timeLockType: TimeKind,
     pub timeLockData: i64,
     pub hashLockType: HashKind,
     pub hashLockData: String,
-    pub referenceChain: Option<Hash>,
+    pub referenceChain: Option<String>,
 }
 
 impl Drop for CreateSwapRequest {
@@ -347,11 +370,22 @@ async fn create_swap(
     } else {
         return respond_error("Invalid mnemonic");
     };
-    let anchor = if let Some(anchor) = request.referenceChain {
-        anchor
+    let anchor = if let Some(ref anchor) = request.referenceChain {
+        match Hash::from_str(anchor) {
+            Ok(anchor) => anchor,
+            Err(err) => return respond_error(format!("Invalid anchor: {err}")),
+        }
     } else {
         let (ref state, _) = **network.node().coin_db().state().load();
         network.wallet_db().anchor(state)
+    };
+    let fee = match Amount::from_str(request.fee.as_str()) {
+        Ok(fee) => fee,
+        Err(err) => return respond_error(format!("Invalid fee: {err}")),
+    };
+    let amount = match Amount::from_str(request.amount.as_str()) {
+        Ok(amount) => amount,
+        Err(err) => return respond_error(format!("Invalid amount: {err}")),
     };
     let from = to_public_key(&secret_key);
     let seq = match network.wallet_db().sequence(from) {
@@ -368,20 +402,13 @@ async fn create_swap(
     };
     let time_lock = TimeLock::new(request.timeLockType, request.timeLockData);
     let hash_lock = HashLock::new(request.hashLockType, image.into());
-    let data = match to_bytes(&CreateHTLC::new(request.amount, to, time_lock, hash_lock)) {
+    let data = match to_bytes(&CreateHTLC::new(amount, to, time_lock, hash_lock)) {
         Ok(data) => data,
         Err(err) => {
             return respond_error(format!("Serialization error: {err}"));
         }
     };
-    let mut tx = Transaction::new(
-        from,
-        seq,
-        anchor,
-        request.fee,
-        TxKind::CreateHTLC,
-        data.into(),
-    );
+    let mut tx = Transaction::new(from, seq, anchor, fee, TxKind::CreateHTLC, data.into());
     let (hash, bytes) = tx.sign(&secret_key);
 
     match network.node().broadcast_tx(hash, &bytes) {
@@ -393,10 +420,10 @@ async fn create_swap(
 #[derive(Deserialize, Serialize)]
 pub struct LeaseRequest {
     pub mnemonic: String,
-    pub fee: Amount,
-    pub amount: Amount,
+    pub fee: String,
+    pub amount: String,
     pub to: String,
-    pub referenceChain: Option<Hash>,
+    pub referenceChain: Option<String>,
 }
 
 impl Drop for LeaseRequest {
@@ -414,11 +441,22 @@ async fn lease(
     } else {
         return respond_error("Invalid mnemonic");
     };
-    let anchor = if let Some(anchor) = request.referenceChain {
-        anchor
+    let anchor = if let Some(ref anchor) = request.referenceChain {
+        match Hash::from_str(anchor) {
+            Ok(anchor) => anchor,
+            Err(err) => return respond_error(format!("Invalid anchor: {err}")),
+        }
     } else {
         let (ref state, _) = **network.node().coin_db().state().load();
         network.wallet_db().anchor(state)
+    };
+    let fee = match Amount::from_str(request.fee.as_str()) {
+        Ok(fee) => fee,
+        Err(err) => return respond_error(format!("Invalid fee: {err}")),
+    };
+    let amount = match Amount::from_str(request.amount.as_str()) {
+        Ok(amount) => amount,
+        Err(err) => return respond_error(format!("Invalid amount: {err}")),
     };
     let from = to_public_key(&secret_key);
     let seq = match network.wallet_db().sequence(from) {
@@ -433,13 +471,13 @@ async fn lease(
             return respond_error(format!("Invalid to: {err}"));
         }
     };
-    let data = match to_bytes(&Lease::new(request.amount, to)) {
+    let data = match to_bytes(&Lease::new(amount, to)) {
         Ok(data) => data,
         Err(err) => {
             return respond_error(format!("Serialization error: {err}"));
         }
     };
-    let mut tx = Transaction::new(from, seq, anchor, request.fee, TxKind::Lease, data.into());
+    let mut tx = Transaction::new(from, seq, anchor, fee, TxKind::Lease, data.into());
     let (hash, bytes) = tx.sign(&secret_key);
 
     match network.node().broadcast_tx(hash, &bytes) {
@@ -451,9 +489,9 @@ async fn lease(
 #[derive(Deserialize, Serialize)]
 pub struct RefundSwapRequest {
     pub mnemonic: String,
-    pub fee: Amount,
+    pub fee: String,
     pub id: String,
-    pub referenceChain: Option<Hash>,
+    pub referenceChain: Option<String>,
 }
 
 impl Drop for RefundSwapRequest {
@@ -471,11 +509,18 @@ async fn refund_swap(
     } else {
         return respond_error("Invalid mnemonic");
     };
-    let anchor = if let Some(anchor) = request.referenceChain {
-        anchor
+    let anchor = if let Some(ref anchor) = request.referenceChain {
+        match Hash::from_str(anchor) {
+            Ok(anchor) => anchor,
+            Err(err) => return respond_error(format!("Invalid anchor: {err}")),
+        }
     } else {
         let (ref state, _) = **network.node().coin_db().state().load();
         network.wallet_db().anchor(state)
+    };
+    let fee = match Amount::from_str(request.fee.as_str()) {
+        Ok(fee) => fee,
+        Err(err) => return respond_error(format!("Invalid fee: {err}")),
     };
     let from = to_public_key(&secret_key);
     let seq = match network.wallet_db().sequence(from) {
@@ -504,14 +549,7 @@ async fn refund_swap(
             return respond_error(format!("Serialization error: {err}"));
         }
     };
-    let mut tx = Transaction::new(
-        from,
-        seq,
-        anchor,
-        request.fee,
-        TxKind::RefundHTLC,
-        data.into(),
-    );
+    let mut tx = Transaction::new(from, seq, anchor, fee, TxKind::RefundHTLC, data.into());
     let (hash, bytes) = tx.sign(&secret_key);
 
     match network.node().broadcast_tx(hash, &bytes) {
@@ -523,12 +561,12 @@ async fn refund_swap(
 #[derive(Deserialize, Serialize)]
 pub struct TransferRequest {
     pub mnemonic: String,
-    pub fee: Amount,
-    pub amount: Amount,
+    pub fee: String,
+    pub amount: String,
     pub to: String,
     pub encrypted: Option<u8>,
     pub message: Option<String>,
-    pub referenceChain: Option<Hash>,
+    pub referenceChain: Option<String>,
 }
 
 impl Drop for TransferRequest {
@@ -546,11 +584,22 @@ async fn transfer(
     } else {
         return respond_error("Invalid mnemonic");
     };
-    let anchor = if let Some(anchor) = request.referenceChain {
-        anchor
+    let anchor = if let Some(ref anchor) = request.referenceChain {
+        match Hash::from_str(anchor) {
+            Ok(anchor) => anchor,
+            Err(err) => return respond_error(format!("Invalid anchor: {err}")),
+        }
     } else {
         let (ref state, _) = **network.node().coin_db().state().load();
         network.wallet_db().anchor(state)
+    };
+    let fee = match Amount::from_str(request.fee.as_str()) {
+        Ok(fee) => fee,
+        Err(err) => return respond_error(format!("Invalid fee: {err}")),
+    };
+    let amount = match Amount::from_str(request.amount.as_str()) {
+        Ok(amount) => amount,
+        Err(err) => return respond_error(format!("Invalid amount: {err}")),
     };
     let from = to_public_key(&secret_key);
     let seq = match network.wallet_db().sequence(from) {
@@ -572,20 +621,13 @@ async fn transfer(
             return respond_error("Unknown encrypted");
         }
     };
-    let data = match to_bytes(&Transfer::new(request.amount, to, payment_id)) {
+    let data = match to_bytes(&Transfer::new(amount, to, payment_id)) {
         Ok(data) => data,
         Err(err) => {
             return respond_error(format!("Serialization error: {err}"));
         }
     };
-    let mut tx = Transaction::new(
-        from,
-        seq,
-        anchor,
-        request.fee,
-        TxKind::Transfer,
-        data.into(),
-    );
+    let mut tx = Transaction::new(from, seq, anchor, fee, TxKind::Transfer, data.into());
     let (hash, bytes) = tx.sign(&secret_key);
 
     match network.node().broadcast_tx(hash, &bytes) {
@@ -597,12 +639,12 @@ async fn transfer(
 #[derive(Deserialize, Serialize)]
 pub struct WithdrawFromLeaseRequest {
     pub mnemonic: String,
-    pub fee: Amount,
-    pub withdraw: Amount,
-    pub amount: Amount,
+    pub fee: String,
+    pub withdraw: String,
+    pub amount: String,
     pub to: String,
     pub height: u32,
-    pub referenceChain: Option<Hash>,
+    pub referenceChain: Option<String>,
 }
 
 impl Drop for WithdrawFromLeaseRequest {
@@ -620,11 +662,26 @@ async fn withdraw_from_lease(
     } else {
         return respond_error("Invalid mnemonic");
     };
-    let anchor = if let Some(anchor) = request.referenceChain {
-        anchor
+    let anchor = if let Some(ref anchor) = request.referenceChain {
+        match Hash::from_str(anchor) {
+            Ok(anchor) => anchor,
+            Err(err) => return respond_error(format!("Invalid anchor: {err}")),
+        }
     } else {
         let (ref state, _) = **network.node().coin_db().state().load();
         network.wallet_db().anchor(state)
+    };
+    let fee = match Amount::from_str(request.fee.as_str()) {
+        Ok(fee) => fee,
+        Err(err) => return respond_error(format!("Invalid fee: {err}")),
+    };
+    let withdraw = match Amount::from_str(request.withdraw.as_str()) {
+        Ok(withdraw) => withdraw,
+        Err(err) => return respond_error(format!("Invalid withdraw: {err}")),
+    };
+    let amount = match Amount::from_str(request.amount.as_str()) {
+        Ok(amount) => amount,
+        Err(err) => return respond_error(format!("Invalid amount: {err}")),
     };
     let from = to_public_key(&secret_key);
     let seq = match network.wallet_db().sequence(from) {
@@ -640,8 +697,8 @@ async fn withdraw_from_lease(
         }
     };
     let data = match to_bytes(&WithdrawFromLease::new(
-        request.withdraw,
-        request.amount,
+        withdraw,
+        amount,
         to,
         request.height,
     )) {
@@ -654,7 +711,7 @@ async fn withdraw_from_lease(
         from,
         seq,
         anchor,
-        request.fee,
+        fee,
         TxKind::WithdrawFromLease,
         data.into(),
     );
