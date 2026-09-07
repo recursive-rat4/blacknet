@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_crypto::random::{FastDRG, UniformGenerator};
+use blacknet_crypto::random::{FastDRG, Seedable, UniformGenerator};
 use blacknet_crypto::symmetric::chacha::BLOCK_SIZE;
 use core::array;
 
@@ -27,7 +27,7 @@ fn discard() {
     let _: [u8; SIZE] = array::from_fn(|_| drg.generate());
     let buf1: [u8; SIZE] = array::from_fn(|_| drg.generate());
 
-    drg.seed(&Default::default());
+    drg.reseed(&Default::default());
     drg.discard(SIZE);
     let buf2: [u8; SIZE] = array::from_fn(|_| drg.generate());
 

@@ -27,7 +27,7 @@ type DRG = blacknet_crypto::random::FastDRG;
 
 #[test]
 fn hash() {
-    let mut drg = DRG::default();
+    let mut drg = DRG::new();
     let setup = AjtaiHash::<LInf, Z>::sis(&mut drg, 2, 2);
     let b_ecd: f64 = 7.22;
     let b_inf: <Z as IntegerModRing>::Int = 8;
@@ -93,7 +93,7 @@ fn hash() {
 
 #[test]
 fn commitment() {
-    let mut drg = DRG::default();
+    let mut drg = DRG::new();
     let setup = AjtaiCommitment::<LInf, Z>::sis(&mut drg, 3, 2, 4);
     let b_ecd: f64 = 7.22;
     let b_inf: <Z as IntegerModRing>::Int = 8;

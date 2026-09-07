@@ -15,26 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-/// Generator of uniformly distributed values.
-pub trait UniformGenerator {
-    /// The type of generated values.
-    type Output;
-
-    /// Generate a single value.
-    fn generate(&mut self) -> Self::Output;
-
-    /// Generate a sequence of values.
-    fn fill(&mut self, sequence: &mut [Self::Output]) {
-        for i in sequence {
-            *i = self.generate()
-        }
-    }
-}
-
-/// Generator of uniformly distributed bytes.
-pub trait UniformBitGenerator: UniformGenerator<Output = u8> {}
-
-impl<G: UniformGenerator<Output = u8>> UniformBitGenerator for G {}
+use crate::random::UniformGenerator;
 
 /// A probability distribution.
 ///

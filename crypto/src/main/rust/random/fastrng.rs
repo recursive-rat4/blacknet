@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::random::{FastDRG, StrongDRG, UniformGenerator, drg::SEED_SIZE};
+use crate::random::{FastDRG, Seedable, StrongDRG, UniformGenerator, drg::SEED_SIZE};
 use blacknet_compat::getentropy;
 use core::{
     cell::RefCell,
@@ -40,7 +40,7 @@ impl StrongSeeder {
         getentropy(&mut seed).expect("source of entropy");
         let seed: Zeroizing<[u8; SEED_SIZE]> = unsafe { transmute(seed) };
         Self {
-            drg: StrongDRG::new(&seed),
+            drg: StrongDRG::from_seed(&seed),
         }
     }
 
@@ -64,7 +64,7 @@ impl FastRNG {
         STRONG_SEEDER.lock().unwrap().generate(&mut seed);
         let seed: [u8; SEED_SIZE] = unsafe { transmute(seed) };
         Self {
-            drg: FastDRG::new(&seed),
+            drg: FastDRG::from_seed(&seed),
         }
     }
 }
@@ -80,6 +80,11 @@ impl UniformGenerator for FastRNG {
     #[inline]
     fn fill(&mut self, sequence: &mut [Self::Output]) {
         self.drg.fill(sequence)
+    }
+
+    #[inline]
+    fn discard(&mut self, n: usize) {
+        self.drg.discard(n)
     }
 }
 

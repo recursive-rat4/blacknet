@@ -22,6 +22,7 @@ mod drg;
 #[cfg(feature = "std")]
 mod fastrng;
 mod float01distribution;
+mod generator;
 pub mod hammingweight;
 mod quartaryuniformdistribution;
 mod uniformintdistribution;
@@ -29,11 +30,12 @@ mod uniformmoddistribution;
 
 pub use binaryuniformdistribution::BinaryUniformDistribution;
 pub use discretegaussiandistribution::DiscreteGaussianDistribution;
-pub use distribution::{Distribution, UniformBitGenerator, UniformDistribution, UniformGenerator};
+pub use distribution::{Distribution, UniformDistribution};
 pub use drg::{FastDRG, StrongDRG};
 #[cfg(feature = "std")]
 pub use fastrng::{FAST_RNG, FastRNG};
 pub use float01distribution::Float01Distribution;
+pub use generator::{Seedable, UniformBitGenerator, UniformGenerator};
 pub use hammingweight::fill_with_weight;
 pub use quartaryuniformdistribution::QuartaryUniformDistribution;
 pub use uniformintdistribution::UniformIntDistribution;
