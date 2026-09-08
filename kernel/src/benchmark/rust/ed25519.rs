@@ -17,6 +17,7 @@
 
 use blacknet_kernel::blake2b::Hash;
 use blacknet_kernel::ed25519::*;
+use core::str::FromStr;
 use criterion::{Criterion, Throughput, criterion_group, criterion_main};
 use std::hint::black_box;
 
@@ -29,13 +30,13 @@ fn criterion_benchmark(crit: &mut Criterion) {
             .unwrap(),
     );
     let public_key = black_box(
-        PublicKey::try_from("27A2C7CE9EE9AF0458832079017A5FBBB1F1551932C4CB901396BAE95F7D0F0A")
+        PublicKey::from_str("27A2C7CE9EE9AF0458832079017A5FBBB1F1551932C4CB901396BAE95F7D0F0A")
             .unwrap(),
     );
     let hash = black_box(
-        Hash::try_from("9909FF1647FE84CBA8C3495A2A9BACE506C70B431B08235DBC3FE8EC49429465").unwrap(),
+        Hash::from_str("9909FF1647FE84CBA8C3495A2A9BACE506C70B431B08235DBC3FE8EC49429465").unwrap(),
     );
-    let signature = black_box(Signature::try_from("6D5D4F6A81C601B1834701BDE84785470F92DFA517975BED9AAEA035FBDB0072327EFD207195B7202B5A72BB9CC37443A011C35137E1DF1C11BB5E9C60125B04").unwrap());
+    let signature = black_box(Signature::from_str("6D5D4F6A81C601B1834701BDE84785470F92DFA517975BED9AAEA035FBDB0072327EFD207195B7202B5A72BB9CC37443A011C35137E1DF1C11BB5E9C60125B04").unwrap());
 
     grp.bench_function("sign", |bench| bench.iter(|| sign(hash, &secret_key)));
     grp.bench_function("verify", |bench| {
