@@ -18,8 +18,7 @@
 use crate::{
     connection::Connection,
     packet::{
-        Blocks, ConsensusFault, MAX_BLOCKS, MAX_HASHES, PACKET_HEADER_SIZE_BYTES, Packet,
-        PacketKind,
+        Blocks, ConsensusFault, MAX_BLOCKS, MAX_HASHES, PACKET_HEADER_SIZE, Packet, PacketKind,
     },
 };
 use blacknet_kernel::blake2b::Hash;
@@ -56,7 +55,7 @@ impl Packet for GetBlocks {
 
         let (_, ref snapshot) = **node.coin_db().state().load();
         if let Some(mut block_index) = block_db.index(snapshot, self.best) {
-            let mut size = PACKET_HEADER_SIZE_BYTES + 2 + 1;
+            let mut size = PACKET_HEADER_SIZE + 2 + 1;
             let max_size = node.min_packet_size(); // actual value is unknown, minimum is assumed
             let mut response = Vec::<Box<[u8]>>::with_capacity(MAX_BLOCKS);
 

@@ -15,31 +15,35 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::endpoint::Endpoint;
-use crate::node::{NETWORK_TIMEOUT, Node};
-use crate::packet::{
-    BlockAnnounce, INVENTORY_SEND_MAX, INVENTORY_SEND_TIMEOUT, Inventory, PACKET_HEADER_SIZE_BYTES,
-    Packet, PacketKind, Peers, Ping, PingV1,
+use crate::{
+    endpoint::Endpoint,
+    node::{NETWORK_TIMEOUT, Node},
+    packet::{
+        BlockAnnounce, INVENTORY_SEND_MAX, INVENTORY_SEND_TIMEOUT, Inventory, PACKET_HEADER_SIZE,
+        PACKET_LENGTH_SIZE, Packet, PacketKind, Peers, Ping, PingV1,
+    },
 };
 use arc_swap::{ArcSwap, ArcSwapOption};
 use atomic::Atomic;
-use blacknet_crypto::bigint::UInt256;
-use blacknet_crypto::random::{Distribution, FAST_RNG, UniformIntDistribution};
-use blacknet_kernel::amount::Amount;
-use blacknet_kernel::blake2b::Hash;
+use blacknet_crypto::{
+    bigint::UInt256,
+    random::{Distribution, FAST_RNG, UniformIntDistribution},
+};
+use blacknet_kernel::{amount::Amount, blake2b::Hash};
 use blacknet_log::{Logger, debug, error, info};
 use blacknet_serialization::format::to_bytes;
 use blacknet_time::{Milliseconds, Seconds, SystemClock};
 use bytemuck::NoUninit;
-use core::cmp::min;
-use core::num::NonZero;
+use core::{cmp::min, num::NonZero};
 use std::sync::{Arc, Mutex, MutexGuard, atomic::*};
-use tokio::io::{AsyncReadExt, AsyncWriteExt, BufReader, BufWriter};
-use tokio::net::tcp::{OwnedReadHalf, OwnedWriteHalf};
-use tokio::runtime::Handle;
-use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender, unbounded_channel};
-use tokio::task::JoinHandle;
-use tokio::time::sleep;
+use tokio::{
+    io::{AsyncReadExt, AsyncWriteExt, BufReader, BufWriter},
+    net::tcp::{OwnedReadHalf, OwnedWriteHalf},
+    runtime::Handle,
+    sync::mpsc::{UnboundedReceiver, UnboundedSender, unbounded_channel},
+    task::JoinHandle,
+    time::sleep,
+};
 
 pub type ConnectionId = NonZero<u64>;
 
@@ -525,8 +529,7 @@ impl Connection {
     }
 
     async fn receiver(self: Arc<Self>, mut buf_reader: BufReader<OwnedReadHalf>) {
-        loop {
-            let size = buf_reader.read_u32().await.unwrap();
+        while let Ok(size) = buf_reader.read_u32().await {
             let max = self.node.max_packet_size();
             if size > max {
                 if self.is_established() {
@@ -535,33 +538,35 @@ impl Connection {
                         "Too long packet {size} max {max} Disconnecting"
                     );
                 }
-                self.close();
                 break;
-            }
-            let kind: PacketKind = match buf_reader.read_u32().await.unwrap().try_into() {
-                Ok(kind) => kind,
-                Err(msg) => {
-                    info!(self.logger, "{msg} Disconnecting");
-                    self.close();
-                    break;
-                }
-            };
-            if (self.is_established() && kind.is_handshake())
-                || (!self.is_established() && !kind.is_handshake())
-            {
-                self.close();
+            } else if size < PACKET_HEADER_SIZE {
                 break;
             }
             let mut bytes = vec![0; size as usize];
-            buf_reader.read_exact(&mut bytes).await.unwrap();
+            if buf_reader.read_exact(&mut bytes).await.is_err() {
+                break;
+            }
+            let (header, body) = bytes.split_at(PACKET_HEADER_SIZE as usize);
+            let kind = u32::from_be_bytes(header.try_into().unwrap());
+            let kind = match PacketKind::try_from(kind) {
+                Ok(kind) => kind,
+                Err(msg) => {
+                    info!(self.logger, "{msg} Disconnecting");
+                    break;
+                }
+            };
+            if !(self.is_established() ^ kind.is_handshake()) {
+                break;
+            }
             debug!(self.logger, "Received {kind:?}");
-            if !kind.handle(&bytes, &self) {
+            if !kind.handle(body, &self) {
                 break;
             }
             self.set_last_packet_time(SystemClock::millis());
             self.total_bytes_read
-                .fetch_add(4 + size as u64, Ordering::Relaxed);
+                .fetch_add((PACKET_LENGTH_SIZE + size) as u64, Ordering::Relaxed);
         }
+        self.close();
     }
 
     async fn sender(
@@ -569,21 +574,30 @@ impl Connection {
         mut recv_channel: UnboundedReceiver<(PacketKind, Vec<u8>)>,
         mut buf_writer: BufWriter<OwnedWriteHalf>,
     ) {
-        loop {
-            let (kind, bytes) = recv_channel.recv().await.unwrap();
+        while let Some((kind, bytes)) = recv_channel.recv().await {
             debug!(self.logger, "Sending {:?}", kind);
-            buf_writer
-                .write_u32(bytes.len() as u32 + PACKET_HEADER_SIZE_BYTES)
+            if buf_writer
+                .write_u32(bytes.len() as u32 + PACKET_HEADER_SIZE)
                 .await
-                .unwrap();
-            buf_writer.write_u32(kind as u32).await.unwrap();
-            buf_writer.write_all(&bytes).await.unwrap();
-            buf_writer.flush().await.unwrap();
+                .is_err()
+            {
+                break;
+            }
+            if buf_writer.write_u32(kind as u32).await.is_err() {
+                break;
+            }
+            if buf_writer.write_all(&bytes).await.is_err() {
+                break;
+            }
+            if buf_writer.flush().await.is_err() {
+                break;
+            }
             self.send_channel_size
                 .fetch_sub(bytes.len(), Ordering::AcqRel);
             self.total_bytes_written
                 .fetch_add(8 + bytes.len() as u64, Ordering::Relaxed);
         }
+        self.close();
     }
 }
 

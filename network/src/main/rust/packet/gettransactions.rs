@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2025 Pavel Vasin
+ * Copyright (c) 2018-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,8 +15,10 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::connection::Connection;
-use crate::packet::{MAX_TRANSACTIONS, PACKET_HEADER_SIZE_BYTES, Packet, PacketKind, Transactions};
+use crate::{
+    connection::Connection,
+    packet::{MAX_TRANSACTIONS, PACKET_HEADER_SIZE, Packet, PacketKind, Transactions},
+};
 use blacknet_kernel::blake2b::Hash;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -69,7 +71,7 @@ impl Packet for GetTransactions {
         let node = connection.node();
         let tx_pool = node.tx_pool().read().unwrap();
 
-        let mut size = PACKET_HEADER_SIZE_BYTES + 2;
+        let mut size = PACKET_HEADER_SIZE + 2;
         let max_size = node.min_packet_size(); // actual value is unknown, minimum is assumed
         let mut response = Transactions::with_capacity(len);
 
@@ -83,13 +85,13 @@ impl Packet for GetTransactions {
                     if size > max_size {
                         connection.send_packet(&response);
                         response.clear();
-                        size = PACKET_HEADER_SIZE_BYTES + 2;
+                        size = PACKET_HEADER_SIZE + 2;
                     }
                 } else {
                     if new_size > max_size {
                         connection.send_packet(&response);
                         response.clear();
-                        size = PACKET_HEADER_SIZE_BYTES + 2;
+                        size = PACKET_HEADER_SIZE + 2;
                     }
                     response.push(bytes.into());
                     size += bytes.len() as u32 + 4;

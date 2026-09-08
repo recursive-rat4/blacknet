@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2025 Pavel Vasin
+ * Copyright (c) 2018-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,8 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::connection::Connection;
-use crate::packet::*;
+use crate::{connection::Connection, packet::*};
 use blacknet_log::info;
 use blacknet_serialization::format::from_bytes;
 use serde::{Deserialize, Serialize};
@@ -25,8 +24,8 @@ use std::sync::Arc;
 /**
  * Packet length is used for delimiting, and as such doesn't count towards packet size.
  */
-pub const PACKET_LENGTH_SIZE_BYTES: u32 = 4;
-pub const PACKET_HEADER_SIZE_BYTES: u32 = 4;
+pub const PACKET_LENGTH_SIZE: u32 = 4;
+pub const PACKET_HEADER_SIZE: u32 = 4;
 
 pub trait Packet: for<'de> Deserialize<'de> + Serialize {
     fn kind() -> PacketKind;
@@ -53,11 +52,11 @@ pub enum PacketKind {
 }
 
 impl PacketKind {
-    pub const fn is_handshake(self) -> bool {
+    pub const fn is_handshake(&self) -> bool {
         matches!(self, PacketKind::Version | PacketKind::Hello)
     }
 
-    pub fn handle(self, bytes: &[u8], connection: &Arc<Connection>) -> bool {
+    pub fn handle(&self, bytes: &[u8], connection: &Arc<Connection>) -> bool {
         match self {
             PacketKind::Version => match from_bytes::<Version>(bytes, false) {
                 Ok(packet) => packet.handle(connection),
