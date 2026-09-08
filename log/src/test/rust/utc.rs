@@ -21,6 +21,9 @@ use std::time::SystemTime;
 
 #[test]
 fn format() {
+    // Whether SystemTime can represent test vectors is platform-specific.
+    let mut tested = 0;
+
     let utc = UTC::new();
     for (t, s) in [
         (i64::MIN, "-292275055-05-16 16:47:04.192"),
@@ -31,12 +34,16 @@ fn format() {
     ] {
         let mut b = String::with_capacity(s.len());
         let d = Duration::from_millis(t.unsigned_abs());
-        let st = if t > 0 {
-            SystemTime::UNIX_EPOCH + d
+        if let Some(st) = if t > 0 {
+            SystemTime::UNIX_EPOCH.checked_add(d)
         } else {
-            SystemTime::UNIX_EPOCH - d
-        };
-        utc.format(st, &mut b).unwrap();
-        assert_eq!(b, s);
+            SystemTime::UNIX_EPOCH.checked_sub(d)
+        } {
+            utc.format(st, &mut b).unwrap();
+            assert_eq!(b, s);
+            tested += 1;
+        }
     }
+
+    assert!(tested > 0);
 }
