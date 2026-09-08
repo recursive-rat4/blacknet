@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -32,10 +32,6 @@ impl<T: Eq + Hash> RollingHashSet<T> {
         }
     }
 
-    pub fn clear(&mut self) {
-        self.lhs.clear()
-    }
-
     pub fn contains(&self, value: &T) -> bool {
         self.lhs.contains(value)
     }
@@ -47,15 +43,21 @@ impl<T: Eq + Hash> RollingHashSet<T> {
         self.lhs.replace(value);
     }
 
+    pub fn remove(&mut self, value: &T) -> bool {
+        self.lhs.remove(value)
+    }
+}
+
+impl<T> RollingHashSet<T> {
+    pub fn clear(&mut self) {
+        self.lhs.clear()
+    }
+
     pub fn is_empty(&self) -> bool {
         self.lhs.is_empty()
     }
 
     pub fn len(&self) -> usize {
         self.lhs.len()
-    }
-
-    pub fn remove(&mut self, value: &T) -> bool {
-        self.lhs.remove(value)
     }
 }
