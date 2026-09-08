@@ -115,7 +115,9 @@ pub struct Connection {
 
 impl Connection {
     async fn new(logger: Logger, endpoint: Endpoint) -> Result<Self, Error> {
-        let endpoint = endpoint.to_rust().ok_or("Not TCP/IP endpoint")?;
+        let endpoint = endpoint
+            .to_rust()
+            .ok_or(Error::message("Not TCP/IP endpoint"))?;
         let socket = TcpStream::connect(endpoint).await?;
         let (tcp_read, tcp_write) = socket.into_split();
         let mut connection = Self {
@@ -231,7 +233,7 @@ impl SAM {
     ) -> Result<Self, Error> {
         let endpoint = match Endpoint::parse(&config.i2p_sam.host, config.i2p_sam.port) {
             Some(endpoint) => endpoint,
-            None => return Err("Can't parse config.i2p_sam_host".into()),
+            None => return Err(Error::message("Can't parse config.i2p_sam_host")),
         };
 
         let data_dir = dirs.data().to_owned();
@@ -397,15 +399,9 @@ pub enum Error {
 impl Error {
     pub fn message<T>(msg: T) -> Self
     where
-        Cow<'static, str>: From<T>,
+        T: Into<Cow<'static, str>>,
     {
         Error::Message(msg.into())
-    }
-}
-
-impl From<&'static str> for Error {
-    fn from(err: &'static str) -> Self {
-        Error::message(err)
     }
 }
 

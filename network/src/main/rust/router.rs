@@ -28,7 +28,7 @@ use blacknet_compat::{
     {Mode, XDGDirectories},
 };
 use blacknet_io::Error as IoError;
-use blacknet_log::{Error as LogError, LogManager, Logger, info, warn};
+use blacknet_log::{Error as LogError, LogManager, Logger, info, trace, warn};
 use core::{
     cmp::{max, min},
     fmt,
@@ -316,8 +316,11 @@ impl Router {
                     info!(self.logger, "Closing TOR session");
                     self.remove_listener(session.endpoint());
                 }
+                Err(TorError::Io(err)) => {
+                    trace!(self.logger, "listen_tor: {err}");
+                }
                 Err(msg) => {
-                    warn!(self.logger, "{msg}");
+                    warn!(self.logger, "listen_tor: {msg}");
                 }
             }
 
@@ -339,8 +342,11 @@ impl Router {
                     self.remove_listener(local_endpoint);
                     self.i2p_sam.close_session();
                 }
+                Err(I2PError::Io(err)) => {
+                    trace!(self.logger, "listen_i2p: {err}");
+                }
                 Err(msg) => {
-                    warn!(self.logger, "{msg}");
+                    warn!(self.logger, "listen_i2p: {msg}");
                 }
             }
 

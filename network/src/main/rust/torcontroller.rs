@@ -50,10 +50,10 @@ impl TorController {
         dirs: &XDGDirectories,
         log_manager: &LogManager,
         config: Arc<Config>,
-    ) -> Result<Self> {
+    ) -> Result<Self, Error> {
         let endpoint = match Endpoint::parse(&config.tor_control.host, config.tor_control.port) {
             Some(endpoint) => endpoint,
-            None => return Err("Can't parse config.tor_control_host".into()),
+            None => return Err(Error::message("Can't parse config.tor_control_host")),
         };
 
         let data_dir = dirs.data().to_owned();
@@ -68,19 +68,19 @@ impl TorController {
         })
     }
 
-    pub async fn create_session(&self) -> Result<TorSession> {
+    pub async fn create_session(&self) -> Result<TorSession, Error> {
         let mut connection = TorConnection::new(self.logger.clone(), self.endpoint).await?;
         connection.authenticate().await?;
         //XXX port
         let private_key = self.private_key.load();
         let (service_id, new_key) = connection.add_onion(&private_key, self.config.port).await?;
         let local_endpoint = Endpoint::parse(&(service_id + ".onion"), self.config.port)
-            .ok_or("Failed to parse Onion Service ID")?;
+            .ok_or(Error::message("Failed to parse Onion Service ID"))?;
         if private_key.starts_with("NEW:") {
             if !new_key.is_empty() {
                 self.save_private_key(new_key);
             } else {
-                return Err("Failed to get new private key".into());
+                return Err(Error::message("Failed to get new private key"));
             }
         }
         info!(self.logger, "Created session");
@@ -137,8 +137,10 @@ struct TorConnection {
 }
 
 impl TorConnection {
-    async fn new(logger: Logger, endpoint: Endpoint) -> Result<Self> {
-        let endpoint = endpoint.to_rust().ok_or("Not TCP/IP endpoint")?;
+    async fn new(logger: Logger, endpoint: Endpoint) -> Result<Self, Error> {
+        let endpoint = endpoint
+            .to_rust()
+            .ok_or(Error::message("Not TCP/IP endpoint"))?;
         let socket = TcpStream::connect(endpoint).await?;
         let stream = BufStream::new(socket);
         Ok(Self {
@@ -147,17 +149,21 @@ impl TorConnection {
         })
     }
 
-    async fn authenticate(&mut self) -> Result<()> {
+    async fn authenticate(&mut self) -> Result<(), Error> {
         //TODO cookie, password
         let request = "AUTHENTICATE\r\n";
         let reply_line = self.request(request).await?;
         if reply_line == "250 OK\r\n" {
             return Ok(());
         }
-        Err("Unknown Tor reply line".into())
+        Err(Error::message("Unknown Tor reply line"))
     }
 
-    async fn add_onion(&mut self, private_key: &str, tor_port: u16) -> Result<(String, String)> {
+    async fn add_onion(
+        &mut self,
+        private_key: &str,
+        tor_port: u16,
+    ) -> Result<(String, String), Error> {
         let request = format!("ADD_ONION {private_key} Port={tor_port}\r\n");
         self.write(&request).await?;
         let mut service_id = String::new();
@@ -171,33 +177,31 @@ impl TorConnection {
             } else if reply_line.starts_with("250-PrivateKey=") && reply_line.ends_with("\r\n") {
                 reply_line[15..reply_line.len() - 15 - 2].clone_into(&mut new_key);
             } else if !reply_line.starts_with("250-") {
-                return Err("Unknown Tor reply line".into());
+                return Err(Error::message("Unknown Tor reply line"));
             }
         }
         Ok((service_id, new_key))
     }
 
-    async fn request(&mut self, request: &str) -> Result<String> {
+    async fn request(&mut self, request: &str) -> Result<String, Error> {
         self.write(request).await?;
         self.read().await
     }
 
-    async fn write(&mut self, message: &str) -> Result<()> {
+    async fn write(&mut self, message: &str) -> Result<(), Error> {
         // debug!(self._logger, "-> {:?}", message);
         self.stream.write_all(message.as_bytes()).await?;
         self.stream.flush().await?;
         Ok(())
     }
 
-    async fn read(&mut self) -> Result<String> {
+    async fn read(&mut self) -> Result<String, Error> {
         let mut message = String::new();
         self.stream.read_line(&mut message).await?;
         // debug!(self._logger, "<- {:?}", message);
         Ok(message)
     }
 }
-
-type Result<T> = core::result::Result<T, Error>;
 
 #[derive(Debug)]
 pub enum Error {
@@ -209,15 +213,9 @@ pub enum Error {
 impl Error {
     pub fn message<T>(msg: T) -> Self
     where
-        Cow<'static, str>: From<T>,
+        T: Into<Cow<'static, str>>,
     {
         Error::Message(msg.into())
-    }
-}
-
-impl From<&'static str> for Error {
-    fn from(err: &'static str) -> Self {
-        Error::message(err)
     }
 }
 
