@@ -16,8 +16,10 @@
  */
 
 use crate::endpoint::Endpoint;
-use blacknet_compat::config::Network as Config;
-use blacknet_compat::{Mode, XDGDirectories};
+use blacknet_compat::{
+    config::Network as Config,
+    {Mode, XDGDirectories},
+};
 use blacknet_crypto::random::{
     Distribution, FAST_RNG, Float01Distribution, UniformIntDistribution,
 };
@@ -26,15 +28,18 @@ use blacknet_kernel::blake2b::Hash;
 use blacknet_log::{LogManager, Logger, debug, error, info, warn};
 use blacknet_serialization::format::{from_read, to_write};
 use blacknet_time::{Milliseconds, SystemClock};
-use core::cmp::min;
-use core::error::Error;
+use core::{cmp::min, error::Error};
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
-use std::fs::File;
-use std::io::{BufReader, ErrorKind, Read, Write};
-use std::path::PathBuf;
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Arc, RwLock};
+use std::{
+    collections::{HashMap, HashSet},
+    fs::File,
+    io::{BufReader, ErrorKind, Read, Write},
+    path::PathBuf,
+    sync::{
+        Arc, RwLock,
+        atomic::{AtomicBool, Ordering},
+    },
+};
 
 const MAX_SIZE: usize = 8192;
 const FILE_VERSION: u32 = 5;
@@ -207,6 +212,13 @@ impl PeerTable {
                 "Inconsistent discontact from {}",
                 endpoint.to_log(self.config.log_endpoint)
             );
+        }
+    }
+
+    pub fn failed(&self, endpoint: Endpoint, time: Milliseconds) {
+        let mut peers = self.peers.write().unwrap();
+        if let Some(entry) = peers.get_mut(&endpoint) {
+            entry.failed(time)
         }
     }
 
@@ -413,6 +425,11 @@ impl Entry {
             self.subnetworks.clear();
         }
         self.attempts = 0;
+        self.last_try = time;
+    }
+
+    const fn failed(&mut self, time: Milliseconds) {
+        self.attempts += 1;
         self.last_try = time;
     }
 

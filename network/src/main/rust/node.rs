@@ -354,8 +354,8 @@ impl Node {
                 }
                 true
             }
-            Err(error) => {
-                info!(self.logger, "{error}");
+            Err(err) => {
+                info!(self.logger, "{err}");
                 false
             }
         }
@@ -461,7 +461,8 @@ impl Node {
             return;
         }
         connections.push(connection.clone());
-        connection.launch(buf_reader, buf_writer, recv_channel, &self.runtime)
+        self.runtime
+            .spawn(connection.run(buf_reader, buf_writer, recv_channel));
     }
 
     fn have_slot(&self, connections: &[Arc<Connection>]) -> bool {

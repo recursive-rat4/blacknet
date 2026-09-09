@@ -34,22 +34,21 @@ use blacknet_log::{Logger, debug, error, info};
 use blacknet_serialization::format::to_bytes;
 use blacknet_time::{Milliseconds, Seconds, SystemClock};
 use bytemuck::NoUninit;
-use core::{cmp::min, num::NonZero};
+use core::{cmp::min, num::NonZero, ops::ControlFlow};
 use std::sync::{Arc, Mutex, MutexGuard, atomic::*};
 use tokio::{
     io::{AsyncReadExt, AsyncWriteExt, BufReader, BufWriter},
     net::tcp::{OwnedReadHalf, OwnedWriteHalf},
-    runtime::Handle,
     sync::mpsc::{UnboundedReceiver, UnboundedSender, unbounded_channel},
-    task::JoinHandle,
+    task::JoinSet,
     time::sleep,
 };
+use tokio_util::sync::CancellationToken;
 
 pub type ConnectionId = NonZero<u64>;
 
 pub struct Connection {
     logger: Logger,
-    handles: Mutex<Vec<JoinHandle<()>>>,
     node: Arc<Node>,
 
     remote_endpoint: Endpoint,
@@ -58,7 +57,7 @@ pub struct Connection {
     total_bytes_read: AtomicU64,
     total_bytes_written: AtomicU64,
 
-    closed: AtomicBool,
+    close: CancellationToken,
     dos_score: AtomicU8,
     send_channel_size: AtomicUsize,
     send_channel: UnboundedSender<(PacketKind, Vec<u8>)>,
@@ -95,14 +94,13 @@ impl Connection {
         (
             Arc::new(Self {
                 logger,
-                handles: Mutex::new(Vec::new()),
                 node,
                 remote_endpoint,
                 local_endpoint,
                 state: Atomic::new(state),
                 total_bytes_read: AtomicU64::new(0),
                 total_bytes_written: AtomicU64::new(0),
-                closed: AtomicBool::new(false),
+                close: CancellationToken::new(),
                 dos_score: AtomicU8::new(0),
                 send_channel_size: AtomicUsize::new(0),
                 send_channel,
@@ -127,32 +125,36 @@ impl Connection {
         )
     }
 
-    pub fn launch(
+    pub async fn run(
         self: Arc<Self>,
         buf_reader: BufReader<OwnedReadHalf>,
         buf_writer: BufWriter<OwnedWriteHalf>,
         recv_channel: UnboundedReceiver<(PacketKind, Vec<u8>)>,
-        runtime: &Handle,
     ) {
-        let mut handles = self.handles.lock().unwrap();
-        handles.push(runtime.spawn(self.clone().pinger()));
-        handles.push(runtime.spawn(self.clone().whisperer()));
-        handles.push(runtime.spawn(self.clone().pusher()));
-        handles.push(runtime.spawn(self.clone().receiver(buf_reader)));
-        handles.push(runtime.spawn(self.clone().sender(recv_channel, buf_writer)));
-    }
+        let mut tasks = JoinSet::<()>::new();
+        tasks.spawn(self.clone().pinger());
+        tasks.spawn(self.clone().whisperer());
+        tasks.spawn(self.clone().pusher());
+        tasks.spawn(self.clone().receiver(buf_reader));
+        tasks.spawn(self.clone().sender(recv_channel, buf_writer));
+        tasks.spawn(self.close.clone().cancelled_owned());
+        let _ = tasks.join_next().await;
 
-    pub async fn join(&self) {
-        loop {
-            let handle = {
-                let mut handles = self.handles.lock().unwrap();
-                if let Some(handle) = handles.pop() {
-                    handle
-                } else {
-                    break;
-                }
-            };
-            let _ = handle.await;
+        self.close.cancel();
+        tasks.shutdown().await;
+
+        if let Ok(mut connections) = self.node().connections().write() {
+            if let Some(index) = connections
+                .iter()
+                .position(|connection| connection.id() == self.id())
+            {
+                connections.swap_remove(index);
+            } else {
+                error!(self.logger(), "Close can't find connection");
+            }
+        }
+        if self.is_established() {
+            self.node().block_fetcher().disconnected(&self);
         }
     }
 
@@ -229,29 +231,11 @@ impl Connection {
     }
 
     pub fn close(&self) {
-        if !self.closed.swap(true, Ordering::AcqRel) {
-            if let Ok(mut connections) = self.node().connections().write() {
-                if let Some(index) = connections
-                    .iter()
-                    .position(|connection| connection.id() == self.id())
-                {
-                    connections.swap_remove(index);
-                } else {
-                    error!(self.logger(), "Close can't find connection");
-                }
-            }
-
-            if self.is_established() {
-                self.node().block_fetcher().disconnected(self);
-            }
-
-            let handles = self.handles.lock().unwrap();
-            handles.iter().for_each(JoinHandle::abort);
-        }
+        self.close.cancel()
     }
 
     pub fn is_closed(&self) -> bool {
-        self.closed.load(Ordering::Acquire)
+        self.close.is_cancelled()
     }
 
     pub fn dos(&self, reason: &str) {
@@ -449,9 +433,10 @@ impl Connection {
             let delay = FAST_RNG.with_borrow_mut(|rng| delay_dst.sample(rng));
             let delay = Milliseconds::new(delay);
             sleep(delay.try_into().unwrap()).await;
-            self.ping_pong().await;
+            if self.ping_pong().await.is_break() {
+                return;
+            }
         } else {
-            self.close();
             return;
         }
 
@@ -462,24 +447,24 @@ impl Connection {
             if d > Milliseconds::ZERO {
                 sleep(d.try_into().unwrap()).await;
                 continue;
-            } else {
-                self.ping_pong().await;
+            } else if self.ping_pong().await.is_break() {
+                break;
             }
         }
     }
 
-    async fn ping_pong(&self) {
+    async fn ping_pong(&self) -> ControlFlow<()> {
         self.send_ping();
         sleep(NETWORK_TIMEOUT.try_into().unwrap()).await;
         if self.ping_request.load().is_none() {
-            return;
+            return ControlFlow::Continue(());
         }
         info!(
             self.logger,
             "Disconnecting {} on ping timeout",
             self.log_name()
         );
-        self.close();
+        ControlFlow::Break(())
     }
 
     fn send_ping(&self) {
@@ -566,7 +551,6 @@ impl Connection {
             self.total_bytes_read
                 .fetch_add((PACKET_LENGTH_SIZE + size) as u64, Ordering::Relaxed);
         }
-        self.close();
     }
 
     async fn sender(
@@ -597,7 +581,6 @@ impl Connection {
             self.total_bytes_written
                 .fetch_add(8 + bytes.len() as u64, Ordering::Relaxed);
         }
-        self.close();
     }
 }
 
