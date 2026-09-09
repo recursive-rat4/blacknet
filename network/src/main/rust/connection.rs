@@ -543,13 +543,13 @@ impl Connection {
             if !(self.is_established() ^ kind.is_handshake()) {
                 break;
             }
+            self.set_last_packet_time(SystemClock::millis());
+            self.total_bytes_read
+                .fetch_add((PACKET_LENGTH_SIZE + size) as u64, Ordering::Relaxed);
             debug!(self.logger, "Received {kind:?}");
             if !kind.handle(body, &self) {
                 break;
             }
-            self.set_last_packet_time(SystemClock::millis());
-            self.total_bytes_read
-                .fetch_add((PACKET_LENGTH_SIZE + size) as u64, Ordering::Relaxed);
         }
     }
 
