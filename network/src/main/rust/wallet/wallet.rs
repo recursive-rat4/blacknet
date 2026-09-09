@@ -20,16 +20,15 @@ use blacknet_kernel::{
     account::Lease,
     amount::Amount,
     blake2b::Hash,
-    ed25519::{PublicKey, SecretKey},
+    ed25519::{PublicKey, SecretKey, to_public_key, to_secret_key},
     transaction::{HashTimeLockContractId, MultiSignatureLockContractId},
 };
 use blacknet_time::{Seconds, SystemClock};
 use core::fmt;
-use rusqlite::{Connection, Error as SqliteError, OpenFlags};
-use std::{
-    path::Path,
-    sync::{Arc, Mutex},
-};
+use rusqlite::{Connection, OpenFlags};
+use std::{path::Path, sync::Mutex};
+
+pub use rusqlite::Error;
 
 #[derive(Debug)]
 pub struct Wallet {
@@ -46,22 +45,22 @@ impl Wallet {
         Self::open_flags() | OpenFlags::SQLITE_OPEN_CREATE
     }
 
-    pub fn create(path: &Path, public_key: PublicKey, mode: &Mode) -> Result<Self> {
+    pub fn create(path: &Path, mode: &Mode) -> Result<Self> {
         let connection = Connection::open_with_flags(path, Self::create_flags())?;
-        Self::initialize(connection, public_key, mode)
+        Self::initialize(connection, mode)
     }
 
-    pub fn open(path: &Path, mode: &Mode) -> Result<Self> {
+    pub fn open(path: &Path, mode: &Mode) -> Result<Self, OpenError> {
         let connection = Connection::open_with_flags(path, Self::open_flags())?;
         Self::attach(connection, mode)
     }
 
-    pub fn ephemeral(public_key: PublicKey, mode: &Mode) -> Result<Self> {
+    pub fn ephemeral(mode: &Mode) -> Result<Self> {
         let connection = Connection::open_in_memory_with_flags(Self::create_flags())?;
-        Self::initialize(connection, public_key, mode)
+        Self::initialize(connection, mode)
     }
 
-    pub fn attach(connection: Connection, mode: &Mode) -> Result<Self> {
+    pub fn attach(connection: Connection, mode: &Mode) -> Result<Self, OpenError> {
         Self::check_magic(&connection, mode)?;
         Self::configure(&connection)?;
         Ok(Self {
@@ -78,12 +77,12 @@ impl Wallet {
         Ok(())
     }
 
-    fn check_magic(connection: &Connection, mode: &Mode) -> Result<()> {
+    fn check_magic(connection: &Connection, mode: &Mode) -> Result<(), OpenError> {
         let magic: u32 = connection.query_one("PRAGMA application_id;", (), |row| row.get(0))?;
         if magic == mode.network_magic() {
             Ok(())
         } else {
-            Err(Error::WrongMagic(mode.agent_name().to_owned()))
+            Err(OpenError::Magic(mode.agent_name().to_owned()))
         }
     }
 
@@ -98,8 +97,16 @@ impl Wallet {
             "CREATE TABLE wallet(\
                 id INTEGER PRIMARY KEY CHECK (id = 0),\
                 created_at INTEGER NOT NULL,\
-                public_key BLOB NOT NULL,\
+                is_staking INTEGER NOT NULL CHECK (is_staking IN (FALSE, TRUE)),\
                 sequence INTEGER NOT NULL\
+             ) STRICT;",
+            (),
+        )?;
+        connection.execute(
+            "CREATE TABLE keys(\
+                 path TEXT NOT NULL UNIQUE,\
+                 secret BLOB,\
+                 public BLOB\
              ) STRICT;",
             (),
         )?;
@@ -120,7 +127,7 @@ impl Wallet {
         Ok(())
     }
 
-    fn initialize(connection: Connection, public_key: PublicKey, mode: &Mode) -> Result<Self> {
+    fn initialize(connection: Connection, mode: &Mode) -> Result<Self> {
         Self::configure(&connection)?;
         Self::set_magic(&connection, mode)?;
         Self::create_schema(&connection)?;
@@ -129,12 +136,32 @@ impl Wallet {
 
         connection.execute(
             "INSERT INTO wallet VALUES(?, ?, ?, ?);",
-            (0, created_at.value(), public_key.as_ref(), 0),
+            (0, created_at.value(), true, 0),
         )?;
 
         Ok(Self {
             connection: Mutex::new(connection),
         })
+    }
+
+    pub fn set_mnemonic(&self, mnemonic: &str) -> Result<()> {
+        let connection = self.connection.lock().unwrap();
+        connection.execute(
+            "INSERT INTO keys VALUES(?, ?, ?);",
+            ("master", mnemonic.as_bytes(), Option::<&[u8]>::None),
+        )?;
+        Ok(())
+    }
+
+    pub fn derive_account(&self) -> Result<(), DeriveAccountError> {
+        let connection = self.connection.lock().unwrap();
+        let mut statement = connection.prepare_cached("SELECT secret FROM keys WHERE path = ?;")?;
+        let master: Box<[u8]> = statement.query_one(("master",), |row| row.get(0))?;
+        let secret_key = to_secret_key(master).ok_or(DeriveAccountError::Version)?;
+        let public_key = to_public_key(&secret_key);
+        let mut statement = connection.prepare_cached("INSERT INTO keys VALUES(?, ?, ?);")?;
+        statement.execute(("", secret_key.as_ref(), public_key.as_ref()))?;
+        Ok(())
     }
 
     pub fn created_at(&self) -> Result<Seconds> {
@@ -145,18 +172,24 @@ impl Wallet {
     }
 
     pub fn is_staking(&self) -> Result<bool> {
-        todo!();
+        let connection = self.connection.lock().unwrap();
+        let mut statement = connection.prepare_cached("SELECT is_staking FROM wallet;")?;
+        let b: bool = statement.query_one((), |row| row.get(0))?;
+        Ok(b)
     }
 
     pub fn public_key(&self) -> Result<PublicKey> {
         let connection = self.connection.lock().unwrap();
-        let mut statement = connection.prepare_cached("SELECT public_key FROM wallet;")?;
-        let bytes: [u8; 32] = statement.query_one((), |row| row.get(0))?;
+        let mut statement = connection.prepare_cached("SELECT public FROM keys WHERE path = ?;")?;
+        let bytes: [u8; 32] = statement.query_one(("",), |row| row.get(0))?;
         Ok(PublicKey::from(bytes))
     }
 
-    pub fn secret_key(&self) -> Result<&Arc<SecretKey>> {
-        todo!();
+    pub fn secret_key(&self) -> Result<SecretKey> {
+        let connection = self.connection.lock().unwrap();
+        let mut statement = connection.prepare_cached("SELECT secret FROM keys WHERE path = ?;")?;
+        let bytes: [u8; 32] = statement.query_one(("",), |row| row.get(0))?;
+        Ok(SecretKey::from(bytes))
     }
 
     pub fn sequence(&self) -> Result<u32> {
@@ -305,21 +338,21 @@ impl Wallet {
 }
 
 #[derive(Debug)]
-pub enum Error {
-    WrongMagic(String),
-    Sqlite(SqliteError),
+pub enum OpenError {
+    Magic(String),
+    Sqlite(Error),
 }
 
-impl From<SqliteError> for Error {
-    fn from(error: SqliteError) -> Self {
+impl From<Error> for OpenError {
+    fn from(error: Error) -> Self {
         Self::Sqlite(error)
     }
 }
 
-impl fmt::Display for Error {
+impl fmt::Display for OpenError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::WrongMagic(name) => {
+            Self::Magic(name) => {
                 write!(f, "This SQLite database doesn't look like {name} wallet")
             }
             Self::Sqlite(err) => write!(f, "{err}"),
@@ -327,6 +360,32 @@ impl fmt::Display for Error {
     }
 }
 
-impl core::error::Error for Error {}
+impl core::error::Error for OpenError {}
 
-pub type Result<T> = core::result::Result<T, Error>;
+#[derive(Debug)]
+pub enum DeriveAccountError {
+    Version,
+    Sqlite(Error),
+}
+
+impl From<Error> for DeriveAccountError {
+    fn from(error: Error) -> Self {
+        Self::Sqlite(error)
+    }
+}
+
+impl fmt::Display for DeriveAccountError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Version => write!(
+                f,
+                "Cannot derive pre-quantum account from this master secret"
+            ),
+            Self::Sqlite(err) => write!(f, "{err}"),
+        }
+    }
+}
+
+impl core::error::Error for DeriveAccountError {}
+
+pub type Result<T, E = Error> = core::result::Result<T, E>;

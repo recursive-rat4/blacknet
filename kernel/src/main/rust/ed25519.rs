@@ -23,12 +23,7 @@ use blacknet_crypto::{
     ed25519::{Edwards25519Affine, Edwards25519Extended, Field25519, Scalar25519},
     symmetric::{Blake2b256, Blake2b512},
 };
-use core::{
-    array::TryFromSliceError,
-    fmt::{Debug, Formatter, Result as FmtResult},
-    mem::transmute,
-    str::FromStr,
-};
+use core::{array::TryFromSliceError, fmt, mem::transmute, str::FromStr};
 use data_encoding::{DecodeError, DecodeKind, HEXUPPER};
 use serde::{Deserialize, Serialize};
 use zeroize::ZeroizeOnDrop;
@@ -67,8 +62,8 @@ impl Signature {
     }
 }
 
-impl Debug for Signature {
-    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+impl fmt::Debug for Signature {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
             "{}{}",
@@ -113,15 +108,15 @@ impl AsRef<[u8]> for PublicKey {
     }
 }
 
-impl Debug for PublicKey {
-    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+impl fmt::Debug for PublicKey {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", HEXUPPER.encode(&self.0))
     }
 }
 
 impl From<[u8; 32]> for PublicKey {
-    fn from(array: [u8; 32]) -> Self {
-        Self(array)
+    fn from(bytes: [u8; 32]) -> Self {
+        Self(bytes)
     }
 }
 
@@ -175,6 +170,18 @@ impl AsRef<[u8]> for SecretKey {
     }
 }
 
+impl fmt::Debug for SecretKey {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("SecretKey").finish_non_exhaustive()
+    }
+}
+
+impl From<[u8; 32]> for SecretKey {
+    fn from(bytes: [u8; 32]) -> Self {
+        Self(bytes)
+    }
+}
+
 impl TryFrom<&str> for SecretKey {
     type Error = DecodeError;
 
@@ -198,8 +205,8 @@ const fn check_version(bytes: [u8; 32]) -> bool {
     bytes[0] & 0xF0 == 0x10
 }
 
-pub fn to_secret_key(mnemonic: &str) -> Option<SecretKey> {
-    let bytes: [u8; 32] = Blake2b256::digest(mnemonic);
+pub fn to_secret_key<Seed: AsRef<[u8]>>(seed: Seed) -> Option<SecretKey> {
+    let bytes: [u8; 32] = Blake2b256::digest(seed);
     if check_version(bytes) {
         Some(SecretKey(bytes))
     } else {

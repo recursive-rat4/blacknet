@@ -20,36 +20,57 @@ use blacknet_kernel::{
     account::Lease,
     amount::Amount,
     blake2b::Hash,
-    ed25519::PublicKey,
+    ed25519::{PublicKey, SecretKey},
     transaction::{HashTimeLockContractId, MultiSignatureLockContractId},
 };
-use blacknet_network::wallet::{Error, Wallet};
-use core::assert_matches;
+use blacknet_network::wallet::{DeriveAccountError, Error, OpenError, Wallet};
+use core::{assert_matches, str::FromStr};
 use rusqlite::Connection;
-
-#[test]
-fn ephemeral() {
-    let mode = Mode::regtest();
-    let public_key = PublicKey::default();
-    let wallet = Wallet::ephemeral(public_key, &mode).unwrap();
-
-    assert_matches!(wallet.created_at(), Ok(_));
-    assert_eq!(wallet.public_key().unwrap(), public_key);
-    assert_matches!(wallet.sequence(), Ok(0));
-}
 
 #[test]
 fn magic() {
     let mode = Mode::regtest();
     let connection = Connection::open_in_memory().unwrap();
 
-    assert_matches!(Wallet::attach(connection, &mode), Err(Error::WrongMagic(_)));
+    assert_matches!(Wallet::attach(connection, &mode), Err(OpenError::Magic(_)));
+}
+
+#[test]
+fn ephemeral() {
+    let mode = Mode::regtest();
+    let wallet = Wallet::ephemeral(&mode).unwrap();
+
+    assert_matches!(wallet.created_at(), Ok(_));
+    assert_matches!(wallet.is_staking(), Ok(true));
+    assert_matches!(wallet.sequence(), Ok(0));
+}
+
+#[test]
+fn keys() {
+    let mode = Mode::regtest();
+    let wallet = Wallet::ephemeral(&mode).unwrap();
+    let mnemonic = "胡 允 空 桥 料 状 纱 角 钠 灌 绝 件";
+    let public_key =
+        PublicKey::from_str("A65AEF3E4128031285BF0367832C38AD1366A1E8D5E395BCDC7A17C3B28BAB1D")
+            .unwrap();
+    let secret_key =
+        SecretKey::try_from("168FFB9152BE8C88F1613B54BCCEA40E5F73DBFB845CBA6CA4E5C13D8FD0D68F")
+            .unwrap();
+
+    assert_matches!(wallet.public_key(), Err(Error::QueryReturnedNoRows));
+    assert_matches!(wallet.secret_key(), Err(Error::QueryReturnedNoRows));
+    assert_matches!(wallet.set_mnemonic(mnemonic), Ok(()));
+    assert_matches!(wallet.set_mnemonic(mnemonic), Err(Error::SqliteFailure(..)));
+    assert_matches!(wallet.derive_account(), Ok(()));
+    assert_matches!(wallet.derive_account(), Err(DeriveAccountError::Sqlite(..)));
+    assert_matches!(wallet.public_key(), Ok(pk) if pk == public_key);
+    assert_matches!(wallet.secret_key(), Ok(sk) if sk.as_ref() == secret_key.as_ref());
 }
 
 #[test]
 fn htlc() {
     let mode = Mode::regtest();
-    let wallet = Wallet::ephemeral(PublicKey::default(), &mode).unwrap();
+    let wallet = Wallet::ephemeral(&mode).unwrap();
     let htlc_id = HashTimeLockContractId::default();
 
     assert_matches!(wallet.put_htlc(htlc_id), Ok(()));
@@ -61,7 +82,7 @@ fn htlc() {
 #[test]
 fn multisig() {
     let mode = Mode::regtest();
-    let wallet = Wallet::ephemeral(PublicKey::default(), &mode).unwrap();
+    let wallet = Wallet::ephemeral(&mode).unwrap();
     let multisig_id = MultiSignatureLockContractId::default();
 
     assert_matches!(wallet.put_multisig(multisig_id), Ok(()));
@@ -73,7 +94,7 @@ fn multisig() {
 #[test]
 fn out_lease() {
     let mode = Mode::regtest();
-    let wallet = Wallet::ephemeral(PublicKey::default(), &mode).unwrap();
+    let wallet = Wallet::ephemeral(&mode).unwrap();
     let lease1 = Lease::new(PublicKey::default(), 1, Amount::new(123));
     let lease2 = Lease::new(PublicKey::default(), 2, Amount::new(123));
     let lease3 = Lease::new(PublicKey::default(), 2, Amount::new(100));
@@ -90,7 +111,7 @@ fn out_lease() {
 #[test]
 fn transaction() {
     let mode = Mode::regtest();
-    let wallet = Wallet::ephemeral(PublicKey::default(), &mode).unwrap();
+    let wallet = Wallet::ephemeral(&mode).unwrap();
     let tx_id = Hash::ZERO;
     let tx_bytes: [u8; 4] = [10, 11, 12, 13];
 
@@ -98,7 +119,7 @@ fn transaction() {
     assert_matches!(wallet.put_transaction(tx_id, &tx_bytes), Ok(()));
     assert_matches!(
         wallet.put_transaction(tx_id, &tx_bytes),
-        Err(Error::Sqlite(_))
+        Err(Error::SqliteFailure(..))
     );
     assert_matches!(wallet.count_transactions(), Ok(1));
     let bytes = wallet.get_transaction(tx_id).unwrap();

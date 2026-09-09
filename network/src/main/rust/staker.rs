@@ -63,7 +63,7 @@ impl Staker {
             match wallet.is_staking() {
                 Ok(true) => match wallet.secret_key() {
                     Ok(secret_key) => {
-                        staker.start_staking(public_key, secret_key.clone());
+                        staker.start_staking(public_key, Arc::new(secret_key));
                     }
                     Err(err) => error!(staker.logger, "{err}"),
                 },

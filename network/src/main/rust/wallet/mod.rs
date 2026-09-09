@@ -22,5 +22,5 @@ mod walletdb;
 
 pub use address::{AddressCodec, AddressKind};
 pub use transactiondata::{TransactionData, TransactionDataType};
-pub use wallet::{Error, Wallet};
+pub use wallet::{DeriveAccountError, Error, OpenError, Wallet};
 pub use walletdb::{Notification, Notifier, Subscriber, WalletDB};
