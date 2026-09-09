@@ -254,6 +254,10 @@ impl BlockFetcher {
     }
 
     async fn process_announce(&self, connection: Arc<Connection>, announce: BlockAnnounce) {
+        if connection.is_closed() {
+            return;
+        }
+
         if connection.requested_blocks() {
             return;
         }
@@ -268,10 +272,13 @@ impl BlockFetcher {
             return;
         }
 
-        info!(self.logger, "Fetching {}", announce.hash());
+        info!(self.logger, "Fetch {}", announce.hash());
         let mut session = Session::new(state.0.block_hash());
 
         'request_loop: loop {
+            if connection.is_closed() {
+                break;
+            }
             let receiver = self.request_blocks(
                 &session,
                 &state.0,
