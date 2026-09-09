@@ -17,7 +17,7 @@
 
 use core::cmp::min;
 use core::mem::{transmute, transmute_copy};
-use zeroize::DefaultIsZeroes;
+use zeroize::Zeroize;
 
 pub const KEY_SIZE: usize = 32;
 pub const IV_SIZE: usize = 12;
@@ -26,7 +26,7 @@ pub const BLOCK_LEN: usize = 16;
 const SIGMA: [u32; 4] = [0x61707865, 0x3320646E, 0x79622D32, 0x6B206574];
 
 /// ChaCha stream cipher. <https://cr.yp.to/chacha/chacha-20080128.pdf>
-#[derive(Clone, Copy, Default)]
+#[derive(Zeroize)]
 pub struct ChaCha<const ROUNDS: usize> {
     input: [u32; BLOCK_LEN],
 }
@@ -120,7 +120,5 @@ impl<const ROUNDS: usize> ChaCha<ROUNDS> {
         }
     }
 }
-
-impl<const ROUNDS: usize> DefaultIsZeroes for ChaCha<ROUNDS> {}
 
 pub type ChaCha20 = ChaCha<20>;

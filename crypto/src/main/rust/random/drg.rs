@@ -18,9 +18,11 @@
 use crate::random::{Seedable, UniformGenerator};
 use crate::symmetric::chacha::{BLOCK_LEN, BLOCK_SIZE, ChaCha, KEY_SIZE};
 use core::mem::transmute;
+use zeroize::Zeroize;
 
 pub const SEED_SIZE: usize = KEY_SIZE;
 
+#[derive(Zeroize)]
 pub struct ChaChaDRG<const ROUNDS: usize> {
     chacha: ChaCha<ROUNDS>,
     buffer: [u8; BLOCK_SIZE],
