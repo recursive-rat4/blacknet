@@ -239,7 +239,7 @@ impl Router {
                                 }
                             }
                             Err(msg) => {
-                                warn!(self.logger, "{msg}");
+                                warn!(self.logger, "listen_ip: {msg}");
                                 break;
                             }
                         }
@@ -247,7 +247,7 @@ impl Router {
                     self.remove_listener(endpoint);
                 }
                 Err(msg) => {
-                    warn!(self.logger, "{msg}");
+                    warn!(self.logger, "listen_ip: {msg}");
                 }
             }
 
@@ -367,31 +367,31 @@ impl Router {
     }
 
     fn add_listener(&self, endpoint: Endpoint) {
-        info!(
-            self.logger,
-            "Listening on {}",
-            endpoint.to_log(self.config.log_endpoint)
-        );
         let inserted = {
             let mut listens = self.listens.write().unwrap();
             listens.insert(endpoint)
         };
         if inserted {
-            self.peer_table.contacted(endpoint)
+            self.peer_table.contacted(endpoint);
+            info!(
+                self.logger,
+                "Listening on {}",
+                endpoint.to_log(self.config.log_endpoint)
+            );
         }
     }
     fn remove_listener(&self, endpoint: Endpoint) {
-        info!(
-            self.logger,
-            "Lost binding to {}",
-            endpoint.to_log(self.config.log_endpoint)
-        );
         let removed = {
             let mut listens = self.listens.write().unwrap();
             listens.remove(&endpoint)
         };
         if removed {
-            self.peer_table.discontacted(endpoint)
+            self.peer_table.discontacted(endpoint);
+            info!(
+                self.logger,
+                "Lost binding to {}",
+                endpoint.to_log(self.config.log_endpoint)
+            );
         }
     }
     pub const fn listening(&self) -> &RwLock<HashSet<Endpoint>> {
