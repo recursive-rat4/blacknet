@@ -218,7 +218,7 @@ impl Connection {
             + bytes.len()
             <= self.node().max_packet_size() as usize * 10
         {
-            self.send_channel.send((T::kind(), bytes)).unwrap();
+            let _ = self.send_channel.send((T::kind(), bytes));
         } else {
             info!(self.logger, "Disconnecting on send queue overflow");
             self.close();
