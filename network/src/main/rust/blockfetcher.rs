@@ -31,7 +31,7 @@ use blacknet_kernel::{
 use blacknet_log::{Error as LogError, LogManager, Logger, debug, error, info};
 use blacknet_time::{Milliseconds, SystemClock};
 use core::{cmp::max, fmt};
-use std::sync::{Arc, OnceLock, RwLock};
+use std::sync::{Arc, OnceLock, RwLock, Weak};
 use tokio::{
     runtime::Runtime,
     select,
@@ -43,8 +43,8 @@ use tokio_util::sync::CancellationToken;
 pub struct BlockFetcher {
     logger: Logger,
     staker_sender: mpsc::UnboundedSender<(Hash, Box<[u8]>, oneshot::Sender<Result<()>>)>,
-    announces_sender: mpsc::Sender<(Arc<Connection>, BlockAnnounce)>,
-    deferred_sender: mpsc::Sender<(Arc<Connection>, Blocks)>,
+    announces_sender: mpsc::Sender<(Weak<Connection>, BlockAnnounce)>,
+    deferred_sender: mpsc::Sender<(Weak<Connection>, Blocks)>,
     request: RwLock<Option<RequestSender>>,
     block_db: Arc<BlockDB>,
     coin_db: Arc<CoinDB>,
@@ -107,7 +107,7 @@ impl BlockFetcher {
 
         let _ = self
             .announces_sender
-            .try_send((connection.clone(), block_announce));
+            .try_send((Arc::downgrade(connection), block_announce));
     }
 
     pub async fn staked_block(&self, hash: Hash, bytes: Box<[u8]>) -> Result<()> {
@@ -150,13 +150,17 @@ impl BlockFetcher {
         match *request {
             Some(ref request_ref) => {
                 if request_ref.connection_id != connection.id() {
-                    let _ = self.deferred_sender.try_send((connection.clone(), blocks));
+                    let _ = self
+                        .deferred_sender
+                        .try_send((Arc::downgrade(connection), blocks));
                 } else {
                     request.take().unwrap().complete(blocks);
                 }
             }
             None => {
-                let _ = self.deferred_sender.try_send((connection.clone(), blocks));
+                let _ = self
+                    .deferred_sender
+                    .try_send((Arc::downgrade(connection), blocks));
             }
         }
     }
@@ -168,8 +172,8 @@ impl BlockFetcher {
             Box<[u8]>,
             oneshot::Sender<Result<()>>,
         )>,
-        mut announces_receiver: mpsc::Receiver<(Arc<Connection>, BlockAnnounce)>,
-        mut deferred_receiver: mpsc::Receiver<(Arc<Connection>, Blocks)>,
+        mut announces_receiver: mpsc::Receiver<(Weak<Connection>, BlockAnnounce)>,
+        mut deferred_receiver: mpsc::Receiver<(Weak<Connection>, Blocks)>,
     ) {
         loop {
             select! {
@@ -206,25 +210,31 @@ impl BlockFetcher {
     }
 
     /// Blocks were received after timeout. During lags, processing these helps to stay in sync.
-    async fn process_deferred(&self, connection: Arc<Connection>, answer: Blocks) {
+    async fn process_deferred(&self, connection: Weak<Connection>, answer: Blocks) {
+        let connection = connection.upgrade();
         let (hashes, blocks) = answer.into();
         if !blocks.is_empty() {
+            let mut accepted = 0;
             info!(
                 self.logger,
                 "Mongering {} deferred blocks from {}",
                 blocks.len(),
-                connection.log_name(),
+                connection
+                    .as_deref()
+                    .map_or_else(|| "a disconnected peer".to_string(), Connection::log_name),
             );
             for i in blocks {
                 let Some(hash) = Block::compute_hash(&i) else {
-                    connection.dos("Unhashable block");
-                    return;
+                    if let Some(c) = connection {
+                        c.dos("Unhashable block")
+                    };
+                    break;
                 };
                 let result = self.block_db.process(&self.coin_db, hash, i);
                 match result {
                     Ok(()) => {
                         // Continue catching up
-                        info!(self.logger, "Accepted {hash}");
+                        accepted += 1;
                         continue;
                     }
                     Err(Error::AlreadyHave(_)) => {
@@ -234,7 +244,9 @@ impl BlockFetcher {
                     }
                     Err(Error::InFuture(msg)) | Err(Error::Invalid(msg)) => {
                         // No way
-                        connection.dos(&msg);
+                        if let Some(c) = connection {
+                            c.dos(&msg)
+                        };
                         break;
                     }
                     Err(Error::NotReachableVertex(_)) => {
@@ -243,6 +255,9 @@ impl BlockFetcher {
                         break;
                     }
                 }
+            }
+            if accepted > 0 {
+                info!(self.logger, "Accepted {accepted} deferred blocks");
             }
         } else if hashes.is_empty() {
             //XXX Can be used somehow?
@@ -253,10 +268,10 @@ impl BlockFetcher {
         }
     }
 
-    async fn process_announce(&self, connection: Arc<Connection>, announce: BlockAnnounce) {
-        if connection.is_closed() {
+    async fn process_announce(&self, connection: Weak<Connection>, announce: BlockAnnounce) {
+        let Some(connection) = connection.upgrade() else {
             return;
-        }
+        };
 
         if connection.requested_blocks() {
             return;
