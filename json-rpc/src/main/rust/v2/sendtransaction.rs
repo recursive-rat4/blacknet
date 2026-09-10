@@ -23,7 +23,7 @@ use axum::{
     routing::get,
     routing::post,
 };
-use blacknet_crypto::zeroize::zeroize_string;
+use blacknet_crypto::zeroize::ZeroizingString;
 use blacknet_kernel::{
     amount::Amount,
     blake2b::Hash,
@@ -41,17 +41,11 @@ use std::sync::Arc;
 
 #[derive(Deserialize, Serialize)]
 pub struct BundleRequest {
-    pub mnemonic: String,
+    pub mnemonic: ZeroizingString,
     pub fee: String,
     pub id: String,
     pub data: String,
     pub referenceChain: Option<String>,
-}
-
-impl Drop for BundleRequest {
-    fn drop(&mut self) {
-        zeroize_string(&mut self.mnemonic)
-    }
 }
 
 async fn bundle(
@@ -123,17 +117,11 @@ async fn bundle(
 
 #[derive(Deserialize, Serialize)]
 pub struct BurnRequest {
-    pub mnemonic: String,
+    pub mnemonic: ZeroizingString,
     pub fee: String,
     pub amount: String,
     pub message: String,
     pub referenceChain: Option<String>,
-}
-
-impl Drop for BurnRequest {
-    fn drop(&mut self) {
-        zeroize_string(&mut self.mnemonic)
-    }
 }
 
 async fn burn(
@@ -195,18 +183,12 @@ async fn burn(
 
 #[derive(Deserialize, Serialize)]
 pub struct CancelLeaseRequest {
-    pub mnemonic: String,
+    pub mnemonic: ZeroizingString,
     pub fee: String,
     pub amount: String,
     pub to: String,
     pub height: u32,
     pub referenceChain: Option<String>,
-}
-
-impl Drop for CancelLeaseRequest {
-    fn drop(&mut self) {
-        zeroize_string(&mut self.mnemonic)
-    }
 }
 
 async fn cancel_lease(
@@ -268,17 +250,11 @@ async fn cancel_lease(
 
 #[derive(Deserialize, Serialize)]
 pub struct ClaimSwapRequest {
-    pub mnemonic: String,
+    pub mnemonic: ZeroizingString,
     pub fee: String,
     pub id: String,
     pub preimage: String,
     pub referenceChain: Option<String>,
-}
-
-impl Drop for ClaimSwapRequest {
-    fn drop(&mut self) {
-        zeroize_string(&mut self.mnemonic)
-    }
 }
 
 async fn claim_swap(
@@ -350,7 +326,7 @@ async fn claim_swap(
 
 #[derive(Deserialize, Serialize)]
 pub struct CreateSwapRequest {
-    pub mnemonic: String,
+    pub mnemonic: ZeroizingString,
     pub fee: String,
     pub amount: String,
     pub to: String,
@@ -359,12 +335,6 @@ pub struct CreateSwapRequest {
     pub hashLockType: HashKind,
     pub hashLockData: String,
     pub referenceChain: Option<String>,
-}
-
-impl Drop for CreateSwapRequest {
-    fn drop(&mut self) {
-        zeroize_string(&mut self.mnemonic)
-    }
 }
 
 async fn create_swap(
@@ -434,17 +404,11 @@ async fn create_swap(
 
 #[derive(Deserialize, Serialize)]
 pub struct LeaseRequest {
-    pub mnemonic: String,
+    pub mnemonic: ZeroizingString,
     pub fee: String,
     pub amount: String,
     pub to: String,
     pub referenceChain: Option<String>,
-}
-
-impl Drop for LeaseRequest {
-    fn drop(&mut self) {
-        zeroize_string(&mut self.mnemonic)
-    }
 }
 
 async fn lease(
@@ -506,16 +470,10 @@ async fn lease(
 
 #[derive(Deserialize, Serialize)]
 pub struct RefundSwapRequest {
-    pub mnemonic: String,
+    pub mnemonic: ZeroizingString,
     pub fee: String,
     pub id: String,
     pub referenceChain: Option<String>,
-}
-
-impl Drop for RefundSwapRequest {
-    fn drop(&mut self) {
-        zeroize_string(&mut self.mnemonic)
-    }
 }
 
 async fn refund_swap(
@@ -581,19 +539,13 @@ async fn refund_swap(
 
 #[derive(Deserialize, Serialize)]
 pub struct TransferRequest {
-    pub mnemonic: String,
+    pub mnemonic: ZeroizingString,
     pub fee: String,
     pub amount: String,
     pub to: String,
     pub encrypted: Option<u8>,
     pub message: Option<String>,
     pub referenceChain: Option<String>,
-}
-
-impl Drop for TransferRequest {
-    fn drop(&mut self) {
-        zeroize_string(&mut self.mnemonic)
-    }
 }
 
 async fn transfer(
@@ -662,19 +614,13 @@ async fn transfer(
 
 #[derive(Deserialize, Serialize)]
 pub struct WithdrawFromLeaseRequest {
-    pub mnemonic: String,
+    pub mnemonic: ZeroizingString,
     pub fee: String,
     pub withdraw: String,
     pub amount: String,
     pub to: String,
     pub height: u32,
     pub referenceChain: Option<String>,
-}
-
-impl Drop for WithdrawFromLeaseRequest {
-    fn drop(&mut self) {
-        zeroize_string(&mut self.mnemonic)
-    }
 }
 
 async fn withdraw_from_lease(

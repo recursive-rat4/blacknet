@@ -15,10 +15,23 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-mod zeroize;
-mod zeroizing;
-mod zeroizingstring;
+use crate::zeroize::zeroize_string;
+use alloc::string::String;
+use serde::{Deserialize, Serialize};
 
-pub use zeroize::{zeroize, zeroize_slice, zeroize_string, zeroize_vec, zeroize_with_default};
-pub use zeroizing::Zeroizing;
-pub use zeroizingstring::ZeroizingString;
+#[derive(Deserialize, Serialize)]
+#[repr(transparent)]
+pub struct ZeroizingString(String);
+
+impl Drop for ZeroizingString {
+    fn drop(&mut self) {
+        zeroize_string(&mut self.0)
+    }
+}
+
+impl AsRef<[u8]> for ZeroizingString {
+    #[inline]
+    fn as_ref(&self) -> &[u8] {
+        self.0.as_bytes()
+    }
+}

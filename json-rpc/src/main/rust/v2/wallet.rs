@@ -25,7 +25,7 @@ use axum::{
     response::Response,
     routing::{get, post},
 };
-use blacknet_crypto::zeroize::zeroize_string;
+use blacknet_crypto::zeroize::ZeroizingString;
 use blacknet_kernel::blake2b::Hash;
 use blacknet_network::{db::genesis, network::Network};
 use core::str::FromStr;
@@ -47,13 +47,7 @@ async fn address(State(network): State<Arc<Network>>, address: Path<String>) -> 
 
 #[derive(Deserialize, Serialize)]
 pub struct MnemonicRequest {
-    pub mnemonic: String,
-}
-
-impl Drop for MnemonicRequest {
-    fn drop(&mut self) {
-        zeroize_string(&mut self.mnemonic)
-    }
+    pub mnemonic: ZeroizingString,
 }
 
 #[expect(unused_variables)]
@@ -66,15 +60,9 @@ async fn mnemonic(
 
 #[derive(Deserialize, Serialize)]
 pub struct DecryptPaymentIdRequest {
-    pub mnemonic: String,
+    pub mnemonic: ZeroizingString,
     pub from: String,
     pub message: String,
-}
-
-impl Drop for DecryptPaymentIdRequest {
-    fn drop(&mut self) {
-        zeroize_string(&mut self.mnemonic)
-    }
 }
 
 #[expect(unused_variables)]
@@ -93,14 +81,8 @@ async fn decrypt_payment_id(
 
 #[derive(Deserialize, Serialize)]
 pub struct SignMessageRequest {
-    pub mnemonic: String,
+    pub mnemonic: ZeroizingString,
     pub message: String,
-}
-
-impl Drop for SignMessageRequest {
-    fn drop(&mut self) {
-        zeroize_string(&mut self.mnemonic)
-    }
 }
 
 #[expect(unused_variables)]
