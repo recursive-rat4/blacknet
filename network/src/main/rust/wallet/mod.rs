@@ -19,8 +19,10 @@ mod address;
 mod transactiondata;
 mod wallet;
 mod walletdb;
+mod wordlist;
 
 pub use address::{AddressCodec, AddressKind};
 pub use transactiondata::{TransactionData, TransactionDataType};
 pub use wallet::{DeriveAccountError, Error, OpenError, Wallet};
 pub use walletdb::{Notification, Notifier, Subscriber, WalletDB};
+pub use wordlist::Wordlist;
