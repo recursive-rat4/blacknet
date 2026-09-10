@@ -23,15 +23,15 @@ use crate::algebra::{
 use crate::branchless::{BlAssign, BlEq, BlOption, BlSelect};
 use crate::gf2::GF2;
 use crate::symmetric::{Absorb, Duplexer, Squeeze};
+use bytemuck::Zeroable;
 use core::array;
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum, zip};
 use core::ops::{Add, AddAssign, Div, Mul, MulAssign, Neg, Sub, SubAssign};
 use serde::{Deserialize, Serialize};
-use zeroize::DefaultIsZeroes;
 
 /// The quotient ring `ℤ/(2, x¹²⁸ + x⁷ + x² + x + 1)`.
-#[derive(Clone, Copy, Default, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Copy, Default, Deserialize, Eq, PartialEq, Serialize, Zeroable)]
 pub struct GHashField {
     coefficients: [u64; 2],
 }
@@ -593,8 +593,6 @@ impl Squeeze<u8> for GHashField {
         Self { coefficients }
     }
 }
-
-impl DefaultIsZeroes for GHashField {}
 
 #[inline(always)]
 fn clmul(a: [u64; 2], b: [u64; 2]) -> [u64; 4] {

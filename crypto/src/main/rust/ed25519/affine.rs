@@ -26,7 +26,6 @@ use core::fmt;
 use core::iter::Sum;
 use core::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 use serde::{Deserialize, Deserializer, Serialize, Serializer, de::Error};
-use zeroize::DefaultIsZeroes as ZeroizeIsDefault;
 
 #[derive(Clone, Copy, Eq, PartialEq)]
 pub struct Edwards25519Affine {
@@ -394,5 +393,3 @@ impl<'de> Deserialize<'de> for Edwards25519Affine {
         Self::decode(bytes).ok_or_else(|| D::Error::custom("Not a point on the elliptic curve"))
     }
 }
-
-impl ZeroizeIsDefault for Edwards25519Affine {}

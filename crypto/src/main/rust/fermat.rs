@@ -23,13 +23,13 @@ use crate::algebra::{
 use crate::branchless::{BlAbs, BlAssign, BlOption, BlSelect, BlSwap};
 use crate::convolution::Negacyclic;
 use crate::integer::Integer;
+use bytemuck::Zeroable;
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
 use core::ops::{Add, AddAssign, Div, Mul, MulAssign, Neg, Sub, SubAssign};
-use zeroize::DefaultIsZeroes;
 
 /// The prime field of Fermat number `2¹⁶ + 1`.
-#[derive(Clone, Copy, Default, Eq)]
+#[derive(Clone, Copy, Default, Eq, Zeroable)]
 pub struct FermatField {
     n: i32,
 }
@@ -497,8 +497,6 @@ impl BlSelect for &FermatField {
         Self::Output { n }
     }
 }
-
-impl DefaultIsZeroes for FermatField {}
 
 // (2¹⁶ + 1) / (x¹⁰²⁴ + 1)
 

@@ -17,10 +17,10 @@
 
 use crate::random::UniformGenerator;
 use crate::symmetric::blake2b::Blake2b512;
-use zeroize::Zeroize;
+use bytemuck::Zeroable;
 
 /// BLAKE2Xb extensible-output function.
-#[derive(Clone, Copy, Zeroize)]
+#[derive(Clone, Copy, Zeroable)]
 pub struct Blake2xb {
     state: Blake2b512,
     xof_length: u32,
@@ -67,7 +67,7 @@ impl Default for Blake2xb {
     }
 }
 
-#[derive(Clone, Copy, Zeroize)]
+#[derive(Clone, Copy, Zeroable)]
 pub struct XOFOutput {
     buffer: [u8; 64],
     position: usize,

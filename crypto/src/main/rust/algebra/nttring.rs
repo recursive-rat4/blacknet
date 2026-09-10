@@ -24,6 +24,7 @@ use crate::branchless::BlOption;
 use crate::convolution::{Convolution, Negacyclic};
 use crate::numbertheoretictransform::{NTTConvolution, Twiddles, cooley_tukey, gentleman_sande};
 use crate::symmetric::{Absorb, Duplexer, Squeeze};
+use bytemuck::Zeroable;
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
 use core::mem::{MaybeUninit, transmute_copy};
@@ -31,18 +32,17 @@ use core::ops::{Add, AddAssign, Div, Index, IndexMut, Mul, MulAssign, Neg, Sub, 
 #[cfg(feature = "rayon")]
 use rayon::iter::IntoParallelIterator;
 use serde::{Deserialize, Serialize};
-use zeroize::Zeroize;
 
 // Univariate polynomial ring in NTT form
 
 type Iso<Z, const N: usize> = UnivariateRing<Z, N, Negacyclic>;
 
-#[derive(Clone, Copy, Deserialize, Eq, PartialEq, Serialize, Zeroize)]
+#[derive(Clone, Copy, Deserialize, Eq, PartialEq, Serialize, Zeroable)]
 #[serde(bound(
     deserialize = "[Z; N]: Deserialize<'de>",
     serialize = "[Z; N]: Serialize"
 ))]
-#[zeroize(bound = "Z: Zeroize")]
+#[zeroable(bound = "")]
 pub struct NTTRing<Z: Twiddles<M>, const M: usize, const N: usize> {
     spectrum: Array<Z, N>,
 }

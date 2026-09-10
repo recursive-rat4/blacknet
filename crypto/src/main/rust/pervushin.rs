@@ -25,14 +25,14 @@ use crate::convolution::Negacyclic;
 use crate::gcd::gcd_inner;
 use crate::integer::Integer;
 use crate::symmetric::{Absorb, Duplexer, Squeeze};
+use bytemuck::Zeroable;
 use core::array;
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
 use core::ops::{Add, AddAssign, Div, Mul, MulAssign, Neg, Sub, SubAssign};
-use zeroize::DefaultIsZeroes;
 
 /// The prime field of Pervushin number `2⁶¹ - 1`.
-#[derive(Clone, Copy, Default, Eq)]
+#[derive(Clone, Copy, Default, Eq, Zeroable)]
 pub struct PervushinField {
     n: i64,
 }
@@ -535,8 +535,6 @@ impl Squeeze<u8> for PervushinField {
         Self { n }
     }
 }
-
-impl DefaultIsZeroes for PervushinField {}
 
 // (2⁶¹ - 1) / (x² + 1)
 

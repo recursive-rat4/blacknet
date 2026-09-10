@@ -52,6 +52,7 @@ impl Blake2bDuplexer {
 }
 
 impl Default for Blake2bDuplexer {
+    #[inline]
     fn default() -> Self {
         Self::new()
     }

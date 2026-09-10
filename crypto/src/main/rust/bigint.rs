@@ -20,7 +20,7 @@ use crate::{
     integer::bits_u64,
 };
 use alloc::{string::String, vec::Vec};
-use bytemuck::NoUninit;
+use bytemuck::{NoUninit, Zeroable};
 use core::{
     array,
     cmp::{Ordering, min},
@@ -33,14 +33,13 @@ use core::{
     },
 };
 use serde::{Deserialize, Serialize};
-use zeroize::DefaultIsZeroes;
 
 pub type UInt128 = BigInt<2>;
 pub type UInt256 = BigInt<4>;
 pub type UInt320 = BigInt<5>;
 pub type UInt512 = BigInt<8>;
 
-#[derive(Clone, Copy, Deserialize, Eq, NoUninit, PartialEq, Serialize)]
+#[derive(Clone, Copy, Deserialize, Eq, NoUninit, PartialEq, Serialize, Zeroable)]
 #[serde(bound(
     deserialize = "[u64; N]: Deserialize<'de>",
     serialize = "[u64; N]: Serialize"
@@ -802,5 +801,3 @@ impl<const N: usize> BlOrd for BigInt<N> {
         o
     }
 }
-
-impl<const N: usize> DefaultIsZeroes for BigInt<N> {}

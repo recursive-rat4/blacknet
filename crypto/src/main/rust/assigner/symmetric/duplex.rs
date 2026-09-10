@@ -21,9 +21,7 @@ use crate::assigner::symmetric::Permutation;
 use crate::random::UniformGenerator;
 use crate::symmetric::{Duplexer, Phase};
 use core::marker::PhantomData;
-use zeroize::Zeroize;
 
-#[derive(Zeroize)]
 pub struct Duplex<
     'a,
     S: AdditiveGroup + From<i8>,
@@ -36,7 +34,6 @@ pub struct Duplex<
     position: usize,
     state: [S; WIDTH],
     phantom: PhantomData<P>,
-    #[zeroize(skip)]
     assigment: &'a Assigment<S>,
 }
 

@@ -19,7 +19,6 @@ use crate::algebra::AdditiveGroup;
 use crate::random::{Distribution, UniformGenerator};
 use crate::symmetric::Permutation;
 use core::marker::PhantomData;
-use zeroize::{DefaultIsZeroes, Zeroize};
 
 /// The phase of sponge state
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
@@ -30,8 +29,6 @@ pub enum Phase {
     /// Squeezing from sponge
     Squeeze,
 }
-
-impl DefaultIsZeroes for Phase {}
 
 pub trait Duplexer: Sized {
     type Msg;
@@ -96,7 +93,6 @@ impl Squeeze<u8> for u8 {
 ///
 /// Non-injective padding: <http://fuee.u-fukui.ac.jp/~hirose/publication/ask20160930.pdf>
 ///
-#[derive(Zeroize)]
 pub struct Duplex<
     S: AdditiveGroup + From<i8>,
     const RATE: usize,

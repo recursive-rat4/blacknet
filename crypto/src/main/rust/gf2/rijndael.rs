@@ -23,14 +23,14 @@ use crate::algebra::{
 use crate::branchless::{BlAssign, BlEq, BlOption, BlSelect};
 use crate::gf2::GF2;
 use crate::symmetric::{Absorb, Duplexer, Squeeze};
+use bytemuck::Zeroable;
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
 use core::ops::{Add, AddAssign, Div, Mul, MulAssign, Neg, Sub, SubAssign};
 use serde::{Deserialize, Serialize};
-use zeroize::DefaultIsZeroes;
 
 /// The quotient ring `ℤ/(2, x⁸ + x⁴ + x³ + x + 1)`.
-#[derive(Clone, Copy, Default, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Copy, Default, Deserialize, Eq, PartialEq, Serialize, Zeroable)]
 pub struct RijndaelField {
     coefficients: u8,
 }
@@ -540,8 +540,6 @@ impl Squeeze<u8> for RijndaelField {
         Self { coefficients }
     }
 }
-
-impl DefaultIsZeroes for RijndaelField {}
 
 #[inline(always)]
 fn clmul(a: u8, b: u8) -> u16 {

@@ -22,18 +22,18 @@ use crate::algebra::{
 };
 use crate::branchless::{BlAbs, BlAssign, BlEq, BlSelect};
 use crate::symmetric::{Absorb, Duplexer, Squeeze};
+use bytemuck::Zeroable;
 use core::array;
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
 use core::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 use serde::{Deserialize, Serialize};
-use zeroize::DefaultIsZeroes;
 
 macro_rules! impl_uring {
     ( $($x:tt, $int:ty, $sint:ty, $long:ty, $modulus:literal),+ ) => {
         $(
             #[doc = concat!(stringify!($int), " as ring.")]
-            #[derive(Clone, Copy, Default, Deserialize, Eq, PartialEq, Serialize)]
+            #[derive(Clone, Copy, Default, Deserialize, Eq, PartialEq, Serialize, Zeroable)]
             #[repr(transparent)]
             pub struct $x {
                 n: $int,
@@ -430,8 +430,6 @@ macro_rules! impl_uring {
                     $x { n }
                 }
             }
-
-            impl DefaultIsZeroes for $x {}
         )+
     };
 }

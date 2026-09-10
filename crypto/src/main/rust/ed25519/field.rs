@@ -24,15 +24,15 @@ use crate::bigint::{UInt256, UInt512};
 use crate::branchless::{BlAbs, BlAssign, BlEq, BlOption, BlOrd, BlSelect, BlSwap};
 use crate::integer::Integer;
 use crate::symmetric::{Absorb, Duplexer, Squeeze};
+use bytemuck::Zeroable;
 use core::array;
 use core::fmt;
 use core::iter::{Product, Sum};
 use core::ops::{Add, AddAssign, Div, Mul, MulAssign, Neg, Sub, SubAssign};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
-use zeroize::DefaultIsZeroes;
 
 /// The prime field `2²⁵⁵ - 19`.
-#[derive(Clone, Copy, Default, Eq, PartialEq)]
+#[derive(Clone, Copy, Default, Eq, PartialEq, Zeroable)]
 pub struct Field25519 {
     n: UInt256,
 }
@@ -682,5 +682,3 @@ impl<'de> Deserialize<'de> for Field25519 {
         Ok(Self::with_int(n))
     }
 }
-
-impl DefaultIsZeroes for Field25519 {}

@@ -18,7 +18,6 @@
 use crate::algebra::{IntegerModRing, One, Zero};
 use crate::lpr;
 use crate::random::UniformBitGenerator;
-use zeroize::Zeroize;
 
 // https://blacknet.ninja/blacklemon.pdf
 
@@ -27,7 +26,6 @@ const KAPPA: usize = 2;
 const ELL: usize = lpr::D;
 const R: <lpr::Zq as IntegerModRing>::Int = 40;
 
-#[derive(Zeroize)]
 pub struct SecretKey {
     a: lpr::SecretKey,
     b: lpr::RqNTT,

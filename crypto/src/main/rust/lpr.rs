@@ -25,8 +25,8 @@ use crate::random::{
     DiscreteGaussianDistribution, Distribution, UniformBitGenerator, UniformIntDistribution,
     UniformModDistribution, fill_with_weight,
 };
+use crate::zeroize::zeroize;
 use core::array;
-use zeroize::Zeroize;
 
 // https://eprint.iacr.org/2013/293
 
@@ -42,9 +42,14 @@ pub(crate) const DELTA: <Zq as IntegerModRing>::Int = Zq::MODULUS >> 1;
 pub(crate) const ZQ_DELTA: Zq = unsafe { Zq::from_unchecked(DELTA) };
 pub(crate) const HALF_DELTA: <Zq as IntegerModRing>::Int = Zq::MODULUS >> 2;
 
-#[derive(Zeroize)]
 pub struct SecretKey {
     pub(crate) s: RqNTT,
+}
+
+impl Drop for SecretKey {
+    fn drop(&mut self) {
+        zeroize(&mut self.s)
+    }
 }
 
 pub struct PublicKey {

@@ -22,14 +22,14 @@ use crate::algebra::{
 };
 use crate::branchless::{BlAssign, BlEq, BlOption, BlSelect};
 use crate::integer::Integer;
+use bytemuck::Zeroable;
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
 use core::ops::{Add, AddAssign, Div, Mul, MulAssign, Neg, Sub, SubAssign};
 use serde::{Deserialize, Serialize};
-use zeroize::DefaultIsZeroes;
 
 /// The quotient ring `ℤ/2ℤ`.
-#[derive(Clone, Copy, Default, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Copy, Default, Deserialize, Eq, PartialEq, Serialize, Zeroable)]
 pub struct GF2 {
     n: bool,
 }
@@ -462,5 +462,3 @@ impl BlEq for GF2 {
         self.n.bl_ne(&rps.n)
     }
 }
-
-impl DefaultIsZeroes for GF2 {}

@@ -22,11 +22,11 @@ use blacknet_crypto::{
     bigint::UInt256,
     ed25519::{Edwards25519Affine, Edwards25519Extended, Field25519, Scalar25519},
     symmetric::{Blake2b256, Blake2b512},
+    zeroize::zeroize,
 };
 use core::{array::TryFromSliceError, fmt, mem::transmute, str::FromStr};
 use data_encoding::{DecodeError, DecodeKind, HEXUPPER};
 use serde::{Deserialize, Serialize};
-use zeroize::ZeroizeOnDrop;
 
 // For compatibility, implementation follows eddsa-java 0.3.0
 // https://eprint.iacr.org/2020/1244
@@ -161,7 +161,6 @@ pub fn to_public_key(secret_key: &SecretKey) -> PublicKey {
     PublicKey(bytes)
 }
 
-#[derive(ZeroizeOnDrop)]
 pub struct SecretKey([u8; 32]);
 
 impl AsRef<[u8]> for SecretKey {
@@ -179,6 +178,12 @@ impl fmt::Debug for SecretKey {
 impl From<[u8; 32]> for SecretKey {
     fn from(bytes: [u8; 32]) -> Self {
         Self(bytes)
+    }
+}
+
+impl Drop for SecretKey {
+    fn drop(&mut self) {
+        zeroize(&mut self.0)
     }
 }
 

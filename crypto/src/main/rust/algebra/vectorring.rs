@@ -23,6 +23,7 @@ use crate::algebra::{
 };
 use crate::branchless::BlOption;
 use crate::symmetric::{Absorb, Duplexer, Squeeze};
+use bytemuck::Zeroable;
 use core::borrow::{Borrow, BorrowMut};
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
@@ -32,15 +33,14 @@ use core::ops::{
 #[cfg(feature = "rayon")]
 use rayon::iter::IntoParallelIterator;
 use serde::{Deserialize, Serialize};
-use zeroize::Zeroize;
 
 /// A ring of vectors where multiplication is defined as Hadamard product.
-#[derive(Clone, Copy, Deserialize, Eq, PartialEq, Serialize, Zeroize)]
+#[derive(Clone, Copy, Deserialize, Eq, PartialEq, Serialize, Zeroable)]
 #[serde(bound(
     deserialize = "[R; N]: Deserialize<'de>",
     serialize = "[R; N]: Serialize"
 ))]
-#[zeroize(bound = "R: Zeroize")]
+#[zeroable(bound = "")]
 pub struct VectorRing<R: Semiring, const N: usize> {
     elements: Array<R, N>,
 }

@@ -23,6 +23,7 @@ use axum::{
     routing::get,
     routing::post,
 };
+use blacknet_crypto::zeroize::zeroize_string;
 use blacknet_kernel::{
     amount::Amount,
     blake2b::Hash,
@@ -37,7 +38,6 @@ use core::str::FromStr;
 use data_encoding::HEXUPPER_PERMISSIVE as HEX;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use zeroize::Zeroize;
 
 #[derive(Deserialize, Serialize)]
 pub struct BundleRequest {
@@ -50,7 +50,7 @@ pub struct BundleRequest {
 
 impl Drop for BundleRequest {
     fn drop(&mut self) {
-        self.mnemonic.zeroize()
+        zeroize_string(&mut self.mnemonic)
     }
 }
 
@@ -132,7 +132,7 @@ pub struct BurnRequest {
 
 impl Drop for BurnRequest {
     fn drop(&mut self) {
-        self.mnemonic.zeroize()
+        zeroize_string(&mut self.mnemonic)
     }
 }
 
@@ -205,7 +205,7 @@ pub struct CancelLeaseRequest {
 
 impl Drop for CancelLeaseRequest {
     fn drop(&mut self) {
-        self.mnemonic.zeroize()
+        zeroize_string(&mut self.mnemonic)
     }
 }
 
@@ -277,7 +277,7 @@ pub struct ClaimSwapRequest {
 
 impl Drop for ClaimSwapRequest {
     fn drop(&mut self) {
-        self.mnemonic.zeroize()
+        zeroize_string(&mut self.mnemonic)
     }
 }
 
@@ -363,7 +363,7 @@ pub struct CreateSwapRequest {
 
 impl Drop for CreateSwapRequest {
     fn drop(&mut self) {
-        self.mnemonic.zeroize()
+        zeroize_string(&mut self.mnemonic)
     }
 }
 
@@ -443,7 +443,7 @@ pub struct LeaseRequest {
 
 impl Drop for LeaseRequest {
     fn drop(&mut self) {
-        self.mnemonic.zeroize()
+        zeroize_string(&mut self.mnemonic)
     }
 }
 
@@ -514,7 +514,7 @@ pub struct RefundSwapRequest {
 
 impl Drop for RefundSwapRequest {
     fn drop(&mut self) {
-        self.mnemonic.zeroize()
+        zeroize_string(&mut self.mnemonic)
     }
 }
 
@@ -592,7 +592,7 @@ pub struct TransferRequest {
 
 impl Drop for TransferRequest {
     fn drop(&mut self) {
-        self.mnemonic.zeroize()
+        zeroize_string(&mut self.mnemonic)
     }
 }
 
@@ -673,7 +673,7 @@ pub struct WithdrawFromLeaseRequest {
 
 impl Drop for WithdrawFromLeaseRequest {
     fn drop(&mut self) {
-        self.mnemonic.zeroize()
+        zeroize_string(&mut self.mnemonic)
     }
 }
 

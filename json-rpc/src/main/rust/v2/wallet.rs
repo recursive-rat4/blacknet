@@ -25,12 +25,12 @@ use axum::{
     response::Response,
     routing::{get, post},
 };
+use blacknet_crypto::zeroize::zeroize_string;
 use blacknet_kernel::blake2b::Hash;
 use blacknet_network::{db::genesis, network::Network};
 use core::str::FromStr;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, sync::Arc};
-use zeroize::{Zeroize, ZeroizeOnDrop};
 
 #[expect(unused_variables)]
 async fn generate_account(
@@ -45,9 +45,15 @@ async fn address(State(network): State<Arc<Network>>, address: Path<String>) -> 
     todo!();
 }
 
-#[derive(Deserialize, Serialize, ZeroizeOnDrop)]
+#[derive(Deserialize, Serialize)]
 pub struct MnemonicRequest {
     pub mnemonic: String,
+}
+
+impl Drop for MnemonicRequest {
+    fn drop(&mut self) {
+        zeroize_string(&mut self.mnemonic)
+    }
 }
 
 #[expect(unused_variables)]
@@ -67,7 +73,7 @@ pub struct DecryptPaymentIdRequest {
 
 impl Drop for DecryptPaymentIdRequest {
     fn drop(&mut self) {
-        self.mnemonic.zeroize();
+        zeroize_string(&mut self.mnemonic)
     }
 }
 
@@ -93,7 +99,7 @@ pub struct SignMessageRequest {
 
 impl Drop for SignMessageRequest {
     fn drop(&mut self) {
-        self.mnemonic.zeroize();
+        zeroize_string(&mut self.mnemonic)
     }
 }
 

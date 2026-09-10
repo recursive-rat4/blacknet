@@ -24,15 +24,21 @@ use axum::{
     routing::get,
     routing::post,
 };
+use blacknet_crypto::zeroize::zeroize_string;
 use blacknet_kernel::ed25519::{PublicKey, to_public_key, to_secret_key};
 use blacknet_network::network::Network;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use zeroize::ZeroizeOnDrop;
 
-#[derive(Deserialize, Serialize, ZeroizeOnDrop)]
+#[derive(Deserialize, Serialize)]
 pub struct StartStakingRequest {
     pub mnemonic: String,
+}
+
+impl Drop for StartStakingRequest {
+    fn drop(&mut self) {
+        zeroize_string(&mut self.mnemonic)
+    }
 }
 
 async fn start_staking(
@@ -52,9 +58,15 @@ async fn start_staking(
     )
 }
 
-#[derive(Deserialize, Serialize, ZeroizeOnDrop)]
+#[derive(Deserialize, Serialize)]
 pub struct StopStakingRequest {
     pub mnemonic: String,
+}
+
+impl Drop for StopStakingRequest {
+    fn drop(&mut self) {
+        zeroize_string(&mut self.mnemonic)
+    }
 }
 
 async fn stop_staking(
@@ -70,9 +82,15 @@ async fn stop_staking(
     respond_bool(network.staker().stop_staking(&public_key))
 }
 
-#[derive(Deserialize, Serialize, ZeroizeOnDrop)]
+#[derive(Deserialize, Serialize)]
 pub struct IsStakingRequest {
     pub mnemonic: String,
+}
+
+impl Drop for IsStakingRequest {
+    fn drop(&mut self) {
+        zeroize_string(&mut self.mnemonic)
+    }
 }
 
 async fn is_staking(

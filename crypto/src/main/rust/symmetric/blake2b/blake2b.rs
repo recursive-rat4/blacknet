@@ -16,8 +16,8 @@
  */
 
 use crate::symmetric::{CompressionFunction, blake2b::compress};
+use bytemuck::Zeroable;
 use core::{cmp::min, mem::transmute};
-use zeroize::Zeroize;
 
 const BLOCK_SIZE: usize = 128;
 const STATE_LEN: usize = 8;
@@ -32,7 +32,7 @@ pub(super) const IV: [u64; STATE_LEN] = [
     0x5BE0CD19137E2179,
 ];
 
-#[derive(Clone, Copy, Zeroize)]
+#[derive(Clone, Copy, Zeroable)]
 pub struct Blake2b<const BYTES: usize> {
     state: [u64; STATE_LEN],
     counter: u128,

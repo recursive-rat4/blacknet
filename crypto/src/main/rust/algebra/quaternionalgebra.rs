@@ -22,6 +22,7 @@ use crate::algebra::{
 };
 use crate::branchless::BlOption;
 use crate::symmetric::{Absorb, Duplexer, Squeeze};
+use bytemuck::Zeroable;
 use core::borrow::{Borrow, BorrowMut};
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
@@ -31,13 +32,12 @@ use core::ops::{
 #[cfg(feature = "rayon")]
 use rayon::iter::IntoParallelIterator;
 use serde::{Deserialize, Serialize};
-use zeroize::Zeroize;
 
 /// Quaternion algebra of characteristic ≠ 2
 ///
 /// with basis `{1, i, j, k}` where `i² = -1`, `j² = -1`, `k = ij = -ji`.
-#[derive(Clone, Copy, Deserialize, Eq, PartialEq, Serialize, Zeroize)]
-#[zeroize(bound = "R: Zeroize")]
+#[derive(Clone, Copy, Deserialize, Eq, PartialEq, Serialize, Zeroable)]
+#[zeroable(bound = "")]
 pub struct QuaternionAlgebra<R: UnitalRing> {
     coefficients: Array<R, 4>,
 }

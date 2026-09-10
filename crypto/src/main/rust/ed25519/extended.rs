@@ -24,7 +24,6 @@ use crate::ed25519::{E25519_D_TWICE, Edwards25519Affine, Field25519, is_on_curve
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::Sum;
 use core::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
-use zeroize::DefaultIsZeroes as ZeroizeIsDefault;
 
 #[derive(Clone, Copy)]
 pub struct Edwards25519Extended {
@@ -116,6 +115,7 @@ impl Debug for Edwards25519Extended {
 }
 
 impl Default for Edwards25519Extended {
+    #[inline]
     fn default() -> Self {
         Self::ZERO
     }
@@ -436,5 +436,3 @@ impl BlSelect for &Edwards25519Extended {
         }
     }
 }
-
-impl ZeroizeIsDefault for Edwards25519Extended {}

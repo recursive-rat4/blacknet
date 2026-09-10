@@ -16,11 +16,11 @@
  */
 
 use crate::v2::Result;
+use blacknet_crypto::zeroize::zeroize_string;
 use blacknet_kernel::ed25519::{to_public_key, to_secret_key};
 use blacknet_network::wallet::AddressCodec;
 use core::fmt::Write;
 use serde::{Deserialize, Serialize};
-use zeroize::Zeroize;
 
 #[derive(Deserialize, Serialize)]
 pub struct NewMnemonicInfo {
@@ -48,6 +48,6 @@ impl NewMnemonicInfo {
 
 impl Drop for NewMnemonicInfo {
     fn drop(&mut self) {
-        self.mnemonic.zeroize();
+        zeroize_string(&mut self.mnemonic);
     }
 }

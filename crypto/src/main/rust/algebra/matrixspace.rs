@@ -21,24 +21,24 @@ use crate::algebra::{
     Semiring, SemiringOps, Set, Square, UnitalSemiring, VectorRing, Zero,
 };
 use crate::symmetric::{Absorb, Duplexer, Squeeze};
+use bytemuck::Zeroable;
 use core::iter::{Product, Sum};
 use core::mem::{MaybeUninit, transmute_copy};
 use core::ops::{Add, AddAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign};
 #[cfg(feature = "rayon")]
 use rayon::iter::IntoParallelIterator;
 use serde::{Deserialize, Serialize};
-use zeroize::Zeroize;
 
 /// A ring of square matrices.
 pub type MatrixRing<R, const N: usize, const NN: usize> = MatrixSpace<R, N, N, NN>;
 
 /// A space of `m × n` matrices.
-#[derive(Clone, Copy, Deserialize, Debug, Eq, PartialEq, Serialize, Zeroize)]
+#[derive(Clone, Copy, Deserialize, Debug, Eq, PartialEq, Serialize, Zeroable)]
 #[serde(bound(
     deserialize = "[R; MN]: Deserialize<'de>",
     serialize = "[R; MN]: Serialize"
 ))]
-#[zeroize(bound = "R: Zeroize")]
+#[zeroable(bound = "")]
 pub struct MatrixSpace<R: Semiring, const M: usize, const N: usize, const MN: usize> {
     elements: Array<R, MN>,
 }

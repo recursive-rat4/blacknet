@@ -18,6 +18,7 @@
 use crate::algebra::{Dot, Double, Inv, LeftOne, LeftZero, One, RightOne, RightZero, Square, Zero};
 use crate::branchless::{BlAssign, BlEq, BlOption, BlSelect};
 use crate::symmetric::{Absorb, Duplexer, Squeeze};
+use bytemuck::Zeroable;
 use core::array;
 use core::borrow::{Borrow, BorrowMut};
 use core::fmt::{Debug, Formatter, Result};
@@ -28,10 +29,9 @@ use core::ops::{
 #[cfg(feature = "rayon")]
 use rayon::iter::IntoParallelIterator;
 use serde::{Deserialize, Serialize};
-use zeroize::Zeroize;
 
 /// Array with entrywise operations.
-#[derive(Clone, Copy, Deserialize, Eq, PartialEq, Serialize, Zeroize)]
+#[derive(Clone, Copy, Deserialize, Eq, PartialEq, Serialize, Zeroable)]
 #[serde(bound(
     deserialize = "[T; N]: Deserialize<'de>",
     serialize = "[T; N]: Serialize"

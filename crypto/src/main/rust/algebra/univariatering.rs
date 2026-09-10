@@ -24,6 +24,7 @@ use crate::algebra::{
 use crate::branchless::BlOption;
 use crate::convolution::{Convolution, Negacyclic};
 use crate::symmetric::{Absorb, Duplexer, Squeeze};
+use bytemuck::Zeroable;
 use core::borrow::{Borrow, BorrowMut};
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
@@ -35,15 +36,14 @@ use core::ops::{
 #[cfg(feature = "rayon")]
 use rayon::iter::IntoParallelIterator;
 use serde::{Deserialize, Serialize};
-use zeroize::Zeroize;
 
 /// Univariate quotient polynomial ring in monomial basis.
-#[derive(Deserialize, Serialize, Zeroize)]
+#[derive(Deserialize, Serialize, Zeroable)]
 #[serde(bound(
     deserialize = "[R; N]: Deserialize<'de>",
     serialize = "[R; N]: Serialize"
 ))]
-#[zeroize(bound = "R: Zeroize")]
+#[zeroable(bound = "")]
 pub struct UnivariateRing<R: UnitalSemiring, const N: usize, C: Convolution<R, N>> {
     coefficients: Array<R, N>,
     #[serde(skip)]

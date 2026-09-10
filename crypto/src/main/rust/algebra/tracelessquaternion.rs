@@ -21,6 +21,7 @@ use crate::algebra::{
 };
 use crate::branchless::BlOption;
 use crate::symmetric::{Absorb, Duplexer, Squeeze};
+use bytemuck::Zeroable;
 use core::borrow::{Borrow, BorrowMut};
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Sum, zip};
@@ -30,13 +31,12 @@ use core::ops::{
 #[cfg(feature = "rayon")]
 use rayon::iter::IntoParallelIterator;
 use serde::{Deserialize, Serialize};
-use zeroize::Zeroize;
 
 /// A submodule of quaternion algebra
 ///
 /// with basis `{i, j, k}` and `Tr(x) = 0`.
-#[derive(Clone, Copy, Deserialize, Eq, PartialEq, Serialize, Zeroize)]
-#[zeroize(bound = "R: Zeroize")]
+#[derive(Clone, Copy, Deserialize, Eq, PartialEq, Serialize, Zeroable)]
+#[zeroable(bound = "")]
 pub struct TracelessQuaternion<R: UnitalRing> {
     coefficients: Array<R, 3>,
 }
