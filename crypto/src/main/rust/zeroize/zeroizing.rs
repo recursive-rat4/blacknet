@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025-2026 Pavel Vasin
+ * Copyright (c) 2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,17 +15,24 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::random::Seedable;
-use crate::zeroize::Zeroizing;
-use blacknet_compat::getentropy;
-use core::mem::{MaybeUninit, transmute};
+use crate::zeroize::zeroize;
+use bytemuck::Zeroable;
+use core::ops::Deref;
 
-/// # Panics
-///
-/// If initial entropy can't be obtained.
-pub fn seed<G: Seedable<Seed = [u8; 32]>>() -> G {
-    let mut seed = [MaybeUninit::<u8>::uninit(); 32];
-    getentropy(&mut seed).expect("source of entropy");
-    let seed: Zeroizing<[u8; 32]> = unsafe { transmute(seed) };
-    G::from_seed(&seed)
+#[repr(transparent)]
+pub struct Zeroizing<T: Zeroable>(T);
+
+impl<T: Zeroable> Drop for Zeroizing<T> {
+    fn drop(&mut self) {
+        zeroize(&mut self.0)
+    }
+}
+
+impl<T: Zeroable> Deref for Zeroizing<T> {
+    type Target = T;
+
+    #[inline]
+    fn deref(&self) -> &T {
+        &self.0
+    }
 }
