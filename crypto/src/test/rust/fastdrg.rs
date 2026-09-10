@@ -22,7 +22,7 @@ use core::array;
 #[test]
 fn discard() {
     const SIZE: usize = BLOCK_SIZE * 2 + 1;
-    let mut drg = FastDRG::default();
+    let mut drg = FastDRG::new();
 
     let _: [u8; SIZE] = array::from_fn(|_| drg.generate());
     let buf1: [u8; SIZE] = array::from_fn(|_| drg.generate());

@@ -28,7 +28,7 @@ fn test() {
     let slack_max = 19.0;
     let high: DenseVector<Z> = [100, 200, 300, 400, 500, 600, 700, 800].map(Z::from).into();
 
-    let mut drg = DRG::default();
+    let mut drg = DRG::new();
     let jl = JohnsonLindenstrauss::<Z>::random(&mut drg, high.dimension());
     let low = jl.project(&high);
 

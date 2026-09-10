@@ -24,7 +24,7 @@ use core::array;
 fn crypt() {
     let bytes: [u8; 128] = array::from_fn(|i| i as u8);
     let pt = encode(&bytes);
-    let mut drg = FastDRG::default();
+    let mut drg = FastDRG::new();
     let sk = generate_secret_key(&mut drg);
     let pk = generate_public_key(&mut drg, &sk);
     let ct = encrypt(&mut drg, &pk, &pt);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2026 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,14 +15,19 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_crypto::random::{FastDRG, UniformIntDistribution, fill_with_weight};
+use crate::random::Seedable;
+use crate::zeroize::zeroize;
+use blacknet_compat::getentropy;
+use core::mem::{MaybeUninit, transmute};
 
-#[test]
-fn weight() {
-    let mut drg = FastDRG::new();
-    let mut dst = UniformIntDistribution::<u16>::new(0..256);
-    let mut a = [0_u16; 32];
-    fill_with_weight(&mut drg, &mut dst, &mut a, 4);
-    let filled = a.into_iter().filter(|i| *i != 0).count();
-    assert_eq!(filled, 4);
+/// # Panics
+///
+/// If initial entropy can't be obtained.
+pub fn seed<G: Seedable<Seed = [u8; 32]>>() -> G {
+    let mut seed = [MaybeUninit::<u8>::uninit(); 32];
+    getentropy(&mut seed).expect("source of entropy");
+    let mut seed: [u8; 32] = unsafe { transmute(seed) };
+    let g = G::from_seed(&seed);
+    zeroize(&mut seed);
+    g
 }
