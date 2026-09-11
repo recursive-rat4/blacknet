@@ -18,7 +18,7 @@
 use crate::v2::Result;
 use blacknet_crypto::zeroize::ZeroizingString;
 use blacknet_kernel::ed25519::{to_public_key, to_secret_key};
-use blacknet_network::wallet::AddressCodec;
+use blacknet_network::wallet::{AddressCodec, Mnemonic};
 use core::fmt::Write;
 use serde::{Deserialize, Serialize};
 
@@ -30,7 +30,8 @@ pub struct NewMnemonicInfo {
 }
 
 impl NewMnemonicInfo {
-    pub fn new(mnemonic: ZeroizingString, address_codec: &AddressCodec) -> Result<Self> {
+    pub fn new(mnemonic: Mnemonic, address_codec: &AddressCodec) -> Result<Self> {
+        let mnemonic = mnemonic.into_zeroizing_string();
         let secret_key = to_secret_key(&mnemonic).ok_or("Invalid mnemonic")?;
         let public_key = to_public_key(&secret_key);
         let address = address_codec.encode(public_key)?;

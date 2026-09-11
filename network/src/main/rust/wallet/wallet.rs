@@ -15,6 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::wallet::{MasterSecret, Mnemonic};
 use blacknet_compat::Mode;
 use blacknet_kernel::{
     account::Lease,
@@ -144,11 +145,12 @@ impl Wallet {
         })
     }
 
-    pub fn set_mnemonic(&self, mnemonic: &str) -> Result<()> {
+    pub fn set_mnemonic(&self, mnemonic: Mnemonic) -> Result<()> {
+        let master = MasterSecret::from(mnemonic);
         let connection = self.connection.lock().unwrap();
         connection.execute(
             "INSERT INTO keys VALUES(?, ?, ?);",
-            ("master", mnemonic.as_bytes(), Option::<&[u8]>::None),
+            ("master", master.as_bytes(), Option::<&[u8]>::None),
         )?;
         Ok(())
     }
@@ -156,7 +158,8 @@ impl Wallet {
     pub fn derive_account(&self) -> Result<(), DeriveAccountError> {
         let connection = self.connection.lock().unwrap();
         let mut statement = connection.prepare_cached("SELECT secret FROM keys WHERE path = ?;")?;
-        let master: Box<[u8]> = statement.query_one(("master",), |row| row.get(0))?;
+        let master: Vec<u8> = statement.query_one(("master",), |row| row.get(0))?;
+        let master = MasterSecret::from(master);
         let secret_key = to_secret_key(master).ok_or(DeriveAccountError::Version)?;
         let public_key = to_public_key(&secret_key);
         let mut statement = connection.prepare_cached("INSERT INTO keys VALUES(?, ?, ?);")?;

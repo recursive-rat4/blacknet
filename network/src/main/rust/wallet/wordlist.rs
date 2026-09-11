@@ -15,10 +15,12 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use core::ops::Index;
 use std::sync::LazyLock;
 
 pub struct Wordlist {
     wordlist: Vec<&'static str>,
+    max_word_size: usize,
 }
 
 impl Wordlist {
@@ -28,7 +30,11 @@ impl Wordlist {
     fn parse(txt: &'static str) -> Self {
         let wordlist: Vec<&'static str> = txt.lines().collect();
         assert!(wordlist.len() == 2048);
-        Self { wordlist }
+        let max_word_size = wordlist.iter().copied().map(str::len).max().unwrap();
+        Self {
+            wordlist,
+            max_word_size,
+        }
     }
 
     pub fn by_name(name: &str) -> Option<&Self> {
@@ -42,8 +48,24 @@ impl Wordlist {
         }
     }
 
-    pub const fn as_slice(&self) -> &[&str] {
-        self.wordlist.as_slice()
+    pub const fn is_empty(&self) -> bool {
+        false
+    }
+
+    pub const fn len(&self) -> u16 {
+        2048
+    }
+
+    pub const fn max_word_size(&self) -> usize {
+        self.max_word_size
+    }
+}
+
+impl Index<u16> for Wordlist {
+    type Output = str;
+
+    fn index(&self, idx: u16) -> &Self::Output {
+        self.wordlist[idx as usize]
     }
 }
 

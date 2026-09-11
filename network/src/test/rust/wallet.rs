@@ -59,8 +59,11 @@ fn keys() {
 
     assert_matches!(wallet.public_key(), Err(Error::QueryReturnedNoRows));
     assert_matches!(wallet.secret_key(), Err(Error::QueryReturnedNoRows));
-    assert_matches!(wallet.set_mnemonic(mnemonic), Ok(()));
-    assert_matches!(wallet.set_mnemonic(mnemonic), Err(Error::SqliteFailure(..)));
+    assert_matches!(wallet.set_mnemonic(mnemonic.into()), Ok(()));
+    assert_matches!(
+        wallet.set_mnemonic(mnemonic.into()),
+        Err(Error::SqliteFailure(..))
+    );
     assert_matches!(wallet.derive_account(), Ok(()));
     assert_matches!(wallet.derive_account(), Err(DeriveAccountError::Sqlite(..)));
     assert_matches!(wallet.public_key(), Ok(pk) if pk == public_key);

@@ -27,17 +27,29 @@ use axum::{
 };
 use blacknet_crypto::zeroize::ZeroizingString;
 use blacknet_kernel::blake2b::Hash;
-use blacknet_network::{db::genesis, network::Network};
+use blacknet_network::{db::genesis, network::Network, wallet::Mnemonic};
 use core::str::FromStr;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, sync::Arc};
 
-#[expect(unused_variables)]
 async fn generate_account(
     State(network): State<Arc<Network>>,
     wordlist: Option<Path<String>>,
-) -> Json<NewMnemonicInfo> {
-    todo!();
+) -> Response<String> {
+    let address_codec = network.wallet_db().address_codec();
+    let wordlist: &str = match &wordlist {
+        Some(name) => name.as_str(),
+        None => "english",
+    };
+    let mnemonic = match Mnemonic::generate_v1(wordlist) {
+        Ok(mnemonic) => mnemonic,
+        Err(err) => return respond_error(format!("Generation error: {err}")),
+    };
+    let info = match NewMnemonicInfo::new(mnemonic, address_codec) {
+        Ok(info) => info,
+        Err(err) => return respond_error(format!("Internal error: {err}")),
+    };
+    respond_json(&info)
 }
 
 #[expect(unused_variables)]

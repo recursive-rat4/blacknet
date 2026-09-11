@@ -17,11 +17,37 @@
 
 use crate::zeroize::zeroize_string;
 use alloc::string::String;
+use core::{
+    mem,
+    ops::{Deref, DerefMut},
+    ptr,
+};
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]
 #[repr(transparent)]
 pub struct ZeroizingString(String);
+
+impl ZeroizingString {
+    #[inline]
+    pub fn with_capacity(capacity: usize) -> Self {
+        Self(String::with_capacity(capacity))
+    }
+
+    #[must_use]
+    pub const fn into_inner(self) -> String {
+        let string = unsafe { ptr::read(&self.0) };
+        mem::forget(self);
+        string
+    }
+}
+
+impl From<String> for ZeroizingString {
+    #[inline]
+    fn from(string: String) -> Self {
+        Self(string)
+    }
+}
 
 impl Drop for ZeroizingString {
     fn drop(&mut self) {
@@ -33,5 +59,21 @@ impl AsRef<[u8]> for ZeroizingString {
     #[inline]
     fn as_ref(&self) -> &[u8] {
         self.0.as_bytes()
+    }
+}
+
+impl Deref for ZeroizingString {
+    type Target = String;
+
+    #[inline]
+    fn deref(&self) -> &String {
+        &self.0
+    }
+}
+
+impl DerefMut for ZeroizingString {
+    #[inline]
+    fn deref_mut(&mut self) -> &mut String {
+        &mut self.0
     }
 }

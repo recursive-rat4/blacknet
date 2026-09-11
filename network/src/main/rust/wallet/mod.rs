@@ -16,12 +16,16 @@
  */
 
 mod address;
+mod mastersecret;
+mod mnemonic;
 mod transactiondata;
 mod wallet;
 mod walletdb;
 mod wordlist;
 
 pub use address::{AddressCodec, AddressKind};
+pub use mastersecret::MasterSecret;
+pub use mnemonic::Mnemonic;
 pub use transactiondata::{TransactionData, TransactionDataType};
 pub use wallet::{DeriveAccountError, Error, OpenError, Wallet};
 pub use walletdb::{Notification, Notifier, Subscriber, WalletDB};
