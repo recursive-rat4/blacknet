@@ -274,6 +274,10 @@ path = "src/test/rust/uring.rs"
 name = "vectorring"
 path = "src/test/rust/vectorring.rs"
 
+[[test]]
+name = "zeroize"
+path = "src/test/rust/zeroize.rs"
+
 [[bench]]
 name = "blake2b"
 path = "src/benchmark/rust/blake2b.rs"
