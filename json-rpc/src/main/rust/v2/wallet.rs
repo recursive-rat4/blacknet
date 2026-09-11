@@ -52,9 +52,12 @@ async fn generate_account(
     respond_json(&info)
 }
 
-#[expect(unused_variables)]
-async fn address(State(network): State<Arc<Network>>, address: Path<String>) -> Json<AddressInfo> {
-    todo!();
+async fn address(State(network): State<Arc<Network>>, address: Path<String>) -> Response<String> {
+    let address_codec = network.wallet_db().address_codec();
+    match AddressInfo::new(&address, address_codec) {
+        Ok(info) => respond_json(&info),
+        Err(err) => respond_error(err.to_string()),
+    }
 }
 
 #[derive(Deserialize, Serialize)]

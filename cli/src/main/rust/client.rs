@@ -28,7 +28,7 @@ use hyper::{
     client::conn::http1,
     rt::{Read, ReadBufCursor, Write},
 };
-use serde_json::{Error as JsonError, Value, from_str, to_writer_pretty};
+use serde_json::{Error as JsonError, Value, from_str, to_writer, to_writer_pretty};
 use std::io::{Error as IoError, IoSlice, stdout};
 use tokio::{
     io::{AsyncRead, AsyncWrite, ReadBuf},
@@ -75,7 +75,7 @@ impl Client {
         })
     }
 
-    pub fn subscribe(&self, route: &str) -> Result<String, Error> {
+    pub fn subscribe(&self, route: &str, no_pretty_json: bool) -> Result<String, Error> {
         let url = format!("ws://{}/api/v2/websocket", self.endpoint);
         let message = format!("{{\"command\":\"subscribe\",\"route\":\"{route}\"}}");
         self.runtime.block_on(async {
@@ -86,7 +86,11 @@ impl Client {
                 match message? {
                     Message::Text(message) => {
                         let json = from_str::<Value>(&message)?;
-                        to_writer_pretty(stdout(), &json)?;
+                        if no_pretty_json {
+                            to_writer(stdout(), &json)?;
+                        } else {
+                            to_writer_pretty(stdout(), &json)?;
+                        }
                         println!();
                     }
                     Message::Binary(_) => return Ok(String::from("Message::Binary")),

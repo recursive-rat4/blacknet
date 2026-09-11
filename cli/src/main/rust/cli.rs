@@ -24,13 +24,16 @@ use blacknet_compat::{
 };
 use clap::{Parser, Subcommand};
 use core::{error::Error, num::NonZero};
-use serde_json::{Value, from_str, to_writer_pretty};
+use serde_json::{Value, from_str, to_writer, to_writer_pretty};
 use std::{io::stdout, process::ExitCode};
 
 #[derive(Parser)]
 #[command(version)]
 #[command(about = "Blacknet RPC client", long_about = None)]
 struct Cli {
+    /// Don't prettify JSON.
+    #[arg(long, default_value_t = false)]
+    no_pretty_json: bool,
     #[command(subcommand)]
     command: Command,
 }
@@ -69,6 +72,9 @@ enum Command {
     /// Debug info.
     #[command(subcommand, hide = true)]
     Debug(Debug),
+    /// Wallet v2.
+    #[command(subcommand, hide = true)]
+    WalletV2(WalletV2),
 }
 
 /// Peering command.
@@ -157,6 +163,15 @@ enum Debug {
     Txpool,
 }
 
+/// Wallet command v2.
+#[derive(Subcommand)]
+enum WalletV2 {
+    /// Generate a new mnemonic.
+    GenerateMnemonic { wordlist: Option<String> },
+    /// Convert an address to a public key.
+    AddressToPublickey { address: String },
+}
+
 fn cli() -> Result<(), Box<dyn Error>> {
     let cli = Cli::parse();
     let mode = mode()?;
@@ -204,8 +219,8 @@ fn cli() -> Result<(), Box<dyn Error>> {
         Command::SendRawTransaction { hex } => {
             client.get(&format!("/api/v2/sendrawtransaction/{hex}"))
         }
-        Command::Watch(Watch::Block) => client.subscribe("block"),
-        Command::Watch(Watch::Txpool) => client.subscribe("txpool"),
+        Command::Watch(Watch::Block) => client.subscribe("block", cli.no_pretty_json),
+        Command::Watch(Watch::Txpool) => client.subscribe("txpool", cli.no_pretty_json),
         Command::MakeBootstrap => client.get("/api/v2/makebootstrap"),
         Command::Shutdown => client.get("/api/shutdown"),
         Command::Debug(Debug::Fjall) => client.get("/api/v2/leveldb/stats"),
@@ -213,10 +228,24 @@ fn cli() -> Result<(), Box<dyn Error>> {
         Command::Debug(Debug::Blockdb) => client.get("/api/v2/blockdb/check"),
         Command::Debug(Debug::Coindb) => client.get("/api/v2/ledger/check"),
         Command::Debug(Debug::Txpool) => client.get("/api/v2/txpool/check"),
+        Command::WalletV2(WalletV2::GenerateMnemonic { wordlist }) => {
+            if let Some(wordlist) = wordlist {
+                client.get(&format!("/api/v2/generateaccount/{wordlist}"))
+            } else {
+                client.get("/api/v2/generateaccount")
+            }
+        }
+        Command::WalletV2(WalletV2::AddressToPublickey { address }) => {
+            client.get(&format!("/api/v2/address/{address}"))
+        }
     }?;
 
     if let Ok(json) = from_str::<Value>(&reply) {
-        to_writer_pretty(stdout(), &json)?;
+        if cli.no_pretty_json {
+            to_writer(stdout(), &json)?;
+        } else {
+            to_writer_pretty(stdout(), &json)?;
+        }
         println!()
     } else {
         println!("{reply}")
