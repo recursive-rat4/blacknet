@@ -15,9 +15,11 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::blake2b::Hash;
-use crate::error::{Error, Result};
-use crate::transaction::{CoinTx, HashTimeLockContractId, Transaction, TxData};
+use crate::{
+    blake2b::Hash256,
+    error::{Error, Result},
+    transaction::{CoinTx, HashTimeLockContractId, Transaction, TxData},
+};
 use alloc::boxed::Box;
 use serde::{Deserialize, Serialize};
 
@@ -45,7 +47,7 @@ impl TxData for ClaimHTLC {
     fn process_impl(
         &self,
         tx: &Transaction,
-        _hash: Hash,
+        _hash: Hash256,
         _data_index: u32,
         coin_tx: &mut impl CoinTx,
     ) -> Result<()> {

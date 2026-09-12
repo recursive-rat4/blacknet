@@ -26,7 +26,7 @@ use axum::{
 use blacknet_crypto::zeroize::ZeroizingString;
 use blacknet_kernel::{
     amount::Amount,
-    blake2b::Hash,
+    blake2b::Hash256,
     ed25519::{to_public_key, to_secret_key},
     hashlock::{HashKind, HashLock},
     timelock::{TimeKind, TimeLock},
@@ -64,7 +64,7 @@ async fn bundle(
         return respond_error("Invalid mnemonic");
     };
     let anchor = if let Some(ref anchor) = request.referenceChain {
-        match Hash::from_str(anchor) {
+        match Hash256::from_str(anchor) {
             Ok(anchor) => anchor,
             Err(err) => return respond_error(format!("Invalid anchor: {err}")),
         }
@@ -140,7 +140,7 @@ async fn burn(
         return respond_error("Invalid mnemonic");
     };
     let anchor = if let Some(ref anchor) = request.referenceChain {
-        match Hash::from_str(anchor) {
+        match Hash256::from_str(anchor) {
             Ok(anchor) => anchor,
             Err(err) => return respond_error(format!("Invalid anchor: {err}")),
         }
@@ -201,7 +201,7 @@ async fn cancel_lease(
         return respond_error("Invalid mnemonic");
     };
     let anchor = if let Some(ref anchor) = request.referenceChain {
-        match Hash::from_str(anchor) {
+        match Hash256::from_str(anchor) {
             Ok(anchor) => anchor,
             Err(err) => return respond_error(format!("Invalid anchor: {err}")),
         }
@@ -273,7 +273,7 @@ async fn claim_swap(
         return respond_error("Invalid mnemonic");
     };
     let anchor = if let Some(ref anchor) = request.referenceChain {
-        match Hash::from_str(anchor) {
+        match Hash256::from_str(anchor) {
             Ok(anchor) => anchor,
             Err(err) => return respond_error(format!("Invalid anchor: {err}")),
         }
@@ -353,7 +353,7 @@ async fn create_swap(
         return respond_error("Invalid mnemonic");
     };
     let anchor = if let Some(ref anchor) = request.referenceChain {
-        match Hash::from_str(anchor) {
+        match Hash256::from_str(anchor) {
             Ok(anchor) => anchor,
             Err(err) => return respond_error(format!("Invalid anchor: {err}")),
         }
@@ -421,7 +421,7 @@ async fn lease(
         return respond_error("Invalid mnemonic");
     };
     let anchor = if let Some(ref anchor) = request.referenceChain {
-        match Hash::from_str(anchor) {
+        match Hash256::from_str(anchor) {
             Ok(anchor) => anchor,
             Err(err) => return respond_error(format!("Invalid anchor: {err}")),
         }
@@ -486,7 +486,7 @@ async fn refund_swap(
         return respond_error("Invalid mnemonic");
     };
     let anchor = if let Some(ref anchor) = request.referenceChain {
-        match Hash::from_str(anchor) {
+        match Hash256::from_str(anchor) {
             Ok(anchor) => anchor,
             Err(err) => return respond_error(format!("Invalid anchor: {err}")),
         }
@@ -558,7 +558,7 @@ async fn transfer(
         return respond_error("Invalid mnemonic");
     };
     let anchor = if let Some(ref anchor) = request.referenceChain {
-        match Hash::from_str(anchor) {
+        match Hash256::from_str(anchor) {
             Ok(anchor) => anchor,
             Err(err) => return respond_error(format!("Invalid anchor: {err}")),
         }
@@ -633,7 +633,7 @@ async fn withdraw_from_lease(
         return respond_error("Invalid mnemonic");
     };
     let anchor = if let Some(ref anchor) = request.referenceChain {
-        match Hash::from_str(anchor) {
+        match Hash256::from_str(anchor) {
             Ok(anchor) => anchor,
             Err(err) => return respond_error(format!("Invalid anchor: {err}")),
         }

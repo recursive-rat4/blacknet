@@ -36,7 +36,7 @@ use blacknet_crypto::{
 };
 use blacknet_io::{Write, file::replace};
 use blacknet_kernel::{
-    blake2b::Hash,
+    blake2b::Hash256,
     error::Error,
     proofofstake::{
         BLOCK_RESERVED_SIZE, DEFAULT_MAX_BLOCK_SIZE, guess_initial_synchronization, time_slot,
@@ -329,7 +329,7 @@ impl Node {
 
     pub(super) fn announce_block(
         &self,
-        hash: Hash,
+        hash: Hash256,
         cumulative_difficulty: UInt256,
         source: Option<ConnectionId>,
     ) -> usize {
@@ -344,7 +344,7 @@ impl Node {
         )
     }
 
-    pub(super) async fn broadcast_block(&self, hash: Hash, bytes: Box<[u8]>) -> bool {
+    pub(super) async fn broadcast_block(&self, hash: Hash256, bytes: Box<[u8]>) -> bool {
         match self.block_fetcher.staked_block(hash, bytes).await {
             Ok(()) => {
                 let (ref state, _) = **self.coin_db.state().load();
@@ -361,7 +361,7 @@ impl Node {
         }
     }
 
-    pub fn broadcast_tx(&self, hash: Hash, bytes: &[u8]) -> Result<(), Error> {
+    pub fn broadcast_tx(&self, hash: Hash256, bytes: &[u8]) -> Result<(), Error> {
         let now = SystemClock::millis();
         let result = {
             let mut tx_pool = self.tx_pool.write().unwrap();
@@ -386,7 +386,7 @@ impl Node {
         source: Option<ConnectionId>,
     ) -> usize {
         let mut n = 0;
-        let mut to_send = Vec::<Hash>::with_capacity(unfiltered.len());
+        let mut to_send = Vec::<Hash256>::with_capacity(unfiltered.len());
         let connections = self.connections.read().unwrap();
         for connection in connections.iter() {
             if Some(connection.id()) != source && connection.is_established() {

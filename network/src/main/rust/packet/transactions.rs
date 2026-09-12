@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2025 Pavel Vasin
+ * Copyright (c) 2018-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,17 +15,16 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::connection::Connection;
-use crate::packet::{Packet, PacketKind};
-use blacknet_kernel::amount::Amount;
-use blacknet_kernel::blake2b::Hash;
-use blacknet_kernel::error::Error;
-use blacknet_kernel::transaction::Transaction;
+use crate::{
+    connection::Connection,
+    packet::{Packet, PacketKind},
+};
+use blacknet_kernel::{amount::Amount, blake2b::Hash256, error::Error, transaction::Transaction};
 use blacknet_log::debug;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
-pub type UnfilteredInvList = Vec<(Hash, u32, Amount)>;
+pub type UnfilteredInvList = Vec<(Hash256, u32, Amount)>;
 
 pub const MAX_TRANSACTIONS: usize = 1000;
 

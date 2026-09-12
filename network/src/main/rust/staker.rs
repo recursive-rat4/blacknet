@@ -22,7 +22,7 @@ use crate::{
 };
 use blacknet_kernel::{
     amount::Amount,
-    blake2b::Hash,
+    blake2b::Hash256,
     block::Block,
     ed25519::{PublicKey, SecretKey},
     proofofstake::{MAX_DIFFICULTY, target_block_time, time_slot, verify},
@@ -353,7 +353,7 @@ struct Holder {
     secret_key: Arc<SecretKey>,
     start_time: Seconds,
     hash_counter: u64,
-    last_block: Hash,
+    last_block: Hash256,
     stake: Amount,
 }
 
@@ -364,7 +364,7 @@ impl Holder {
             secret_key,
             start_time: SystemClock::secs(),
             hash_counter: 0,
-            last_block: Hash::ZERO,
+            last_block: Hash256::ZERO,
             stake: Amount::ZERO,
         }
     }

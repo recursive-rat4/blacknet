@@ -15,22 +15,24 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::account::Account;
-use crate::amount::Amount;
-use crate::blake2b::Hash;
-use crate::ed25519::PublicKey;
-use crate::error::{Error, Result};
-use crate::htlc::HTLC;
-use crate::multisig::Multisig;
-use crate::transaction::*;
+use crate::{
+    account::Account,
+    amount::Amount,
+    blake2b::Hash256,
+    ed25519::PublicKey,
+    error::{Error, Result},
+    htlc::HTLC,
+    multisig::Multisig,
+    transaction::*,
+};
 use blacknet_serialization::format::from_bytes;
 use blacknet_time::Seconds;
 
 pub trait CoinTx: Sized {
     fn add_supply(&mut self, amount: Amount);
     fn sub_supply(&mut self, amount: Amount);
-    fn check_anchor(&self, hash: Hash) -> Result<()>;
-    fn block_hash(&self) -> Hash;
+    fn check_anchor(&self, hash: Hash256) -> Result<()>;
+    fn block_hash(&self) -> Hash256;
     fn block_time(&self) -> Seconds;
     fn height(&self) -> u32;
     fn get_account(&mut self, key: PublicKey) -> Result<Account>;
@@ -43,7 +45,7 @@ pub trait CoinTx: Sized {
     fn get_multisig(&mut self, id: MultiSignatureLockContractId) -> Result<Multisig>;
     fn remove_multisig(&mut self, id: MultiSignatureLockContractId);
 
-    fn process_transaction_impl(&mut self, tx: &Transaction, hash: Hash) -> Result<()> {
+    fn process_transaction_impl(&mut self, tx: &Transaction, hash: Hash256) -> Result<()> {
         tx.verify_signature(hash)?;
         self.check_anchor(tx.anchor())?;
         match tx.kind() {

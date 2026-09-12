@@ -21,7 +21,7 @@ use crate::{
     packet::{GetTransactions, Inventory, MAX_INVENTORY, MAX_TRANSACTIONS},
     txpool::TxPool,
 };
-use blacknet_kernel::blake2b::Hash;
+use blacknet_kernel::blake2b::Hash256;
 use blacknet_time::{Milliseconds, SystemClock};
 use core::cmp::min;
 use std::{
@@ -38,7 +38,7 @@ const MAX_REQUESTS: usize = 16 * MAX_INVENTORY;
 
 pub struct TxFetcher {
     inventory_send: UnboundedSender<(Weak<Connection>, Inventory)>,
-    requests: Mutex<HashMap<Hash, (ConnectionId, Milliseconds)>>,
+    requests: Mutex<HashMap<Hash256, (ConnectionId, Milliseconds)>>,
     tx_pool: Arc<RwLock<TxPool>>,
 }
 
@@ -61,7 +61,7 @@ impl TxFetcher {
         self.inventory_send.send((connection, inventory)).unwrap();
     }
 
-    pub fn fetched(&self, connection: &Connection, hash: Hash) -> bool {
+    pub fn fetched(&self, connection: &Connection, hash: Hash256) -> bool {
         let mut requests = self.requests.lock().unwrap();
         if let Some(&(id, _)) = requests.get(&hash)
             && connection.id() == id

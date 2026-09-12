@@ -15,8 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::v2::{AmountInfo, BigIntegerInfo, EndpointInfo, HashInfo};
-use blacknet_kernel::blake2b::Hash;
+use crate::v2::{AmountInfo, BigIntegerInfo, EndpointInfo, Hash256Info};
+use blacknet_kernel::blake2b::Hash256;
 use blacknet_network::{
     connection::{Connection, ConnectionId},
     db::{BlockDB, Snapshot, genesis},
@@ -78,7 +78,7 @@ impl PeerInfo {
 
 #[derive(Deserialize, Serialize)]
 struct ChainInfo {
-    chain: HashInfo,
+    chain: Hash256Info,
     cumulativeDifficulty: BigIntegerInfo,
     fork: bool,
 }
@@ -98,7 +98,7 @@ impl ChainInfo {
     }
 }
 
-pub(crate) type ForkCache = HashMap<Hash, bool>;
+pub(crate) type ForkCache = HashMap<Hash256, bool>;
 
 pub(crate) fn fork_cache_new() -> ForkCache {
     let mut cache = HashMap::new();
@@ -108,7 +108,7 @@ pub(crate) fn fork_cache_new() -> ForkCache {
 
 fn fork_cache_get_or_compute(
     cache: &mut ForkCache,
-    hash: Hash,
+    hash: Hash256,
     block_db: &BlockDB,
     snapshot: &Snapshot,
 ) -> bool {

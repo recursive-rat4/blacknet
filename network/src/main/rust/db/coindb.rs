@@ -25,7 +25,7 @@ use blacknet_crypto::bigint::UInt256;
 use blacknet_kernel::{
     account::Account,
     amount::Amount,
-    blake2b::Hash,
+    blake2b::Hash256,
     block::{BLOCK_VERSION, Block},
     ed25519::PublicKey,
     error::{Error, Result},
@@ -55,21 +55,21 @@ use tokio::sync::mpsc;
 
 pub enum Notification {
     Transaction {
-        tx_hash: Hash,
+        tx_hash: Hash256,
         tx: Transaction,
         tx_bytes: Box<[u8]>,
         time: Seconds,
         height: u32,
     },
     Mint {
-        hash: Hash,
+        hash: Hash256,
         time: Seconds,
         generator: PublicKey,
         height: u32,
         generated: Amount,
     },
     Rollback {
-        hash: Hash,
+        hash: Hash256,
     },
 }
 pub type Notifier = mpsc::UnboundedReceiver<Notification>;
@@ -89,7 +89,7 @@ pub struct CoinDB {
     accounts: View<PublicKey, Account>,
     htlcs: View<HashTimeLockContractId, HTLC>,
     multisigs: View<MultiSignatureLockContractId, Multisig>,
-    undos: View<Hash, UndoBlock>,
+    undos: View<Hash256, UndoBlock>,
     subscriber: Subscriber,
     fjall: Arc<Fjall>,
     block_db: Arc<BlockDB>,
@@ -209,7 +209,7 @@ impl CoinDB {
                 break;
             }
             batch.remove(&self.undos, hash);
-            if hash == Hash::ZERO {
+            if hash == Hash256::ZERO {
                 break;
             }
             block_index = snapshot
@@ -253,7 +253,7 @@ impl CoinDB {
         check
     }
 
-    pub fn check_anchor(&self, snapshot: &Snapshot, hash: Hash) -> Result<()> {
+    pub fn check_anchor(&self, snapshot: &Snapshot, hash: Hash256) -> Result<()> {
         if hash == genesis::hash() || snapshot.contains(&self.block_db.indexes, hash) {
             Ok(())
         } else {
@@ -261,7 +261,7 @@ impl CoinDB {
         }
     }
 
-    fn next_rolling_checkpoint(&self) -> Hash {
+    fn next_rolling_checkpoint(&self) -> Hash256 {
         let (ref state, ref snapshot) = **self.state.load();
         if state.rolling_checkpoint != genesis::hash() {
             let block_index = snapshot
@@ -288,10 +288,10 @@ impl CoinDB {
     pub fn process_block_impl(
         &self,
         coin_tx: &mut Update,
-        hash: Hash,
+        hash: Hash256,
         block: &Block,
         size: u32,
-    ) -> Result<Vec<Hash>> {
+    ) -> Result<Vec<Hash256>> {
         if block.previous() != coin_tx.state.block_hash {
             error!(
                 self.logger,
@@ -312,7 +312,7 @@ impl CoinDB {
         }
         let mut generator = coin_tx.get_account(block.generator())?;
         let height = coin_tx.height();
-        let mut tx_hashes = Vec::<Hash>::with_capacity(block.raw_transactions().len());
+        let mut tx_hashes = Vec::<Hash256>::with_capacity(block.raw_transactions().len());
         let pos_version = coin_tx.state.pos_version();
 
         verify_pos(
@@ -358,7 +358,7 @@ impl CoinDB {
         coin_tx.prev_index = Some(prev_index);
         coin_tx.block_index = Some(BlockIndex::new(
             block.previous(),
-            Hash::ZERO,
+            Hash256::ZERO,
             0,
             height,
             generated,
@@ -379,7 +379,7 @@ impl CoinDB {
         Ok(tx_hashes)
     }
 
-    fn undo_block(&self) -> Hash {
+    fn undo_block(&self) -> Hash256 {
         let mut batch = self.fjall.create_write_batch();
         let (ref state, ref snapshot) = **self.state.load();
         let hash = state.block_hash;
@@ -412,7 +412,7 @@ impl CoinDB {
         let mut prev_index = snapshot
             .get(&self.block_db.indexes, block_index.previous())
             .expect("consistent index for undo");
-        prev_index.next = Hash::ZERO;
+        prev_index.next = Hash256::ZERO;
         prev_index.next_size = 0;
         batch.insert(&self.block_db.indexes, block_index.previous(), &prev_index);
         batch.remove(&self.block_db.indexes, hash);
@@ -448,7 +448,7 @@ impl CoinDB {
         hash
     }
 
-    pub fn rollback_to(&self, hash: Hash) -> Vec<Hash> {
+    pub fn rollback_to(&self, hash: Hash256) -> Vec<Hash256> {
         let mut hashes = Vec::new();
         loop {
             hashes.push(self.undo_block());
@@ -461,9 +461,9 @@ impl CoinDB {
 
     pub fn undo_rollback(
         self: &Arc<CoinDB>,
-        rollback_to: Hash,
-        undo_rollback: Vec<Hash>,
-    ) -> Vec<Hash> {
+        rollback_to: Hash256,
+        undo_rollback: Vec<Hash256>,
+    ) -> Vec<Hash256> {
         let (ref state, ref snapshot) = **self.state.load();
         let to_remove = if state.block_hash() != rollback_to {
             self.rollback_to(rollback_to)
@@ -505,13 +505,13 @@ impl CoinDB {
 #[derive(Clone, Deserialize, Serialize)]
 pub struct State {
     height: u32,
-    block_hash: Hash,
+    block_hash: Hash256,
     block_time: Seconds,
     difficulty: UInt256,
     cumulative_difficulty: UInt256,
     supply: Amount,
-    nxtrng: Hash,
-    rolling_checkpoint: Hash,
+    nxtrng: Hash256,
+    rolling_checkpoint: Hash256,
     max_block_size: u32,
     upgraded: u16,
     fork_v2: u16,
@@ -526,7 +526,7 @@ impl State {
         fjall: &Fjall,
         db_version: &DBVersion,
         accounts: &View<PublicKey, Account>,
-        indexes: &View<Hash, BlockIndex>,
+        indexes: &View<Hash256, BlockIndex>,
     ) -> Self {
         let mut supply = Amount::ZERO;
         let mut batch = fjall.create_write_batch();
@@ -546,7 +546,7 @@ impl State {
             difficulty: INITIAL_DIFFICULTY,
             cumulative_difficulty: genesis::cumulative_difficulty(),
             supply,
-            nxtrng: Hash::ZERO,
+            nxtrng: Hash256::ZERO,
             rolling_checkpoint: genesis::hash(),
             max_block_size: DEFAULT_MAX_BLOCK_SIZE,
             upgraded: 0,
@@ -555,7 +555,7 @@ impl State {
             requires_network: mode.requires_network(),
         };
 
-        let block_index = BlockIndex::new(Hash::ZERO, Hash::ZERO, 0, 0, Amount::ZERO);
+        let block_index = BlockIndex::new(Hash256::ZERO, Hash256::ZERO, 0, 0, Amount::ZERO);
         batch.insert(indexes, genesis::hash(), &block_index);
 
         batch.verset(db_version, DBVersionKey::CoinDBState, &state);
@@ -579,7 +579,7 @@ impl State {
         self.height
     }
 
-    pub const fn block_hash(&self) -> Hash {
+    pub const fn block_hash(&self) -> Hash256 {
         self.block_hash
     }
 
@@ -599,11 +599,11 @@ impl State {
         self.supply
     }
 
-    pub const fn nxtrng(&self) -> Hash {
+    pub const fn nxtrng(&self) -> Hash256 {
         self.nxtrng
     }
 
-    pub const fn rolling_checkpoint(&self) -> Hash {
+    pub const fn rolling_checkpoint(&self) -> Hash256 {
         self.rolling_checkpoint
     }
 
@@ -626,14 +626,14 @@ pub struct Update {
     snapshot: Snapshot,
     write_batch: WriteBatch,
     block_version: u32,
-    block_hash: Hash,
-    block_previous: Hash,
+    block_hash: Hash256,
+    block_previous: Hash256,
     block_time: Seconds,
     block_size: u32,
     block_generator: PublicKey,
     height: u32,
     supply: Amount,
-    rolling_checkpoint: Hash,
+    rolling_checkpoint: Hash256,
     accounts: HashMap<PublicKey, Account>,
     htlcs: HashMap<HashTimeLockContractId, Option<HTLC>>,
     multisigs: HashMap<MultiSignatureLockContractId, Option<Multisig>>,
@@ -649,8 +649,8 @@ impl Update {
         snapshot: Snapshot,
         write_batch: WriteBatch,
         block_version: u32,
-        block_hash: Hash,
-        block_previous: Hash,
+        block_hash: Hash256,
+        block_previous: Hash256,
         block_time: Seconds,
         block_size: u32,
         block_generator: PublicKey,
@@ -781,11 +781,11 @@ impl CoinTx for Update {
         self.supply -= amount;
     }
 
-    fn check_anchor(&self, hash: Hash) -> Result<()> {
+    fn check_anchor(&self, hash: Hash256) -> Result<()> {
         self.coin_db.check_anchor(&self.snapshot, hash)
     }
 
-    fn block_hash(&self) -> Hash {
+    fn block_hash(&self) -> Hash256 {
         self.block_hash
     }
 

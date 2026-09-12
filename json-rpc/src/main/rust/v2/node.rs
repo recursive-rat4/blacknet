@@ -22,7 +22,7 @@ use axum::{
     response::Response,
     routing::get,
 };
-use blacknet_kernel::{blake2b::Hash, transaction::Transaction};
+use blacknet_kernel::{blake2b::Hash256, transaction::Transaction};
 use blacknet_network::{
     connection::ConnectionId, endpoint::Endpoint, network::Network, txpool::TxPoolCheck,
 };
@@ -68,7 +68,7 @@ async fn tx_pool_transaction_raw(
 }
 
 fn tx_pool_transaction_handler(hash: &str, raw: bool, network: &Arc<Network>) -> Response<String> {
-    let hash = match Hash::from_str(hash) {
+    let hash = match Hash256::from_str(hash) {
         Ok(hash) => hash,
         Err(err) => return respond_error(format!("Invalid hash: {err}")),
     };

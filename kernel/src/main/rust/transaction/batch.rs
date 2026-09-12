@@ -15,11 +15,12 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::blake2b::Hash;
-use crate::error::{Error, Result};
-use crate::transaction::*;
-use alloc::boxed::Box;
-use alloc::format;
+use crate::{
+    blake2b::Hash256,
+    error::{Error, Result},
+    transaction::*,
+};
+use alloc::{boxed::Box, format};
 use blacknet_serialization::format::from_bytes;
 use serde::{Deserialize, Serialize};
 
@@ -69,7 +70,7 @@ impl TxData for Batch {
     fn process_impl(
         &self,
         tx: &Transaction,
-        hash: Hash,
+        hash: Hash256,
         data_index: u32,
         coin_tx: &mut impl CoinTx,
     ) -> Result<()> {

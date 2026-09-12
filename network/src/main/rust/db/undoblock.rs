@@ -16,10 +16,12 @@
  */
 
 use blacknet_crypto::bigint::UInt256;
-use blacknet_kernel::amount::Amount;
-use blacknet_kernel::blake2b::Hash;
-use blacknet_kernel::ed25519::PublicKey;
-use blacknet_kernel::transaction::{HashTimeLockContractId, MultiSignatureLockContractId};
+use blacknet_kernel::{
+    amount::Amount,
+    blake2b::Hash256,
+    ed25519::PublicKey,
+    transaction::{HashTimeLockContractId, MultiSignatureLockContractId},
+};
 use blacknet_time::Seconds;
 use serde::{Deserialize, Serialize};
 
@@ -29,8 +31,8 @@ pub struct UndoBlock {
     difficulty: UInt256,
     cumulative_difficulty: UInt256,
     supply: Amount,
-    nxtrng: Hash,
-    rolling_checkpoint: Hash,
+    nxtrng: Hash256,
+    rolling_checkpoint: Hash256,
     upgraded: u16,
     block_size: u32,
     accounts: Vec<(PublicKey, Option<Box<[u8]>>)>,
@@ -46,8 +48,8 @@ impl UndoBlock {
         difficulty: UInt256,
         cumulative_difficulty: UInt256,
         supply: Amount,
-        nxtrng: Hash,
-        rolling_checkpoint: Hash,
+        nxtrng: Hash256,
+        rolling_checkpoint: Hash256,
         upgraded: u16,
         block_size: u32,
         fork_v2: u16,
@@ -102,11 +104,11 @@ impl UndoBlock {
         self.supply
     }
 
-    pub const fn nxtrng(&self) -> Hash {
+    pub const fn nxtrng(&self) -> Hash256 {
         self.nxtrng
     }
 
-    pub const fn rolling_checkpoint(&self) -> Hash {
+    pub const fn rolling_checkpoint(&self) -> Hash256 {
         self.rolling_checkpoint
     }
 

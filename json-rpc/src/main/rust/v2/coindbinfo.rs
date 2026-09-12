@@ -15,21 +15,21 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::v2::{AmountInfo, BigIntegerInfo, HashInfo};
+use crate::v2::{AmountInfo, BigIntegerInfo, Hash256Info};
 use blacknet_network::db::State;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]
 pub struct CoinDBInfo {
     height: u32,
-    blockHash: HashInfo,
+    blockHash: Hash256Info,
     blockTime: i64,
-    rollingCheckpoint: HashInfo,
+    rollingCheckpoint: Hash256Info,
     difficulty: BigIntegerInfo,
     cumulativeDifficulty: BigIntegerInfo,
     supply: AmountInfo,
     maxBlockSize: u32,
-    nxtrng: HashInfo,
+    nxtrng: Hash256Info,
 }
 
 impl CoinDBInfo {

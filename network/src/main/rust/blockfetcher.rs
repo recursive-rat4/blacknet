@@ -23,7 +23,7 @@ use crate::{
 use blacknet_compat::config::Network as Config;
 use blacknet_crypto::bigint::UInt256;
 use blacknet_kernel::{
-    blake2b::Hash,
+    blake2b::Hash256,
     block::Block,
     error::{Error, Result},
     proofofstake::{ROLLBACK_LIMIT, guess_initial_synchronization},
@@ -42,7 +42,7 @@ use tokio_util::sync::CancellationToken;
 
 pub struct BlockFetcher {
     logger: Logger,
-    staker_sender: mpsc::UnboundedSender<(Hash, Box<[u8]>, oneshot::Sender<Result<()>>)>,
+    staker_sender: mpsc::UnboundedSender<(Hash256, Box<[u8]>, oneshot::Sender<Result<()>>)>,
     announces_sender: mpsc::Sender<(Weak<Connection>, BlockAnnounce)>,
     deferred_sender: mpsc::Sender<(Weak<Connection>, Blocks)>,
     request: RwLock<Option<RequestSender>>,
@@ -110,7 +110,7 @@ impl BlockFetcher {
             .try_send((Arc::downgrade(connection), block_announce));
     }
 
-    pub async fn staked_block(&self, hash: Hash, bytes: Box<[u8]>) -> Result<()> {
+    pub async fn staked_block(&self, hash: Hash256, bytes: Box<[u8]>) -> Result<()> {
         let (sender, receiver) = oneshot::channel();
         let _ = self.staker_sender.send((hash, bytes, sender));
         if let Some(ref request) = *self.request.read().unwrap() {
@@ -168,7 +168,7 @@ impl BlockFetcher {
     async fn run(
         self: Arc<Self>,
         mut staker_receiver: mpsc::UnboundedReceiver<(
-            Hash,
+            Hash256,
             Box<[u8]>,
             oneshot::Sender<Result<()>>,
         )>,
@@ -201,7 +201,7 @@ impl BlockFetcher {
 
     async fn process_staked(
         &self,
-        hash: Hash,
+        hash: Hash256,
         bytes: Box<[u8]>,
         sender: oneshot::Sender<Result<()>>,
     ) {
@@ -313,7 +313,7 @@ impl BlockFetcher {
                             break;
                         }
                     } else if !answer.hashes().is_empty() {
-                        if session.rollback_to != Hash::ZERO || session.connected_blocks != 0 {
+                        if session.rollback_to != Hash256::ZERO || session.connected_blocks != 0 {
                             connection.dos("Unexpected rollback");
                             break;
                         }
@@ -410,7 +410,7 @@ impl BlockFetcher {
     ) -> bool {
         let (_, blocks) = answer.into();
         let n = blocks.len();
-        if session.rollback_to != Hash::ZERO && session.undo_rollback.is_empty() {
+        if session.rollback_to != Hash256::ZERO && session.undo_rollback.is_empty() {
             let undo_difficulty = state.cumulative_difficulty();
             let undo_rollback = self.coin_db.rollback_to(session.rollback_to);
             info!(self.logger, "Disconnected {} blocks", undo_rollback.len());
@@ -449,7 +449,8 @@ impl BlockFetcher {
         connection: &Connection,
         difficulty: UInt256,
     ) -> RequestReceiver {
-        let block_hash = if session.rollback_to != Hash::ZERO && session.undo_rollback.is_empty() {
+        let block_hash = if session.rollback_to != Hash256::ZERO && session.undo_rollback.is_empty()
+        {
             session.rollback_to
         } else {
             state.block_hash()
@@ -565,19 +566,19 @@ fn new_request(
 }
 
 struct Session {
-    original_chain: Hash,
+    original_chain: Hash256,
     connected_blocks: usize,
-    rollback_to: Hash,
+    rollback_to: Hash256,
     undo_difficulty: UInt256,
-    undo_rollback: Vec<Hash>,
+    undo_rollback: Vec<Hash256>,
 }
 
 impl Session {
-    const fn new(original_chain: Hash) -> Self {
+    const fn new(original_chain: Hash256) -> Self {
         Self {
             original_chain,
             connected_blocks: 0,
-            rollback_to: Hash::ZERO,
+            rollback_to: Hash256::ZERO,
             undo_difficulty: UInt256::ZERO,
             undo_rollback: Vec::new(),
         }

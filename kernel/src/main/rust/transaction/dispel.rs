@@ -15,19 +15,20 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::amount::Amount;
-use crate::blake2b::Hash;
-use crate::error::{Error, Result};
-use crate::transaction::{CoinTx, Transaction, TxData};
+use crate::{
+    amount::Amount,
+    blake2b::Hash256,
+    error::{Error, Result},
+    transaction::{CoinTx, Transaction, TxData},
+};
 use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize, Serialize)]
+#[derive(Default, Deserialize, Serialize)]
 pub struct Dispel;
 
 impl Dispel {
-    #[allow(clippy::new_without_default)]
     pub const fn new() -> Self {
-        Self {}
+        Self
     }
 }
 
@@ -35,7 +36,7 @@ impl TxData for Dispel {
     fn process_impl(
         &self,
         tx: &Transaction,
-        _hash: Hash,
+        _hash: Hash256,
         _data_index: u32,
         _coin_tx: &mut impl CoinTx,
     ) -> Result<()> {

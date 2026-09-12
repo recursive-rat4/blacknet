@@ -15,21 +15,23 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::blake2b::Hash;
-use crate::error::{Error, Result};
-use crate::transaction::{CoinTx, Transaction};
+use crate::{
+    blake2b::Hash256,
+    error::{Error, Result},
+    transaction::{CoinTx, Transaction},
+};
 use alloc::format;
 
 pub trait TxData {
     fn process_impl(
         &self,
         tx: &Transaction,
-        hash: Hash,
+        hash: Hash256,
         data_index: u32,
         coin_tx: &mut impl CoinTx,
     ) -> Result<()>;
 
-    fn process(&self, tx: &Transaction, hash: Hash, coin_tx: &mut impl CoinTx) -> Result<()> {
+    fn process(&self, tx: &Transaction, hash: Hash256, coin_tx: &mut impl CoinTx) -> Result<()> {
         let mut account = coin_tx.get_account(tx.from())?;
         if tx.seq() != account.seq() {
             let msg = format!("sequence {} expected {}", tx.seq(), account.seq());

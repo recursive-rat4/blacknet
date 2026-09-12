@@ -19,17 +19,17 @@ use crate::{
     connection::Connection,
     packet::{MAX_TRANSACTIONS, PACKET_HEADER_SIZE, Packet, PacketKind, Transactions},
 };
-use blacknet_kernel::blake2b::Hash;
+use blacknet_kernel::blake2b::Hash256;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
 #[derive(Deserialize, Serialize)]
 pub struct GetTransactions {
-    list: Vec<Hash>,
+    list: Vec<Hash256>,
 }
 
 impl GetTransactions {
-    pub const fn new(list: Vec<Hash>) -> Self {
+    pub const fn new(list: Vec<Hash256>) -> Self {
         Self { list }
     }
 
@@ -39,7 +39,7 @@ impl GetTransactions {
         }
     }
 
-    pub fn push(&mut self, hash: Hash) {
+    pub fn push(&mut self, hash: Hash256) {
         self.list.push(hash)
     }
 

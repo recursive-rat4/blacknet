@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2025 Pavel Vasin
+ * Copyright (c) 2018-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::v2::{EndpointInfo, HashInfo};
+use crate::v2::{EndpointInfo, Hash256Info};
 use blacknet_network::endpoint::Endpoint;
 use blacknet_network::peertable::{Entry, PeerTable};
 use blacknet_time::Milliseconds;
@@ -56,7 +56,7 @@ struct EntryInfo {
     last_try: Milliseconds,
     last_connected: Milliseconds,
     user_agent: String,
-    subnetworks: Vec<HashInfo>,
+    subnetworks: Vec<Hash256Info>,
     added: Milliseconds,
 }
 
@@ -73,7 +73,7 @@ impl EntryInfo {
                 .subnetworks()
                 .iter()
                 .copied()
-                .map(HashInfo::from)
+                .map(Hash256Info::from)
                 .collect(),
             added: entry.added(),
         }

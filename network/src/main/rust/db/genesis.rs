@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2025 Pavel Vasin
+ * Copyright (c) 2018-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -17,9 +17,7 @@
 
 use blacknet_compat::Mode;
 use blacknet_crypto::bigint::UInt256;
-use blacknet_kernel::amount::Amount;
-use blacknet_kernel::blake2b::Hash;
-use blacknet_kernel::ed25519::PublicKey;
+use blacknet_kernel::{amount::Amount, blake2b::Hash256, ed25519::PublicKey};
 use blacknet_time::Seconds;
 use data_encoding::HEXLOWER;
 use serde::{Deserialize, Serialize};
@@ -30,8 +28,8 @@ pub const fn time() -> Seconds {
     Seconds::new(1545555600)
 }
 
-pub const fn hash() -> Hash {
-    Hash::ZERO
+pub const fn hash() -> Hash256 {
+    Hash256::ZERO
 }
 
 pub const fn cumulative_difficulty() -> UInt256 {

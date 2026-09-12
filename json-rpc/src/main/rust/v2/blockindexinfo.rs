@@ -15,14 +15,14 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::v2::{AmountInfo, HashInfo};
+use crate::v2::{AmountInfo, Hash256Info};
 use blacknet_network::db::BlockIndex;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]
 pub struct BlockIndexInfo {
-    previous: HashInfo,
-    next: HashInfo,
+    previous: Hash256Info,
+    next: Hash256Info,
     nextSize: u32,
     height: u32,
     generated: AmountInfo,

@@ -15,12 +15,14 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::amount::Amount;
-use crate::blake2b::Hash;
-use crate::ed25519::{PublicKey, Signature, verify};
-use crate::error::{Error, Result};
-use crate::multisig::{Deposit, Multisig};
-use crate::transaction::{CoinTx, Transaction, TxData};
+use crate::{
+    amount::Amount,
+    blake2b::Hash256,
+    ed25519::{PublicKey, Signature, verify},
+    error::{Error, Result},
+    multisig::{Deposit, Multisig},
+    transaction::{CoinTx, Transaction, TxData},
+};
 use alloc::boxed::Box;
 use blacknet_crypto::symmetric::Blake2b256;
 use blacknet_serialization::format::to_bytes;
@@ -28,7 +30,7 @@ use serde::{Deserialize, Serialize};
 
 pub type MultiSignatureLockContractId = [u8; 32];
 
-fn id(hash: Hash, data_index: u32) -> MultiSignatureLockContractId {
+fn id(hash: Hash256, data_index: u32) -> MultiSignatureLockContractId {
     let mut hasher = Blake2b256::new();
     hasher.update(hash);
     hasher.update(data_index.to_be_bytes());
@@ -95,7 +97,7 @@ impl CreateMultisig {
         &self.signatures
     }
 
-    fn hash(&self, from: PublicKey, seq: u32, data_index: u32) -> Result<Hash> {
+    fn hash(&self, from: PublicKey, seq: u32, data_index: u32) -> Result<Hash256> {
         let copy = Self {
             n: self.n,
             deposits: self.deposits.clone(),
@@ -115,7 +117,7 @@ impl TxData for CreateMultisig {
     fn process_impl(
         &self,
         tx: &Transaction,
-        hash: Hash,
+        hash: Hash256,
         data_index: u32,
         coin_tx: &mut impl CoinTx,
     ) -> Result<()> {

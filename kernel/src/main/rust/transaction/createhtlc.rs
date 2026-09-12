@@ -15,20 +15,22 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::amount::Amount;
-use crate::blake2b::Hash;
-use crate::ed25519::PublicKey;
-use crate::error::{Error, Result};
-use crate::hashlock::HashLock;
-use crate::htlc::HTLC;
-use crate::timelock::TimeLock;
-use crate::transaction::{CoinTx, Transaction, TxData};
+use crate::{
+    amount::Amount,
+    blake2b::Hash256,
+    ed25519::PublicKey,
+    error::{Error, Result},
+    hashlock::HashLock,
+    htlc::HTLC,
+    timelock::TimeLock,
+    transaction::{CoinTx, Transaction, TxData},
+};
 use blacknet_crypto::symmetric::Blake2b256;
 use serde::{Deserialize, Serialize};
 
 pub type HashTimeLockContractId = [u8; 32];
 
-fn id(hash: Hash, data_index: u32) -> HashTimeLockContractId {
+fn id(hash: Hash256, data_index: u32) -> HashTimeLockContractId {
     let mut hasher = Blake2b256::new();
     hasher.update(hash);
     hasher.update(data_index.to_be_bytes());
@@ -79,7 +81,7 @@ impl TxData for CreateHTLC {
     fn process_impl(
         &self,
         tx: &Transaction,
-        hash: Hash,
+        hash: Hash256,
         data_index: u32,
         coin_tx: &mut impl CoinTx,
     ) -> Result<()> {

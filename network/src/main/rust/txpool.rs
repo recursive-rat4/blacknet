@@ -20,7 +20,7 @@ use blacknet_compat::config::Network as Config;
 use blacknet_kernel::{
     account::Account,
     amount::Amount,
-    blake2b::Hash,
+    blake2b::Hash256,
     block::Block,
     ed25519::PublicKey,
     error::{Error, Result},
@@ -42,21 +42,21 @@ use std::{
 };
 use tokio::{runtime::Runtime, sync::mpsc};
 
-pub type Notification = (Transaction, Hash, Milliseconds, u32);
+pub type Notification = (Transaction, Hash256, Milliseconds, u32);
 pub type Notifier = mpsc::UnboundedReceiver<Arc<Notification>>;
 pub type Subscriber = mpsc::UnboundedSender<Arc<Notification>>;
 
 pub struct TxPool {
     logger: Logger,
     config: Arc<Config>,
-    map: HashMap<Hash, Box<[u8]>>,
-    rejects: HashSet<Hash>,
+    map: HashMap<Hash256, Box<[u8]>>,
+    rejects: HashSet<Hash256>,
     data_size: usize,
     max_seen_len: usize,
     accounts: HashMap<PublicKey, Account>,
     htlcs: HashMap<HashTimeLockContractId, Option<HTLC>>,
     multisigs: HashMap<MultiSignatureLockContractId, Option<Multisig>>,
-    transactions: Vec<Hash>,
+    transactions: Vec<Hash256>,
     undo_accounts: HashMap<PublicKey, Option<Account>>,
     undo_htlcs: HashMap<HashTimeLockContractId, (bool, Option<HTLC>)>,
     undo_multisigs: HashMap<MultiSignatureLockContractId, (bool, Option<Multisig>)>,
@@ -118,15 +118,15 @@ impl TxPool {
         Amount::new(self.config.min_relay_fee_rate)
     }
 
-    pub fn hashes(&self) -> Keys<'_, Hash, Box<[u8]>> {
+    pub fn hashes(&self) -> Keys<'_, Hash256, Box<[u8]>> {
         self.map.keys()
     }
 
-    pub fn get_raw(&self, hash: Hash) -> Option<&[u8]> {
+    pub fn get_raw(&self, hash: Hash256) -> Option<&[u8]> {
         self.map.get(&hash).map(|x| &**x)
     }
 
-    pub fn is_interesting(&self, hash: Hash) -> bool {
+    pub fn is_interesting(&self, hash: Hash256) -> bool {
         !self.rejects.contains(&hash) && !self.map.contains_key(&hash)
     }
 
@@ -178,7 +178,7 @@ impl TxPool {
 
     pub fn process(
         &mut self,
-        hash: Hash,
+        hash: Hash256,
         bytes: &[u8],
         time: Milliseconds,
         remote: bool,
@@ -203,7 +203,7 @@ impl TxPool {
         result
     }
 
-    fn process_impl(&mut self, hash: Hash, bytes: &[u8]) -> Result<()> {
+    fn process_impl(&mut self, hash: Hash256, bytes: &[u8]) -> Result<()> {
         let tx = from_bytes::<Transaction>(bytes, false)?;
         let fee = tx.fee();
         self.check_fee(bytes.len() as u32, fee)?;
@@ -219,7 +219,7 @@ impl TxPool {
 
     fn process_impl_with_fee(
         &mut self,
-        hash: Hash,
+        hash: Hash256,
         bytes: &[u8],
         time: Milliseconds,
     ) -> Result<Amount> {
@@ -279,7 +279,7 @@ impl TxPool {
         result
     }
 
-    fn remove(&mut self, hashes: &[Hash]) {
+    fn remove(&mut self, hashes: &[Hash256]) {
         if hashes.is_empty() || self.transactions.is_empty() {
             return;
         }
@@ -292,7 +292,7 @@ impl TxPool {
         }
     }
 
-    fn steal(&mut self) -> (Vec<Hash>, HashMap<Hash, Box<[u8]>>) {
+    fn steal(&mut self) -> (Vec<Hash256>, HashMap<Hash256, Box<[u8]>>) {
         self.max_seen_len = max(self.max_seen_len, self.transactions.len());
         let txs = replace(
             &mut self.transactions,
@@ -339,11 +339,11 @@ impl CoinTx for Update<'_> {
 
     fn sub_supply(&mut self, _amount: Amount) {}
 
-    fn check_anchor(&self, hash: Hash) -> Result<()> {
+    fn check_anchor(&self, hash: Hash256) -> Result<()> {
         self.tx_pool.coin_db.check_anchor(&self.coin_db.1, hash)
     }
 
-    fn block_hash(&self) -> Hash {
+    fn block_hash(&self) -> Hash256 {
         self.coin_db.0.block_hash()
     }
 

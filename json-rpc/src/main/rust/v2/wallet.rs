@@ -16,7 +16,7 @@
  */
 
 use crate::v2::{
-    AddressInfo, HashInfo, LeaseInfo, MnemonicInfo, NewMnemonicInfo, TransactionDataInfo,
+    AddressInfo, Hash256Info, LeaseInfo, MnemonicInfo, NewMnemonicInfo, TransactionDataInfo,
     WalletTransactionInfo, response::*,
 };
 use axum::{
@@ -26,7 +26,7 @@ use axum::{
     routing::{get, post},
 };
 use blacknet_crypto::zeroize::ZeroizingString;
-use blacknet_kernel::blake2b::Hash;
+use blacknet_kernel::blake2b::Hash256;
 use blacknet_network::{db::genesis, network::Network, wallet::Mnemonic};
 use core::str::FromStr;
 use serde::{Deserialize, Serialize};
@@ -173,7 +173,7 @@ fn transaction_handler(
         Ok(public_key) => public_key,
         Err(err) => return respond_error(format!("Invalid address: {err}")),
     };
-    let hash = match Hash::from_str(hash.as_str()) {
+    let hash = match Hash256::from_str(hash.as_str()) {
         Ok(hash) => hash,
         Err(err) => return respond_error(format!("Invalid hash: {err}")),
     };
@@ -247,7 +247,7 @@ async fn list_transactions_with_all(
 #[derive(Deserialize, Serialize)]
 pub struct ListSinceBlockInfo {
     pub transactions: Vec<WalletTransactionInfo>,
-    pub lastBlockHash: HashInfo,
+    pub lastBlockHash: Hash256Info,
 }
 
 async fn list_since_block(
@@ -261,7 +261,7 @@ async fn list_since_block_with_hash(
     State(network): State<Arc<Network>>,
     Path((address, hash)): Path<(String, String)>,
 ) -> Response<String> {
-    let hash = match Hash::from_str(hash.as_str()) {
+    let hash = match Hash256::from_str(hash.as_str()) {
         Ok(hash) => hash,
         Err(err) => return respond_error(format!("Invalid hash: {err}")),
     };
@@ -272,7 +272,7 @@ async fn list_since_block_with_hash(
 fn list_since_block_handler(
     network: Arc<Network>,
     address: String,
-    hash: Hash,
+    hash: Hash256,
 ) -> Response<String> {
     todo!();
 }

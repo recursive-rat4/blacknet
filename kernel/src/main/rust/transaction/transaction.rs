@@ -15,13 +15,14 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::amount::Amount;
-use crate::blake2b::Hash;
-use crate::ed25519::{PublicKey, SecretKey, Signature, sign, verify};
-use crate::error::Result;
-use crate::transaction::TxKind;
-use alloc::boxed::Box;
-use alloc::vec::Vec;
+use crate::{
+    amount::Amount,
+    blake2b::Hash256,
+    ed25519::{PublicKey, SecretKey, Signature, sign, verify},
+    error::Result,
+    transaction::TxKind,
+};
+use alloc::{boxed::Box, vec::Vec};
 use blacknet_crypto::symmetric::Blake2b256;
 use blacknet_serialization::format::to_bytes;
 use serde::{Deserialize, Serialize};
@@ -29,7 +30,7 @@ use serde::{Deserialize, Serialize};
 const HEADER_SIZE_BYTES: usize = size_of::<Signature>()
     + size_of::<PublicKey>()
     + size_of::<u32>()
-    + size_of::<Hash>()
+    + size_of::<Hash256>()
     + size_of::<Amount>()
     + size_of::<TxKind>();
 
@@ -38,7 +39,7 @@ pub struct Transaction {
     signature: Signature,
     from: PublicKey,
     seq: u32,
-    anchor: Hash,
+    anchor: Hash256,
     fee: Amount,
     kind: TxKind,
     data: Box<[u8]>,
@@ -48,7 +49,7 @@ impl Transaction {
     pub fn new(
         from: PublicKey,
         seq: u32,
-        anchor: Hash,
+        anchor: Hash256,
         fee: Amount,
         kind: TxKind,
         data: Box<[u8]>,
@@ -64,7 +65,7 @@ impl Transaction {
         }
     }
 
-    pub fn generated(from: PublicKey, height: u32, anchor: Hash, amount: Amount) -> Self {
+    pub fn generated(from: PublicKey, height: u32, anchor: Hash256, amount: Amount) -> Self {
         Self {
             signature: Default::default(),
             from,
@@ -76,7 +77,7 @@ impl Transaction {
         }
     }
 
-    pub fn compute_hash(bytes: &[u8]) -> Option<Hash> {
+    pub fn compute_hash(bytes: &[u8]) -> Option<Hash256> {
         if bytes.len() > HEADER_SIZE_BYTES {
             Some(Blake2b256::digest(&bytes[size_of::<Signature>()..]).into())
         } else {
@@ -84,7 +85,7 @@ impl Transaction {
         }
     }
 
-    pub fn sign(&mut self, secret_key: &SecretKey) -> (Hash, Vec<u8>) {
+    pub fn sign(&mut self, secret_key: &SecretKey) -> (Hash256, Vec<u8>) {
         let mut bytes = to_bytes(&self).expect("Transaction serialization");
         let hash = Self::compute_hash(&bytes).expect("Transaction serialized");
         self.signature = sign(hash, secret_key);
@@ -93,11 +94,11 @@ impl Transaction {
         (hash, bytes)
     }
 
-    pub fn verify_signature(&self, hash: Hash) -> Result<()> {
+    pub fn verify_signature(&self, hash: Hash256) -> Result<()> {
         verify(self.signature, hash, self.from)
     }
 
-    pub const fn anchor(&self) -> Hash {
+    pub const fn anchor(&self) -> Hash256 {
         self.anchor
     }
 

@@ -15,12 +15,14 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::amount::Amount;
-use crate::blake2b::Hash;
-use crate::ed25519::PublicKey;
-use crate::error::{Error, Result};
-use crate::proofofstake::MIN_LEASE;
-use crate::transaction::{CoinTx, Transaction, TxData};
+use crate::{
+    amount::Amount,
+    blake2b::Hash256,
+    ed25519::PublicKey,
+    error::{Error, Result},
+    proofofstake::MIN_LEASE,
+    transaction::{CoinTx, Transaction, TxData},
+};
 use alloc::format;
 use serde::{Deserialize, Serialize};
 
@@ -48,7 +50,7 @@ impl TxData for Lease {
     fn process_impl(
         &self,
         tx: &Transaction,
-        _hash: Hash,
+        _hash: Hash256,
         _data_index: u32,
         coin_tx: &mut impl CoinTx,
     ) -> Result<()> {

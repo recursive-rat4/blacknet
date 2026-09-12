@@ -24,7 +24,7 @@ use crate::{
 use arc_swap::ArcSwapOption;
 use blacknet_compat::{XDGDirectories, statvfs};
 use blacknet_kernel::{
-    blake2b::Hash,
+    blake2b::Hash256,
     block::{BLOCK_VERSION, Block},
     error::{Error, Result},
     proofofstake::{
@@ -55,18 +55,18 @@ enum BlockDBVersion {
     V1,
 }
 
-pub type Notification = (Block, Hash, u32, u32, Vec<Hash>);
+pub type Notification = (Block, Hash256, u32, u32, Vec<Hash256>);
 pub type Notifier = mpsc::UnboundedReceiver<Arc<Notification>>;
 pub type Subscriber = mpsc::UnboundedSender<Arc<Notification>>;
 
 pub struct BlockDB {
     logger: Logger,
-    cached_block: ArcSwapOption<(Hash, Box<[u8]>)>,
-    cached_index: ArcSwapOption<(Hash, BlockIndex)>,
-    rejects: Mutex<RollingHashSet<Hash>>,
+    cached_block: ArcSwapOption<(Hash256, Box<[u8]>)>,
+    cached_index: ArcSwapOption<(Hash256, BlockIndex)>,
+    rejects: Mutex<RollingHashSet<Hash256>>,
     subscribers: Mutex<Vec<Subscriber>>,
-    pub(super) blocks: View<Hash, Block>,
-    pub(crate) indexes: View<Hash, BlockIndex>,
+    pub(super) blocks: View<Hash256, Block>,
+    pub(crate) indexes: View<Hash256, BlockIndex>,
     fjall: Arc<Fjall>,
     data_dir: PathBuf,
 }
@@ -115,16 +115,16 @@ impl BlockDB {
         receiver
     }
 
-    pub const fn cached_block(&self) -> &ArcSwapOption<(Hash, Box<[u8]>)> {
+    pub const fn cached_block(&self) -> &ArcSwapOption<(Hash256, Box<[u8]>)> {
         &self.cached_block
     }
 
-    pub fn is_rejected(&self, hash: Hash) -> bool {
+    pub fn is_rejected(&self, hash: Hash256) -> bool {
         let rejects = self.rejects.lock().unwrap();
         rejects.contains(&hash)
     }
 
-    pub fn remove(&self, hashes: Vec<Hash>) {
+    pub fn remove(&self, hashes: Vec<Hash256>) {
         let mut batch = self.fjall.create_write_batch();
         for hash in hashes {
             batch.remove(&self.blocks, hash)
@@ -132,33 +132,33 @@ impl BlockDB {
         batch.commit();
     }
 
-    pub fn contains(&self, snapshot: &Snapshot, hash: Hash) -> bool {
+    pub fn contains(&self, snapshot: &Snapshot, hash: Hash256) -> bool {
         snapshot.contains(&self.indexes, hash)
     }
 
-    pub fn index(&self, snapshot: &Snapshot, hash: Hash) -> Option<BlockIndex> {
+    pub fn index(&self, snapshot: &Snapshot, hash: Hash256) -> Option<BlockIndex> {
         snapshot.get(&self.indexes, hash)
     }
 
-    pub fn get(&self, snapshot: &Snapshot, hash: Hash) -> Option<(Block, usize)> {
+    pub fn get(&self, snapshot: &Snapshot, hash: Hash256) -> Option<(Block, usize)> {
         snapshot.get_with_size(&self.blocks, hash)
     }
 
-    pub fn get_bytes(&self, snapshot: &Snapshot, hash: Hash) -> Option<Box<[u8]>> {
+    pub fn get_bytes(&self, snapshot: &Snapshot, hash: Hash256) -> Option<Box<[u8]>> {
         snapshot.get_bytes(&self.blocks, hash)
     }
 
     pub fn next_block_hashes(
         &self,
         snapshot: &Snapshot,
-        start: Hash,
+        start: Hash256,
         max: usize,
-    ) -> Option<Vec<Hash>> {
+    ) -> Option<Vec<Hash256>> {
         let mut index = snapshot.get(&self.indexes, start)?;
-        let mut result = Vec::<Hash>::with_capacity(max);
+        let mut result = Vec::<Hash256>::with_capacity(max);
         loop {
             let hash = index.next();
-            if hash == Hash::ZERO {
+            if hash == Hash256::ZERO {
                 break;
             }
             result.push(hash);
@@ -173,7 +173,7 @@ impl BlockDB {
         Some(result)
     }
 
-    pub fn hash(&self, state: &State, snapshot: &Snapshot, height: u32) -> Option<Hash> {
+    pub fn hash(&self, state: &State, snapshot: &Snapshot, height: u32) -> Option<Hash256> {
         if height > state.height() {
             return None;
         } else if height == 0 {
@@ -189,7 +189,7 @@ impl BlockDB {
             }
         }
 
-        let mut hash: Hash;
+        let mut hash: Hash256;
         let mut index: BlockIndex;
         if height < state.height() / 2 {
             hash = genesis::hash();
@@ -342,7 +342,7 @@ impl BlockDB {
         check
     }
 
-    pub fn process(&self, coin_db: &Arc<CoinDB>, hash: Hash, bytes: Box<[u8]>) -> Result<()> {
+    pub fn process(&self, coin_db: &Arc<CoinDB>, hash: Hash256, bytes: Box<[u8]>) -> Result<()> {
         let mut rejects = self.rejects.lock().unwrap();
         if rejects.contains(&hash) {
             return Err(Error::invalid("Already rejected block"));
@@ -363,7 +363,7 @@ impl BlockDB {
         coin_db: &Arc<CoinDB>,
         state: State,
         snapshot: Snapshot,
-        hash: Hash,
+        hash: Hash256,
         bytes: Box<[u8]>,
     ) -> Result<()> {
         let block = from_bytes::<Block>(&bytes, false)?;

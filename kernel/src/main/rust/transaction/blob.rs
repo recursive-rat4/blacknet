@@ -15,9 +15,11 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::blake2b::Hash;
-use crate::error::Result;
-use crate::transaction::{CoinTx, Transaction, TxData};
+use crate::{
+    blake2b::Hash256,
+    error::Result,
+    transaction::{CoinTx, Transaction, TxData},
+};
 use alloc::boxed::Box;
 use serde::{Deserialize, Serialize};
 
@@ -47,7 +49,7 @@ impl TxData for Blob {
     fn process_impl(
         &self,
         _tx: &Transaction,
-        _hash: Hash,
+        _hash: Hash256,
         _data_index: u32,
         _coin_tx: &mut impl CoinTx,
     ) -> Result<()> {

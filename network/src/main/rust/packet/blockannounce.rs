@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2025 Pavel Vasin
+ * Copyright (c) 2019-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,28 +15,30 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::connection::Connection;
-use crate::packet::{Packet, PacketKind};
+use crate::{
+    connection::Connection,
+    packet::{Packet, PacketKind},
+};
 use blacknet_crypto::bigint::UInt256;
-use blacknet_kernel::blake2b::Hash;
+use blacknet_kernel::blake2b::Hash256;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
 #[derive(Clone, Deserialize, Serialize)]
 pub struct BlockAnnounce {
-    hash: Hash,
+    hash: Hash256,
     cumulative_difficulty: Box<[u8]>,
 }
 
 impl BlockAnnounce {
-    pub fn new(hash: Hash, cumulative_difficulty: UInt256) -> Self {
+    pub fn new(hash: Hash256, cumulative_difficulty: UInt256) -> Self {
         Self {
             hash,
             cumulative_difficulty: unsafe { Box::new(cumulative_difficulty.to_java::<32>()) },
         }
     }
 
-    pub const fn hash(&self) -> Hash {
+    pub const fn hash(&self) -> Hash256 {
         self.hash
     }
 
@@ -52,7 +54,7 @@ impl BlockAnnounce {
 impl Default for BlockAnnounce {
     fn default() -> Self {
         Self {
-            hash: Hash::ZERO,
+            hash: Hash256::ZERO,
             cumulative_difficulty: Box::new([0; 1]),
         }
     }

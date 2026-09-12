@@ -19,7 +19,7 @@ use blacknet_compat::Mode;
 use blacknet_kernel::{
     account::Lease,
     amount::Amount,
-    blake2b::Hash,
+    blake2b::Hash256,
     ed25519::{PublicKey, SecretKey},
     transaction::{HashTimeLockContractId, MultiSignatureLockContractId},
 };
@@ -115,7 +115,7 @@ fn out_lease() {
 fn transaction() {
     let mode = Mode::regtest();
     let wallet = Wallet::ephemeral(&mode).unwrap();
-    let tx_id = Hash::ZERO;
+    let tx_id = Hash256::ZERO;
     let tx_bytes: [u8; 4] = [10, 11, 12, 13];
 
     assert_matches!(wallet.count_transactions(), Ok(0));

@@ -15,13 +15,13 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_kernel::{amount::Amount, blake2b::Hash};
+use blacknet_kernel::{amount::Amount, blake2b::Hash256};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Copy, Deserialize, Serialize)]
 pub struct BlockIndex {
-    previous: Hash,
-    pub(super) next: Hash,
+    previous: Hash256,
+    pub(super) next: Hash256,
     pub(super) next_size: u32,
     height: u32,
     generated: Amount,
@@ -29,8 +29,8 @@ pub struct BlockIndex {
 
 impl BlockIndex {
     pub const fn new(
-        previous: Hash,
-        next: Hash,
+        previous: Hash256,
+        next: Hash256,
         next_size: u32,
         height: u32,
         generated: Amount,
@@ -44,11 +44,11 @@ impl BlockIndex {
         }
     }
 
-    pub const fn previous(&self) -> Hash {
+    pub const fn previous(&self) -> Hash256 {
         self.previous
     }
 
-    pub const fn next(&self) -> Hash {
+    pub const fn next(&self) -> Hash256 {
         self.next
     }
 
@@ -64,7 +64,7 @@ impl BlockIndex {
         self.generated
     }
 
-    pub const fn set_next(&mut self, next: Hash) {
+    pub const fn set_next(&mut self, next: Hash256) {
         self.next = next
     }
 

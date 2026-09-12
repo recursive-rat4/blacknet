@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::v2::HashInfo;
+use crate::v2::Hash256Info;
 use blacknet_network::txpool::TxPool;
 use serde::{Deserialize, Serialize};
 
@@ -23,7 +23,7 @@ use serde::{Deserialize, Serialize};
 pub struct TxPoolInfo {
     size: u32,
     dataSize: u32,
-    tx: Vec<HashInfo>,
+    tx: Vec<Hash256Info>,
 }
 
 impl TxPoolInfo {
@@ -31,7 +31,7 @@ impl TxPoolInfo {
         Self {
             size: tx_pool.len() as u32,
             dataSize: tx_pool.data_size() as u32,
-            tx: tx_pool.hashes().copied().map(HashInfo::from).collect(),
+            tx: tx_pool.hashes().copied().map(Hash256Info::from).collect(),
         }
     }
 }

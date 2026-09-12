@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_kernel::blake2b::Hash;
+use blacknet_kernel::blake2b::Hash256;
 use blacknet_kernel::ed25519::*;
 use core::str::FromStr;
 use criterion::{Criterion, Throughput, criterion_group, criterion_main};
@@ -34,7 +34,8 @@ fn criterion_benchmark(crit: &mut Criterion) {
             .unwrap(),
     );
     let hash = black_box(
-        Hash::from_str("9909FF1647FE84CBA8C3495A2A9BACE506C70B431B08235DBC3FE8EC49429465").unwrap(),
+        Hash256::from_str("9909FF1647FE84CBA8C3495A2A9BACE506C70B431B08235DBC3FE8EC49429465")
+            .unwrap(),
     );
     let signature = black_box(Signature::from_str("6D5D4F6A81C601B1834701BDE84785470F92DFA517975BED9AAEA035FBDB0072327EFD207195B7202B5A72BB9CC37443A011C35137E1DF1C11BB5E9C60125B04").unwrap());
 

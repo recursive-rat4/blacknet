@@ -24,7 +24,7 @@ use blacknet_crypto::random::{
     Distribution, FAST_RNG, Float01Distribution, UniformIntDistribution,
 };
 use blacknet_io::file::replace;
-use blacknet_kernel::blake2b::Hash;
+use blacknet_kernel::blake2b::Hash256;
 use blacknet_log::{LogManager, Logger, debug, error, info, warn};
 use blacknet_serialization::format::{from_read, to_write};
 use blacknet_time::{Milliseconds, SystemClock};
@@ -389,7 +389,7 @@ pub struct Entry {
     last_try: Milliseconds,
     last_connected: Milliseconds,
     user_agent: String,
-    subnetworks: HashSet<Hash>,
+    subnetworks: HashSet<Hash256>,
     added: Milliseconds,
 }
 
@@ -489,7 +489,7 @@ impl Entry {
         &self.user_agent
     }
 
-    pub const fn subnetworks(&self) -> &HashSet<Hash> {
+    pub const fn subnetworks(&self) -> &HashSet<Hash256> {
         &self.subnetworks
     }
 

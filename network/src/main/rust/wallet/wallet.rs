@@ -20,7 +20,7 @@ use blacknet_compat::Mode;
 use blacknet_kernel::{
     account::Lease,
     amount::Amount,
-    blake2b::Hash,
+    blake2b::Hash256,
     ed25519::{PublicKey, SecretKey, to_public_key, to_secret_key},
     transaction::{HashTimeLockContractId, MultiSignatureLockContractId},
 };
@@ -202,7 +202,7 @@ impl Wallet {
         Ok(sequence)
     }
 
-    pub fn get_transaction(&self, id: Hash) -> Result<Box<[u8]>> {
+    pub fn get_transaction(&self, id: Hash256) -> Result<Box<[u8]>> {
         let id: [u8; _] = id.into();
         let connection = self.connection.lock().unwrap();
         let mut statement =
@@ -211,7 +211,7 @@ impl Wallet {
         Ok(bytes)
     }
 
-    pub fn put_transaction(&self, id: Hash, bytes: &[u8]) -> Result<()> {
+    pub fn put_transaction(&self, id: Hash256, bytes: &[u8]) -> Result<()> {
         let id: [u8; _] = id.into();
         let connection = self.connection.lock().unwrap();
         let mut statement = connection.prepare_cached("INSERT INTO transactions VALUES(?, ?);")?;

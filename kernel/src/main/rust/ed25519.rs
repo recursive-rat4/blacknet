@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::{blake2b::Hash, error::Error};
+use crate::{blake2b::Hash256, error::Error};
 use alloc::vec::Vec;
 use blacknet_crypto::{
     algebra::{IntegerModRing, One},
@@ -219,7 +219,7 @@ pub fn to_secret_key<Seed: AsRef<[u8]>>(seed: Seed) -> Option<SecretKey> {
     }
 }
 
-pub fn sign(hash: Hash, secret_key: &SecretKey) -> Signature {
+pub fn sign(hash: Hash256, secret_key: &SecretKey) -> Signature {
     let (scalar, h) = parse_secret_key(secret_key);
 
     let mut hasher = Blake2b512::new();
@@ -242,7 +242,7 @@ pub fn sign(hash: Hash, secret_key: &SecretKey) -> Signature {
     Signature { r, s }
 }
 
-pub fn verify(signature: Signature, hash: Hash, public_key: PublicKey) -> Result<(), Error> {
+pub fn verify(signature: Signature, hash: Hash256, public_key: PublicKey) -> Result<(), Error> {
     let a = Edwards25519Affine::decode(public_key.0)
         .ok_or_else(|| Error::invalid("Invalid public key"))?;
     let mut hasher = Blake2b512::new();

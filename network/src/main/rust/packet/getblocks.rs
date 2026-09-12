@@ -21,18 +21,18 @@ use crate::{
         Blocks, ConsensusFault, MAX_BLOCKS, MAX_HASHES, PACKET_HEADER_SIZE, Packet, PacketKind,
     },
 };
-use blacknet_kernel::blake2b::Hash;
+use blacknet_kernel::blake2b::Hash256;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
 #[derive(Deserialize, Serialize)]
 pub struct GetBlocks {
-    best: Hash,
-    checkpoint: Hash,
+    best: Hash256,
+    checkpoint: Hash256,
 }
 
 impl GetBlocks {
-    pub const fn new(best: Hash, checkpoint: Hash) -> Self {
+    pub const fn new(best: Hash256, checkpoint: Hash256) -> Self {
         Self { best, checkpoint }
     }
 }
@@ -61,7 +61,7 @@ impl Packet for GetBlocks {
 
             loop {
                 let hash = block_index.next();
-                if hash == Hash::ZERO {
+                if hash == Hash256::ZERO {
                     break;
                 }
                 size += block_index.next_size() + 4; //XXX VarInt.size()

@@ -29,7 +29,7 @@ use blacknet_crypto::{
     bigint::UInt256,
     random::{Distribution, FAST_RNG, UniformIntDistribution},
 };
-use blacknet_kernel::{amount::Amount, blake2b::Hash};
+use blacknet_kernel::{amount::Amount, blake2b::Hash256};
 use blacknet_log::{Logger, debug, error, info};
 use blacknet_serialization::format::to_bytes;
 use blacknet_time::{Milliseconds, Seconds, SystemClock};
@@ -61,7 +61,7 @@ pub struct Connection {
     dos_score: AtomicU8,
     send_channel_size: AtomicUsize,
     send_channel: UnboundedSender<(PacketKind, Vec<u8>)>,
-    inventory_to_send: Mutex<Vec<Hash>>,
+    inventory_to_send: Mutex<Vec<Hash256>>,
     connected_at: Milliseconds,
 
     last_packet_time: Atomic<Milliseconds>,
@@ -158,7 +158,7 @@ impl Connection {
         }
     }
 
-    pub fn inventory(&self, inv: Hash) {
+    pub fn inventory(&self, inv: Hash256) {
         let mut inventory_to_send = self.inventory_to_send.lock().unwrap();
         inventory_to_send.push(inv);
         if inventory_to_send.len() == INVENTORY_SEND_MAX {
@@ -166,7 +166,7 @@ impl Connection {
         }
     }
 
-    pub fn inventory_slice(&self, inv: &[Hash]) {
+    pub fn inventory_slice(&self, inv: &[Hash256]) {
         let mut inventory_to_send = self.inventory_to_send.lock().unwrap();
         let new_len = inventory_to_send.len() + inv.len();
         if new_len < INVENTORY_SEND_MAX {
@@ -195,7 +195,7 @@ impl Connection {
 
     fn send_inventory_impl(
         &self,
-        inventory_to_send: &mut MutexGuard<Vec<Hash>>,
+        inventory_to_send: &mut MutexGuard<Vec<Hash256>>,
         time: Milliseconds,
     ) {
         self.send_packet(&Inventory::new(inventory_to_send.clone()));

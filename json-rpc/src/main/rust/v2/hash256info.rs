@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,14 +15,14 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_kernel::blake2b::Hash;
+use blacknet_kernel::blake2b::Hash256;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]
-pub struct HashInfo(String);
+pub struct Hash256Info(String);
 
-impl From<Hash> for HashInfo {
-    fn from(hash: Hash) -> Self {
+impl From<Hash256> for Hash256Info {
+    fn from(hash: Hash256) -> Self {
         Self(hash.to_string())
     }
 }

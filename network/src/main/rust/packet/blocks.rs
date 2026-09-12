@@ -15,10 +15,11 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::connection::Connection;
-use crate::packet::{Packet, PacketKind};
-use blacknet_kernel::blake2b::Hash;
-use blacknet_kernel::proofofstake::ROLLBACK_LIMIT;
+use crate::{
+    connection::Connection,
+    packet::{Packet, PacketKind},
+};
+use blacknet_kernel::{blake2b::Hash256, proofofstake::ROLLBACK_LIMIT};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
@@ -27,7 +28,7 @@ pub const MAX_HASHES: usize = ROLLBACK_LIMIT;
 
 #[derive(Deserialize, Serialize)]
 pub struct Blocks {
-    hashes: Vec<Hash>,
+    hashes: Vec<Hash256>,
     blocks: Vec<Box<[u8]>>,
 }
 
@@ -46,14 +47,14 @@ impl Blocks {
         }
     }
 
-    pub fn with_hashes(hashes: Vec<Hash>) -> Self {
+    pub fn with_hashes(hashes: Vec<Hash256>) -> Self {
         Self {
             hashes,
             blocks: Default::default(),
         }
     }
 
-    pub const fn hashes(&self) -> &[Hash] {
+    pub const fn hashes(&self) -> &[Hash256] {
         self.hashes.as_slice()
     }
 
@@ -62,7 +63,7 @@ impl Blocks {
     }
 }
 
-impl From<Blocks> for (Vec<Hash>, Vec<Box<[u8]>>) {
+impl From<Blocks> for (Vec<Hash256>, Vec<Box<[u8]>>) {
     fn from(blocks: Blocks) -> Self {
         (blocks.hashes, blocks.blocks)
     }

@@ -15,14 +15,15 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::amount::Amount;
-use crate::blake2b::Hash;
-use crate::ed25519::{PublicKey, verify};
-use crate::error::{Error, Result};
-use crate::multisig::Multisig;
-use crate::transaction::{CoinTx, MultiSignatureLockContractId, Sig, Transaction, TxData};
-use alloc::boxed::Box;
-use alloc::collections::BTreeMap;
+use crate::{
+    amount::Amount,
+    blake2b::Hash256,
+    ed25519::{PublicKey, verify},
+    error::{Error, Result},
+    multisig::Multisig,
+    transaction::{CoinTx, MultiSignatureLockContractId, Sig, Transaction, TxData},
+};
+use alloc::{boxed::Box, collections::BTreeMap};
 use blacknet_crypto::symmetric::Blake2b256;
 use blacknet_serialization::format::to_bytes;
 use serde::{Deserialize, Serialize};
@@ -80,7 +81,7 @@ impl SpendMultisig {
         }
     }
 
-    fn hash(&self) -> Result<Hash> {
+    fn hash(&self) -> Result<Hash256> {
         let copy = Self {
             id: self.id,
             amounts: self.amounts.clone(),
@@ -95,7 +96,7 @@ impl TxData for SpendMultisig {
     fn process_impl(
         &self,
         tx: &Transaction,
-        _hash: Hash,
+        _hash: Hash256,
         _data_index: u32,
         coin_tx: &mut impl CoinTx,
     ) -> Result<()> {

@@ -15,12 +15,13 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::amount::Amount;
-use crate::blake2b::Hash;
-use crate::ed25519::PublicKey;
-use crate::error::{Error, Result};
-use alloc::boxed::Box;
-use alloc::collections::VecDeque;
+use crate::{
+    amount::Amount,
+    blake2b::Hash256,
+    ed25519::PublicKey,
+    error::{Error, Result},
+};
+use alloc::{boxed::Box, collections::VecDeque};
 use blacknet_crypto::{
     bigint::{UInt256, UInt320},
     symmetric::Blake2b256,
@@ -47,7 +48,7 @@ pub fn mint(version: Version, supply: Amount) -> Amount {
     supply / 100u64 / blocks_in_year(version)
 }
 
-pub fn nxtrng(nxtrng: Hash, generator: PublicKey) -> Hash {
+pub fn nxtrng(nxtrng: Hash256, generator: PublicKey) -> Hash256 {
     let mut hasher = Blake2b256::new();
     hasher.update(nxtrng);
     hasher.update(generator);
@@ -58,7 +59,7 @@ pub fn verify(
     version: Version,
     time: Seconds,
     generator: PublicKey,
-    nxtrng: Hash,
+    nxtrng: Hash256,
     difficulty: UInt256,
     prev_time: Seconds,
     stake: Amount,

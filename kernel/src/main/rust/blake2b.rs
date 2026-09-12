@@ -15,50 +15,59 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use core::fmt::{Debug, Display, Formatter, Result as FmtResult};
-use core::str::FromStr;
+use core::{borrow::Borrow, fmt, str::FromStr};
 use data_encoding::{DecodeError, DecodeKind, HEXUPPER};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Copy, Default, Deserialize, Eq, Hash, PartialEq, Serialize)]
 #[repr(transparent)]
-pub struct Hash([u8; 32]);
+pub struct Hash256([u8; 32]);
 
-impl Hash {
+impl Hash256 {
     pub const ZERO: Self = Self([0; 32]);
 }
 
-impl AsRef<[u8]> for Hash {
+impl AsRef<[u8]> for Hash256 {
+    #[inline]
     fn as_ref(&self) -> &[u8] {
         &self.0
     }
 }
 
-impl Debug for Hash {
-    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+impl Borrow<[u8; 32]> for Hash256 {
+    #[inline]
+    fn borrow(&self) -> &[u8; 32] {
+        &self.0
+    }
+}
+
+impl fmt::Debug for Hash256 {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self)
     }
 }
 
-impl Display for Hash {
-    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+impl fmt::Display for Hash256 {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", HEXUPPER.encode(&self.0))
     }
 }
 
-impl From<[u8; 32]> for Hash {
+impl From<[u8; 32]> for Hash256 {
+    #[inline]
     fn from(array: [u8; 32]) -> Self {
         Self(array)
     }
 }
 
-impl From<Hash> for [u8; 32] {
-    fn from(hash: Hash) -> Self {
+impl From<Hash256> for [u8; 32] {
+    #[inline]
+    fn from(hash: Hash256) -> Self {
         hash.0
     }
 }
 
-impl FromStr for Hash {
+impl FromStr for Hash256 {
     type Err = DecodeError;
 
     fn from_str(hex: &str) -> Result<Self, Self::Err> {

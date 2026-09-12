@@ -15,9 +15,11 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::connection::Connection;
-use crate::packet::{Packet, PacketKind};
-use blacknet_kernel::blake2b::Hash;
+use crate::{
+    connection::Connection,
+    packet::{Packet, PacketKind},
+};
+use blacknet_kernel::blake2b::Hash256;
 use blacknet_time::Milliseconds;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -28,11 +30,11 @@ pub const INVENTORY_SEND_TIMEOUT: Milliseconds = Milliseconds::with_seconds(5);
 
 #[derive(Deserialize, Serialize)]
 pub struct Inventory {
-    list: Vec<Hash>,
+    list: Vec<Hash256>,
 }
 
 impl Inventory {
-    pub const fn new(list: Vec<Hash>) -> Self {
+    pub const fn new(list: Vec<Hash256>) -> Self {
         Self { list }
     }
 
@@ -46,8 +48,8 @@ impl Inventory {
 }
 
 impl IntoIterator for Inventory {
-    type Item = Hash;
-    type IntoIter = <Box<[Hash]> as IntoIterator>::IntoIter;
+    type Item = Hash256;
+    type IntoIter = <Box<[Hash256]> as IntoIterator>::IntoIter;
 
     #[inline]
     fn into_iter(self) -> Self::IntoIter {

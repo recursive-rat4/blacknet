@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -16,14 +16,14 @@
  */
 
 use blacknet_crypto::bigint::UInt256;
-use blacknet_kernel::blake2b::Hash;
+use blacknet_kernel::blake2b::Hash256;
 use blacknet_network::packet::BlockAnnounce;
 use blacknet_serialization::format::{from_bytes, to_bytes};
 
 #[test]
 fn serialization() {
     #[rustfmt::skip]
-    let hash: Hash = [
+    let hash: Hash256 = [
         0xFB, 0x40, 0x64, 0x28, 0x3A, 0x07, 0xA6, 0x97,
         0x49, 0xA8, 0x01, 0x28, 0x97, 0xBD, 0xA7, 0x15,
         0x9D, 0x6F, 0x25, 0x6F, 0x9A, 0xE4, 0x1B, 0xEB,

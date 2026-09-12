@@ -22,7 +22,7 @@ use crate::{
 };
 use blacknet_compat::{Mode, XDGDirectories};
 use blacknet_kernel::{
-    blake2b::Hash, ed25519::PublicKey, proofofstake::guess_initial_synchronization,
+    blake2b::Hash256, ed25519::PublicKey, proofofstake::guess_initial_synchronization,
     transaction::Transaction,
 };
 use blacknet_log::{LogManager, Logger, error, info};
@@ -40,7 +40,7 @@ use tokio::{runtime::Runtime, sync::mpsc};
 #[cfg(target_family = "unix")]
 use std::os::unix::fs::DirBuilderExt;
 
-pub type Notification = (Transaction, Hash, Milliseconds, u32, PublicKey);
+pub type Notification = (Transaction, Hash256, Milliseconds, u32, PublicKey);
 pub type Notifier = mpsc::UnboundedReceiver<Notification>;
 pub type Subscriber = mpsc::UnboundedSender<Notification>;
 
@@ -131,7 +131,7 @@ impl WalletDB {
         &self.wallets
     }
 
-    pub fn anchor(&self, state: &State) -> Hash {
+    pub fn anchor(&self, state: &State) -> Hash256 {
         if !guess_initial_synchronization(
             state.pos_version(),
             SystemClock::secs(),

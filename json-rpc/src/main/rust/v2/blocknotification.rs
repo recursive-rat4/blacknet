@@ -15,17 +15,17 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::v2::{HashInfo, PublicKeyInfo, Result};
+use crate::v2::{Hash256Info, PublicKeyInfo, Result};
 use blacknet_network::{db::BlockNotification as Notification, wallet::AddressCodec};
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]
 pub struct BlockNotification {
-    hash: HashInfo,
+    hash: Hash256Info,
     height: u32,
     size: u32,
     version: u32,
-    previous: HashInfo,
+    previous: Hash256Info,
     time: i64,
     generator: PublicKeyInfo,
     transactions: u32,

@@ -23,7 +23,7 @@ use axum::{
     response::Response,
     routing::get,
 };
-use blacknet_kernel::{blake2b::Hash, proofofstake::DEFAULT_CONFIRMATIONS};
+use blacknet_kernel::{blake2b::Hash256, proofofstake::DEFAULT_CONFIRMATIONS};
 use blacknet_network::{
     db::{BlockDBCheck, CoinDBCheck},
     network::Network,
@@ -66,7 +66,7 @@ async fn block_with_txdetail(
 }
 
 fn block_handler(hash: &str, txdetail: bool, network: &Arc<Network>) -> Response<String> {
-    let hash = match Hash::from_str(hash) {
+    let hash = match Hash256::from_str(hash) {
         Ok(hash) => hash,
         Err(err) => return respond_error(format!("Invalid hash: {err}")),
     };
@@ -111,7 +111,7 @@ async fn block_index(
     Path(hash): Path<String>,
     State(network): State<Arc<Network>>,
 ) -> Response<String> {
-    let hash = match Hash::from_str(hash.as_str()) {
+    let hash = match Hash256::from_str(hash.as_str()) {
         Ok(hash) => hash,
         Err(err) => return respond_error(format!("Invalid hash: {err}")),
     };
