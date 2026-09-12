@@ -34,7 +34,7 @@ pub struct NodeInfo {
 impl NodeInfo {
     pub fn new(network: &Network) -> Self {
         let node = network.node();
-        let listening = node.listening().read().unwrap();
+        let listening = node.router().listening();
         Self {
             agent: node.agent_string().to_owned(),
             name: node.agent_name().to_owned(),
@@ -42,7 +42,10 @@ impl NodeInfo {
             protocolVersion: PROTOCOL_VERSION,
             outgoing: node.outgoing() as u32,
             incoming: node.incoming() as u32,
-            listening: listening.iter().copied().map(EndpointInfo::from).collect(),
+            listening: listening
+                .iter()
+                .map(|guard| EndpointInfo::from(**guard))
+                .collect(),
             warnings: network.warnings(),
         }
     }

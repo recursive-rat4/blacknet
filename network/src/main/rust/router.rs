@@ -19,7 +19,7 @@ use crate::{
     endpoint::{Endpoint, ipv4_any, ipv6_any},
     i2psam::{Error as I2PError, SAM},
     natpmp::natpmp_forward,
-    peertable::PeerTable,
+    peertable::{ContactGuard, PeerTable},
     socks5::{Error as Socks5Error, socks5},
     torcontroller::{Error as TorError, TorController},
 };
@@ -28,7 +28,7 @@ use blacknet_compat::{
     {Mode, XDGDirectories},
 };
 use blacknet_io::Error as IoError;
-use blacknet_log::{Error as LogError, LogManager, Logger, info, trace, warn};
+use blacknet_log::{Error as LogError, LogManager, Logger, error, info, trace, warn};
 use core::{
     cmp::{max, min},
     fmt,
@@ -37,7 +37,7 @@ use core::{
 };
 use std::{
     collections::HashSet,
-    sync::{Arc, RwLock},
+    sync::{Arc, RwLock, RwLockReadGuard},
 };
 use tokio::{
     io::{BufReader, BufWriter},
@@ -63,7 +63,7 @@ pub struct Router {
     logger: Logger,
     runtime: Handle,
     config: Arc<Config>,
-    listens: RwLock<HashSet<Endpoint>>,
+    listens: RwLock<HashSet<ContactGuard>>,
     peer_table: Arc<PeerTable>,
     socks_proxy: Option<Endpoint>,
     tor_proxy: Option<Endpoint>,
@@ -152,7 +152,7 @@ impl Router {
                         if !local_endpoint.is_local() {
                             let mut local_endpoint = local_endpoint;
                             local_endpoint.set_port(self.config.port);
-                            self.add_listener(local_endpoint);
+                            self.add_listener(local_endpoint)
                         }
                         Ok((buf_reader, buf_writer, local_endpoint))
                     }
@@ -180,7 +180,7 @@ impl Router {
                         if !local_endpoint.is_local() {
                             let mut local_endpoint = local_endpoint;
                             local_endpoint.set_port(self.config.port);
-                            self.add_listener(local_endpoint);
+                            self.add_listener(local_endpoint)
                         }
                         Ok((buf_reader, buf_writer, local_endpoint))
                     }
@@ -357,9 +357,7 @@ impl Router {
 
     async fn forward_natpmp(self: Arc<Self>) {
         match natpmp_forward(self.config.port).await {
-            Ok(endpoint) => {
-                self.add_listener(endpoint);
-            }
+            Ok(endpoint) => self.add_listener(endpoint),
             Err(msg) => {
                 info!(self.logger, "NAT-PMP: {msg}");
             }
@@ -367,17 +365,21 @@ impl Router {
     }
 
     fn add_listener(&self, endpoint: Endpoint) {
-        let inserted = {
+        if let Some(guard) = self.peer_table.try_contact(endpoint) {
             let mut listens = self.listens.write().unwrap();
-            listens.insert(endpoint)
-        };
-        if inserted {
-            self.peer_table.contacted(endpoint);
-            info!(
-                self.logger,
-                "Listening on {}",
-                endpoint.to_log(self.config.log_endpoint)
-            );
+            if listens.insert(guard) {
+                info!(
+                    self.logger,
+                    "Listening on {}",
+                    endpoint.to_log(self.config.log_endpoint)
+                );
+            } else {
+                error!(
+                    self.logger,
+                    "Cannot add listener {}",
+                    endpoint.to_log(self.config.log_endpoint)
+                );
+            }
         }
     }
     fn remove_listener(&self, endpoint: Endpoint) {
@@ -386,16 +388,21 @@ impl Router {
             listens.remove(&endpoint)
         };
         if removed {
-            self.peer_table.discontacted(endpoint);
             info!(
                 self.logger,
                 "Lost binding to {}",
                 endpoint.to_log(self.config.log_endpoint)
             );
+        } else {
+            error!(
+                self.logger,
+                "Cannot remove lost {}",
+                endpoint.to_log(self.config.log_endpoint)
+            );
         }
     }
-    pub const fn listening(&self) -> &RwLock<HashSet<Endpoint>> {
-        &self.listens
+    pub fn listening(&self) -> RwLockReadGuard<'_, HashSet<ContactGuard>> {
+        self.listens.read().unwrap()
     }
 
     const INIT_TIMEOUT: Duration = Duration::from_secs(60);

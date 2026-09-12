@@ -28,7 +28,13 @@ use blacknet_kernel::blake2b::Hash256;
 use blacknet_log::{LogManager, Logger, debug, error, info, warn};
 use blacknet_serialization::format::{from_read, to_write};
 use blacknet_time::{Milliseconds, SystemClock};
-use core::{cmp::min, error::Error};
+use core::{
+    borrow::Borrow,
+    cmp::min,
+    error::Error,
+    hash::{Hash, Hasher},
+    ops::Deref,
+};
 use serde::{Deserialize, Serialize};
 use std::{
     collections::{HashMap, HashSet},
@@ -36,7 +42,7 @@ use std::{
     io::{BufReader, ErrorKind, Read, Write},
     path::PathBuf,
     sync::{
-        Arc, RwLock,
+        Arc, Mutex, RwLock,
         atomic::{AtomicBool, Ordering},
     },
 };
@@ -50,6 +56,7 @@ pub struct PeerTable {
     config: Arc<Config>,
     data_dir: PathBuf,
     peers: RwLock<HashMap<Endpoint, Entry>>,
+    locals: Mutex<HashSet<Endpoint>>,
 }
 
 impl PeerTable {
@@ -64,6 +71,7 @@ impl PeerTable {
             config,
             data_dir: dirs.data().to_owned(),
             peers: RwLock::new(HashMap::with_capacity(MAX_SIZE)),
+            locals: Mutex::new(HashSet::new()),
         };
         match peer_table.load() {
             Ok(()) => {
@@ -117,6 +125,7 @@ impl PeerTable {
         prober: bool,
     ) {
         if endpoint.is_local() || endpoint.is_private() {
+            // not have persistent table of private network peers
             return;
         }
         let mut peers = self.peers.write().unwrap();
@@ -128,33 +137,14 @@ impl PeerTable {
             .or_insert_with(|| Entry::with_connected(time, user_agent));
     }
 
-    pub fn try_contact(&self, endpoint: Endpoint) -> bool {
+    pub fn try_contact(self: &Arc<Self>, endpoint: Endpoint) -> Option<ContactGuard> {
         if endpoint.is_local() || endpoint.is_private() {
-            return false;
-        }
-        let mut contacted = false;
-        let mut inserted = false;
-        {
-            let mut peers = self.peers.write().unwrap();
-            // ignore max size
-            peers
-                .entry(endpoint)
-                .and_modify(|entry| {
-                    if entry.contact() {
-                        contacted = true;
-                    }
-                })
-                .or_insert_with(|| {
-                    inserted = true;
-                    Entry::new(true)
-                });
-        }
-        contacted || inserted
-    }
-
-    pub fn contacted(&self, endpoint: Endpoint) {
-        if endpoint.is_local() || endpoint.is_private() {
-            return;
+            let mut locals = self.locals.lock().unwrap();
+            if locals.insert(endpoint) {
+                return Some(ContactGuard::new(endpoint, self.clone()));
+            } else {
+                return None;
+            }
         }
         let mut contacted = false;
         let mut inserted = false;
@@ -174,17 +164,22 @@ impl PeerTable {
                 });
         }
         if contacted || inserted {
-            return;
+            Some(ContactGuard::new(endpoint, self.clone()))
+        } else {
+            None
         }
-        error!(
-            self.logger,
-            "Inconsistent contact to {}",
-            endpoint.to_log(self.config.log_endpoint)
-        );
     }
 
-    pub fn discontacted(&self, endpoint: Endpoint) {
+    fn discontacted(&self, endpoint: Endpoint) {
         if endpoint.is_local() || endpoint.is_private() {
+            let mut locals = self.locals.lock().unwrap();
+            if !locals.remove(&endpoint) {
+                error!(
+                    self.logger,
+                    "Inconsistent discontact from local or private {}",
+                    endpoint.to_log(self.config.log_endpoint)
+                );
+            }
             return;
         }
         let mut discontacted = false;
@@ -246,6 +241,7 @@ impl PeerTable {
 
     fn add_impl(peers: &mut HashMap<Endpoint, Entry>, peer: Endpoint) -> bool {
         if peer.is_local() || peer.is_private() {
+            // not have persistent table of private network peers
             return false;
         }
         if let Endpoint::TORv2 {
@@ -262,7 +258,10 @@ impl PeerTable {
         true
     }
 
-    pub fn candidate(&self, predicate: impl Fn(&Endpoint, &Entry) -> bool) -> Option<Endpoint> {
+    pub fn candidate(
+        self: &Arc<Self>,
+        predicate: impl Fn(&Endpoint, &Entry) -> bool,
+    ) -> Option<ContactGuard> {
         let peers = self.peers.read().unwrap();
         let mut candidates = Vec::<(&Endpoint, &Entry, f32)>::with_capacity(peers.len());
         let now = SystemClock::millis();
@@ -279,7 +278,7 @@ impl PeerTable {
                 let random = uid.sample(rng);
                 let (endpoint, entry, chance) = candidates[random];
                 if chance > f01.sample(rng) && entry.contact() {
-                    return Some(*endpoint);
+                    return Some(ContactGuard::new(*endpoint, self.clone()));
                 } else {
                     candidates.swap_remove(random);
                 }
@@ -495,5 +494,62 @@ impl Entry {
 
     pub const fn added(&self) -> Milliseconds {
         self.added
+    }
+}
+
+pub struct ContactGuard {
+    endpoint: Endpoint,
+    peer_table: Arc<PeerTable>,
+}
+
+impl ContactGuard {
+    const fn new(endpoint: Endpoint, peer_table: Arc<PeerTable>) -> Self {
+        Self {
+            endpoint,
+            peer_table,
+        }
+    }
+}
+
+impl Drop for ContactGuard {
+    fn drop(&mut self) {
+        self.peer_table.discontacted(self.endpoint)
+    }
+}
+
+impl AsRef<Endpoint> for ContactGuard {
+    #[inline]
+    fn as_ref(&self) -> &Endpoint {
+        &self.endpoint
+    }
+}
+
+impl Borrow<Endpoint> for ContactGuard {
+    #[inline]
+    fn borrow(&self) -> &Endpoint {
+        &self.endpoint
+    }
+}
+
+impl Deref for ContactGuard {
+    type Target = Endpoint;
+
+    #[inline]
+    fn deref(&self) -> &Endpoint {
+        &self.endpoint
+    }
+}
+
+impl PartialEq for ContactGuard {
+    fn eq(&self, rps: &Self) -> bool {
+        self.endpoint.eq(&rps.endpoint)
+    }
+}
+
+impl Eq for ContactGuard {}
+
+impl Hash for ContactGuard {
+    fn hash<H: Hasher>(&self, h: &mut H) {
+        self.endpoint.hash(h)
     }
 }

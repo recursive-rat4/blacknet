@@ -48,7 +48,6 @@ use blacknet_time::{Milliseconds, Seconds, SystemClock};
 use core::{error::Error as StdError, ops::Deref};
 use serde::{Deserialize, Serialize};
 use std::{
-    collections::HashSet,
     path::PathBuf,
     sync::{
         Arc, RwLock,
@@ -232,10 +231,6 @@ impl Node {
         &self.connections
     }
 
-    pub fn listening(&self) -> &RwLock<HashSet<Endpoint>> {
-        self.router.listening()
-    }
-
     pub(super) fn warnings(&self, warnings: &mut Vec<String>) {
         self.block_db.warnings(warnings);
         self.coin_db.warnings(warnings);
@@ -287,8 +282,12 @@ impl Node {
         &self.coin_db
     }
 
-    pub fn peer_table(&self) -> &PeerTable {
+    pub const fn peer_table(&self) -> &Arc<PeerTable> {
         &self.peer_table
+    }
+
+    pub const fn router(&self) -> &Arc<Router> {
+        &self.router
     }
 
     pub const fn tx_pool(&self) -> &Arc<RwLock<TxPool>> {
