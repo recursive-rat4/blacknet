@@ -15,14 +15,18 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use core::net::{Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6};
-use core::str::FromStr;
+use core::{
+    hash::{Hash, Hasher},
+    mem::discriminant,
+    net::{Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6},
+    str::FromStr,
+};
 use data_encoding::Encoding;
 use data_encoding_macro::new_encoding;
 use serde::{Deserialize, Serialize};
 use sha3::{Digest, Sha3_256};
 
-#[derive(Clone, Copy, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
+#[derive(Clone, Copy, Debug, Deserialize, Eq, Serialize)]
 #[repr(u8)]
 pub enum Endpoint {
     IPv4 { port: u16, address: [u8; 4] } = 128,
@@ -41,7 +45,7 @@ impl Endpoint {
         parse_ipv4(string, port))))
     }
 
-    pub const fn is_permissionless(self) -> bool {
+    pub const fn is_permissionless(&self) -> bool {
         match self {
             Endpoint::IPv4 { .. } => false,
             Endpoint::IPv6 { .. } => false,
@@ -51,35 +55,35 @@ impl Endpoint {
         }
     }
 
-    pub fn is_local(self) -> bool {
+    pub fn is_local(&self) -> bool {
         match self {
-            Endpoint::IPv4 { port: _, address } => is_local_ipv4(address),
-            Endpoint::IPv6 { port: _, address } => is_local_ipv6(address),
+            Endpoint::IPv4 { port: _, address } => CanonicalIP::from(*address).is_local(),
+            Endpoint::IPv6 { port: _, address } => CanonicalIP::from(*address).is_local(),
             Endpoint::TORv2 { .. } => false,
             Endpoint::TORv3 { .. } => false,
             Endpoint::I2P { .. } => false,
         }
     }
 
-    pub const fn is_private(self) -> bool {
+    pub fn is_private(&self) -> bool {
         match self {
-            Endpoint::IPv4 { port: _, address } => is_private_ipv4(address),
-            Endpoint::IPv6 { port: _, address } => is_private_ipv6(address),
+            Endpoint::IPv4 { port: _, address } => CanonicalIP::from(*address).is_private(),
+            Endpoint::IPv6 { port: _, address } => CanonicalIP::from(*address).is_private(),
             Endpoint::TORv2 { .. } => false,
             Endpoint::TORv3 { .. } => false,
             Endpoint::I2P { .. } => false,
         }
     }
 
-    pub fn to_rust(self) -> Option<SocketAddr> {
+    pub fn to_rust(&self) -> Option<SocketAddr> {
         match self {
             Endpoint::IPv4 { port, address } => Some(SocketAddr::V4(SocketAddrV4::new(
-                Ipv4Addr::from(address),
-                port,
+                Ipv4Addr::from(*address),
+                *port,
             ))),
             Endpoint::IPv6 { port, address } => Some(SocketAddr::V6(SocketAddrV6::new(
-                Ipv6Addr::from(address),
-                port,
+                Ipv6Addr::from(*address),
+                *port,
                 0,
                 0,
             ))),
@@ -89,23 +93,23 @@ impl Endpoint {
         }
     }
 
-    pub fn to_host(self) -> String {
+    pub fn to_host(&self) -> String {
         match self {
-            Endpoint::IPv4 { port: _, address } => to_host_ipv4(address),
-            Endpoint::IPv6 { port: _, address } => to_host_ipv6(address),
+            Endpoint::IPv4 { port: _, address } => to_host_ipv4(*address),
+            Endpoint::IPv6 { port: _, address } => to_host_ipv6(*address),
             Endpoint::TORv2 { port: _, address } => format!("{address:?}"),
-            Endpoint::TORv3 { port: _, address } => to_host_torv3(address),
-            Endpoint::I2P { port: _, address } => to_host_i2p(address),
+            Endpoint::TORv3 { port: _, address } => to_host_torv3(*address),
+            Endpoint::I2P { port: _, address } => to_host_i2p(*address),
         }
     }
 
-    pub fn to_log(self, detail: bool) -> String {
+    pub fn to_log(&self, detail: bool) -> String {
         match self {
-            Endpoint::IPv4 { port, address } => to_log_ipv4(port, address, detail),
-            Endpoint::IPv6 { port, address } => to_log_ipv6(port, address, detail),
+            Endpoint::IPv4 { port, address } => to_log_ipv4(*port, *address, detail),
+            Endpoint::IPv6 { port, address } => to_log_ipv6(*port, *address, detail),
             Endpoint::TORv2 { .. } => "TORv2".to_string(),
-            Endpoint::TORv3 { port, address } => to_log_torv3(port, address, detail),
-            Endpoint::I2P { port, address } => to_log_i2p(port, address, detail),
+            Endpoint::TORv3 { port, address } => to_log_torv3(*port, *address, detail),
+            Endpoint::I2P { port, address } => to_log_i2p(*port, *address, detail),
         }
     }
 
@@ -144,6 +148,114 @@ impl From<SocketAddrV6> for Endpoint {
         Endpoint::IPv6 {
             port: addr_v6.port(),
             address: addr_v6.ip().octets(),
+        }
+    }
+}
+
+impl PartialEq for Endpoint {
+    fn eq(&self, rps: &Endpoint) -> bool {
+        match (self, rps) {
+            (
+                Endpoint::IPv4 {
+                    port: l_port,
+                    address: l_address,
+                },
+                Endpoint::IPv4 {
+                    port: r_port,
+                    address: r_address,
+                },
+            ) => l_port == r_port && l_address == r_address,
+            (
+                Endpoint::IPv4 {
+                    port: l_port,
+                    address: l_address,
+                },
+                Endpoint::IPv6 {
+                    port: r_port,
+                    address: r_address,
+                },
+            ) => l_port == r_port && CanonicalIP::from(*l_address) == CanonicalIP::from(*r_address),
+            (
+                Endpoint::IPv6 {
+                    port: l_port,
+                    address: l_address,
+                },
+                Endpoint::IPv4 {
+                    port: r_port,
+                    address: r_address,
+                },
+            ) => l_port == r_port && CanonicalIP::from(*l_address) == CanonicalIP::from(*r_address),
+            (
+                Endpoint::IPv6 {
+                    port: l_port,
+                    address: l_address,
+                },
+                Endpoint::IPv6 {
+                    port: r_port,
+                    address: r_address,
+                },
+            ) => l_port == r_port && l_address == r_address,
+            (
+                Endpoint::TORv2 {
+                    port: l_port,
+                    address: l_address,
+                },
+                Endpoint::TORv2 {
+                    port: r_port,
+                    address: r_address,
+                },
+            ) => l_port == r_port && l_address == r_address,
+            (
+                Endpoint::TORv3 {
+                    port: l_port,
+                    address: l_address,
+                },
+                Endpoint::TORv3 {
+                    port: r_port,
+                    address: r_address,
+                },
+            ) => l_port == r_port && l_address == r_address,
+            (
+                Endpoint::I2P {
+                    port: l_port,
+                    address: l_address,
+                },
+                Endpoint::I2P {
+                    port: r_port,
+                    address: r_address,
+                },
+            ) => l_port == r_port && l_address == r_address,
+            _ => false,
+        }
+    }
+}
+
+impl Hash for Endpoint {
+    fn hash<H: Hasher>(&self, h: &mut H) {
+        match self {
+            Endpoint::IPv4 { port, address } => {
+                port.hash(h);
+                CanonicalIP::from(*address).hash(h);
+            }
+            Endpoint::IPv6 { port, address } => {
+                port.hash(h);
+                CanonicalIP::from(*address).hash(h);
+            }
+            Endpoint::TORv2 { port, address } => {
+                discriminant(self).hash(h);
+                port.hash(h);
+                address.hash(h);
+            }
+            Endpoint::TORv3 { port, address } => {
+                discriminant(self).hash(h);
+                port.hash(h);
+                address.hash(h);
+            }
+            Endpoint::I2P { port, address } => {
+                discriminant(self).hash(h);
+                port.hash(h);
+                address.hash(h);
+            }
         }
     }
 }
@@ -284,6 +396,26 @@ const fn is_private_ipv6(address: [u8; 16]) -> bool {
     false
 }
 
+fn try_ipv4_mapped_ipv6(address: [u8; 16]) -> Option<[u8; 4]> {
+    // ::ffff:0:0 - ::ffff:ffff:ffff
+    if address[0] == 0x00
+        && address[1] == 0x00
+        && address[2] == 0x00
+        && address[3] == 0x00
+        && address[4] == 0x00
+        && address[5] == 0x00
+        && address[7] == 0x00
+        && address[8] == 0x00
+        && address[9] == 0x00
+        && address[10] == 0xFF
+        && address[11] == 0xFF
+    {
+        return Some(address[12..16].try_into().unwrap());
+    }
+
+    None
+}
+
 fn to_host_ipv6(address: [u8; 16]) -> String {
     let addr = Ipv6Addr::from(address);
     format!("{addr}")
@@ -313,6 +445,43 @@ pub const fn ipv6_loopback(port: u16) -> Endpoint {
 
 const IPV6_ANY_ADDRESS: [u8; 16] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 const IPV6_LOOPBACK_ADDRESS: [u8; 16] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1];
+
+#[derive(Eq, Hash, PartialEq)]
+enum CanonicalIP {
+    V4([u8; 4]),
+    V6([u8; 16]),
+}
+
+impl CanonicalIP {
+    fn is_local(&self) -> bool {
+        match *self {
+            Self::V4(address) => is_local_ipv4(address),
+            Self::V6(address) => is_local_ipv6(address),
+        }
+    }
+
+    const fn is_private(&self) -> bool {
+        match *self {
+            Self::V4(address) => is_private_ipv4(address),
+            Self::V6(address) => is_private_ipv6(address),
+        }
+    }
+}
+
+impl From<[u8; 4]> for CanonicalIP {
+    fn from(address: [u8; 4]) -> Self {
+        Self::V4(address)
+    }
+}
+
+impl From<[u8; 16]> for CanonicalIP {
+    fn from(address: [u8; 16]) -> Self {
+        match try_ipv4_mapped_ipv6(address) {
+            Some(v4) => Self::V4(v4),
+            None => Self::V6(address),
+        }
+    }
+}
 
 const BASE32: Encoding = new_encoding! {
     symbols: "abcdefghijklmnopqrstuvwxyz234567",

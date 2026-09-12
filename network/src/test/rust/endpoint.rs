@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -17,6 +17,8 @@
 
 use blacknet_network::endpoint::Endpoint;
 use blacknet_serialization::format::{from_bytes, to_bytes, to_size};
+use core::hash::{Hash, Hasher};
+use std::hash::DefaultHasher;
 
 #[test]
 fn ipv4() {
@@ -44,6 +46,10 @@ fn ipv6() {
         ("1001:1001:1001:1001:1001:1001:1001:1001", false, false),
         ("2001:8db8:8558:8888:1331:8aa8:3789:7337", false, false),
         ("f00f:f00f:f00f:f00f:f00f:f00f:f00f:f00f", false, false),
+        // Mapped IPv4
+        ("::ffff:127.0.0.2", true, false),
+        ("::ffff:198.19.255.255", false, true),
+        ("::ffff:255.255.255.254", false, false),
     ];
     for (string, is_local, is_private) in data {
         let endpoint = Endpoint::parse(string, 28453).unwrap();
@@ -91,7 +97,7 @@ fn i2p() {
 #[test]
 fn compare() {
     let a = Endpoint::parse("127.0.0.1", 12345).unwrap();
-    let b = Endpoint::parse("127.0.0.2", 12345).unwrap();
+    let b = Endpoint::parse("0000:0000:0000:0000:0000:ffff:7f00:0001", 12345).unwrap();
     let c = Endpoint::parse(
         "mzgt4svgc72euhvkpfdow7aiiivziqwhsl2fdzgiwkqeronnjjtq.b32.i2p",
         0,
@@ -103,10 +109,34 @@ fn compare() {
     )
     .unwrap();
 
-    assert_ne!(a, b);
+    assert_eq!(a, b);
     assert_ne!(b, c);
     assert_eq!(c, d);
-    assert_ne!(d, a);
+}
+
+#[test]
+fn hash() {
+    let a = Endpoint::parse("127.0.0.1", 12345).unwrap();
+    let b = Endpoint::parse("0000:0000:0000:0000:0000:ffff:7f00:0001", 12345).unwrap();
+    let c = Endpoint::parse(
+        "mzgt4svgc72euhvkpfdow7aiiivziqwhsl2fdzgiwkqeronnjjtq.b32.i2p",
+        0,
+    )
+    .unwrap();
+    let d = Endpoint::parse(
+        "mzgt4svgc72euhvkpfdow7aiiivziqwhsl2fdzgiwkqeronnjjtq.b32.i2p",
+        0,
+    )
+    .unwrap();
+
+    fn hash(endpoint: Endpoint) -> u64 {
+        let mut hasher = DefaultHasher::new();
+        endpoint.hash(&mut hasher);
+        hasher.finish()
+    }
+
+    assert_eq!(hash(a), hash(b));
+    assert_eq!(hash(c), hash(d));
 }
 
 #[test]
