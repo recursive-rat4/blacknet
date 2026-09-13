@@ -180,6 +180,8 @@ enum WalletV2 {
         signature: String,
         message: String,
     },
+    /// List outgoing leases.
+    ListOutLeases { address: String },
 }
 
 fn cli() -> Result<(), Box<dyn Error>> {
@@ -277,6 +279,9 @@ fn cli() -> Result<(), Box<dyn Error>> {
             signature,
             message,
         }) => client.get(&["api", "v2", "verifymessage", &from, &signature, &message]),
+        Command::WalletV2(WalletV2::ListOutLeases { address }) => {
+            client.get(&["api", "v2", "wallet", &address, "outleases"])
+        }
     }?;
 
     if let Ok(json) = from_str::<Value>(&reply) {

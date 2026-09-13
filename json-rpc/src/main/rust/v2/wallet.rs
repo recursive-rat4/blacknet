@@ -151,12 +151,32 @@ async fn transactions(
     todo!();
 }
 
-#[expect(unused_variables)]
 async fn out_leases(
     State(network): State<Arc<Network>>,
     address: Path<String>,
-) -> Json<Vec<LeaseInfo>> {
-    todo!();
+) -> Response<String> {
+    let wallet_db = network.wallet_db();
+    let public_key = match wallet_db.address_codec().decode(&address) {
+        Ok(public_key) => public_key,
+        Err(err) => {
+            return respond_error(format!("Invalid address: {err}"));
+        }
+    };
+    let Some(wallet) = wallet_db.wallet(public_key) else {
+        return respond_error("Wallet not found");
+    };
+    let address_codec = wallet_db.address_codec();
+    let out_leases = match wallet.get_out_leases() {
+        Ok(out_leases) => out_leases
+            .into_iter()
+            .map(|lease| LeaseInfo::new(lease, address_codec))
+            .collect::<Result<Vec<LeaseInfo>, _>>(),
+        Err(err) => return respond_error(err.to_string()),
+    };
+    match out_leases {
+        Ok(out_leases) => respond_json(&out_leases),
+        Err(err) => respond_error(err.to_string()),
+    }
 }
 
 async fn sequence(State(network): State<Arc<Network>>, address: Path<String>) -> Response<String> {

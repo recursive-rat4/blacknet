@@ -234,7 +234,7 @@ impl Input {
     }
 }
 
-#[derive(Clone, Copy, Default, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Copy, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 pub struct Lease {
     public_key: PublicKey,
     height: u32,

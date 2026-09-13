@@ -101,14 +101,18 @@ fn out_lease() {
     let lease1 = Lease::new(PublicKey::default(), 1, Amount::new(123));
     let lease2 = Lease::new(PublicKey::default(), 2, Amount::new(123));
     let lease3 = Lease::new(PublicKey::default(), 2, Amount::new(100));
+    let leases = vec![lease2.clone(), lease3.clone()];
 
     assert_matches!(wallet.put_out_lease(lease1), Ok(()));
+    assert_matches!(wallet.put_out_lease(lease2), Ok(()));
+    assert_matches!(wallet.put_out_lease(lease3), Ok(()));
     assert_matches!(wallet.set_out_lease_height(lease1, lease2.height()), Ok(()));
     assert_matches!(
         wallet.withdraw_from_out_lease(lease2, Amount::new(23)),
         Ok(())
     );
     assert_matches!(wallet.remove_out_lease(lease3), Ok(()));
+    assert_matches!(wallet.get_out_leases(), Ok(x) if x == leases);
 }
 
 #[test]

@@ -270,6 +270,20 @@ impl Wallet {
         Ok(())
     }
 
+    pub fn get_out_leases(&self) -> Result<Vec<Lease>> {
+        let connection = self.connection.lock().unwrap();
+        let mut statement =
+            connection.prepare_cached("SELECT public_key, height, amount FROM out_leases;")?;
+        statement
+            .query_map((), |row| {
+                let public_key: [u8; 32] = row.get(0)?;
+                let height: u32 = row.get(1)?;
+                let amount: u64 = row.get(2)?;
+                Ok(Lease::new(public_key.into(), height, amount.into()))
+            })?
+            .collect()
+    }
+
     pub fn put_out_lease(&self, lease: Lease) -> Result<()> {
         let connection = self.connection.lock().unwrap();
         let mut statement = connection.prepare_cached("INSERT INTO out_leases VALUES(?, ?, ?);")?;
