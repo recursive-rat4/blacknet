@@ -38,6 +38,7 @@ hyper = { workspace = true, features = ["client", "http1"] }
 serde_json.workspace = true
 tokio.workspace = true
 tokio-tungstenite = { workspace = true, features = ["connect"] }
+urlencoding.workspace = true
 
 [lints]
 workspace = true

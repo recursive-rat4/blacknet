@@ -65,12 +65,15 @@ pub struct MnemonicRequest {
     pub mnemonic: ZeroizingString,
 }
 
-#[expect(unused_variables)]
 async fn mnemonic(
     State(network): State<Arc<Network>>,
     Form(request): Form<MnemonicRequest>,
-) -> Json<MnemonicInfo> {
-    todo!();
+) -> Response<String> {
+    let address_codec = network.wallet_db().address_codec();
+    match MnemonicInfo::new(&request.mnemonic, address_codec) {
+        Ok(info) => respond_json(&info),
+        Err(err) => respond_error(err.to_string()),
+    }
 }
 
 #[derive(Deserialize, Serialize)]

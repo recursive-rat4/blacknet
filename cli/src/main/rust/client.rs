@@ -55,8 +55,38 @@ impl Client {
 
     pub fn get(&self, path: &str) -> Result<String, Error> {
         let request = Request::builder()
+            .method("GET")
             .uri(path)
             .body(String::new())
+            .expect("http request");
+        self.runtime.block_on(async {
+            let stream = HyperStream::connect(&self.endpoint).await?;
+            let (mut sender, connection) = http1::handshake(stream).await?;
+            self.runtime.spawn(connection);
+            let response = sender.send_request(request).await?;
+            let mut body = response.into_body();
+            let size_hint = body.size_hint().lower() as usize;
+            let mut buffer = String::with_capacity(size_hint);
+            while let Some(frame) = HyperFrame::new(&mut body).await {
+                if let Some(data) = frame?.data_ref() {
+                    buffer.push_str(str::from_utf8(data)?)
+                }
+            }
+            Ok(buffer)
+        })
+    }
+
+    pub fn post(&self, path: &str, args: &[(&str, &str)]) -> Result<String, Error> {
+        let body = args
+            .iter()
+            .map(|(k, v)| format!("{}={}", urlencoding::encode(k), urlencoding::encode(v)))
+            .collect::<Vec<String>>()
+            .join("&");
+        let request = Request::builder()
+            .method("POST")
+            .uri(path)
+            .header("Content-Type", "application/x-www-form-urlencoded")
+            .body(body)
             .expect("http request");
         self.runtime.block_on(async {
             let stream = HyperStream::connect(&self.endpoint).await?;

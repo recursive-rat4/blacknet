@@ -170,6 +170,8 @@ enum WalletV2 {
     GenerateMnemonic { wordlist: Option<String> },
     /// Convert an address to a public key.
     AddressToPublickey { address: String },
+    /// Convert a mnemonic to an address and a public key.
+    MnemonicToAddress { mnemonic: String },
 }
 
 fn cli() -> Result<(), Box<dyn Error>> {
@@ -237,6 +239,9 @@ fn cli() -> Result<(), Box<dyn Error>> {
         }
         Command::WalletV2(WalletV2::AddressToPublickey { address }) => {
             client.get(&format!("/api/v2/address/{address}"))
+        }
+        Command::WalletV2(WalletV2::MnemonicToAddress { mnemonic }) => {
+            client.post("/api/v2/mnemonic", &[("mnemonic", &mnemonic)])
         }
     }?;
 
