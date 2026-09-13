@@ -26,7 +26,7 @@ pub const BLOCK_LEN: usize = 16;
 const SIGMA: [u32; 4] = [0x61707865, 0x3320646E, 0x79622D32, 0x6B206574];
 
 /// ChaCha stream cipher. <https://cr.yp.to/chacha/chacha-20080128.pdf>
-#[derive(Zeroable)]
+#[derive(Clone, Copy, Zeroable)]
 pub struct ChaCha<const ROUNDS: usize> {
     input: [u32; BLOCK_LEN],
 }

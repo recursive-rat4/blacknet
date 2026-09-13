@@ -15,6 +15,11 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+//! Zeroization erases secret values from memory.
+//!
+//! Implementation relies on bytemuck traits to enable desirable optimizations,
+//! and on inline assembly to prevent undesirable optimizations.
+
 mod zeroize;
 mod zeroizing;
 mod zeroizingstring;

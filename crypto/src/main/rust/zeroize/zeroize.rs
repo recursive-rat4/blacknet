@@ -15,50 +15,50 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use alloc::{string::String, vec::Vec};
+use bytemuck::Zeroable;
+
 #[inline(always)]
 fn black_box<T: ?Sized>(x: &T) {
     unsafe {
         core::arch::asm!(
-            "# black_box {}",
+            "# zeroize::black_box {}",
             in(reg) x as *const T as *const (),
             options(readonly, preserves_flags, nostack),
         );
     }
 }
 
-pub fn zeroize<T: bytemuck::Zeroable>(x: &mut T) {
-    unsafe {
-        core::ptr::drop_in_place(x);
-        core::ptr::write_bytes(x, 0, 1);
-    }
+/// Zeroize a value.
+pub fn zeroize<T: Copy + Zeroable>(x: &mut T) {
+    unsafe { core::ptr::write_bytes(x, 0, 1) };
     black_box(x);
 }
 
-pub fn zeroize_slice<T: bytemuck::Zeroable>(x: &mut [T]) {
-    unsafe {
-        core::ptr::drop_in_place(x);
-        core::ptr::write_bytes(x.as_mut_ptr(), 0, x.len());
-    }
+/// Zeroize a slice of values.
+pub fn zeroize_slice<T: Copy + Zeroable>(x: &mut [T]) {
+    unsafe { core::ptr::write_bytes(x.as_mut_ptr(), 0, x.len()) };
     black_box(x);
 }
 
+/// Zeroize a string.
 #[inline]
-pub fn zeroize_string(x: &mut alloc::string::String) {
+pub fn zeroize_string(x: &mut String) {
     zeroize_vec(unsafe { x.as_mut_vec() });
 }
 
+/// Zeroize a vector of values.
 #[inline]
-pub fn zeroize_vec<T: bytemuck::Zeroable>(x: &mut alloc::vec::Vec<T>) {
+pub fn zeroize_vec<T: Copy + Zeroable>(x: &mut Vec<T>) {
     x.clear();
     zeroize_slice(x.spare_capacity_mut());
 }
 
-pub fn zeroize_with_default<T: Default>(x: &mut T) {
+/// Overwrite with default value.
+///
+/// For types that don't implement `Zeroable`.
+pub fn zeroize_with_default<T: Copy + Default>(x: &mut T) {
     let y = T::default();
-    unsafe {
-        core::ptr::drop_in_place(x);
-        core::ptr::copy_nonoverlapping(&y, x, 1);
-        core::mem::forget(y);
-    }
+    unsafe { core::ptr::copy_nonoverlapping(&y, x, 1) };
     black_box(x);
 }

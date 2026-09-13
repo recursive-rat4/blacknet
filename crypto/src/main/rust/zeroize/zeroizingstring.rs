@@ -24,16 +24,22 @@ use core::{
 };
 use serde::{Deserialize, Serialize};
 
+/// String that is zeroized on drop.
+///
+/// # Safety
+/// Reallocations may not zeroize previously allocated memory.
 #[derive(Deserialize, Serialize)]
 #[repr(transparent)]
 pub struct ZeroizingString(String);
 
 impl ZeroizingString {
+    /// Create an empty string for the `capacity`.
     #[inline]
     pub fn with_capacity(capacity: usize) -> Self {
         Self(String::with_capacity(capacity))
     }
 
+    /// Unwrap the string without zeroizing it.
     #[must_use]
     pub const fn into_inner(self) -> String {
         let string = unsafe { ptr::read(&self.0) };

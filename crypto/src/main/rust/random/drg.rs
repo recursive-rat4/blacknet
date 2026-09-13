@@ -22,7 +22,7 @@ use core::mem::transmute;
 
 pub const SEED_SIZE: usize = KEY_SIZE;
 
-#[derive(Zeroable)]
+#[derive(Clone, Copy, Zeroable)]
 pub struct ChaChaDRG<const ROUNDS: usize> {
     chacha: ChaCha<ROUNDS>,
     buffer: [u8; BLOCK_SIZE],

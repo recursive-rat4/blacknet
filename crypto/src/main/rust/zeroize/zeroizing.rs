@@ -18,19 +18,23 @@
 use crate::zeroize::zeroize;
 use bytemuck::Zeroable;
 use core::{
+    borrow::{Borrow, BorrowMut},
     mem,
     ops::{Deref, DerefMut},
     ptr,
 };
 
+/// Wrapper that zeroizes on drop.
 #[repr(transparent)]
-pub struct Zeroizing<T: Zeroable>(T);
+pub struct Zeroizing<T: Copy + Zeroable>(T);
 
-impl<T: Zeroable> Zeroizing<T> {
+impl<T: Copy + Zeroable> Zeroizing<T> {
+    /// Wrap a value.
     pub const fn new(value: T) -> Self {
         Self(value)
     }
 
+    /// Unwrap the value without zeroizing it.
     #[must_use]
     pub const fn into_inner(self) -> T {
         let value = unsafe { ptr::read(&self.0) };
@@ -39,34 +43,48 @@ impl<T: Zeroable> Zeroizing<T> {
     }
 }
 
-impl<T: Zeroable> From<T> for Zeroizing<T> {
+impl<T: Copy + Zeroable> From<T> for Zeroizing<T> {
     #[inline]
     fn from(value: T) -> Self {
         Self(value)
     }
 }
 
-impl<T: Zeroable> Drop for Zeroizing<T> {
+impl<T: Copy + Zeroable> Drop for Zeroizing<T> {
     fn drop(&mut self) {
         zeroize(&mut self.0)
     }
 }
 
-impl<T: Zeroable> AsRef<T> for Zeroizing<T> {
+impl<T: Copy + Zeroable> AsRef<T> for Zeroizing<T> {
     #[inline]
     fn as_ref(&self) -> &T {
         &self.0
     }
 }
 
-impl<T: Zeroable> AsMut<T> for Zeroizing<T> {
+impl<T: Copy + Zeroable> AsMut<T> for Zeroizing<T> {
     #[inline]
     fn as_mut(&mut self) -> &mut T {
         &mut self.0
     }
 }
 
-impl<T: Zeroable> Deref for Zeroizing<T> {
+impl<T: Copy + Zeroable> Borrow<T> for Zeroizing<T> {
+    #[inline]
+    fn borrow(&self) -> &T {
+        &self.0
+    }
+}
+
+impl<T: Copy + Zeroable> BorrowMut<T> for Zeroizing<T> {
+    #[inline]
+    fn borrow_mut(&mut self) -> &mut T {
+        &mut self.0
+    }
+}
+
+impl<T: Copy + Zeroable> Deref for Zeroizing<T> {
     type Target = T;
 
     #[inline]
@@ -75,7 +93,7 @@ impl<T: Zeroable> Deref for Zeroizing<T> {
     }
 }
 
-impl<T: Zeroable> DerefMut for Zeroizing<T> {
+impl<T: Copy + Zeroable> DerefMut for Zeroizing<T> {
     #[inline]
     fn deref_mut(&mut self) -> &mut T {
         &mut self.0

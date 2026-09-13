@@ -79,15 +79,11 @@ fn zeroize_with_default() {
     assert_eq!(data, zero);
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 struct Def(u8);
 
 impl Default for Def {
     fn default() -> Self {
         Self(u8::MAX)
     }
-}
-
-impl Drop for Def {
-    fn drop(&mut self) {}
 }
