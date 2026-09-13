@@ -90,6 +90,10 @@ name = "i2psam"
 path = "src/test/rust/i2psam.rs"
 
 [[test]]
+name = "message"
+path = "src/test/rust/message.rs"
+
+[[test]]
 name = "rollinghashset"
 path = "src/test/rust/rollinghashset.rs"
 

@@ -26,8 +26,15 @@ use axum::{
     routing::{get, post},
 };
 use blacknet_crypto::zeroize::ZeroizingString;
-use blacknet_kernel::blake2b::Hash256;
-use blacknet_network::{db::genesis, network::Network, wallet::Mnemonic};
+use blacknet_kernel::{
+    blake2b::Hash256,
+    ed25519::{Signature, to_secret_key},
+};
+use blacknet_network::{
+    db::genesis,
+    network::Network,
+    wallet::{Mnemonic, sign_message, verify_message},
+};
 use core::str::FromStr;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, sync::Arc};
@@ -103,20 +110,37 @@ pub struct SignMessageRequest {
     pub message: String,
 }
 
-#[expect(unused_variables)]
-async fn sign_message(
+async fn sign_message_handler(
     State(network): State<Arc<Network>>,
     Form(request): Form<SignMessageRequest>,
 ) -> Response<String> {
-    todo!();
+    let Some(secret_key) = to_secret_key(&request.mnemonic) else {
+        return respond_error("Invalid mnemonic");
+    };
+    let signature = sign_message(network.mode(), &secret_key, &request.message);
+    respond_text(format!("{signature:?}"))
 }
 
-#[expect(unused_variables)]
-async fn verify_message(
+async fn verify_message_handler(
     State(network): State<Arc<Network>>,
     Path((from, signature, message)): Path<(String, String, String)>,
 ) -> Response<String> {
-    todo!();
+    let from = match network.wallet_db().address_codec().decode(&from) {
+        Ok(from) => from,
+        Err(err) => {
+            return respond_error(format!("Invalid from: {err}"));
+        }
+    };
+    let signature = match Signature::from_str(&signature) {
+        Ok(signature) => signature,
+        Err(err) => {
+            return respond_error(format!("Invalid signature: {err}"));
+        }
+    };
+    match verify_message(network.mode(), from, signature, &message) {
+        Ok(()) => respond_text("true"),
+        Err(err) => respond_error(format!("Verification failed: {err}")),
+    }
 }
 
 #[expect(unused_variables)]
@@ -288,10 +312,10 @@ pub fn routes() -> Router<Arc<Network>> {
         .route("/api/v2/mnemonic", post(mnemonic))
         .route("/api/v2/decryptpaymentid", post(decrypt_payment_id))
         .route("/api/v2/decryptmessage", post(decrypt_payment_id))
-        .route("/api/v2/signmessage", post(sign_message))
+        .route("/api/v2/signmessage", post(sign_message_handler))
         .route(
             "/api/v2/verifymessage/{from}/{signature}/{message}",
-            get(verify_message),
+            get(verify_message_handler),
         )
         .route("/api/v2/wallet/{address}/transactions", get(transactions))
         .route("/api/v2/wallet/{address}/outleases", get(out_leases))

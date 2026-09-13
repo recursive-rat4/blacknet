@@ -53,7 +53,13 @@ impl Client {
         })
     }
 
-    pub fn get(&self, path: &str) -> Result<String, Error> {
+    pub fn get(&self, args: &[&str]) -> Result<String, Error> {
+        let path = String::from("/")
+            + &args
+                .iter()
+                .map(|arg| urlencoding::encode(arg))
+                .collect::<Vec<_>>()
+                .join("/");
         let request = Request::builder()
             .method("GET")
             .uri(path)
@@ -80,7 +86,7 @@ impl Client {
         let body = args
             .iter()
             .map(|(k, v)| format!("{}={}", urlencoding::encode(k), urlencoding::encode(v)))
-            .collect::<Vec<String>>()
+            .collect::<Vec<_>>()
             .join("&");
         let request = Request::builder()
             .method("POST")

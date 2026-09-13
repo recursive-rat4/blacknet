@@ -17,6 +17,7 @@
 
 mod address;
 mod mastersecret;
+mod message;
 mod mnemonic;
 mod transactiondata;
 mod wallet;
@@ -25,6 +26,7 @@ mod wordlist;
 
 pub use address::{AddressCodec, AddressKind};
 pub use mastersecret::MasterSecret;
+pub use message::{sign_message, verify_message};
 pub use mnemonic::Mnemonic;
 pub use transactiondata::{TransactionData, TransactionDataType};
 pub use wallet::{DeriveAccountError, Error, OpenError, Wallet};

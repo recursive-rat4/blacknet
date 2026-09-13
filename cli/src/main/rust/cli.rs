@@ -172,6 +172,14 @@ enum WalletV2 {
     AddressToPublickey { address: String },
     /// Convert a mnemonic to an address and a public key.
     MnemonicToAddress { mnemonic: String },
+    /// Sign a text message.
+    SignMessage { mnemonic: String, message: String },
+    /// Verify a text message.
+    VerifyMessage {
+        from: String,
+        signature: String,
+        message: String,
+    },
 }
 
 fn cli() -> Result<(), Box<dyn Error>> {
@@ -183,66 +191,92 @@ fn cli() -> Result<(), Box<dyn Error>> {
     let client = Client::new(&config.rpc.bind.host, config.rpc.bind.port)?;
 
     let reply = match cli.command {
-        Command::Node => client.get("/api/v2/node"),
-        Command::Peer(Peer::List) => client.get("/api/v2/peers"),
-        Command::Peer(Peer::Connect { address, port }) => client.get(&if let Some(port) = port {
-            format!("/api/v2/addpeer/{address}/{port}")
-        } else {
-            format!("/api/v2/addpeer/{address}")
-        }),
-        Command::Peer(Peer::Disconnect { id }) => {
-            client.get(&format!("/api/v2/disconnectpeer/{id}"))
+        Command::Node => client.get(&["api", "v2", "node"]),
+        Command::Peer(Peer::List) => client.get(&["api", "v2", "peers"]),
+        Command::Peer(Peer::Connect { address, port }) => {
+            if let Some(port) = port {
+                client.get(&["api", "v2", "addpeer", &address, &port.to_string()])
+            } else {
+                client.get(&["api", "v2", "addpeer", &address])
+            }
         }
-        Command::Staking { address: None } => client.get("/api/v2/staking"),
+        Command::Peer(Peer::Disconnect { id }) => {
+            client.get(&["api", "v2", "disconnectpeer", &id.to_string()])
+        }
+        Command::Staking { address: None } => client.get(&["api", "v2", "staking"]),
         Command::Staking {
             address: Some(address),
-        } => client.get(&format!("/api/v2/staking/{address}")),
-        Command::Txpool(Txpool::List) => client.get("/api/v2/txpool"),
-        Command::Txpool(Txpool::Transaction { hash, raw }) => client.get(&if let Some(raw) = raw {
-            format!("/api/v2/txpool/transaction/{hash}/{raw}")
-        } else {
-            format!("/api/v2/txpool/transaction/{hash}")
-        }),
-        Command::Db(Db::Block { hash, detail }) => client.get(&if let Some(txdetail) = detail {
-            format!("/api/v2/block/{hash}/{txdetail}")
-        } else {
-            format!("/api/v2/block/{hash}")
-        }),
-        Command::Db(Db::BlockIndex { hash }) => client.get(&format!("/api/v2/blockindex/{hash}")),
+        } => client.get(&["api", "v2", "staking", &address]),
+        Command::Txpool(Txpool::List) => client.get(&["api", "v2", "txpool"]),
+        Command::Txpool(Txpool::Transaction { hash, raw }) => {
+            if let Some(raw) = raw {
+                client.get(&[
+                    "api",
+                    "v2",
+                    "txpool",
+                    "transaction",
+                    &hash,
+                    &raw.to_string(),
+                ])
+            } else {
+                client.get(&["api", "v2", "txpool", "transaction", &hash])
+            }
+        }
+        Command::Db(Db::Block { hash, detail }) => {
+            if let Some(txdetail) = detail {
+                client.get(&["api", "v2", "block", &hash, &txdetail.to_string()])
+            } else {
+                client.get(&["api", "v2", "block", &hash])
+            }
+        }
+        Command::Db(Db::BlockIndex { hash }) => client.get(&["api", "v2", "blockindex", &hash]),
         Command::Db(Db::Account {
             address,
             confirmations,
-        }) => client.get(&if let Some(confirmations) = confirmations {
-            format!("/api/v2/account/{address}/{confirmations}")
-        } else {
-            format!("/api/v2/account/{address}")
-        }),
-        Command::Db(Db::BlockHash { height }) => client.get(&format!("/api/v2/blockhash/{height}")),
+        }) => {
+            if let Some(confirmations) = confirmations {
+                client.get(&["api", "v2", "account", &address, &confirmations.to_string()])
+            } else {
+                client.get(&["api", "v2", "account", &address])
+            }
+        }
+        Command::Db(Db::BlockHash { height }) => {
+            client.get(&["api", "v2", "blockhash", &height.to_string()])
+        }
         Command::SendRawTransaction { hex } => {
-            client.get(&format!("/api/v2/sendrawtransaction/{hex}"))
+            client.get(&["api", "v2", "sendrawtransaction", &hex])
         }
         Command::Watch(Watch::Block) => client.subscribe("block", cli.no_pretty_json),
         Command::Watch(Watch::Txpool) => client.subscribe("txpool", cli.no_pretty_json),
-        Command::MakeBootstrap => client.get("/api/v2/makebootstrap"),
-        Command::Shutdown => client.get("/api/shutdown"),
-        Command::Debug(Debug::Fjall) => client.get("/api/v2/leveldb/stats"),
-        Command::Debug(Debug::Tokio) => client.get("/api/debug/tokio/metrics"),
-        Command::Debug(Debug::Blockdb) => client.get("/api/v2/blockdb/check"),
-        Command::Debug(Debug::Coindb) => client.get("/api/v2/ledger/check"),
-        Command::Debug(Debug::Txpool) => client.get("/api/v2/txpool/check"),
+        Command::MakeBootstrap => client.get(&["api", "v2", "makebootstrap"]),
+        Command::Shutdown => client.get(&["api", "shutdown"]),
+        Command::Debug(Debug::Fjall) => client.get(&["api", "v2", "leveldb", "stats"]),
+        Command::Debug(Debug::Tokio) => client.get(&["api", "debug", "tokio", "metrics"]),
+        Command::Debug(Debug::Blockdb) => client.get(&["api", "v2", "blockdb", "check"]),
+        Command::Debug(Debug::Coindb) => client.get(&["api", "v2", "ledger", "check"]),
+        Command::Debug(Debug::Txpool) => client.get(&["api", "v2", "txpool", "check"]),
         Command::WalletV2(WalletV2::GenerateMnemonic { wordlist }) => {
             if let Some(wordlist) = wordlist {
-                client.get(&format!("/api/v2/generateaccount/{wordlist}"))
+                client.get(&["api", "v2", "generateaccount", &wordlist])
             } else {
-                client.get("/api/v2/generateaccount")
+                client.get(&["api", "v2", "generateaccount"])
             }
         }
         Command::WalletV2(WalletV2::AddressToPublickey { address }) => {
-            client.get(&format!("/api/v2/address/{address}"))
+            client.get(&["api", "v2", "address", &address])
         }
         Command::WalletV2(WalletV2::MnemonicToAddress { mnemonic }) => {
             client.post("/api/v2/mnemonic", &[("mnemonic", &mnemonic)])
         }
+        Command::WalletV2(WalletV2::SignMessage { mnemonic, message }) => client.post(
+            "/api/v2/signmessage",
+            &[("mnemonic", &mnemonic), ("message", &message)],
+        ),
+        Command::WalletV2(WalletV2::VerifyMessage {
+            from,
+            signature,
+            message,
+        }) => client.get(&["api", "v2", "verifymessage", &from, &signature, &message]),
     }?;
 
     if let Ok(json) = from_str::<Value>(&reply) {

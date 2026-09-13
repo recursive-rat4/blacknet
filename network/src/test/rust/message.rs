@@ -1,0 +1,40 @@
+/*
+ * Copyright (c) 2020-2026 Pavel Vasin
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
+use blacknet_compat::Mode;
+use blacknet_kernel::ed25519::{PublicKey, Signature, to_secret_key};
+use blacknet_network::wallet::{sign_message, verify_message};
+use core::{assert_matches, str::FromStr};
+
+#[test]
+fn test() {
+    let mode = Mode::mainnet();
+    let mnemonic = "疗 昨 示 穿 偏 贷 五 袁 色 烂 撒 殖";
+    let secret_key = to_secret_key(mnemonic).unwrap();
+    let public_key =
+        PublicKey::from_str("27A2C7CE9EE9AF0458832079017A5FBBB1F1551932C4CB901396BAE95F7D0F0A")
+            .unwrap();
+    let message = "Blacknet test message 2";
+    let signature = Signature::from_str("6D5D4F6A81C601B1834701BDE84785470F92DFA517975BED9AAEA035FBDB0072327EFD207195B7202B5A72BB9CC37443A011C35137E1DF1C11BB5E9C60125B04")
+        .unwrap();
+
+    assert_eq!(sign_message(&mode, &secret_key, message), signature);
+    assert_matches!(
+        verify_message(&mode, public_key, signature, message),
+        Ok(())
+    );
+}
