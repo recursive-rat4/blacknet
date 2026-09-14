@@ -23,10 +23,10 @@ members = [
     "crypto",
     "daemon",
     "io",
-    "json-rpc",
     "kernel",
     "log",
     "network",
+    "rpc",
     "serialization",
     "time",
     "vm",
@@ -36,10 +36,10 @@ members = [
 blacknet-compat = { path = "compat" }
 blacknet-crypto = { path = "crypto" }
 blacknet-io = { path = "io", default-features = false }
-blacknet-json-rpc = { path = "json-rpc" }
 blacknet-kernel = { path = "kernel" }
 blacknet-log = { path = "log" }
 blacknet-network = { path = "network" }
+blacknet-rpc = { path = "rpc" }
 blacknet-serialization = { path = "serialization" }
 blacknet-time = { path = "time" }
 blacknet-vm = { path = "vm" }

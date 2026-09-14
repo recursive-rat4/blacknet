@@ -16,9 +16,9 @@
  */
 
 use blacknet_compat::{XDGDirectories, config::Config, mode};
-use blacknet_json_rpc::RPCServer;
 use blacknet_log::{LogManager, Strategy};
 use blacknet_network::network::Network;
+use blacknet_rpc::RPCServer;
 use core::error::Error;
 use std::{
     env::args,

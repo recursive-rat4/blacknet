@@ -252,9 +252,9 @@ name = "blacknet-daemon"
 version = "0.3.0"
 dependencies = [
  "blacknet-compat",
- "blacknet-json-rpc",
  "blacknet-log",
  "blacknet-network",
+ "blacknet-rpc",
  "tokio",
 ]
 
@@ -263,26 +263,6 @@ name = "blacknet-io"
 version = "0.3.0"
 dependencies = [
  "blacknet-crypto",
-]
-
-[[package]]
-name = "blacknet-json-rpc"
-version = "0.3.0"
-dependencies = [
- "axum",
- "blacknet-compat",
- "blacknet-crypto",
- "blacknet-kernel",
- "blacknet-log",
- "blacknet-network",
- "blacknet-serialization",
- "blacknet-time",
- "const-hex",
- "futures-util",
- "serde",
- "serde_json",
- "spdlog-rs",
- "tokio",
 ]
 
 [[package]]
@@ -340,6 +320,26 @@ dependencies = [
  "spdlog-rs",
  "tokio",
  "tokio-util",
+]
+
+[[package]]
+name = "blacknet-rpc"
+version = "0.3.0"
+dependencies = [
+ "axum",
+ "blacknet-compat",
+ "blacknet-crypto",
+ "blacknet-kernel",
+ "blacknet-log",
+ "blacknet-network",
+ "blacknet-serialization",
+ "blacknet-time",
+ "const-hex",
+ "futures-util",
+ "serde",
+ "serde_json",
+ "spdlog-rs",
+ "tokio",
 ]
 
 [[package]]
