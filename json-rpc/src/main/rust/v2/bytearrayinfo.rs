@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,7 +15,6 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use data_encoding::HEXUPPER;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]
@@ -23,6 +22,6 @@ pub struct ByteArrayInfo(String);
 
 impl From<&[u8]> for ByteArrayInfo {
     fn from(bytes: &[u8]) -> Self {
-        Self(HEXUPPER.encode(bytes))
+        Self(const_hex::encode_upper(bytes))
     }
 }

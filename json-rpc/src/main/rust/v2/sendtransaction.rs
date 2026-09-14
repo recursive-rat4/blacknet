@@ -35,7 +35,6 @@ use blacknet_kernel::{
 use blacknet_network::{network::Network, wallet::AddressKind};
 use blacknet_serialization::format::to_bytes;
 use core::str::FromStr;
-use data_encoding::HEXUPPER_PERMISSIVE as HEX;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
@@ -52,7 +51,7 @@ async fn bundle(
     State(network): State<Arc<Network>>,
     Form(request): Form<BundleRequest>,
 ) -> Response<String> {
-    let message = match HEX.decode(request.data.as_bytes()) {
+    let message = match const_hex::decode(request.data.as_bytes()) {
         Ok(message) => message,
         Err(err) => {
             return respond_error(format!("Invalid hex: {err}"));
@@ -128,7 +127,7 @@ async fn burn(
     State(network): State<Arc<Network>>,
     Form(request): Form<BurnRequest>,
 ) -> Response<String> {
-    let message = match HEX.decode(request.message.as_bytes()) {
+    let message = match const_hex::decode(request.message.as_bytes()) {
         Ok(message) => message,
         Err(err) => {
             return respond_error(format!("Invalid hex: {err}"));
@@ -261,7 +260,7 @@ async fn claim_swap(
     State(network): State<Arc<Network>>,
     Form(request): Form<ClaimSwapRequest>,
 ) -> Response<String> {
-    let preimage = match HEX.decode(request.preimage.as_bytes()) {
+    let preimage = match const_hex::decode(request.preimage.as_bytes()) {
         Ok(preimage) => preimage,
         Err(err) => {
             return respond_error(format!("Invalid hex: {err}"));
@@ -341,7 +340,7 @@ async fn create_swap(
     State(network): State<Arc<Network>>,
     Form(request): Form<CreateSwapRequest>,
 ) -> Response<String> {
-    let image = match HEX.decode(request.hashLockData.as_bytes()) {
+    let image = match const_hex::decode(request.hashLockData.as_bytes()) {
         Ok(image) => image,
         Err(err) => {
             return respond_error(format!("Invalid hex: {err}"));
@@ -700,7 +699,7 @@ async fn send_raw_transaction(
     State(network): State<Arc<Network>>,
     Path(hex): Path<String>,
 ) -> Response<String> {
-    let bytes = match HEX.decode(hex.as_bytes()) {
+    let bytes = match const_hex::decode(hex.as_bytes()) {
         Ok(bytes) => bytes,
         Err(err) => {
             return respond_error(format!("Invalid hex: {err}"));

@@ -16,7 +16,6 @@
  */
 
 use crate::{blake2b::Hash256, error::Error};
-use alloc::vec::Vec;
 use blacknet_crypto::{
     algebra::{IntegerModRing, One},
     bigint::UInt256,
@@ -24,8 +23,8 @@ use blacknet_crypto::{
     symmetric::{Blake2b256, Blake2b512},
     zeroize::zeroize,
 };
+use const_hex::FromHexError;
 use core::{array::TryFromSliceError, fmt, mem::transmute, str::FromStr};
-use data_encoding::{DecodeError, DecodeKind, HEXUPPER};
 use serde::{Deserialize, Serialize};
 
 // For compatibility, implementation follows eddsa-java 0.3.0
@@ -67,34 +66,23 @@ impl fmt::Debug for Signature {
         write!(
             f,
             "{}{}",
-            HEXUPPER.encode(&self.r),
-            HEXUPPER.encode(&self.s)
+            const_hex::encode_upper(self.r),
+            const_hex::encode_upper(self.s)
         )
     }
 }
 
 impl FromStr for Signature {
-    type Err = DecodeError;
+    type Err = FromHexError;
 
     fn from_str(hex: &str) -> Result<Self, Self::Err> {
         if hex.len() == 128 {
             let (left, right) = hex.as_bytes().split_at(64);
-            let mut r = [0_u8; 32];
-            match HEXUPPER.decode_mut(left, &mut r) {
-                Ok(_) => {}
-                Err(err) => return Err(err.error),
-            };
-            let mut s = [0_u8; 32];
-            match HEXUPPER.decode_mut(right, &mut s) {
-                Ok(_) => {}
-                Err(err) => return Err(err.error),
-            };
+            let r: [u8; 32] = const_hex::decode_to_array(left)?;
+            let s: [u8; 32] = const_hex::decode_to_array(right)?;
             Ok(Self { r, s })
         } else {
-            Err(DecodeError {
-                position: 0,
-                kind: DecodeKind::Length,
-            })
+            Err(FromHexError::InvalidStringLength)
         }
     }
 }
@@ -110,7 +98,7 @@ impl AsRef<[u8]> for PublicKey {
 
 impl fmt::Debug for PublicKey {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", HEXUPPER.encode(&self.0))
+        write!(f, "{}", const_hex::encode_upper(self.0))
     }
 }
 
@@ -128,30 +116,11 @@ impl TryFrom<&[u8]> for PublicKey {
     }
 }
 
-impl TryFrom<Vec<u8>> for PublicKey {
-    type Error = Vec<u8>;
-
-    fn try_from(vec: Vec<u8>) -> Result<Self, Self::Error> {
-        Ok(Self(vec.try_into()?))
-    }
-}
-
 impl FromStr for PublicKey {
-    type Err = DecodeError;
+    type Err = FromHexError;
 
     fn from_str(hex: &str) -> Result<Self, Self::Err> {
-        if hex.len() == 64 {
-            let mut buf = [0_u8; 32];
-            match HEXUPPER.decode_mut(hex.as_bytes(), &mut buf) {
-                Ok(_) => Ok(Self(buf)),
-                Err(err) => Err(err.error),
-            }
-        } else {
-            Err(DecodeError {
-                position: 0,
-                kind: DecodeKind::Length,
-            })
-        }
+        Ok(Self(const_hex::decode_to_array(hex)?))
     }
 }
 
@@ -188,21 +157,10 @@ impl Drop for SecretKey {
 }
 
 impl TryFrom<&str> for SecretKey {
-    type Error = DecodeError;
+    type Error = FromHexError;
 
     fn try_from(hex: &str) -> Result<Self, Self::Error> {
-        if hex.len() == 64 {
-            let mut buf = [0_u8; 32];
-            match HEXUPPER.decode_mut(hex.as_bytes(), &mut buf) {
-                Ok(_) => Ok(Self(buf)),
-                Err(err) => Err(err.error),
-            }
-        } else {
-            Err(DecodeError {
-                position: 0,
-                kind: DecodeKind::Length,
-            })
-        }
+        Ok(Self(const_hex::decode_to_array(hex)?))
     }
 }
 

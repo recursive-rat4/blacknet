@@ -19,7 +19,6 @@ use crate::v2::{AmountInfo, PublicKeyInfo, error::Result};
 use blacknet_kernel::transaction::{PayloadKind, PaymentId, Transfer};
 use blacknet_network::wallet::AddressCodec;
 use blacknet_serialization::format::from_bytes;
-use data_encoding::HEXUPPER;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]
@@ -40,7 +39,7 @@ impl From<&PaymentId> for PaymentIdInfo {
         } else {
             Self {
                 kind: payment_id.kind(),
-                payload: HEXUPPER.encode(payment_id.payload()),
+                payload: const_hex::encode_upper(payment_id.payload()),
             }
         }
     }

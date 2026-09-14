@@ -15,8 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use const_hex::FromHexError;
 use core::{borrow::Borrow, fmt, str::FromStr};
-use data_encoding::{DecodeError, DecodeKind, HEXUPPER};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Copy, Default, Deserialize, Eq, Hash, PartialEq, Serialize)]
@@ -49,7 +49,7 @@ impl fmt::Debug for Hash256 {
 
 impl fmt::Display for Hash256 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", HEXUPPER.encode(&self.0))
+        write!(f, "{}", const_hex::encode_upper(self.0))
     }
 }
 
@@ -68,20 +68,9 @@ impl From<Hash256> for [u8; 32] {
 }
 
 impl FromStr for Hash256 {
-    type Err = DecodeError;
+    type Err = FromHexError;
 
     fn from_str(hex: &str) -> Result<Self, Self::Err> {
-        if hex.len() == 64 {
-            let mut buf = [0_u8; 32];
-            match HEXUPPER.decode_mut(hex.as_bytes(), &mut buf) {
-                Ok(_) => Ok(Self(buf)),
-                Err(err) => Err(err.error),
-            }
-        } else {
-            Err(DecodeError {
-                position: 0,
-                kind: DecodeKind::Length,
-            })
-        }
+        Ok(Self(const_hex::decode_to_array(hex.as_bytes())?))
     }
 }

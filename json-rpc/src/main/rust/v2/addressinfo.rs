@@ -17,7 +17,6 @@
 
 use crate::v2::Result;
 use blacknet_network::wallet::AddressCodec;
-use core::fmt::Write;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]
@@ -28,10 +27,7 @@ pub struct AddressInfo {
 impl AddressInfo {
     pub fn new(string: &str, address_codec: &AddressCodec) -> Result<Self> {
         let public_key = address_codec.decode(string)?;
-        let mut hex = String::with_capacity(64);
-        for byte in public_key.as_ref() {
-            write!(hex, "{byte:02X}").expect("hex format");
-        }
+        let hex = const_hex::encode_upper(public_key);
         Ok(Self { publicKey: hex })
     }
 }

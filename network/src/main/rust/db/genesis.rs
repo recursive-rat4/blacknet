@@ -19,7 +19,7 @@ use blacknet_compat::Mode;
 use blacknet_crypto::bigint::UInt256;
 use blacknet_kernel::{amount::Amount, blake2b::Hash256, ed25519::PublicKey};
 use blacknet_time::Seconds;
-use data_encoding::HEXLOWER;
+use core::str::FromStr;
 use serde::{Deserialize, Serialize};
 use serde_json::from_str;
 use std::collections::HashMap;
@@ -52,11 +52,7 @@ struct GenesisJsonEntry {
 
 impl GenesisJsonEntry {
     fn public_key(&self) -> PublicKey {
-        HEXLOWER
-            .decode(self.publicKey.as_bytes())
-            .expect("genesis public key hex")
-            .try_into()
-            .expect("genesis public key len")
+        PublicKey::from_str(&self.publicKey).expect("genesis public key hex")
     }
 
     fn balance(&self) -> Amount {

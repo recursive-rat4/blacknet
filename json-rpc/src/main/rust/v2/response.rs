@@ -16,7 +16,6 @@
  */
 
 use axum::response::Response;
-use data_encoding::HEXUPPER;
 use serde::Serialize;
 use serde_json::to_string;
 
@@ -32,7 +31,7 @@ pub fn respond_hex(message: &[u8]) -> Response<String> {
     Response::builder()
         .status(200)
         .header("Content-Type", "text/plain")
-        .body(HEXUPPER.encode(message))
+        .body(const_hex::encode_upper(message))
         .unwrap()
 }
 

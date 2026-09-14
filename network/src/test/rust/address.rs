@@ -18,19 +18,17 @@
 use blacknet_compat::Mode;
 use blacknet_kernel::ed25519::PublicKey;
 use blacknet_network::wallet::{AddressCodec, AddressKind};
-use data_encoding::HEXUPPER;
+use core::str::FromStr;
 
 #[test]
 fn account() {
-    let string = "blacknet1klnycx794hg9jvuhua0gy75d5v374rrwrlnpg25xpykfxkg30egqq83tj0";
-    let bytes: PublicKey = HEXUPPER
-        .decode(b"B7E64C1BC5ADD0593397E75E827A8DA323EA8C6E1FE6142A86092C9359117E50")
-        .unwrap()
-        .try_into()
-        .unwrap();
+    let address = "blacknet1klnycx794hg9jvuhua0gy75d5v374rrwrlnpg25xpykfxkg30egqq83tj0";
+    let public_key =
+        PublicKey::from_str("B7E64C1BC5ADD0593397E75E827A8DA323EA8C6E1FE6142A86092C9359117E50")
+            .unwrap();
     let address_codec = AddressCodec::new(&Mode::mainnet()).unwrap();
-    assert_eq!(address_codec.encode(bytes).unwrap(), string);
-    assert_eq!(address_codec.decode(string).unwrap(), bytes);
+    assert_eq!(address_codec.encode(public_key).unwrap(), address);
+    assert_eq!(address_codec.decode(address).unwrap(), public_key);
 }
 
 #[test]

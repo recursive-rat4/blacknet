@@ -50,6 +50,7 @@ bech32 = { version = "0.12.0", default-features = false, features = ["alloc"] }
 bytemuck = { version = "1.25.0", features = ["derive", "min_const_generics", "zeroable_maybe_uninit"] }
 clap = { version = "4.6.4", features = ["derive"] }
 cmov = { version = "0.5.4" }
+const-hex = { version = "1.19.1", default-features = false, features = ["alloc", "core-error"] }
 criterion = { version = "0.8.2", default-features = false, features = ["cargo_bench_support"] }
 data-encoding = { version = "2.10.0", default-features = false, features = ["alloc"] }
 data-encoding-macro = { version = "0.1.19" }
