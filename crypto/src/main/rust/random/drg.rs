@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::random::{Seedable, UniformGenerator};
+use crate::random::{BufferedGenerator, Seedable, UniformGenerator};
 use crate::symmetric::chacha::{BLOCK_LEN, BLOCK_SIZE, ChaCha, KEY_SIZE};
 use bytemuck::Zeroable;
 use core::mem::transmute;
@@ -25,8 +25,6 @@ pub const SEED_SIZE: usize = KEY_SIZE;
 #[derive(Clone, Copy, Zeroable)]
 pub struct ChaChaDRG<const ROUNDS: usize> {
     chacha: ChaCha<ROUNDS>,
-    buffer: [u8; BLOCK_SIZE],
-    position: usize,
 }
 
 impl<const ROUNDS: usize> ChaChaDRG<ROUNDS> {
@@ -43,40 +41,23 @@ impl<const ROUNDS: usize> ChaChaDRG<ROUNDS> {
 }
 
 impl<const ROUNDS: usize> Default for ChaChaDRG<ROUNDS> {
+    #[inline]
     fn default() -> Self {
         Self::new()
     }
 }
 
 impl<const ROUNDS: usize> UniformGenerator for ChaChaDRG<ROUNDS> {
-    type Output = u8;
+    type Output = [u8; BLOCK_SIZE];
 
     fn generate(&mut self) -> Self::Output {
-        if self.position != BLOCK_SIZE {
-            let result = self.buffer[self.position];
-            self.position += 1;
-            result
-        } else {
-            self.position = 1;
-            Self::keystream(&mut self.chacha, &mut self.buffer);
-            self.buffer[0]
-        }
+        let mut buffer = [0; BLOCK_SIZE];
+        Self::keystream(&mut self.chacha, &mut buffer);
+        buffer
     }
 
-    fn discard(&mut self, n: usize) {
-        let pos_n = self.position + n;
-        if pos_n <= BLOCK_SIZE {
-            self.position = pos_n;
-            return;
-        }
-        const {
-            assert!(BLOCK_SIZE == 64);
-        };
-        let q = pos_n >> 6;
-        let r = pos_n & 63;
-        self.chacha.seek(self.chacha.counter() + q as u32 - 1);
-        self.position = r;
-        Self::keystream(&mut self.chacha, &mut self.buffer);
+    fn discard(&mut self, n: u32) {
+        self.chacha.seek(self.chacha.counter() + n);
     }
 }
 
@@ -84,22 +65,14 @@ impl<const ROUNDS: usize> Seedable for ChaChaDRG<ROUNDS> {
     type Seed = [u8; SEED_SIZE];
 
     fn from_seed(seed: &Self::Seed) -> Self {
-        let mut chacha = ChaCha::<ROUNDS>::new(seed, &Default::default());
-        let mut buffer = [0u8; BLOCK_SIZE];
-        Self::keystream(&mut chacha, &mut buffer);
-        Self {
-            chacha,
-            buffer,
-            position: 0,
-        }
+        let chacha = ChaCha::<ROUNDS>::new(seed, &Default::default());
+        Self { chacha }
     }
 
     fn reseed(&mut self, seed: &Self::Seed) {
         self.chacha.reset(seed, &Default::default());
-        Self::keystream(&mut self.chacha, &mut self.buffer);
-        self.position = 0;
     }
 }
 
-pub type FastDRG = ChaChaDRG<8>;
-pub type StrongDRG = ChaChaDRG<20>;
+pub type FastDRG = BufferedGenerator<ChaChaDRG<8>, u8, BLOCK_SIZE>;
+pub type StrongDRG = BufferedGenerator<ChaChaDRG<20>, u8, BLOCK_SIZE>;

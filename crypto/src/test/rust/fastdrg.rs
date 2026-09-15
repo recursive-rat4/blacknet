@@ -28,7 +28,7 @@ fn discard() {
     let buf1: [u8; SIZE] = array::from_fn(|_| drg.generate());
 
     drg.reseed(&Default::default());
-    drg.discard(SIZE);
+    drg.discard(SIZE as u32);
     let buf2: [u8; SIZE] = array::from_fn(|_| drg.generate());
 
     assert_eq!(buf2, buf1);

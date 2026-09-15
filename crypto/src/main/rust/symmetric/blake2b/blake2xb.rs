@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::random::UniformGenerator;
+use crate::random::{BufferedGenerator, UniformGenerator};
 use crate::symmetric::blake2b::Blake2b512;
 use bytemuck::Zeroable;
 
@@ -50,13 +50,11 @@ impl Blake2xb {
 
     /// Produce XOF output.
     pub fn finalize_xof(self) -> XOFOutput {
-        XOFOutput {
-            buffer: [0; 64],
-            position: 64,
+        XOFOutput::with_generator(XOF {
             h0: self.state.finalize(),
             node_offset: 0,
             xof_length: self.xof_length,
-        }
+        })
     }
 }
 
@@ -68,28 +66,26 @@ impl Default for Blake2xb {
 }
 
 #[derive(Clone, Copy, Zeroable)]
-pub struct XOFOutput {
-    buffer: [u8; 64],
-    position: usize,
+pub struct XOF {
     h0: [u8; 64],
     node_offset: u32,
     xof_length: u32,
 }
 
-impl UniformGenerator for XOFOutput {
-    type Output = u8;
+impl UniformGenerator for XOF {
+    type Output = [u8; 64];
 
     fn generate(&mut self) -> Self::Output {
-        if self.position == self.buffer.len() {
-            let mut hasher =
-                Blake2b512::with_params(0, 0, 64, self.node_offset, self.xof_length, 64, [0; 16]);
-            hasher.update(self.h0);
-            self.buffer = hasher.finalize();
-            self.position = 0;
-            self.node_offset += 1;
-        }
-        let b = self.buffer[self.position];
-        self.position += 1;
-        b
+        let mut hasher =
+            Blake2b512::with_params(0, 0, 64, self.node_offset, self.xof_length, 64, [0; 16]);
+        hasher.update(self.h0);
+        self.node_offset += 1;
+        hasher.finalize()
+    }
+
+    fn discard(&mut self, n: u32) {
+        self.node_offset += n;
     }
 }
+
+pub type XOFOutput = BufferedGenerator<XOF, u8, 64>;

@@ -37,7 +37,7 @@ pub use drg::{FastDRG, StrongDRG};
 #[cfg(feature = "std")]
 pub use fastrng::FAST_RNG;
 pub use float01distribution::Float01Distribution;
-pub use generator::{Seedable, UniformBitGenerator, UniformGenerator};
+pub use generator::{BufferedGenerator, Seedable, UniformBitGenerator, UniformGenerator};
 pub use hammingweight::fill_with_weight;
 pub use quartaryuniformdistribution::QuartaryUniformDistribution;
 #[cfg(feature = "std")]
