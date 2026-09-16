@@ -16,7 +16,7 @@
  */
 
 /// Optional value.
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 pub struct BlOption<T> {
     value: T,
     is_some: bool,
