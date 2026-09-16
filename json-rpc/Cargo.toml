@@ -16,7 +16,7 @@
 #
 
 [package]
-name = "blacknet-cli"
+name = "blacknet-json-rpc"
 version.workspace = true
 authors.workspace = true
 edition.workspace = true
@@ -31,21 +31,58 @@ keywords.workspace = true
 categories.workspace = true
 
 [dependencies]
-blacknet-compat.workspace = true
-blacknet-json-rpc = { workspace = true, features = ["client"] }
-clap.workspace = true
-futures-util.workspace = true
-hyper = { workspace = true, features = ["client", "http1"] }
+hashbrown = { workspace = true, optional = true }
+serde.workspace = true
 serde_json.workspace = true
-tokio.workspace = true
-tokio-tungstenite = { workspace = true, features = ["connect"] }
-urlencoding.workspace = true
+
+[features]
+default = []
+client = []
+server = ["dep:hashbrown"]
 
 [lints]
 workspace = true
 
-[[bin]]
-name = "blacknet-cli"
-test = false
-bench = false
-path = "src/main/rust/cli.rs"
+[lib]
+doctest = false
+path = "src/main/rust/lib.rs"
+
+[[test]]
+name = "batch"
+path = "src/test/rust/batch.rs"
+
+[[test]]
+name = "error"
+path = "src/test/rust/error.rs"
+
+[[test]]
+name = "id"
+path = "src/test/rust/id.rs"
+
+[[test]]
+name = "idgenerator"
+path = "src/test/rust/idgenerator.rs"
+
+[[test]]
+name = "jsonrpc"
+path = "src/test/rust/jsonrpc.rs"
+
+[[test]]
+name = "method"
+path = "src/test/rust/method.rs"
+
+[[test]]
+name = "params"
+path = "src/test/rust/params.rs"
+
+[[test]]
+name = "request"
+path = "src/test/rust/request.rs"
+
+[[test]]
+name = "response"
+path = "src/test/rust/response.rs"
+
+[[test]]
+name = "router"
+path = "src/test/rust/router.rs"

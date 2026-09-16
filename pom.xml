@@ -21,7 +21,6 @@
     <modules>
         <module>io</module>
         <module>daemon</module>
-        <module>json-rpc</module>
         <module>kernel</module>
         <module>runtime</module>
         <module>serialization</module>

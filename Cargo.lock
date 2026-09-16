@@ -214,6 +214,7 @@ name = "blacknet-cli"
 version = "0.3.0"
 dependencies = [
  "blacknet-compat",
+ "blacknet-json-rpc",
  "clap",
  "futures-util",
  "hyper",
@@ -263,6 +264,15 @@ name = "blacknet-io"
 version = "0.3.0"
 dependencies = [
  "blacknet-crypto",
+]
+
+[[package]]
+name = "blacknet-json-rpc"
+version = "0.3.0"
+dependencies = [
+ "hashbrown 0.17.1",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -329,6 +339,7 @@ dependencies = [
  "axum",
  "blacknet-compat",
  "blacknet-crypto",
+ "blacknet-json-rpc",
  "blacknet-kernel",
  "blacknet-log",
  "blacknet-network",
@@ -1274,9 +1285,9 @@ checksum = "47e1ffaa40ddd1f3ed91f717a33c8c0ee23fff369e3aa8772b9605cc1d22f4c3"
 
 [[package]]
 name = "memchr"
-version = "2.8.0"
+version = "2.8.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f8ca58f447f06ed17d5fc4043ce1b10dd205e060fb3ce5b979b8ed8e59ff3f79"
+checksum = "cf8baf1c55e62ffcace7a9f06f4bd9cd3f0c4beb022d3b367256b91b87513d98"
 
 [[package]]
 name = "mime"
@@ -2766,6 +2777,6 @@ dependencies = [
 
 [[package]]
 name = "zmij"
-version = "1.0.21"
+version = "1.0.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b8848ee67ecc8aedbaf3e4122217aff892639231befc6a1b58d29fff4c2cabaa"
+checksum = "29666d0abbfad1e3dc4dcf6144730dd3a3ab225bbbdac83319345b1b44ccfc1b"

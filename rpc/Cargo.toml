@@ -33,6 +33,7 @@ categories.workspace = true
 [dependencies]
 blacknet-compat.workspace = true
 blacknet-crypto.workspace = true
+blacknet-json-rpc = { workspace = true, features = ["server"] }
 blacknet-kernel.workspace = true
 blacknet-log.workspace = true
 blacknet-network.workspace = true
