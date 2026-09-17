@@ -18,11 +18,23 @@
 use blacknet_kernel::blake2b::Hash256;
 use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize, Serialize)]
-pub struct Hash256Info(String);
+#[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub struct Hash256Info(
+    #[serde(
+        deserialize_with = "const_hex::serde::deserialize",
+        serialize_with = "const_hex::serde::no_prefix::serialize_upper"
+    )]
+    [u8; 32],
+);
 
 impl From<Hash256> for Hash256Info {
     fn from(hash: Hash256) -> Self {
-        Self(hash.to_string())
+        Self(hash.into())
+    }
+}
+
+impl From<Hash256Info> for Hash256 {
+    fn from(info: Hash256Info) -> Self {
+        Self::from(info.0)
     }
 }
