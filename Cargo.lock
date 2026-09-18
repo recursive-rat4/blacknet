@@ -319,6 +319,7 @@ dependencies = [
  "data-encoding",
  "data-encoding-macro",
  "fjall",
+ "hashbrown 0.17.1",
  "hashlink",
  "natpmp",
  "rusqlite",

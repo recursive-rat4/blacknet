@@ -24,6 +24,7 @@ use blacknet_kernel::{
     transaction::{HashTimeLockContractId, MultiSignatureLockContractId},
 };
 use blacknet_network::wallet::{DeriveAccountError, Error, OpenError, Wallet};
+use blacknet_time::Seconds;
 use core::{assert_matches, str::FromStr};
 use rusqlite::Connection;
 
@@ -39,8 +40,11 @@ fn magic() {
 fn ephemeral() {
     let mode = Mode::regtest();
     let wallet = Wallet::ephemeral(&mode).unwrap();
+    let created_at = Seconds::new(123);
 
     assert_matches!(wallet.created_at(), Ok(_));
+    assert_matches!(wallet.set_created_at(created_at), Ok(()));
+    assert_matches!(wallet.created_at(), Ok(x) if x == created_at);
     assert_matches!(wallet.is_staking(), Ok(true));
     assert_matches!(wallet.sequence(), Ok(0));
 }

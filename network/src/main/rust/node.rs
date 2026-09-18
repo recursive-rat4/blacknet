@@ -86,12 +86,12 @@ pub struct Node {
     agent_name: String,
     agent_version: String,
     nonce: u64,
-    mode: Mode,
+    mode: Arc<Mode>,
 }
 
 impl Node {
     pub(super) fn new(
-        mode: Mode,
+        mode: Arc<Mode>,
         dirs: &XDGDirectories,
         log_manager: &LogManager,
         runtime: &Runtime,
@@ -298,7 +298,7 @@ impl Node {
         &self.tx_fetcher
     }
 
-    pub(super) const fn mode(&self) -> &Mode {
+    pub(super) const fn mode(&self) -> &Arc<Mode> {
         &self.mode
     }
 

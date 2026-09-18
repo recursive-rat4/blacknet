@@ -174,6 +174,13 @@ impl Wallet {
         Ok(Seconds::new(num))
     }
 
+    pub fn set_created_at(&self, created_at: Seconds) -> Result<()> {
+        let connection = self.connection.lock().unwrap();
+        let mut statement = connection.prepare_cached("UPDATE wallet SET created_at = ?;")?;
+        statement.execute((created_at.value(),))?;
+        Ok(())
+    }
+
     pub fn is_staking(&self) -> Result<bool> {
         let connection = self.connection.lock().unwrap();
         let mut statement = connection.prepare_cached("SELECT is_staking FROM wallet;")?;
@@ -350,6 +357,12 @@ impl Wallet {
             lease.height(),
             lease.balance().value(),
         ))?;
+        Ok(())
+    }
+
+    pub(super) fn vacuum_into(&self, path: &Path) -> Result<()> {
+        let connection = self.connection.lock().unwrap();
+        connection.execute("VACUUM main INTO ?", (path.to_str(),))?;
         Ok(())
     }
 }

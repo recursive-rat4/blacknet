@@ -57,9 +57,10 @@ impl Network {
             warn!(logger, "Running as root");
         }
 
-        let (node, coin_notifier) = Node::new(mode, dirs, log_manager, runtime, config)?;
+        let mode = Arc::new(mode);
+        let (node, coin_notifier) = Node::new(mode.clone(), dirs, log_manager, runtime, config)?;
         let wallet_db = WalletDB::new(
-            node.mode(),
+            mode,
             dirs,
             log_manager,
             runtime,

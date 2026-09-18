@@ -59,7 +59,8 @@ impl Staker {
             runtime: runtime.handle().clone(),
         });
 
-        for (public_key, wallet) in wallet_db.wallets() {
+        let wallets = wallet_db.wallets();
+        for (public_key, wallet) in wallets.iter() {
             match wallet.is_staking() {
                 Ok(true) => match wallet.secret_key() {
                     Ok(secret_key) => {

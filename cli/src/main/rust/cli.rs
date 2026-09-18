@@ -182,6 +182,16 @@ enum WalletV2 {
     },
     /// List outgoing leases.
     ListOutLeases { address: String },
+    /// Import mnemonic of pre-quantum account.
+    ImportMnemonic {
+        /// Name of wallet. It must be valid as a file name.
+        name: String,
+        /// The mnemonic to be imported.
+        mnemonic: String,
+        /// Timestamp in seconds of when the mnemonic was created.
+        /// If not specified uses genesis time.
+        created_at: Option<i64>,
+    },
 }
 
 fn cli() -> Result<(), Box<dyn Error>> {
@@ -281,6 +291,27 @@ fn cli() -> Result<(), Box<dyn Error>> {
         }) => client.get(&["api", "v2", "verifymessage", &from, &signature, &message]),
         Command::WalletV2(WalletV2::ListOutLeases { address }) => {
             client.get(&["api", "v2", "wallet", &address, "outleases"])
+        }
+        Command::WalletV2(WalletV2::ImportMnemonic {
+            name,
+            mnemonic,
+            created_at,
+        }) => {
+            if let Some(created_at) = created_at {
+                client.post(
+                    "/api/v2/importmnemonic",
+                    &[
+                        ("name", &name),
+                        ("mnemonic", &mnemonic),
+                        ("created_at", &created_at.to_string()),
+                    ],
+                )
+            } else {
+                client.post(
+                    "/api/v2/importmnemonic",
+                    &[("name", &name), ("mnemonic", &mnemonic)],
+                )
+            }
         }
     }?;
 

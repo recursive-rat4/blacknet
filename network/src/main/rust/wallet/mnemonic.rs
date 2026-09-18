@@ -30,6 +30,10 @@ pub struct Mnemonic {
 }
 
 impl Mnemonic {
+    pub const fn new(string: ZeroizingString) -> Self {
+        Self { string }
+    }
+
     pub fn generate_v1(lang: &str) -> Result<Self, Error> {
         let wordlist = Wordlist::by_name(lang).ok_or(Error::Wordlist)?;
         let mut rng = Zeroizing::new(seed::<StrongDRG>());

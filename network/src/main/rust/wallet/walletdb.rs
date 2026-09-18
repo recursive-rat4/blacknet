@@ -18,7 +18,7 @@
 use crate::{
     db::{CoinNotification, CoinNotifier, State, genesis},
     txpool::{Notifier as TxPoolNotifier, TxPool},
-    wallet::{AddressCodec, Wallet},
+    wallet::{AddressCodec, Error as WalletError, OpenError, Wallet},
 };
 use blacknet_compat::{Mode, XDGDirectories};
 use blacknet_kernel::{
@@ -27,13 +27,13 @@ use blacknet_kernel::{
 };
 use blacknet_log::{LogManager, Logger, error, info};
 use blacknet_time::{Milliseconds, SystemClock};
-use core::error::Error;
+use core::{error::Error, fmt};
+use hashbrown::{HashMap, hash_map::Entry};
 use std::{
-    collections::HashMap,
     fs::{DirBuilder, read_dir},
     io::Error as IoError,
     path::PathBuf,
-    sync::{Arc, OnceLock, RwLock},
+    sync::{Arc, OnceLock, RwLock, RwLockReadGuard},
 };
 use tokio::{runtime::Runtime, sync::mpsc};
 
@@ -47,13 +47,15 @@ pub type Subscriber = mpsc::UnboundedSender<Notification>;
 pub struct WalletDB {
     logger: Logger,
     address_codec: AddressCodec,
-    wallets: HashMap<PublicKey, Wallet>,
+    wallets: RwLock<HashMap<PublicKey, Wallet>>,
     subscriber: OnceLock<Subscriber>,
+    mode: Arc<Mode>,
+    dir: PathBuf,
 }
 
 impl WalletDB {
     pub fn new(
-        mode: &Mode,
+        mode: Arc<Mode>,
         dirs: &XDGDirectories,
         log_manager: &LogManager,
         runtime: &Runtime,
@@ -64,10 +66,10 @@ impl WalletDB {
         info!(logger, "Driving SQLite {}", rusqlite::version());
 
         let mut wallets = HashMap::new();
-        let dir_path = Self::mkdir(dirs)?;
-        for dir_entry in read_dir(dir_path)? {
+        let dir = Self::mkdir(dirs)?;
+        for dir_entry in read_dir(&dir)? {
             let dir_entry = dir_entry?;
-            match Wallet::open(&dir_entry.path(), mode) {
+            match Wallet::open(&dir_entry.path(), &mode) {
                 Ok(wallet) => {
                     info!(
                         logger,
@@ -89,9 +91,11 @@ impl WalletDB {
 
         let wallet_db = Arc::new(Self {
             logger,
-            address_codec: AddressCodec::new(mode)?,
-            wallets,
+            address_codec: AddressCodec::new(&mode)?,
+            wallets: RwLock::new(wallets),
             subscriber: OnceLock::new(),
+            mode,
+            dir,
         });
 
         runtime.spawn(WalletDB::coindb_observer(wallet_db.clone(), coin_notifier));
@@ -123,12 +127,25 @@ impl WalletDB {
         &self.address_codec
     }
 
-    pub fn wallet(&self, public_key: PublicKey) -> Option<&Wallet> {
-        self.wallets.get(&public_key)
+    pub fn wallets(&self) -> RwLockReadGuard<'_, HashMap<PublicKey, Wallet>> {
+        self.wallets.read().unwrap()
     }
 
-    pub const fn wallets(&self) -> &HashMap<PublicKey, Wallet> {
-        &self.wallets
+    pub fn ingest(&self, name: &str, wallet: &Wallet) -> Result<(), IngestError> {
+        let public_key = wallet.public_key()?;
+        let mut wallets = self.wallets.write().unwrap();
+        match wallets.entry(public_key) {
+            Entry::Vacant(vacant) => {
+                let file_name = format!("{name}.sqlite");
+                let path = self.dir.join(file_name);
+                wallet.vacuum_into(&path)?;
+                let wallet = Wallet::open(&path, &self.mode)?;
+                vacant.insert(wallet);
+                //TODO rescan
+                Ok(())
+            }
+            Entry::Occupied(_) => Err(IngestError::Occupied),
+        }
     }
 
     pub fn anchor(&self, state: &State) -> Hash256 {
@@ -187,3 +204,34 @@ impl Drop for WalletDB {
         info!(self.logger, "Braking SQLite");
     }
 }
+
+#[derive(Debug)]
+pub enum IngestError {
+    Occupied,
+    Wallet(WalletError),
+    Reopen(OpenError),
+}
+
+impl From<WalletError> for IngestError {
+    fn from(err: WalletError) -> Self {
+        Self::Wallet(err)
+    }
+}
+
+impl From<OpenError> for IngestError {
+    fn from(err: OpenError) -> Self {
+        Self::Reopen(err)
+    }
+}
+
+impl fmt::Display for IngestError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Occupied => write!(f, "This public key is already occupied by a wallet"),
+            Self::Wallet(err) => write!(f, "{err}"),
+            Self::Reopen(err) => write!(f, "Reopen: {err}"),
+        }
+    }
+}
+
+impl Error for IngestError {}

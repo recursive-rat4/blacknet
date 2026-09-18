@@ -46,6 +46,7 @@ const-hex.workspace = true
 data-encoding = { workspace = true, features = ["std"] }
 data-encoding-macro.workspace = true
 fjall.workspace = true
+hashbrown.workspace = true
 hashlink.workspace = true
 natpmp.workspace = true
 serde = { workspace = true, features = ["std"] }

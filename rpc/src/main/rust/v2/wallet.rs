@@ -33,8 +33,9 @@ use blacknet_kernel::{
 use blacknet_network::{
     db::genesis,
     network::Network,
-    wallet::{Mnemonic, sign_message, verify_message},
+    wallet::{Mnemonic, Wallet, sign_message, verify_message},
 };
+use blacknet_time::Seconds;
 use core::str::FromStr;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, sync::Arc};
@@ -162,7 +163,8 @@ async fn out_leases(
             return respond_error(format!("Invalid address: {err}"));
         }
     };
-    let Some(wallet) = wallet_db.wallet(public_key) else {
+    let wallets = wallet_db.wallets();
+    let Some(wallet) = wallets.get(&public_key) else {
         return respond_error("Wallet not found");
     };
     let address_codec = wallet_db.address_codec();
@@ -185,7 +187,8 @@ async fn sequence(State(network): State<Arc<Network>>, address: Path<String>) ->
         Ok(public_key) => public_key,
         Err(err) => return respond_error(format!("Invalid address: {err}")),
     };
-    let Some(wallet) = network.wallet_db().wallet(public_key) else {
+    let wallets = wallet_db.wallets();
+    let Some(wallet) = wallets.get(&public_key) else {
         return respond_error("Wallet not found");
     };
     match wallet.sequence() {
@@ -224,7 +227,8 @@ fn transaction_handler(
         Ok(hash) => hash,
         Err(err) => return respond_error(format!("Invalid hash: {err}")),
     };
-    let Some(wallet) = wallet_db.wallet(public_key) else {
+    let wallets = wallet_db.wallets();
+    let Some(wallet) = wallets.get(&public_key) else {
         return respond_error("Wallet not found");
     };
     todo!();
@@ -250,7 +254,8 @@ async fn tx_count(State(network): State<Arc<Network>>, address: Path<String>) ->
         Ok(public_key) => public_key,
         Err(err) => return respond_error(format!("Invalid address: {err}")),
     };
-    let Some(wallet) = network.wallet_db().wallet(public_key) else {
+    let wallets = wallet_db.wallets();
+    let Some(wallet) = wallets.get(&public_key) else {
         return respond_error("Wallet not found");
     };
     match wallet.count_transactions() {
@@ -324,6 +329,38 @@ fn list_since_block_handler(
     todo!();
 }
 
+#[derive(Deserialize, Serialize)]
+pub struct ImportMnemonic {
+    pub name: String,
+    pub mnemonic: ZeroizingString,
+    pub created_at: Option<i64>,
+}
+
+async fn import_mnemonic(
+    State(network): State<Arc<Network>>,
+    Form(request): Form<ImportMnemonic>,
+) -> Response<String> {
+    let wallet = match Wallet::ephemeral(network.mode()) {
+        Ok(wallet) => wallet,
+        Err(err) => return respond_error(err.to_string()),
+    };
+    if let Err(err) = wallet.set_mnemonic(Mnemonic::new(request.mnemonic)) {
+        return respond_error(err.to_string());
+    }
+    if let Err(err) = wallet.derive_account() {
+        return respond_error(err.to_string());
+    }
+    if let Some(created_at) = request.created_at
+        && let Err(err) = wallet.set_created_at(Seconds::new(created_at))
+    {
+        return respond_error(err.to_string());
+    }
+    if let Err(err) = network.wallet_db().ingest(&request.name, &wallet) {
+        return respond_error(err.to_string());
+    }
+    respond_text("true")
+}
+
 pub fn routes() -> Router<Arc<Network>> {
     Router::new()
         .route("/api/v2/generateaccount", get(generate_account))
@@ -378,4 +415,5 @@ pub fn routes() -> Router<Arc<Network>> {
             "/api/v2/wallet/{address}/listsinceblock/{hash}",
             get(list_since_block_with_hash),
         )
+        .route("/api/v2/importmnemonic", post(import_mnemonic))
 }
