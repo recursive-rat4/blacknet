@@ -23,7 +23,6 @@ use core::ops::{Add, BitAnd, Shl, ShrAssign, Sub};
 #[rustfmt::skip]
 pub trait Integer
     : Copy
-    + Default
     + From<Self::Limb>
     + Ord
     + BitAnd<Self, Output = Self>
@@ -34,16 +33,11 @@ pub trait Integer
     + Add<Output = Self>
     + Sub<Output = Self>
 {
-    type Limb
-        : Copy
-        + Ord
-        + Sub<Output = Self::Limb>
-        ;
+    type Limb: Copy;
     type Bytes: BorrowMut<[u8]> + Default;
     type CastUnsigned: UnsignedInteger<Bytes = Self::Bytes>;
 
     fn cast_unsigned(self) -> Self::CastUnsigned;
-    fn count_ones(self) -> u32;
     fn from_le_bytes(bytes: Self::Bytes) -> Self;
     fn leading_zeros(self) -> u32;
     fn to_le_bytes(self) -> Self::Bytes;
@@ -57,8 +51,6 @@ pub trait Integer
 
     const ZERO: Self;
     const ONE: Self;
-
-    const LIMB_ONE: Self::Limb;
 }
 
 pub trait SignedInteger: Integer {}
@@ -77,10 +69,6 @@ macro_rules! impl_integer {
                     self
                 }
                 #[inline]
-                fn count_ones(self) -> u32 {
-                    self.count_ones()
-                }
-                #[inline]
                 fn from_le_bytes(bytes: Self::Bytes) -> Self {
                     Self::from_le_bytes(bytes)
                 }
@@ -108,8 +96,6 @@ macro_rules! impl_integer {
 
                 const ZERO: Self = 0;
                 const ONE: Self = 1;
-
-                const LIMB_ONE: Self::Limb = 1;
             }
 
             impl UnsignedInteger for $x {}
@@ -124,10 +110,6 @@ macro_rules! impl_integer {
                     self.cast_unsigned()
                 }
                 #[inline]
-                fn count_ones(self) -> u32 {
-                    self.count_ones()
-                }
-                #[inline]
                 fn from_le_bytes(bytes: Self::Bytes) -> Self {
                     Self::from_le_bytes(bytes)
                 }
@@ -155,8 +137,6 @@ macro_rules! impl_integer {
 
                 const ZERO: Self = 0;
                 const ONE: Self = 1;
-
-                const LIMB_ONE: Self::Limb = 1;
             }
 
             impl SignedInteger for $y {}
@@ -176,10 +156,6 @@ impl Integer for UInt256 {
     #[inline]
     fn cast_unsigned(self) -> Self::CastUnsigned {
         self
-    }
-    #[inline]
-    fn count_ones(self) -> u32 {
-        self.count_ones()
     }
     #[inline]
     fn from_le_bytes(bytes: Self::Bytes) -> Self {
@@ -209,8 +185,6 @@ impl Integer for UInt256 {
 
     const ZERO: Self = Self::ZERO;
     const ONE: Self = Self::ONE;
-
-    const LIMB_ONE: Self::Limb = 1;
 }
 
 impl UnsignedInteger for UInt256 {}
