@@ -19,15 +19,22 @@ use blacknet_kernel::ed25519::Signature;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]
-pub struct SignatureInfo(String);
+pub struct SignatureInfo(
+    #[serde(
+        deserialize_with = "const_hex::serde::deserialize",
+        serialize_with = "const_hex::serde::no_prefix::serialize_upper"
+    )]
+    [u8; 64],
+);
 
 impl From<Signature> for SignatureInfo {
     fn from(signature: Signature) -> Self {
-        let (r, s) = (
-            const_hex::display(signature.raw_r()),
-            const_hex::display(signature.raw_s()),
-        );
-        let hex = format!("{:X}{:X}", r, s);
-        Self(hex)
+        Self(signature.into())
+    }
+}
+
+impl From<SignatureInfo> for Signature {
+    fn from(info: SignatureInfo) -> Self {
+        Self::from(info.0)
     }
 }

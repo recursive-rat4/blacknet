@@ -100,8 +100,7 @@ impl Block {
             .copy_from_slice(content_hash.as_ref());
         let hash = Self::compute_hash(&bytes).expect("Block serialized");
         self.signature = sign(hash, secret_key);
-        bytes[SIGNATURE_POS..SIGNATURE_POS + 32].copy_from_slice(self.signature.raw_r());
-        bytes[SIGNATURE_POS + 32..SIGNATURE_POS + 64].copy_from_slice(self.signature.raw_s());
+        bytes[SIGNATURE_POS..SIGNATURE_POS + 64].copy_from_slice(self.signature.as_bytes());
         (hash, bytes)
     }
 

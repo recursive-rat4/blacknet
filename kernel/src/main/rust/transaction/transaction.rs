@@ -89,8 +89,7 @@ impl Transaction {
         let mut bytes = to_bytes(&self).expect("Transaction serialization");
         let hash = Self::compute_hash(&bytes).expect("Transaction serialized");
         self.signature = sign(hash, secret_key);
-        bytes[0..32].copy_from_slice(self.signature.raw_r());
-        bytes[32..64].copy_from_slice(self.signature.raw_s());
+        bytes[0..64].copy_from_slice(self.signature.as_bytes());
         (hash, bytes)
     }
 

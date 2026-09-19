@@ -25,7 +25,11 @@ use blacknet_crypto::{
 };
 use const_hex::FromHexError;
 use core::{array::TryFromSliceError, fmt, mem::transmute, str::FromStr};
-use serde::{Deserialize, Serialize};
+use serde::{
+    Deserialize, Deserializer, Serialize, Serializer,
+    de::{Error as _, SeqAccess, Visitor},
+    ser::SerializeTuple,
+};
 
 // For compatibility, implementation follows eddsa-java 0.3.0
 // https://eprint.iacr.org/2020/1244
@@ -45,30 +49,55 @@ const BASE: Edwards25519Extended = unsafe {
     )
 };
 
-#[derive(Clone, Copy, Default, Deserialize, Eq, PartialEq, Serialize)]
-pub struct Signature {
-    r: [u8; 32],
-    s: [u8; 32],
-}
+#[derive(Clone, Copy, Eq, PartialEq)]
+pub struct Signature([u8; 64]);
 
 impl Signature {
-    pub const fn raw_r(&self) -> &[u8; 32] {
-        &self.r
+    pub const fn with_rs(r: &[u8; 32], s: &[u8; 32]) -> Self {
+        let mut bytes = [0; 64];
+        let chunks = bytes.as_chunks_mut::<32>().0;
+        chunks[0].copy_from_slice(r);
+        chunks[1].copy_from_slice(s);
+        Self(bytes)
     }
 
-    pub const fn raw_s(&self) -> &[u8; 32] {
-        &self.s
+    pub const fn as_bytes(&self) -> &[u8; 64] {
+        &self.0
+    }
+
+    pub const fn as_r_bytes(&self) -> &[u8; 32] {
+        &self.0.as_chunks::<32>().0[0]
+    }
+
+    pub const fn as_s_bytes(&self) -> &[u8; 32] {
+        &self.0.as_chunks::<32>().0[1]
+    }
+}
+
+impl Default for Signature {
+    #[inline]
+    fn default() -> Self {
+        Self([0; 64])
     }
 }
 
 impl fmt::Debug for Signature {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "{}{}",
-            const_hex::encode_upper(self.r),
-            const_hex::encode_upper(self.s)
-        )
+        write!(f, "{}", const_hex::encode_upper(self.0))
+    }
+}
+
+impl From<[u8; 64]> for Signature {
+    #[inline]
+    fn from(bytes: [u8; 64]) -> Self {
+        Self(bytes)
+    }
+}
+
+impl From<Signature> for [u8; 64] {
+    #[inline]
+    fn from(signature: Signature) -> Self {
+        signature.0
     }
 }
 
@@ -77,13 +106,44 @@ impl FromStr for Signature {
 
     fn from_str(hex: &str) -> Result<Self, Self::Err> {
         if hex.len() == 128 {
-            let (left, right) = hex.as_bytes().split_at(64);
-            let r: [u8; 32] = const_hex::decode_to_array(left)?;
-            let s: [u8; 32] = const_hex::decode_to_array(right)?;
-            Ok(Self { r, s })
+            let bytes: [u8; 64] = const_hex::decode_to_array(hex)?;
+            Ok(Self(bytes))
         } else {
             Err(FromHexError::InvalidStringLength)
         }
+    }
+}
+
+impl Serialize for Signature {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let mut serializer = serializer.serialize_tuple(64)?;
+        for byte in self.as_bytes() {
+            serializer.serialize_element(byte)?;
+        }
+        serializer.end()
+    }
+}
+
+impl<'de> Deserialize<'de> for Signature {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        struct SignatureVisitor;
+        impl<'vi> Visitor<'vi> for SignatureVisitor {
+            type Value = [u8; 64];
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                write!(formatter, "64 bytes")
+            }
+            fn visit_seq<V: SeqAccess<'vi>>(self, mut seq: V) -> Result<[u8; 64], V::Error> {
+                let mut bytes = [0; 64];
+                for (i, b) in bytes.iter_mut().enumerate() {
+                    *b = seq
+                        .next_element()?
+                        .ok_or_else(|| V::Error::invalid_length(i, &self))?;
+                }
+                Ok(bytes)
+            }
+        }
+        let bytes: [u8; 64] = deserializer.deserialize_tuple(64, SignatureVisitor)?;
+        Ok(Self(bytes))
     }
 }
 
@@ -197,28 +257,28 @@ pub fn sign(hash: Hash256, secret_key: &SecretKey) -> Signature {
     let s = r_scalar + s * scalar;
     let s = s.canonical().to_le_bytes();
 
-    Signature { r, s }
+    Signature::with_rs(&r, &s)
 }
 
 pub fn verify(signature: Signature, hash: Hash256, public_key: PublicKey) -> Result<(), Error> {
     let a = Edwards25519Affine::decode(public_key.0)
         .ok_or_else(|| Error::invalid("Invalid public key"))?;
     let mut hasher = Blake2b512::new();
-    hasher.update(signature.r);
+    hasher.update(signature.as_r_bytes());
     hasher.update(a.encode());
     hasher.update(hash);
     let h: [u8; 64] = hasher.finalize();
     let h = Scalar25519::with_512(h);
     let h = h.canonical().bits::<{ Scalar25519::BITS as usize }>();
     let a: Edwards25519Extended = a.into();
-    let s = UInt256::from_le_bytes(signature.s);
+    let s = UInt256::from_le_bytes(*signature.as_s_bytes());
     let s = s
         .bits::<{ UInt256::BITS as usize }>()
         .into_iter()
         .take(s.bit_width() as usize);
     let r = BASE * s - a * h;
     let r: Edwards25519Affine = r.into();
-    if r.encode() == signature.r {
+    if &r.encode() == signature.as_r_bytes() {
         Ok(())
     } else {
         Err(Error::invalid("Invalid signature"))
