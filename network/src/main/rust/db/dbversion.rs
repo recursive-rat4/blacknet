@@ -16,7 +16,7 @@
  */
 
 use crate::db::{Fjall, Snapshot, View};
-use blacknet_serialization::{error::Result, format::from_bytes};
+use blacknet_serialization::{Result, from_bytes};
 use fjall::Error as FjallError;
 use serde::Deserialize;
 

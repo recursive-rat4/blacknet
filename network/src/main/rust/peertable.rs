@@ -26,7 +26,7 @@ use blacknet_crypto::random::{
 use blacknet_io::file::replace;
 use blacknet_kernel::blake2b::Hash256;
 use blacknet_log::{LogManager, Logger, debug, error, info, warn};
-use blacknet_serialization::format::{from_read, to_write};
+use blacknet_serialization::{from_read, to_write};
 use blacknet_time::{Milliseconds, SystemClock};
 use core::{
     borrow::Borrow,

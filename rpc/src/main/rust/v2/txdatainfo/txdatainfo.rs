@@ -18,7 +18,7 @@
 use crate::v2::{error::Result, txdatainfo::*};
 use blacknet_kernel::transaction::{Batch, TxKind};
 use blacknet_network::wallet::AddressCodec;
-use blacknet_serialization::format::from_bytes;
+use blacknet_serialization::from_bytes;
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value, to_value};
 

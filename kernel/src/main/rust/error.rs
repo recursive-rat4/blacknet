@@ -15,9 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use alloc::borrow::Cow;
-use alloc::string::ToString;
-use blacknet_serialization::error::Error as SerializationError;
+use alloc::{borrow::Cow, string::ToString};
+use blacknet_serialization::Error as SerializationError;
 use core::fmt;
 
 #[derive(Debug)]

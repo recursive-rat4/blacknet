@@ -16,7 +16,7 @@
  */
 
 use blacknet_kernel::transaction::{Transaction, TxKind};
-use blacknet_serialization::format::{from_bytes, to_bytes};
+use blacknet_serialization::{from_bytes, to_bytes};
 
 #[test]
 fn hash() {

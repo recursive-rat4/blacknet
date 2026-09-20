@@ -18,7 +18,7 @@
 use crate::v2::{AmountInfo, PublicKeyInfo, SignatureInfo, error::Result};
 use blacknet_kernel::transaction::{CreateMultisig, Dep, Sig};
 use blacknet_network::wallet::AddressCodec;
-use blacknet_serialization::format::from_bytes;
+use blacknet_serialization::from_bytes;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]

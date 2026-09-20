@@ -18,7 +18,7 @@
 use crate::v2::{ByteArrayInfo, error::Result};
 use blacknet_kernel::transaction::Blob;
 use blacknet_network::wallet::{AddressCodec, AddressKind};
-use blacknet_serialization::format::from_bytes;
+use blacknet_serialization::from_bytes;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]

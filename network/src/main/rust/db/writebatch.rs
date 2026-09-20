@@ -16,7 +16,7 @@
  */
 
 use crate::db::{DBVersion, DBVersionKey, View};
-use blacknet_serialization::format::to_bytes;
+use blacknet_serialization::to_bytes;
 use fjall::OwnedWriteBatch;
 use serde::Serialize;
 

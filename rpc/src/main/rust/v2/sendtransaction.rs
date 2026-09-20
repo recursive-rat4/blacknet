@@ -33,7 +33,7 @@ use blacknet_kernel::{
     transaction::*,
 };
 use blacknet_network::{network::Network, wallet::AddressKind};
-use blacknet_serialization::format::to_bytes;
+use blacknet_serialization::to_bytes;
 use core::str::FromStr;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;

@@ -16,7 +16,7 @@
  */
 
 use crate::db::View;
-use blacknet_serialization::format::from_bytes;
+use blacknet_serialization::from_bytes;
 use core::fmt::Debug;
 use fjall::Readable;
 use serde::Deserialize;

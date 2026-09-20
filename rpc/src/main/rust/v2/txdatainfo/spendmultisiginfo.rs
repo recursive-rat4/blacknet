@@ -18,7 +18,7 @@
 use crate::v2::{AmountInfo, error::Result, txdatainfo::SigInfo};
 use blacknet_kernel::transaction::SpendMultisig;
 use blacknet_network::wallet::{AddressCodec, AddressKind};
-use blacknet_serialization::format::from_bytes;
+use blacknet_serialization::from_bytes;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]

@@ -31,7 +31,7 @@ use blacknet_crypto::{
 };
 use blacknet_kernel::{amount::Amount, blake2b::Hash256};
 use blacknet_log::{Logger, debug, error, info};
-use blacknet_serialization::format::to_bytes;
+use blacknet_serialization::to_bytes;
 use blacknet_time::{Milliseconds, Seconds, SystemClock};
 use bytemuck::NoUninit;
 use core::{cmp::min, num::NonZero, ops::ControlFlow};

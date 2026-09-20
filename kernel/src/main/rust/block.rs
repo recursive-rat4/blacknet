@@ -22,7 +22,7 @@ use crate::{
 };
 use alloc::{boxed::Box, vec::Vec};
 use blacknet_crypto::symmetric::Blake2b256;
-use blacknet_serialization::format::to_bytes;
+use blacknet_serialization::to_bytes;
 use blacknet_time::Seconds;
 use serde::{Deserialize, Serialize};
 

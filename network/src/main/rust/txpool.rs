@@ -29,7 +29,7 @@ use blacknet_kernel::{
     transaction::{CoinTx, HashTimeLockContractId, MultiSignatureLockContractId, Transaction},
 };
 use blacknet_log::{Error as LogError, LogManager, Logger, debug, error, warn};
-use blacknet_serialization::format::from_bytes;
+use blacknet_serialization::from_bytes;
 use blacknet_time::{Milliseconds, Seconds};
 use core::{
     cmp::{max, min},

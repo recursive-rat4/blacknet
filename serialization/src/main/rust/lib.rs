@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -22,12 +22,22 @@ extern crate alloc;
 #[cfg(feature = "std")]
 extern crate std;
 
-pub mod decoder;
-pub mod deserializer;
-pub mod encoder;
-pub mod error;
-pub mod format;
-pub mod reader;
-pub mod serializer;
-pub mod sizer;
-pub mod writer;
+mod decoder;
+mod deserializer;
+mod encoder;
+mod error;
+mod format;
+mod reader;
+mod serializer;
+mod sizer;
+mod writer;
+
+pub use decoder::Decoder;
+pub use deserializer::Deserializer;
+pub use encoder::Encoder;
+pub use error::{Error, Result};
+pub use format::{from_bytes, from_read, to_bytes, to_size, to_write};
+pub use reader::Reader;
+pub use serializer::Serializer;
+pub use sizer::Sizer;
+pub use writer::Writer;

@@ -18,7 +18,7 @@
 use blacknet_crypto::bigint::UInt256;
 use blacknet_kernel::blake2b::Hash256;
 use blacknet_network::packet::BlockAnnounce;
-use blacknet_serialization::format::{from_bytes, to_bytes};
+use blacknet_serialization::{from_bytes, to_bytes};
 
 #[test]
 fn serialization() {

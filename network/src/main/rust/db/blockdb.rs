@@ -33,7 +33,7 @@ use blacknet_kernel::{
     },
 };
 use blacknet_log::{LogManager, Logger, debug, error, info, warn};
-use blacknet_serialization::format::from_bytes;
+use blacknet_serialization::from_bytes;
 use blacknet_time::SystemClock;
 use core::error::Error as StdError;
 use serde::{Deserialize, Serialize};

@@ -16,7 +16,7 @@
  */
 
 use blacknet_network::endpoint::Endpoint;
-use blacknet_serialization::format::{from_bytes, to_bytes, to_size};
+use blacknet_serialization::{from_bytes, to_bytes, to_size};
 use core::hash::{Hash, Hasher};
 use std::hash::DefaultHasher;
 

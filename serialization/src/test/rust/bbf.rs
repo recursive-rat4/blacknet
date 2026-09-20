@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2025 Pavel Vasin
+ * Copyright (c) 2020-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_serialization::format::{from_bytes, to_bytes, to_size};
+use blacknet_serialization::{from_bytes, to_bytes, to_size};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, PartialEq, Serialize)]

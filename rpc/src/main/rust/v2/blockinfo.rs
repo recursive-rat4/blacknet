@@ -18,7 +18,7 @@
 use crate::v2::{Hash256Info, PublicKeyInfo, Result, SignatureInfo, TransactionInfo};
 use blacknet_kernel::{blake2b::Hash256, block::Block, transaction::Transaction};
 use blacknet_network::wallet::AddressCodec;
-use blacknet_serialization::format::from_bytes;
+use blacknet_serialization::from_bytes;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, to_value};
 

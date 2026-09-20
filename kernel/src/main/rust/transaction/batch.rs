@@ -21,7 +21,7 @@ use crate::{
     transaction::*,
 };
 use alloc::{boxed::Box, format};
-use blacknet_serialization::format::from_bytes;
+use blacknet_serialization::from_bytes;
 use serde::{Deserialize, Serialize};
 
 pub const MIN_SIZE: usize = 2;

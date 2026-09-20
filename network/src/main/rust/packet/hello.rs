@@ -22,10 +22,9 @@ use crate::{
 };
 use blacknet_kernel::amount::Amount;
 use blacknet_log::{error, info};
-use blacknet_serialization::format::{from_bytes, to_bytes};
+use blacknet_serialization::{from_bytes, to_bytes};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 
 const MAGIC: u8 = 128;
 const VERSION: u8 = 129;

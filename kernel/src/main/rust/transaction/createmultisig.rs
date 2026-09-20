@@ -25,7 +25,7 @@ use crate::{
 };
 use alloc::boxed::Box;
 use blacknet_crypto::symmetric::Blake2b256;
-use blacknet_serialization::format::to_bytes;
+use blacknet_serialization::to_bytes;
 use serde::{Deserialize, Serialize};
 
 pub type MultiSignatureLockContractId = [u8; 32];

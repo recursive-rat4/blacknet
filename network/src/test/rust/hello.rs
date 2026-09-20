@@ -16,7 +16,7 @@
  */
 
 use blacknet_network::packet::Hello;
-use blacknet_serialization::format::{from_bytes, to_bytes};
+use blacknet_serialization::{from_bytes, to_bytes};
 
 #[test]
 fn serialization() {
@@ -39,14 +39,14 @@ fn serialization() {
         132, 128 + 8, 0, 0, 0, 0, 0, 0, 0, 5,
     ];
 
-    let deserialized_empty = from_bytes::<Hello>(&empty_bytes, false).unwrap();
+    let deserialized_empty = from_bytes::<Hello>(empty_bytes, false).unwrap();
     assert_eq!(deserialized_empty.magic(), None);
     assert_eq!(deserialized_empty.version(), None);
     assert_eq!(deserialized_empty.nonce(), None);
     assert_eq!(deserialized_empty.agent(), None);
     assert_eq!(deserialized_empty.fee_filter(), None);
 
-    let deserialized = from_bytes::<Hello>(&hello_bytes, false).unwrap();
+    let deserialized = from_bytes::<Hello>(hello_bytes, false).unwrap();
     assert_eq!(deserialized.magic(), Some(1));
     assert_eq!(deserialized.version(), Some(2));
     assert_eq!(deserialized.nonce(), Some(3));

@@ -26,7 +26,7 @@ use blacknet_kernel::{blake2b::Hash256, transaction::Transaction};
 use blacknet_network::{
     connection::ConnectionId, endpoint::Endpoint, network::Network, txpool::TxPoolCheck,
 };
-use blacknet_serialization::format::from_bytes;
+use blacknet_serialization::from_bytes;
 use core::str::FromStr;
 use std::sync::Arc;
 

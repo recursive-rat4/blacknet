@@ -22,7 +22,7 @@ use blacknet_kernel::{
     transaction::CreateHTLC,
 };
 use blacknet_network::wallet::AddressCodec;
-use blacknet_serialization::format::from_bytes;
+use blacknet_serialization::from_bytes;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]

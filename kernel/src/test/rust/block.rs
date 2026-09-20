@@ -20,7 +20,7 @@ use blacknet_kernel::{
     block::Block,
     ed25519::{PublicKey, Signature},
 };
-use blacknet_serialization::format::{from_bytes, to_bytes};
+use blacknet_serialization::{from_bytes, to_bytes};
 use core::str::FromStr;
 
 #[test]

@@ -17,7 +17,7 @@
 
 use crate::{connection::Connection, packet::*};
 use blacknet_log::info;
-use blacknet_serialization::format::from_bytes;
+use blacknet_serialization::from_bytes;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 

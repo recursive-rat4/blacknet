@@ -25,7 +25,7 @@ use crate::{
     multisig::Multisig,
     transaction::*,
 };
-use blacknet_serialization::format::from_bytes;
+use blacknet_serialization::from_bytes;
 use blacknet_time::Seconds;
 
 pub trait CoinTx: Sized {

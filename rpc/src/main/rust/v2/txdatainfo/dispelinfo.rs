@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2025 Pavel Vasin
+ * Copyright (c) 2020-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -17,7 +17,7 @@
 
 use crate::v2::error::Result;
 use blacknet_kernel::transaction::Dispel;
-use blacknet_serialization::format::from_bytes;
+use blacknet_serialization::from_bytes;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]
