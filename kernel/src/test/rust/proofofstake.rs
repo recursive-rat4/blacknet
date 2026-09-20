@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2026 Pavel Vasin
+ * Copyright (c) 2023-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -18,6 +18,7 @@
 use blacknet_crypto::bigint::UInt256;
 use blacknet_kernel::proofofstake::*;
 use blacknet_time::Seconds;
+use std::collections::VecDeque;
 
 #[test]
 fn next_difficulty_v4() {
@@ -32,4 +33,24 @@ fn next_difficulty_v4() {
         next_difficulty(version, difficulty, prev_block_time, block_time),
         next
     );
+}
+
+#[test]
+fn max_block_size_v4() {
+    let mut block_sizes = VecDeque::<u32>::with_capacity(BLOCK_SIZE_SPAN);
+
+    for _ in 0..BLOCK_SIZE_SPAN {
+        block_sizes.push_back(0);
+    }
+    assert_eq!(max_block_size(&block_sizes), DEFAULT_MAX_BLOCK_SIZE);
+
+    for i in 0..BLOCK_SIZE_SPAN {
+        block_sizes[i] = DEFAULT_MAX_BLOCK_SIZE * 3 / 4;
+    }
+    assert_eq!(max_block_size(&block_sizes), DEFAULT_MAX_BLOCK_SIZE * 3 / 2);
+
+    for i in 0..BLOCK_SIZE_SPAN {
+        block_sizes[i] = DEFAULT_MAX_BLOCK_SIZE;
+    }
+    assert_eq!(max_block_size(&block_sizes), DEFAULT_MAX_BLOCK_SIZE * 2);
 }
