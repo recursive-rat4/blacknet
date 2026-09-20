@@ -168,6 +168,12 @@ impl From<[u8; 32]> for PublicKey {
     }
 }
 
+impl From<PublicKey> for [u8; 32] {
+    fn from(public_key: PublicKey) -> Self {
+        public_key.0
+    }
+}
+
 impl TryFrom<&[u8]> for PublicKey {
     type Error = TryFromSliceError;
 

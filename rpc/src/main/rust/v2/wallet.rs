@@ -29,6 +29,7 @@ use blacknet_crypto::zeroize::ZeroizingString;
 use blacknet_kernel::{
     blake2b::Hash256,
     ed25519::{Signature, to_secret_key},
+    transaction::PaymentId,
 };
 use blacknet_network::{
     db::genesis,
@@ -91,18 +92,23 @@ pub struct DecryptPaymentIdRequest {
     pub message: String,
 }
 
-#[expect(unused_variables)]
 async fn decrypt_payment_id(
     State(network): State<Arc<Network>>,
     Form(request): Form<DecryptPaymentIdRequest>,
 ) -> Response<String> {
+    let Some(secret_key) = to_secret_key(&request.mnemonic) else {
+        return respond_error("Invalid mnemonic");
+    };
     let from = match network.wallet_db().address_codec().decode(&request.from) {
         Ok(from) => from,
         Err(err) => {
             return respond_error(format!("Invalid from: {err}"));
         }
     };
-    todo!();
+    match PaymentId::decrypt(&secret_key, from, &request.message) {
+        Ok(decrypted) => respond_text(decrypted),
+        Err(err) => respond_error(format!("Decryption failed: {err}")),
+    }
 }
 
 #[derive(Deserialize, Serialize)]

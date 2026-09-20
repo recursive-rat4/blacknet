@@ -69,6 +69,10 @@ name = "hashlock"
 path = "src/test/rust/hashlock.rs"
 
 [[test]]
+name = "paymentid"
+path = "src/test/rust/paymentid.rs"
+
+[[test]]
 name = "proofofstake"
 path = "src/test/rust/proofofstake.rs"
 
@@ -79,6 +83,10 @@ path = "src/test/rust/timelock.rs"
 [[test]]
 name = "transaction"
 path = "src/test/rust/transaction.rs"
+
+[[test]]
+name = "x25519"
+path = "src/test/rust/x25519.rs"
 
 [[bench]]
 name = "ed25519"

@@ -18,11 +18,13 @@
 use crate::{
     amount::Amount,
     blake2b::Hash256,
-    ed25519::PublicKey,
-    error::Result,
+    ed25519::{PublicKey, SecretKey},
+    error::{Error, Result},
     transaction::{CoinTx, Transaction, TxData},
+    x25519::x25519,
 };
-use alloc::boxed::Box;
+use alloc::{boxed::Box, string::String, vec};
+use blacknet_crypto::symmetric::{ChaCha20, chacha::IV_SIZE};
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 
@@ -54,6 +56,19 @@ impl PaymentId {
 
     pub const fn payload(&self) -> &[u8] {
         &self.payload
+    }
+
+    pub fn decrypt(secret_key: &SecretKey, public_key: PublicKey, hex: &str) -> Result<String> {
+        let bytes = const_hex::decode(hex).map_err(|_| Error::invalid("Invalid hex"))?;
+        let Some((iv, ct)) = bytes.split_at_checked(IV_SIZE) else {
+            return Err(Error::invalid("Too short hex"));
+        };
+        let shared_key = x25519(secret_key, public_key)?;
+        let mut chacha = ChaCha20::new(shared_key.as_ref(), iv.try_into().unwrap());
+        let mut pt = vec![0u8; ct.len()];
+        chacha.decrypt(&mut pt, ct);
+        let decrypted = String::from_utf8(pt).map_err(|_| Error::invalid("Invalid UTF-8"))?;
+        Ok(decrypted)
     }
 }
 

@@ -172,6 +172,12 @@ enum WalletV2 {
     AddressToPublickey { address: String },
     /// Convert a mnemonic to an address and a public key.
     MnemonicToAddress { mnemonic: String },
+    /// Decrypt a payment id.
+    DecryptPaymentId {
+        mnemonic: String,
+        from: String,
+        message: String,
+    },
     /// Sign a text message.
     SignMessage { mnemonic: String, message: String },
     /// Verify a text message.
@@ -280,6 +286,18 @@ fn cli() -> Result<(), Box<dyn Error>> {
         Command::WalletV2(WalletV2::MnemonicToAddress { mnemonic }) => {
             client.post("/api/v2/mnemonic", &[("mnemonic", &mnemonic)])
         }
+        Command::WalletV2(WalletV2::DecryptPaymentId {
+            mnemonic,
+            from,
+            message,
+        }) => client.post(
+            "/api/v2/decryptpaymentid",
+            &[
+                ("mnemonic", &mnemonic),
+                ("from", &from),
+                ("message", &message),
+            ],
+        ),
         Command::WalletV2(WalletV2::SignMessage { mnemonic, message }) => client.post(
             "/api/v2/signmessage",
             &[("mnemonic", &mnemonic), ("message", &message)],

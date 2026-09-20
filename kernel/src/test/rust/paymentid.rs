@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025-2026 Pavel Vasin
+ * Copyright (c) 2020-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,20 +15,24 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#![no_std]
+use blacknet_kernel::{
+    ed25519::{PublicKey, to_secret_key},
+    transaction::PaymentId,
+};
+use core::str::FromStr;
 
-extern crate alloc;
+#[test]
+fn decrypt() {
+    let mnemonic1 = "疗 昨 示 穿 偏 贷 五 袁 色 烂 撒 殖";
+    let secret_key1 = to_secret_key(mnemonic1).unwrap();
+    let public_key2 =
+        PublicKey::from_str("A65AEF3E4128031285BF0367832C38AD1366A1E8D5E395BCDC7A17C3B28BAB1D")
+            .unwrap();
+    let id = "id";
+    let encrypted = "CDCEF8D208A645DB78358859C10F";
 
-pub mod account;
-pub mod amount;
-pub mod blake2b;
-pub mod block;
-pub mod ed25519;
-pub mod error;
-pub mod hashlock;
-pub mod htlc;
-pub mod multisig;
-pub mod proofofstake;
-pub mod timelock;
-pub mod transaction;
-pub mod x25519;
+    assert_eq!(
+        PaymentId::decrypt(&secret_key1, public_key2, encrypted).unwrap(),
+        id,
+    );
+}
