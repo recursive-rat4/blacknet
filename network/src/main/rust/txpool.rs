@@ -161,7 +161,7 @@ impl TxPool {
     pub fn fill(&self, block: &mut Block) {
         let mut free_block_size = min(
             self.coin_db.state().load().0.max_block_size(),
-            self.config.soft_block_size_limit,
+            self.config.soft_block_size_limit.as_u32(),
         ) - 176;
         for hash in &self.transactions {
             let Some(bytes) = self.map.get(hash) else {
@@ -189,7 +189,7 @@ impl TxPool {
         if self.map.contains_key(&hash) {
             return Err(Error::already_have(hash.to_string()));
         }
-        if self.data_size + bytes.len() > self.config.tx_pool_size {
+        if self.data_size + bytes.len() > self.config.tx_pool_size.as_usize() {
             if remote {
                 return Err(Error::in_future("TxPool is full"));
             } else {

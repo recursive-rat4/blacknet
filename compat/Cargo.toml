@@ -55,3 +55,7 @@ path = "src/test/rust/config.rs"
 [[test]]
 name = "error"
 path = "src/test/rust/error.rs"
+
+[[test]]
+name = "size"
+path = "src/test/rust/size.rs"

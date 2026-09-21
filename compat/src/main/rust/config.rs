@@ -15,13 +15,15 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::Mode;
+use crate::{Mode, size::Size};
 use core::fmt;
 use serde::Deserialize;
-use std::fs;
-use std::io::{Error as IoError, ErrorKind};
-use std::path::Path;
-use std::sync::Arc;
+use std::{
+    fs,
+    io::{Error as IoError, ErrorKind},
+    path::Path,
+    sync::Arc,
+};
 use toml::{de::Error as TomlError, from_str};
 
 #[derive(Deserialize)]
@@ -70,9 +72,9 @@ pub struct Network {
     pub incoming_connections: u16,
     pub outgoing_connections: u16,
     pub log_endpoint: bool,
-    pub db_cache: u64,
-    pub soft_block_size_limit: u32,
-    pub tx_pool_size: usize,
+    pub db_cache: Size,
+    pub soft_block_size_limit: Size,
+    pub tx_pool_size: Size,
     pub min_relay_fee_rate: u64,
     pub proxy: Option<HostPort>,
     pub i2p_sam: HostPort,

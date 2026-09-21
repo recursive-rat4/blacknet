@@ -44,7 +44,7 @@ impl Fjall {
         let path = dirs.data().join("fjall");
         let database = Database::builder(path)
             .max_cached_files(Some(Self::max_open_files(config)))
-            .cache_size(config.db_cache)
+            .cache_size(config.db_cache.as_bytes())
             .journal_compression(CompressionType::None)
             .open()?;
         Ok(Arc::new(Fjall { database }))

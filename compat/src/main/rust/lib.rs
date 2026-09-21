@@ -24,6 +24,7 @@ mod magic;
 mod mode;
 #[cfg(target_family = "windows")]
 mod ntstatus;
+pub mod size;
 mod statvfs;
 mod ulimit;
 mod uname;
@@ -33,10 +34,10 @@ mod xdgdirectories;
 pub use errno::Errno;
 pub use getentropy::*;
 pub use getuid::*;
-pub use mode::*;
+pub use mode::{Mode, mode};
 #[cfg(target_family = "windows")]
 pub use ntstatus::{Error, NtStatus, Win32Error};
 pub use statvfs::*;
 pub use ulimit::*;
 pub use uname::*;
-pub use xdgdirectories::*;
+pub use xdgdirectories::XDGDirectories;
