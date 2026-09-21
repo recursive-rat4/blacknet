@@ -84,6 +84,10 @@ name = "endpoint"
 path = "src/test/rust/endpoint.rs"
 
 [[test]]
+name = "feefilter"
+path = "src/test/rust/feefilter.rs"
+
+[[test]]
 name = "hello"
 path = "src/test/rust/hello.rs"
 

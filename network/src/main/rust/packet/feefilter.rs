@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025-2026 Pavel Vasin
+ * Copyright (c) 2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,20 +15,37 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_kernel::amount::Amount;
+use crate::{
+    connection::Connection,
+    packet::{Packet, PacketKind},
+};
+use blacknet_compat::feerate::FeeRate;
 use serde::{Deserialize, Serialize};
+use std::sync::Arc;
 
 #[derive(Deserialize, Serialize)]
-pub struct AmountInfo(String);
+pub struct FeeFilter {
+    fee_rate: FeeRate,
+}
 
-impl From<Amount> for AmountInfo {
-    fn from(amount: Amount) -> Self {
-        Self(amount.to_string())
+impl FeeFilter {
+    pub const MIN_VERSION: u32 = 16;
+
+    pub const fn new(fee_rate: FeeRate) -> Self {
+        Self { fee_rate }
+    }
+
+    pub const fn fee_rate(&self) -> FeeRate {
+        self.fee_rate
     }
 }
 
-impl From<u64> for AmountInfo {
-    fn from(n: u64) -> Self {
-        Self(n.to_string())
+impl Packet for FeeFilter {
+    fn kind() -> PacketKind {
+        PacketKind::FeeFilter
+    }
+
+    fn handle(self, connection: &Arc<Connection>) {
+        connection.set_fee_filter(self.fee_rate);
     }
 }

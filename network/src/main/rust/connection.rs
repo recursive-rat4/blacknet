@@ -19,12 +19,13 @@ use crate::{
     endpoint::Endpoint,
     node::{NETWORK_TIMEOUT, Node},
     packet::{
-        BlockAnnounce, INVENTORY_SEND_MAX, INVENTORY_SEND_TIMEOUT, Inventory, PACKET_HEADER_SIZE,
-        PACKET_LENGTH_SIZE, Packet, PacketKind, Peers, Ping, PingV1,
+        BlockAnnounce, FeeFilter, INVENTORY_SEND_MAX, INVENTORY_SEND_TIMEOUT, Inventory,
+        PACKET_HEADER_SIZE, PACKET_LENGTH_SIZE, Packet, PacketKind, Peers, Ping, PingV1,
     },
 };
 use arc_swap::{ArcSwap, ArcSwapOption};
 use atomic::Atomic;
+use blacknet_compat::feerate::FeeRate;
 use blacknet_crypto::{
     bigint::UInt256,
     random::{Distribution, FAST_RNG, UniformIntDistribution},
@@ -78,7 +79,7 @@ pub struct Connection {
     id: ConnectionId,
     version: AtomicU32,
     agent: ArcSwap<String>,
-    fee_filter: Atomic<Amount>,
+    fee_filter: Atomic<FeeRate>,
 }
 
 impl Connection {
@@ -119,7 +120,7 @@ impl Connection {
                 id,
                 version: AtomicU32::new(0),
                 agent: ArcSwap::new(Arc::new(String::new())),
-                fee_filter: Atomic::new(Amount::ZERO),
+                fee_filter: Atomic::new(FeeRate::MIN),
             }),
             recv_channel,
         )
@@ -225,9 +226,12 @@ impl Connection {
         }
     }
 
-    pub fn check_fee_filter(&self, _size: u32, fee: Amount) -> bool {
-        //FIXME use size
-        self.fee_filter() <= fee
+    pub fn check_fee_filter(&self, fee: Amount, size: u32) -> bool {
+        if self.version() >= FeeFilter::MIN_VERSION {
+            self.fee_filter() <= FeeRate::floor(fee.value(), size)
+        } else {
+            u64::from(self.fee_filter()) <= u64::from(fee)
+        }
     }
 
     pub fn close(&self) {
@@ -349,11 +353,11 @@ impl Connection {
         self.agent.store(Arc::new(sanitized));
     }
 
-    pub fn fee_filter(&self) -> Amount {
+    pub fn fee_filter(&self) -> FeeRate {
         self.fee_filter.load(Ordering::Acquire)
     }
 
-    pub fn set_fee_filter(&self, fee_filter: Amount) {
+    pub fn set_fee_filter(&self, fee_filter: FeeRate) {
         self.fee_filter.store(fee_filter, Ordering::Release);
     }
 

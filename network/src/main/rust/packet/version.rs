@@ -18,6 +18,7 @@
 use crate::connection::{Connection, State};
 use crate::node::{MIN_PROTOCOL_VERSION, PROTOCOL_VERSION};
 use crate::packet::{BlockAnnounce, Packet, PacketKind};
+use blacknet_compat::feerate::FeeRate;
 use blacknet_kernel::amount::Amount;
 use blacknet_log::{error, info};
 use blacknet_time::{Seconds, SystemClock};
@@ -73,7 +74,7 @@ impl Packet for Version {
         connection.set_time_offset(self.time - SystemClock::secs());
         connection.set_version(self.version);
         connection.set_agent(&self.agent);
-        connection.set_fee_filter(self.fee_filter);
+        connection.set_fee_filter(FeeRate::from(self.fee_filter.value()));
         connection.set_last_block(self.block_announce.clone());
 
         if connection.version() < MIN_PROTOCOL_VERSION {
@@ -162,7 +163,7 @@ fn send_version(connection: &Connection, nonce: u64) {
         SystemClock::secs(),
         nonce,
         user_agent.to_owned(),
-        min_fee_rate,
+        Amount::new(min_fee_rate.into()),
         BlockAnnounce::new(state.block_hash(), state.cumulative_difficulty()),
     ));
 }

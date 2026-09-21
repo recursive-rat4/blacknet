@@ -20,7 +20,7 @@ use crate::{
     node::{MIN_PROTOCOL_VERSION, PROTOCOL_VERSION},
     packet::{BlockAnnounce, Packet, PacketKind},
 };
-use blacknet_kernel::amount::Amount;
+use blacknet_compat::feerate::FeeRate;
 use blacknet_log::{error, info};
 use blacknet_serialization::{from_bytes, to_bytes};
 use serde::{Deserialize, Serialize};
@@ -96,16 +96,16 @@ impl Hello {
         self.data.insert(AGENT, bytes);
     }
 
-    pub fn fee_filter(&self) -> Option<Amount> {
+    pub fn fee_filter(&self) -> Option<FeeRate> {
         if let Some(bytes) = self.data.get(&FEE_FILTER) {
-            from_bytes::<Amount>(bytes, false).ok()
+            from_bytes::<FeeRate>(bytes, false).ok()
         } else {
             None
         }
     }
 
-    pub fn set_fee_filter(&mut self, fee_filter: Amount) {
-        let bytes = to_bytes::<Amount>(&fee_filter).expect("serialization");
+    pub fn set_fee_filter(&mut self, fee_filter: FeeRate) {
+        let bytes = to_bytes::<FeeRate>(&fee_filter).expect("serialization");
         self.data.insert(FEE_FILTER, bytes);
     }
 }
@@ -222,7 +222,7 @@ fn send_hello(connection: &Connection) {
         node.agent_string()
     });
     hello.set_fee_filter(if state == State::ProberWaiting {
-        Amount::MAX
+        FeeRate::MAX
     } else {
         let tx_pool = node.tx_pool().read().unwrap();
         tx_pool.min_fee_rate()

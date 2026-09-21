@@ -228,6 +228,7 @@ dependencies = [
 name = "blacknet-compat"
 version = "0.3.0"
 dependencies = [
+ "bytemuck",
  "libc",
  "platform-info",
  "serde",

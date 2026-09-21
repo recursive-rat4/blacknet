@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025-2026 Pavel Vasin
+ * Copyright (c) 2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,20 +15,27 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_kernel::amount::Amount;
-use serde::{Deserialize, Serialize};
+use blacknet_compat::feerate::{Error, FeeRate};
+use core::assert_matches;
 
-#[derive(Deserialize, Serialize)]
-pub struct AmountInfo(String);
+#[test]
+fn parse() {
+    for (string, n) in [("800", 800), ("800sat/B", 800)] {
+        assert_matches!(FeeRate::parse(string), Ok(x) if x == FeeRate::from(n));
+    }
+    assert_matches!(FeeRate::parse("-1"), Err(Error::Int(_)));
+    assert_matches!(FeeRate::parse("1 tangerine"), Err(Error::Unit));
+}
 
-impl From<Amount> for AmountInfo {
-    fn from(amount: Amount) -> Self {
-        Self(amount.to_string())
+#[test]
+fn to_string_sat() {
+    for (n, string) in [(999, "999 sat/B")] {
+        assert_eq!(FeeRate::from(n).to_string_sat(), string);
     }
 }
 
-impl From<u64> for AmountInfo {
-    fn from(n: u64) -> Self {
-        Self(n.to_string())
-    }
+#[test]
+fn floor() {
+    assert_eq!(FeeRate::floor(100000, 184), FeeRate::from(543));
+    assert_eq!(FeeRate::floor(100000, 200), FeeRate::from(500));
 }

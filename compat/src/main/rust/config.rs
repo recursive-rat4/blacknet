@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::{Mode, size::Size};
+use crate::{Mode, feerate::FeeRate, size::Size};
 use core::fmt;
 use serde::Deserialize;
 use std::{
@@ -75,7 +75,7 @@ pub struct Network {
     pub db_cache: Size,
     pub soft_block_size_limit: Size,
     pub tx_pool_size: Size,
-    pub min_relay_fee_rate: u64,
+    pub min_relay_fee_rate: FeeRate,
     pub proxy: Option<HostPort>,
     pub i2p_sam: HostPort,
     pub tor_proxy: HostPort,

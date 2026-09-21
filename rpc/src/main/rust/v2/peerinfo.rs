@@ -61,7 +61,7 @@ impl PeerInfo {
             agent: connection.agent().load().to_string(),
             outgoing: connection.state().is_outgoing(),
             banScore: connection.dos_score(),
-            feeFilter: connection.fee_filter().into(),
+            feeFilter: u64::from(connection.fee_filter()).into(),
             connectedAt: Into::<i64>::into(connection.connected_at()) / 1000,
             lastChain: ChainInfo::new(
                 connection.last_block().load().as_ref(),

@@ -49,6 +49,7 @@ pub enum PacketKind {
     Peers = 15,
     Ping = 16,
     Hello = 17,
+    FeeFilter = 18,
 }
 
 impl PacketKind {
@@ -162,6 +163,14 @@ impl PacketKind {
                     return false;
                 }
             },
+            PacketKind::FeeFilter => match from_bytes::<FeeFilter>(bytes, false) {
+                Ok(packet) => packet.handle(connection),
+                Err(err) => {
+                    info!(connection.logger(), "{err} Disconnecting");
+                    connection.close();
+                    return false;
+                }
+            },
         }
         true
     }
@@ -185,6 +194,7 @@ impl TryFrom<u32> for PacketKind {
             15 => PacketKind::Peers,
             16 => PacketKind::Ping,
             17 => PacketKind::Hello,
+            18 => PacketKind::FeeFilter,
             _ => return Err(format!("Unknown packet kind 0x{value:08X}")),
         })
     }

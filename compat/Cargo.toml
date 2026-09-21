@@ -31,6 +31,7 @@ keywords.workspace = true
 categories.workspace = true
 
 [dependencies]
+bytemuck.workspace = true
 serde = { workspace = true, features = ["rc"] }
 toml.workspace = true
 
@@ -55,6 +56,10 @@ path = "src/test/rust/config.rs"
 [[test]]
 name = "error"
 path = "src/test/rust/error.rs"
+
+[[test]]
+name = "feerate"
+path = "src/test/rust/feerate.rs"
 
 [[test]]
 name = "size"

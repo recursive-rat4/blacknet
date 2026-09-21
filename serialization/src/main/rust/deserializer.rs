@@ -193,6 +193,11 @@ impl<'de, D: Decoder> de::Deserializer<'de> for &mut Deserializer<D> {
     fn deserialize_ignored_any<V: Visitor<'de>>(self, _visitor: V) -> Result<V::Value> {
         Err(Error::message("Unsupported"))
     }
+
+    #[inline(always)]
+    fn is_human_readable(&self) -> bool {
+        false
+    }
 }
 
 struct Sequence<'a, D: Decoder> {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2025-2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -18,6 +18,7 @@
 mod blockannounce;
 mod blocks;
 mod consensusfault;
+mod feefilter;
 mod getblocks;
 mod gettransactions;
 mod hello;
@@ -30,17 +31,18 @@ mod pong;
 mod transactions;
 mod version;
 
-pub use blockannounce::*;
-pub use blocks::*;
-pub use consensusfault::*;
-pub use getblocks::*;
-pub use gettransactions::*;
-pub use hello::*;
-pub use inventory::*;
-pub use packet::*;
-pub use peers::*;
-pub use ping::*;
-pub use pingv1::*;
-pub use pong::*;
-pub use transactions::*;
-pub use version::*;
+pub use blockannounce::BlockAnnounce;
+pub use blocks::{Blocks, MAX_BLOCKS, MAX_HASHES};
+pub use consensusfault::ConsensusFault;
+pub use feefilter::FeeFilter;
+pub use getblocks::GetBlocks;
+pub use gettransactions::GetTransactions;
+pub use hello::Hello;
+pub use inventory::{INVENTORY_SEND_MAX, INVENTORY_SEND_TIMEOUT, Inventory, MAX_INVENTORY};
+pub use packet::{PACKET_HEADER_SIZE, PACKET_LENGTH_SIZE, Packet, PacketKind};
+pub use peers::Peers;
+pub use ping::Ping;
+pub use pingv1::PingV1;
+pub use pong::Pong;
+pub use transactions::{MAX_TRANSACTIONS, Transactions, UnfilteredInvList};
+pub use version::Version;

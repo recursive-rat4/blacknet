@@ -18,6 +18,7 @@
 pub mod config;
 #[cfg(target_family = "unix")]
 mod errno;
+pub mod feerate;
 mod getentropy;
 mod getuid;
 mod magic;

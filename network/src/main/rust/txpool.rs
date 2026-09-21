@@ -16,7 +16,7 @@
  */
 
 use crate::db::{BlockDB, BlockNotifier, CoinDB, Snapshot, State};
-use blacknet_compat::config::Network as Config;
+use blacknet_compat::{config::Network as Config, feerate::FeeRate};
 use blacknet_kernel::{
     account::Account,
     amount::Amount,
@@ -114,8 +114,8 @@ impl TxPool {
         self.data_size
     }
 
-    pub fn min_fee_rate(&self) -> Amount {
-        Amount::new(self.config.min_relay_fee_rate)
+    pub fn min_fee_rate(&self) -> FeeRate {
+        self.config.min_relay_fee_rate
     }
 
     pub fn hashes(&self) -> Keys<'_, Hash256, Box<[u8]>> {
@@ -206,7 +206,7 @@ impl TxPool {
     fn process_impl(&mut self, hash: Hash256, bytes: &[u8]) -> Result<()> {
         let tx = from_bytes::<Transaction>(bytes, false)?;
         let fee = tx.fee();
-        self.check_fee(bytes.len() as u32, fee)?;
+        self.check_fee(fee, bytes.len() as u32)?;
         let coin_db = self.coin_db.state().load();
         let mut update = Update::new(self, &coin_db);
         let result = update.process_transaction_impl(&tx, hash);
@@ -226,7 +226,7 @@ impl TxPool {
         let tx = from_bytes::<Transaction>(bytes, false)?;
         let fee = tx.fee();
         let bytes_len = bytes.len() as u32;
-        self.check_fee(bytes_len, fee)?;
+        self.check_fee(fee, bytes_len)?;
         let coin_db = self.coin_db.state().load();
         let mut update = Update::new(self, &coin_db);
         let result = update.process_transaction_impl(&tx, hash);
@@ -239,11 +239,11 @@ impl TxPool {
         Ok(fee)
     }
 
-    fn check_fee(&self, size: u32, amount: Amount) -> Result<()> {
-        if amount >= Amount::new(self.config.min_relay_fee_rate) * (1 + size / 1000).into() {
+    fn check_fee(&self, amount: Amount, size: u32) -> Result<()> {
+        if FeeRate::floor(amount.value(), size) >= self.config.min_relay_fee_rate {
             Ok(())
         } else {
-            Err(Error::invalid(format!("Too low fee {}", amount)))
+            Err(Error::in_future(format!("Too low fee {}", amount)))
         }
     }
 

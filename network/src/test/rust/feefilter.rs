@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025-2026 Pavel Vasin
+ * Copyright (c) 2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,20 +15,19 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_kernel::amount::Amount;
-use serde::{Deserialize, Serialize};
+use blacknet_compat::feerate::FeeRate;
+use blacknet_network::packet::FeeFilter;
+use blacknet_serialization::{from_bytes, to_bytes};
 
-#[derive(Deserialize, Serialize)]
-pub struct AmountInfo(String);
+#[test]
+fn serialization() {
+    let fee_rate = FeeRate::from(0x0000000004030201);
+    let fee_filter = FeeFilter::new(fee_rate);
+    let bytes: &[u8] = &[0x00, 0x00, 0x00, 0x00, 0x04, 0x03, 0x02, 0x01];
 
-impl From<Amount> for AmountInfo {
-    fn from(amount: Amount) -> Self {
-        Self(amount.to_string())
-    }
-}
+    let deserialized = from_bytes::<FeeFilter>(bytes, false).unwrap();
+    assert_eq!(deserialized.fee_rate(), fee_rate);
 
-impl From<u64> for AmountInfo {
-    fn from(n: u64) -> Self {
-        Self(n.to_string())
-    }
+    let serialized = to_bytes::<FeeFilter>(&fee_filter).unwrap();
+    assert_eq!(serialized, bytes);
 }

@@ -202,6 +202,11 @@ impl<E: Encoder> ser::Serializer for &mut Serializer<E> {
         self.encoder.encode_var_int(variant_index)?;
         Ok(self)
     }
+
+    #[inline(always)]
+    fn is_human_readable(&self) -> bool {
+        false
+    }
 }
 
 impl<E: Encoder> ser::SerializeSeq for &mut Serializer<E> {

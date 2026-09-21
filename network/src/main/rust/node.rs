@@ -63,7 +63,7 @@ use tokio::{
 };
 
 pub const NETWORK_TIMEOUT: Milliseconds = Milliseconds::with_seconds(90);
-pub const PROTOCOL_VERSION: u32 = 15;
+pub const PROTOCOL_VERSION: u32 = 16;
 pub const MIN_PROTOCOL_VERSION: u32 = 12;
 
 pub struct Node {
@@ -370,7 +370,7 @@ impl Node {
             let connections = self.connections.read().unwrap();
             for connection in connections.iter() {
                 if connection.is_established()
-                    && connection.check_fee_filter(bytes.len() as u32, fee)
+                    && connection.check_fee_filter(fee, bytes.len() as u32)
                 {
                     connection.inventory(hash)
                 }
@@ -391,7 +391,7 @@ impl Node {
             if Some(connection.id()) != source && connection.is_established() {
                 for i in unfiltered.iter() {
                     let &(hash, size, fee) = i;
-                    if connection.check_fee_filter(size, fee) {
+                    if connection.check_fee_filter(fee, size) {
                         to_send.push(hash);
                     }
                 }
