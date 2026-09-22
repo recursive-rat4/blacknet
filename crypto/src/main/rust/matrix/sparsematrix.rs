@@ -76,6 +76,16 @@ impl<T: Zero> SparseMatrix<T> {
     pub const fn columns(&self) -> u32 {
         self.columns
     }
+
+    /// The row index.
+    pub fn r_index(&self) -> &[u32] {
+        &self.r_index
+    }
+
+    /// The column index.
+    pub fn c_index(&self) -> &[u32] {
+        &self.c_index
+    }
 }
 
 impl<T: Zero> Default for SparseMatrix<T> {
