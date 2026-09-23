@@ -67,7 +67,7 @@ pub const PROTOCOL_VERSION: u32 = 16;
 pub const MIN_PROTOCOL_VERSION: u32 = 12;
 
 pub struct Node {
-    logger: Logger,
+    logger: Arc<Logger>,
     runtime: Handle,
     config: Arc<Config>,
     state_dir: PathBuf,
@@ -99,7 +99,7 @@ impl Node {
     ) -> Result<(Arc<Self>, CoinNotifier), Box<dyn StdError>> {
         let (agent_name, agent_version) = (mode.agent_name(), env!("CARGO_PKG_VERSION"));
 
-        let logger = log_manager.logger("Node")?;
+        let logger = Arc::new(log_manager.logger("Node")?);
 
         let fjall = Fjall::open(dirs, config)?;
         let db_version = DBVersion::new(&fjall)?;
@@ -431,8 +431,12 @@ impl Node {
         local_endpoint: Endpoint,
     ) {
         let id = self.next_connection_id();
+        let logger = self
+            .logger
+            .fork_with_name(Some(format!("Peer-{id}")))
+            .unwrap_or_else(|_| self.logger.clone());
         let (connection, recv_channel) = Connection::new(
-            self.logger.clone(),
+            logger,
             self.clone(),
             remote_endpoint,
             local_endpoint,

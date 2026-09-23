@@ -49,7 +49,7 @@ use tokio_util::sync::CancellationToken;
 pub type ConnectionId = NonZero<u64>;
 
 pub struct Connection {
-    logger: Logger,
+    logger: Arc<Logger>,
     node: Arc<Node>,
 
     remote_endpoint: Endpoint,
@@ -84,7 +84,7 @@ pub struct Connection {
 
 impl Connection {
     pub fn new(
-        logger: Logger,
+        logger: Arc<Logger>,
         node: Arc<Node>,
         remote_endpoint: Endpoint,
         local_endpoint: Endpoint,
@@ -413,7 +413,7 @@ impl Connection {
         self.total_bytes_written.load(Ordering::Relaxed)
     }
 
-    pub const fn logger(&self) -> &Logger {
+    pub const fn logger(&self) -> &Arc<Logger> {
         &self.logger
     }
 
