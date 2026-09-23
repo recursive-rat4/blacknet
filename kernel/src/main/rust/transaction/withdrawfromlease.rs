@@ -71,7 +71,7 @@ impl TxData for WithdrawFromLease {
             return Err(Error::invalid("Invalid withdraw amount"));
         }
         let mut to_account = coin_tx.get_account(self.to)?;
-        to_account.withdraw_from_lease(self.withdraw, self.amount, self.to, self.height)?;
+        to_account.withdraw_from_lease(self.withdraw, self.amount, tx.from(), self.height)?;
         coin_tx.set_account(self.to, to_account);
         let mut account = coin_tx.get_account(tx.from())?;
         account.debit(coin_tx.height(), self.withdraw);
