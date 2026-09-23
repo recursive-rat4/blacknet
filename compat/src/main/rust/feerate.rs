@@ -90,7 +90,7 @@ impl<'de> Deserialize<'de> for FeeRate {
                 Ok(FeeRate(v))
             }
             fn visit_str<E: DeError>(self, v: &str) -> Result<Self::Value, E> {
-                FeeRate::parse(v).map_err(|err| E::custom(err.to_string()))
+                FeeRate::parse(v).map_err(E::custom)
             }
             fn visit_i64<E: DeError>(self, v: i64) -> Result<Self::Value, E> {
                 if v >= 0 {

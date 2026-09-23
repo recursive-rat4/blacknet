@@ -15,8 +15,10 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::v2::{Hash256Info, PublicKeyInfo, Result, SignatureInfo, TransactionInfo};
-use blacknet_kernel::{blake2b::Hash256, block::Block, transaction::Transaction};
+use crate::v2::{PublicKeyInfo, Result, TransactionInfo};
+use blacknet_kernel::{
+    blake2b::Hash256, block::Block, ed25519::Signature, transaction::Transaction,
+};
 use blacknet_network::wallet::AddressCodec;
 use blacknet_serialization::from_bytes;
 use serde::{Deserialize, Serialize};
@@ -24,14 +26,14 @@ use serde_json::{Value, to_value};
 
 #[derive(Deserialize, Serialize)]
 pub struct BlockInfo {
-    hash: Hash256Info,
+    hash: Hash256,
     size: u32,
     version: u32,
-    previous: Hash256Info,
+    previous: Hash256,
     time: i64,
     generator: PublicKeyInfo,
-    contentHash: Hash256Info,
-    signature: SignatureInfo,
+    contentHash: Hash256,
+    signature: Signature,
     transactions: Value,
 }
 
@@ -56,14 +58,14 @@ impl BlockInfo {
             Value::Number(block.raw_transactions().len().into())
         };
         Ok(Self {
-            hash: hash.into(),
+            hash,
             size,
             version: block.version(),
-            previous: block.previous().into(),
+            previous: block.previous(),
             time: block.time().into(),
             generator: PublicKeyInfo::new(block.generator(), address_codec)?,
-            contentHash: block.content_hash().into(),
-            signature: block.signature().into(),
+            contentHash: block.content_hash(),
+            signature: block.signature(),
             transactions,
         })
     }

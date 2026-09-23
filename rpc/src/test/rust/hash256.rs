@@ -16,21 +16,19 @@
  */
 
 use blacknet_kernel::blake2b::Hash256;
-use blacknet_rpc::v2::Hash256Info;
 use core::{array, assert_matches};
 use serde_json::{from_str, to_string};
 
 #[test]
-fn hash256info() {
+fn hash256() {
     let string = "\"000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F\"";
     let bad1 = "\"000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1Z\"";
     let bad2 = "\"00010203\"";
     let bytes: [u8; 32] = array::from_fn(|i| i as u8);
     let hash256 = Hash256::from(bytes);
-    let info = Hash256Info::from(hash256);
 
-    assert_matches!(from_str::<Hash256Info>(string), Ok(x) if x == info);
-    assert_matches!(from_str::<Hash256Info>(bad1), Err(_));
-    assert_matches!(from_str::<Hash256Info>(bad2), Err(_));
-    assert_matches!(to_string(&info), Ok(x) if x == string);
+    assert_matches!(from_str::<Hash256>(string), Ok(x) if x == hash256);
+    assert_matches!(from_str::<Hash256>(bad1), Err(_));
+    assert_matches!(from_str::<Hash256>(bad2), Err(_));
+    assert_matches!(to_string(&hash256), Ok(x) if x == string);
 }

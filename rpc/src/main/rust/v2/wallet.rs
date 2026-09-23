@@ -16,7 +16,7 @@
  */
 
 use crate::v2::{
-    AddressInfo, Hash256Info, LeaseInfo, MnemonicInfo, NewMnemonicInfo, TransactionDataInfo,
+    AddressInfo, LeaseInfo, MnemonicInfo, NewMnemonicInfo, TransactionDataInfo,
     WalletTransactionInfo, response::*,
 };
 use axum::{
@@ -305,7 +305,7 @@ async fn list_transactions_with_all(
 #[derive(Deserialize, Serialize)]
 pub struct ListSinceBlockInfo {
     pub transactions: Vec<WalletTransactionInfo>,
-    pub lastBlockHash: Hash256Info,
+    pub lastBlockHash: Hash256,
 }
 
 async fn list_since_block(

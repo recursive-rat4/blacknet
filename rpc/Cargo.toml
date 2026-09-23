@@ -40,7 +40,7 @@ blacknet-network.workspace = true
 blacknet-serialization.workspace = true
 blacknet-time.workspace = true
 axum.workspace = true
-const-hex = { workspace = true, features = ["serde"] }
+const-hex.workspace = true
 futures-util.workspace = true
 serde.workspace = true
 serde_json.workspace = true
@@ -55,5 +55,5 @@ doctest = false
 path = "src/main/rust/lib.rs"
 
 [[test]]
-name = "hash256info"
-path = "src/test/rust/hash256info.rs"
+name = "hash256"
+path = "src/test/rust/hash256.rs"

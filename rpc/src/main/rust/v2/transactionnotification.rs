@@ -15,19 +15,20 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::v2::{AmountInfo, Hash256Info, PublicKeyInfo, Result, SignatureInfo, TxDataInfo};
+use crate::v2::{AmountInfo, PublicKeyInfo, Result, TxDataInfo};
+use blacknet_kernel::{blake2b::Hash256, ed25519::Signature};
 use blacknet_network::{txpool::Notification, wallet::AddressCodec};
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]
 pub struct TransactionNotification {
-    hash: Hash256Info,
+    hash: Hash256,
     time: i64,
     size: u32,
-    signature: SignatureInfo,
+    signature: Signature,
     from: PublicKeyInfo,
     seq: u32,
-    referenceChain: Hash256Info,
+    referenceChain: Hash256,
     fee: AmountInfo,
     r#type: u8,
     data: Vec<TxDataInfo>,
@@ -36,13 +37,13 @@ pub struct TransactionNotification {
 impl TransactionNotification {
     pub fn new(notification: &Notification, address_codec: &AddressCodec) -> Result<Self> {
         Ok(Self {
-            hash: notification.1.into(),
+            hash: notification.1,
             time: notification.2.into(),
             size: notification.3,
-            signature: notification.0.signature().into(),
+            signature: notification.0.signature(),
             from: PublicKeyInfo::new(notification.0.from(), address_codec)?,
             seq: notification.0.seq(),
-            referenceChain: notification.0.anchor().into(),
+            referenceChain: notification.0.anchor(),
             fee: notification.0.fee().into(),
             r#type: notification.0.kind() as u8,
             data: TxDataInfo::new(

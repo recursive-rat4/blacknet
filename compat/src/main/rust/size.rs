@@ -120,7 +120,7 @@ impl<'de> Deserialize<'de> for Size {
                 Ok(Size(v))
             }
             fn visit_str<E: DeError>(self, v: &str) -> Result<Self::Value, E> {
-                Size::parse(v).map_err(|err| E::custom(err.to_string()))
+                Size::parse(v).map_err(E::custom)
             }
             fn visit_i64<E: DeError>(self, v: i64) -> Result<Self::Value, E> {
                 if v >= 0 {

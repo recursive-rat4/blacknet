@@ -15,17 +15,18 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::v2::{Hash256Info, PublicKeyInfo, Result};
+use crate::v2::{PublicKeyInfo, Result};
+use blacknet_kernel::blake2b::Hash256;
 use blacknet_network::{db::BlockNotification as Notification, wallet::AddressCodec};
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]
 pub struct BlockNotification {
-    hash: Hash256Info,
+    hash: Hash256,
     height: u32,
     size: u32,
     version: u32,
-    previous: Hash256Info,
+    previous: Hash256,
     time: i64,
     generator: PublicKeyInfo,
     transactions: u32,
@@ -34,11 +35,11 @@ pub struct BlockNotification {
 impl BlockNotification {
     pub fn new(notification: &Notification, address_codec: &AddressCodec) -> Result<Self> {
         Ok(Self {
-            hash: notification.1.into(),
+            hash: notification.1,
             height: notification.2,
             size: notification.3,
             version: notification.0.version(),
-            previous: notification.0.previous().into(),
+            previous: notification.0.previous(),
             time: notification.0.time().into(),
             generator: PublicKeyInfo::new(notification.0.generator(), address_codec)?,
             transactions: notification.0.raw_transactions().len() as u32,

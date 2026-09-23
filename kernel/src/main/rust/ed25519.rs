@@ -16,6 +16,7 @@
  */
 
 use crate::{blake2b::Hash256, error::Error};
+use alloc::string::ToString;
 use blacknet_crypto::{
     algebra::{IntegerModRing, One},
     bigint::UInt256,
@@ -83,6 +84,12 @@ impl Default for Signature {
 
 impl fmt::Debug for Signature {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self)
+    }
+}
+
+impl fmt::Display for Signature {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", const_hex::encode_upper(self.0))
     }
 }
@@ -116,11 +123,15 @@ impl FromStr for Signature {
 
 impl Serialize for Signature {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut serializer = serializer.serialize_tuple(64)?;
-        for byte in self.as_bytes() {
-            serializer.serialize_element(byte)?;
+        if !serializer.is_human_readable() {
+            let mut serializer = serializer.serialize_tuple(64)?;
+            for byte in self.as_bytes() {
+                serializer.serialize_element(byte)?;
+            }
+            serializer.end()
+        } else {
+            self.to_string().serialize(serializer)
         }
-        serializer.end()
     }
 }
 
@@ -142,8 +153,11 @@ impl<'de> Deserialize<'de> for Signature {
                 Ok(bytes)
             }
         }
-        let bytes: [u8; 64] = deserializer.deserialize_tuple(64, SignatureVisitor)?;
-        Ok(Self(bytes))
+        Ok(if !deserializer.is_human_readable() {
+            Self(deserializer.deserialize_tuple(64, SignatureVisitor)?)
+        } else {
+            Self::from_str(<&str>::deserialize(deserializer)?).map_err(D::Error::custom)?
+        })
     }
 }
 

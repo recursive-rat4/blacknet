@@ -15,8 +15,11 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::v2::{AmountInfo, PublicKeyInfo, SignatureInfo, error::Result};
-use blacknet_kernel::transaction::{CreateMultisig, Dep, Sig};
+use crate::v2::{AmountInfo, PublicKeyInfo, error::Result};
+use blacknet_kernel::{
+    ed25519::Signature,
+    transaction::{CreateMultisig, Dep, Sig},
+};
 use blacknet_network::wallet::AddressCodec;
 use blacknet_serialization::from_bytes;
 use serde::{Deserialize, Serialize};
@@ -39,14 +42,14 @@ impl DepInfo {
 #[derive(Deserialize, Serialize)]
 pub struct SigInfo {
     index: u8,
-    signature: SignatureInfo,
+    signature: Signature,
 }
 
 impl From<Sig> for SigInfo {
     fn from(sig: Sig) -> Self {
         Self {
             index: sig.index(),
-            signature: sig.signature().into(),
+            signature: sig.signature(),
         }
     }
 }

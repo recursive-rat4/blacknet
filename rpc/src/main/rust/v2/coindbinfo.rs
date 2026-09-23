@@ -15,35 +15,36 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::v2::{AmountInfo, BigIntegerInfo, Hash256Info};
+use crate::v2::{AmountInfo, BigIntegerInfo};
+use blacknet_kernel::blake2b::Hash256;
 use blacknet_network::db::State;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]
 pub struct CoinDBInfo {
     height: u32,
-    blockHash: Hash256Info,
+    blockHash: Hash256,
     blockTime: i64,
-    rollingCheckpoint: Hash256Info,
+    rollingCheckpoint: Hash256,
     difficulty: BigIntegerInfo,
     cumulativeDifficulty: BigIntegerInfo,
     supply: AmountInfo,
     maxBlockSize: u32,
-    nxtrng: Hash256Info,
+    nxtrng: Hash256,
 }
 
 impl CoinDBInfo {
     pub fn new(state: &State) -> Self {
         Self {
             height: state.height(),
-            blockHash: state.block_hash().into(),
+            blockHash: state.block_hash(),
             blockTime: state.block_time().into(),
-            rollingCheckpoint: state.rolling_checkpoint().into(),
+            rollingCheckpoint: state.rolling_checkpoint(),
             difficulty: state.difficulty().into(),
             cumulativeDifficulty: state.cumulative_difficulty().into(),
             supply: state.supply().into(),
             maxBlockSize: state.max_block_size(),
-            nxtrng: state.nxtrng().into(),
+            nxtrng: state.nxtrng(),
         }
     }
 }

@@ -15,14 +15,15 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::v2::{AmountInfo, Hash256Info};
+use crate::v2::AmountInfo;
+use blacknet_kernel::blake2b::Hash256;
 use blacknet_network::db::BlockIndex;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]
 pub struct BlockIndexInfo {
-    previous: Hash256Info,
-    next: Hash256Info,
+    previous: Hash256,
+    next: Hash256,
     nextSize: u32,
     height: u32,
     generated: AmountInfo,
@@ -31,8 +32,8 @@ pub struct BlockIndexInfo {
 impl BlockIndexInfo {
     pub fn new(index: BlockIndex) -> Self {
         Self {
-            previous: index.previous().into(),
-            next: index.next().into(),
+            previous: index.previous(),
+            next: index.next(),
             nextSize: index.next_size(),
             height: index.height(),
             generated: index.generated().into(),

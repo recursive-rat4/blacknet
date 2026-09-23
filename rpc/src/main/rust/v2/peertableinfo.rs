@@ -15,9 +15,12 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::v2::{EndpointInfo, Hash256Info};
-use blacknet_network::endpoint::Endpoint;
-use blacknet_network::peertable::{Entry, PeerTable};
+use crate::v2::EndpointInfo;
+use blacknet_kernel::blake2b::Hash256;
+use blacknet_network::{
+    endpoint::Endpoint,
+    peertable::{Entry, PeerTable},
+};
 use blacknet_time::Milliseconds;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, to_value};
@@ -56,7 +59,7 @@ struct EntryInfo {
     last_try: Milliseconds,
     last_connected: Milliseconds,
     user_agent: String,
-    subnetworks: Vec<Hash256Info>,
+    subnetworks: Vec<Hash256>,
     added: Milliseconds,
 }
 
@@ -69,12 +72,7 @@ impl EntryInfo {
             last_try: entry.last_try(),
             last_connected: entry.last_connected(),
             user_agent: entry.user_agent().to_owned(),
-            subnetworks: entry
-                .subnetworks()
-                .iter()
-                .copied()
-                .map(Hash256Info::from)
-                .collect(),
+            subnetworks: entry.subnetworks().iter().copied().collect(),
             added: entry.added(),
         }
     }

@@ -15,19 +15,19 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::v2::{AmountInfo, Hash256Info, PublicKeyInfo, Result, SignatureInfo, TxDataInfo};
-use blacknet_kernel::{blake2b::Hash256, transaction::Transaction};
+use crate::v2::{AmountInfo, PublicKeyInfo, Result, TxDataInfo};
+use blacknet_kernel::{blake2b::Hash256, ed25519::Signature, transaction::Transaction};
 use blacknet_network::wallet::AddressCodec;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]
 pub struct TransactionInfo {
-    hash: Hash256Info,
+    hash: Hash256,
     size: u32,
-    signature: SignatureInfo,
+    signature: Signature,
     from: PublicKeyInfo,
     seq: u32,
-    referenceChain: Hash256Info,
+    referenceChain: Hash256,
     fee: AmountInfo,
     data: Vec<TxDataInfo>,
 }
@@ -40,12 +40,12 @@ impl TransactionInfo {
         address_codec: &AddressCodec,
     ) -> Result<Self> {
         Ok(Self {
-            hash: hash.into(),
+            hash,
             size: size as u32,
-            signature: tx.signature().into(),
+            signature: tx.signature(),
             from: PublicKeyInfo::new(tx.from(), address_codec)?,
             seq: tx.seq(),
-            referenceChain: tx.anchor().into(),
+            referenceChain: tx.anchor(),
             fee: tx.fee().into(),
             data: TxDataInfo::new(tx.kind(), tx.data_bytes(), address_codec)?,
         })

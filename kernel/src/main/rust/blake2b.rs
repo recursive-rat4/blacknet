@@ -15,11 +15,12 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use alloc::string::ToString;
 use const_hex::FromHexError;
 use core::{borrow::Borrow, fmt, str::FromStr};
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize, Serializer, de::Error as _};
 
-#[derive(Clone, Copy, Default, Deserialize, Eq, Hash, PartialEq, Serialize)]
+#[derive(Clone, Copy, Default, Eq, Hash, PartialEq)]
 #[repr(transparent)]
 pub struct Hash256([u8; 32]);
 
@@ -72,5 +73,25 @@ impl FromStr for Hash256 {
 
     fn from_str(hex: &str) -> Result<Self, Self::Err> {
         Ok(Self(const_hex::decode_to_array(hex.as_bytes())?))
+    }
+}
+
+impl Serialize for Hash256 {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        if !serializer.is_human_readable() {
+            self.0.serialize(serializer)
+        } else {
+            self.to_string().serialize(serializer)
+        }
+    }
+}
+
+impl<'de> Deserialize<'de> for Hash256 {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        Ok(if !deserializer.is_human_readable() {
+            Self(<[u8; 32]>::deserialize(deserializer)?)
+        } else {
+            Self::from_str(<&str>::deserialize(deserializer)?).map_err(D::Error::custom)?
+        })
     }
 }
