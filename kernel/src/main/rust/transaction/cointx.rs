@@ -27,6 +27,7 @@ use crate::{
 };
 use blacknet_serialization::from_bytes;
 use blacknet_time::Seconds;
+use serde::Deserialize;
 
 pub trait CoinTx: Sized {
     fn add_supply(&mut self, amount: Amount);
@@ -49,55 +50,28 @@ pub trait CoinTx: Sized {
         tx.verify_signature(hash)?;
         self.check_anchor(tx.anchor())?;
         match tx.kind() {
-            TxKind::Transfer => {
-                let data = from_bytes::<Transfer>(tx.data_bytes(), false)?;
-                data.process(tx, hash, self)
-            }
-            TxKind::Burn => {
-                let data = from_bytes::<Burn>(tx.data_bytes(), false)?;
-                data.process(tx, hash, self)
-            }
-            TxKind::Lease => {
-                let data = from_bytes::<Lease>(tx.data_bytes(), false)?;
-                data.process(tx, hash, self)
-            }
-            TxKind::CancelLease => {
-                let data = from_bytes::<CancelLease>(tx.data_bytes(), false)?;
-                data.process(tx, hash, self)
-            }
-            TxKind::Blob => {
-                let data = from_bytes::<Blob>(tx.data_bytes(), false)?;
-                data.process(tx, hash, self)
-            }
-            TxKind::CreateHTLC => {
-                let data = from_bytes::<CreateHTLC>(tx.data_bytes(), false)?;
-                data.process(tx, hash, self)
-            }
-            TxKind::RefundHTLC => {
-                let data = from_bytes::<RefundHTLC>(tx.data_bytes(), false)?;
-                data.process(tx, hash, self)
-            }
-            TxKind::CreateMultisig => {
-                let data = from_bytes::<CreateMultisig>(tx.data_bytes(), false)?;
-                data.process(tx, hash, self)
-            }
-            TxKind::SpendMultisig => {
-                let data = from_bytes::<SpendMultisig>(tx.data_bytes(), false)?;
-                data.process(tx, hash, self)
-            }
-            TxKind::WithdrawFromLease => {
-                let data = from_bytes::<WithdrawFromLease>(tx.data_bytes(), false)?;
-                data.process(tx, hash, self)
-            }
-            TxKind::ClaimHTLC => {
-                let data = from_bytes::<ClaimHTLC>(tx.data_bytes(), false)?;
-                data.process(tx, hash, self)
-            }
-            TxKind::Batch => {
-                let data = from_bytes::<Batch>(tx.data_bytes(), false)?;
-                data.process(tx, hash, self)
-            }
+            TxKind::Transfer => self.process_tx_data::<Transfer>(tx, hash),
+            TxKind::Burn => self.process_tx_data::<Burn>(tx, hash),
+            TxKind::Lease => self.process_tx_data::<Lease>(tx, hash),
+            TxKind::CancelLease => self.process_tx_data::<CancelLease>(tx, hash),
+            TxKind::Blob => self.process_tx_data::<Blob>(tx, hash),
+            TxKind::CreateHTLC => self.process_tx_data::<CreateHTLC>(tx, hash),
+            TxKind::RefundHTLC => self.process_tx_data::<RefundHTLC>(tx, hash),
+            TxKind::CreateMultisig => self.process_tx_data::<CreateMultisig>(tx, hash),
+            TxKind::SpendMultisig => self.process_tx_data::<SpendMultisig>(tx, hash),
+            TxKind::WithdrawFromLease => self.process_tx_data::<WithdrawFromLease>(tx, hash),
+            TxKind::ClaimHTLC => self.process_tx_data::<ClaimHTLC>(tx, hash),
+            TxKind::Batch => self.process_tx_data::<Batch>(tx, hash),
             TxKind::Generated => Err(Error::invalid("Generated as individual tx")),
         }
+    }
+
+    fn process_tx_data<T: TxData + for<'de> Deserialize<'de>>(
+        &mut self,
+        tx: &Transaction,
+        hash: Hash256,
+    ) -> Result<()> {
+        let data = from_bytes::<T>(tx.data_bytes(), false)?;
+        data.process(tx, hash, self)
     }
 }

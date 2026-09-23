@@ -59,120 +59,35 @@ impl PacketKind {
 
     pub fn handle(&self, bytes: &[u8], connection: &Arc<Connection>) -> bool {
         match self {
-            PacketKind::Version => match from_bytes::<Version>(bytes, false) {
-                Ok(packet) => packet.handle(connection),
-                Err(err) => {
-                    info!(connection.logger(), "{err} Disconnecting");
-                    connection.close();
-                    return false;
-                }
-            },
-            PacketKind::PingV1 => match from_bytes::<PingV1>(bytes, false) {
-                Ok(packet) => packet.handle(connection),
-                Err(err) => {
-                    info!(connection.logger(), "{err} Disconnecting");
-                    connection.close();
-                    return false;
-                }
-            },
-            PacketKind::Pong => match from_bytes::<Pong>(bytes, false) {
-                Ok(packet) => packet.handle(connection),
-                Err(err) => {
-                    info!(connection.logger(), "{err} Disconnecting");
-                    connection.close();
-                    return false;
-                }
-            },
-            PacketKind::GetBlocks => match from_bytes::<GetBlocks>(bytes, false) {
-                Ok(packet) => packet.handle(connection),
-                Err(err) => {
-                    info!(connection.logger(), "{err} Disconnecting");
-                    connection.close();
-                    return false;
-                }
-            },
-            PacketKind::Blocks => match from_bytes::<Blocks>(bytes, false) {
-                Ok(packet) => packet.handle(connection),
-                Err(err) => {
-                    info!(connection.logger(), "{err} Disconnecting");
-                    connection.close();
-                    return false;
-                }
-            },
-            PacketKind::BlockAnnounce => match from_bytes::<BlockAnnounce>(bytes, false) {
-                Ok(packet) => packet.handle(connection),
-                Err(err) => {
-                    info!(connection.logger(), "{err} Disconnecting");
-                    connection.close();
-                    return false;
-                }
-            },
-            PacketKind::ConsensusFault => match from_bytes::<ConsensusFault>(bytes, false) {
-                Ok(packet) => packet.handle(connection),
-                Err(err) => {
-                    info!(connection.logger(), "{err} Disconnecting");
-                    connection.close();
-                    return false;
-                }
-            },
-            PacketKind::Inventory => match from_bytes::<Inventory>(bytes, false) {
-                Ok(packet) => packet.handle(connection),
-                Err(err) => {
-                    info!(connection.logger(), "{err} Disconnecting");
-                    connection.close();
-                    return false;
-                }
-            },
-            PacketKind::GetTransactions => match from_bytes::<GetTransactions>(bytes, false) {
-                Ok(packet) => packet.handle(connection),
-                Err(err) => {
-                    info!(connection.logger(), "{err} Disconnecting");
-                    connection.close();
-                    return false;
-                }
-            },
-            PacketKind::Transactions => match from_bytes::<Transactions>(bytes, false) {
-                Ok(packet) => packet.handle(connection),
-                Err(err) => {
-                    info!(connection.logger(), "{err} Disconnecting");
-                    connection.close();
-                    return false;
-                }
-            },
-            PacketKind::Peers => match from_bytes::<Peers>(bytes, false) {
-                Ok(packet) => packet.handle(connection),
-                Err(err) => {
-                    info!(connection.logger(), "{err} Disconnecting");
-                    connection.close();
-                    return false;
-                }
-            },
-            PacketKind::Ping => match from_bytes::<Ping>(bytes, false) {
-                Ok(packet) => packet.handle(connection),
-                Err(err) => {
-                    info!(connection.logger(), "{err} Disconnecting");
-                    connection.close();
-                    return false;
-                }
-            },
-            PacketKind::Hello => match from_bytes::<Hello>(bytes, false) {
-                Ok(packet) => packet.handle(connection),
-                Err(err) => {
-                    info!(connection.logger(), "{err} Disconnecting");
-                    connection.close();
-                    return false;
-                }
-            },
-            PacketKind::FeeFilter => match from_bytes::<FeeFilter>(bytes, false) {
-                Ok(packet) => packet.handle(connection),
-                Err(err) => {
-                    info!(connection.logger(), "{err} Disconnecting");
-                    connection.close();
-                    return false;
-                }
-            },
+            PacketKind::Version => self.h::<Version>(bytes, connection),
+            PacketKind::PingV1 => self.h::<PingV1>(bytes, connection),
+            PacketKind::Pong => self.h::<Pong>(bytes, connection),
+            PacketKind::GetBlocks => self.h::<GetBlocks>(bytes, connection),
+            PacketKind::Blocks => self.h::<Blocks>(bytes, connection),
+            PacketKind::BlockAnnounce => self.h::<BlockAnnounce>(bytes, connection),
+            PacketKind::ConsensusFault => self.h::<ConsensusFault>(bytes, connection),
+            PacketKind::Inventory => self.h::<Inventory>(bytes, connection),
+            PacketKind::GetTransactions => self.h::<GetTransactions>(bytes, connection),
+            PacketKind::Transactions => self.h::<Transactions>(bytes, connection),
+            PacketKind::Peers => self.h::<Peers>(bytes, connection),
+            PacketKind::Ping => self.h::<Ping>(bytes, connection),
+            PacketKind::Hello => self.h::<Hello>(bytes, connection),
+            PacketKind::FeeFilter => self.h::<FeeFilter>(bytes, connection),
         }
-        true
+    }
+
+    fn h<T: Packet>(&self, bytes: &[u8], connection: &Arc<Connection>) -> bool {
+        match from_bytes::<T>(bytes, false) {
+            Ok(packet) => {
+                packet.handle(connection);
+                true
+            }
+            Err(err) => {
+                info!(connection.logger(), "{err} Disconnecting");
+                connection.close();
+                false
+            }
+        }
     }
 }
 

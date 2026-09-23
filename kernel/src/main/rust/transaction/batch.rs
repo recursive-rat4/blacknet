@@ -64,6 +64,18 @@ impl Batch {
     pub const fn multi_data(&self) -> &[Batchee] {
         &self.multi_data
     }
+
+    fn process_inner<T: TxData + for<'de> Deserialize<'de>>(
+        &self,
+        data_bytes: &[u8],
+        tx: &Transaction,
+        hash: Hash256,
+        idx: usize,
+        coin_tx: &mut impl CoinTx,
+    ) -> Result<()> {
+        let data = from_bytes::<T>(data_bytes, false)?;
+        data.process_impl(tx, hash, (idx + 1) as u32, coin_tx)
+    }
 }
 
 impl TxData for Batch {
@@ -82,58 +94,38 @@ impl TxData for Batch {
             return Err(Error::invalid(format!("Invalid Batch size {len}")));
         }
 
-        for index in 0..len {
-            let kind = self.multi_data[index].kind();
-            let data_bytes = self.multi_data[index].data_bytes();
+        for idx in 0..len {
+            let kind = self.multi_data[idx].kind();
+            let data_bytes = self.multi_data[idx].data_bytes();
             match kind {
                 TxKind::Transfer => {
-                    let data = from_bytes::<Transfer>(data_bytes, false)?;
-                    data.process_impl(tx, hash, (index + 1) as u32, coin_tx)?;
+                    self.process_inner::<Transfer>(data_bytes, tx, hash, idx, coin_tx)?
                 }
-                TxKind::Burn => {
-                    let data = from_bytes::<Burn>(data_bytes, false)?;
-                    data.process_impl(tx, hash, (index + 1) as u32, coin_tx)?;
-                }
-                TxKind::Lease => {
-                    let data = from_bytes::<Lease>(data_bytes, false)?;
-                    data.process_impl(tx, hash, (index + 1) as u32, coin_tx)?;
-                }
+                TxKind::Burn => self.process_inner::<Burn>(data_bytes, tx, hash, idx, coin_tx)?,
+                TxKind::Lease => self.process_inner::<Lease>(data_bytes, tx, hash, idx, coin_tx)?,
                 TxKind::CancelLease => {
-                    let data = from_bytes::<CancelLease>(data_bytes, false)?;
-                    data.process_impl(tx, hash, (index + 1) as u32, coin_tx)?;
+                    self.process_inner::<CancelLease>(data_bytes, tx, hash, idx, coin_tx)?
                 }
-                TxKind::Blob => {
-                    let data = from_bytes::<Blob>(data_bytes, false)?;
-                    data.process_impl(tx, hash, (index + 1) as u32, coin_tx)?;
-                }
+                TxKind::Blob => self.process_inner::<Blob>(data_bytes, tx, hash, idx, coin_tx)?,
                 TxKind::CreateHTLC => {
-                    let data = from_bytes::<CreateHTLC>(data_bytes, false)?;
-                    data.process_impl(tx, hash, (index + 1) as u32, coin_tx)?;
+                    self.process_inner::<CreateHTLC>(data_bytes, tx, hash, idx, coin_tx)?
                 }
                 TxKind::RefundHTLC => {
-                    let data = from_bytes::<RefundHTLC>(data_bytes, false)?;
-                    data.process_impl(tx, hash, (index + 1) as u32, coin_tx)?;
+                    self.process_inner::<RefundHTLC>(data_bytes, tx, hash, idx, coin_tx)?
                 }
                 TxKind::CreateMultisig => {
-                    let data = from_bytes::<CreateMultisig>(data_bytes, false)?;
-                    data.process_impl(tx, hash, (index + 1) as u32, coin_tx)?;
+                    self.process_inner::<CreateMultisig>(data_bytes, tx, hash, idx, coin_tx)?
                 }
                 TxKind::SpendMultisig => {
-                    let data = from_bytes::<SpendMultisig>(data_bytes, false)?;
-                    data.process_impl(tx, hash, (index + 1) as u32, coin_tx)?;
+                    self.process_inner::<SpendMultisig>(data_bytes, tx, hash, idx, coin_tx)?
                 }
                 TxKind::WithdrawFromLease => {
-                    let data = from_bytes::<WithdrawFromLease>(data_bytes, false)?;
-                    data.process_impl(tx, hash, (index + 1) as u32, coin_tx)?;
+                    self.process_inner::<WithdrawFromLease>(data_bytes, tx, hash, idx, coin_tx)?
                 }
                 TxKind::ClaimHTLC => {
-                    let data = from_bytes::<ClaimHTLC>(data_bytes, false)?;
-                    data.process_impl(tx, hash, (index + 1) as u32, coin_tx)?;
+                    self.process_inner::<ClaimHTLC>(data_bytes, tx, hash, idx, coin_tx)?
                 }
-                TxKind::Batch => {
-                    let data = from_bytes::<Batch>(data_bytes, false)?;
-                    data.process_impl(tx, hash, (index + 1) as u32, coin_tx)?;
-                }
+                TxKind::Batch => self.process_inner::<Batch>(data_bytes, tx, hash, idx, coin_tx)?,
                 TxKind::Generated => {
                     return Err(Error::invalid("Generated as individual tx"));
                 }
