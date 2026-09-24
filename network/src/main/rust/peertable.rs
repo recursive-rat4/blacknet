@@ -107,6 +107,10 @@ impl PeerTable {
         peers.len()
     }
 
+    pub const fn max_len(&self) -> usize {
+        MAX_SIZE
+    }
+
     pub fn endpoints<R, F: Fn(Endpoint) -> R>(&self, f: F) -> Vec<R> {
         let peers = self.peers.read().unwrap();
         peers.keys().copied().map(f).collect()

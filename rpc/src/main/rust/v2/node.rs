@@ -27,6 +27,7 @@ use blacknet_network::{
     connection::ConnectionId, endpoint::Endpoint, network::Network, txpool::TxPoolCheck,
 };
 use blacknet_serialization::from_bytes;
+use blacknet_time::SystemClock;
 use core::str::FromStr;
 use std::sync::Arc;
 
@@ -97,25 +98,24 @@ async fn add_peer(
     Path(address): Path<String>,
     State(network): State<Arc<Network>>,
 ) -> Response<String> {
-    add_peer_handler(&address, network.mode().default_p2p_port(), false, &network)
+    add_peer_handler(&address, network.mode().default_p2p_port(), false, &network).await
 }
 
 async fn add_peer_with_port(
     Path((address, port)): Path<(String, u16)>,
     State(network): State<Arc<Network>>,
 ) -> Response<String> {
-    add_peer_handler(&address, port, false, &network)
+    add_peer_handler(&address, port, false, &network).await
 }
 
 async fn add_peer_with_all(
     Path((address, port, force)): Path<(String, u16, bool)>,
     State(network): State<Arc<Network>>,
 ) -> Response<String> {
-    add_peer_handler(&address, port, force, &network)
+    add_peer_handler(&address, port, force, &network).await
 }
 
-#[expect(unused_variables)]
-fn add_peer_handler(
+async fn add_peer_handler(
     address: &str,
     port: u16,
     _force: bool,
@@ -124,8 +124,14 @@ fn add_peer_handler(
     let Some(endpoint) = Endpoint::parse(address, port) else {
         return respond_error("Invalid endpoint");
     };
-
-    todo!();
+    let node = network.node();
+    let Some(guard) = node.peer_table().try_contact(endpoint) else {
+        return respond_error("Already in contact");
+    };
+    let time = SystemClock::millis();
+    node.runtime()
+        .spawn(node.clone().add_peer(guard, time, false));
+    respond_text("true")
 }
 
 async fn disconnect_peer_by_address(

@@ -20,14 +20,15 @@ use crate::{
     connection::{Connection, ConnectionId, State},
     db::{BlockDB, CoinDB, CoinNotifier, DBVersion, Fjall},
     endpoint::Endpoint,
-    packet::{BlockAnnounce, Packet, PacketKind, UnfilteredInvList},
-    peertable::PeerTable,
-    router::{Notifier, Router},
+    packet::{BlockAnnounce, Hello, Packet, PacketKind, UnfilteredInvList, Version},
+    peertable::{ContactGuard, PeerTable},
+    router::{Error as RouterError, Notifier, Router},
     txfetcher::TxFetcher,
     txpool::TxPool,
 };
 use blacknet_compat::{
     config::Network as Config,
+    feerate::FeeRate,
     {Mode, XDGDirectories},
 };
 use blacknet_crypto::{
@@ -36,21 +37,24 @@ use blacknet_crypto::{
 };
 use blacknet_io::{Write, file::replace};
 use blacknet_kernel::{
+    amount::Amount,
     blake2b::Hash256,
-    error::Error,
+    error::Error as KernelError,
     proofofstake::{
         BLOCK_RESERVED_SIZE, DEFAULT_MAX_BLOCK_SIZE, guess_initial_synchronization, time_slot,
     },
 };
-use blacknet_log::{LogManager, Logger, error, info};
-use blacknet_serialization::to_write;
+use blacknet_log::{LogManager, Logger, debug, error, info, warn};
+use blacknet_serialization::{from_read, to_write};
 use blacknet_time::{Milliseconds, Seconds, SystemClock};
-use core::{error::Error as StdError, ops::Deref};
+use core::{error::Error, ops::Deref};
 use serde::{Deserialize, Serialize};
 use std::{
-    path::PathBuf,
+    fs::File,
+    io::{ErrorKind, Read},
+    path::{Path, PathBuf},
     sync::{
-        Arc, RwLock,
+        Arc, Mutex, RwLock,
         atomic::{AtomicU64, Ordering},
     },
 };
@@ -87,6 +91,7 @@ pub struct Node {
     agent_version: String,
     nonce: u64,
     mode: Arc<Mode>,
+    queued_peers: Mutex<Vec<Endpoint>>,
 }
 
 impl Node {
@@ -96,10 +101,19 @@ impl Node {
         log_manager: &LogManager,
         runtime: &Runtime,
         config: &Arc<Config>,
-    ) -> Result<(Arc<Self>, CoinNotifier), Box<dyn StdError>> {
+    ) -> Result<(Arc<Self>, CoinNotifier), Box<dyn Error>> {
         let (agent_name, agent_version) = (mode.agent_name(), env!("CARGO_PKG_VERSION"));
-
         let logger = Arc::new(log_manager.logger("Node")?);
+        let queued_peers = match Self::load(dirs.state()) {
+            Ok(queued_peers) => {
+                debug!(logger, "Queuing {} p2p connections", queued_peers.len());
+                queued_peers
+            }
+            Err(err) => {
+                warn!(logger, "{err}");
+                Vec::new()
+            }
+        };
 
         let fjall = Fjall::open(dirs, config)?;
         let db_version = DBVersion::new(&fjall)?;
@@ -149,12 +163,14 @@ impl Node {
             agent_version: agent_version.to_owned(),
             nonce: Self::generate_nonce(),
             mode,
+            queued_peers: Mutex::new(queued_peers),
         });
 
         for _ in 0..config.outgoing_connections {
             runtime.spawn(node.clone().connector());
         }
         runtime.spawn(node.clone().acceptor(router_notifier));
+        runtime.spawn(node.clone().prober());
         runtime.spawn(node.clone().rotator());
 
         Ok((node, coin_notifier))
@@ -266,6 +282,10 @@ impl Node {
         &self.config
     }
 
+    pub const fn runtime(&self) -> &Handle {
+        &self.runtime
+    }
+
     pub const fn fjall(&self) -> &Arc<Fjall> {
         &self.fjall
     }
@@ -360,7 +380,7 @@ impl Node {
         }
     }
 
-    pub fn broadcast_tx(&self, hash: Hash256, bytes: &[u8]) -> Result<(), Error> {
+    pub fn broadcast_tx(&self, hash: Hash256, bytes: &[u8]) -> Result<(), KernelError> {
         let now = SystemClock::millis();
         let result = {
             let mut tx_pool = self.tx_pool.write().unwrap();
@@ -443,16 +463,6 @@ impl Node {
             State::IncomingWaiting,
             id,
         );
-        self.add_incoming_connection(connection, buf_reader, buf_writer, recv_channel)
-    }
-
-    fn add_incoming_connection(
-        &self,
-        connection: Arc<Connection>,
-        buf_reader: BufReader<OwnedReadHalf>,
-        buf_writer: BufWriter<OwnedWriteHalf>,
-        recv_channel: UnboundedReceiver<(PacketKind, Vec<u8>)>,
-    ) {
         let mut connections = self.connections.write().unwrap();
         if !self.have_slot(&connections) {
             info!(
@@ -533,8 +543,204 @@ impl Node {
         }
     }
 
+    async fn connect_to(
+        self: &Arc<Self>,
+        remote_endpoint: Endpoint,
+        v2: bool,
+        prober: bool,
+    ) -> Result<
+        (
+            Arc<Connection>,
+            BufReader<OwnedReadHalf>,
+            BufWriter<OwnedWriteHalf>,
+            UnboundedReceiver<(PacketKind, Vec<u8>)>,
+        ),
+        RouterError,
+    > {
+        let (buf_reader, buf_writer, local_endpoint) = self.router.connect(remote_endpoint).await?;
+        let state = if prober {
+            State::ProberWaiting
+        } else {
+            State::OutgoingWaiting
+        };
+        let id = self.next_connection_id();
+        let logger = self
+            .logger
+            .fork_with_name(Some(format!("Peer-{id}")))
+            .unwrap_or_else(|_| self.logger.clone());
+        let (connection, recv_channel) = Connection::new(
+            logger,
+            self.clone(),
+            remote_endpoint,
+            local_endpoint,
+            state,
+            id,
+        );
+        let mut connections = self.connections.write().unwrap();
+        connections.push(connection.clone());
+        if v2 {
+            self.send_hello(&connection);
+        } else {
+            self.send_version(
+                &connection,
+                if connection.state() == State::OutgoingWaiting
+                    && !connection.remote_endpoint().is_permissionless()
+                {
+                    self.nonce
+                } else {
+                    0
+                },
+                prober,
+            );
+        }
+        Ok((connection, buf_reader, buf_writer, recv_channel))
+    }
+
+    fn send_version(&self, connection: &Connection, nonce: u64, prober: bool) {
+        connection.send_packet(&if prober {
+            Version::new(
+                self.mode.network_magic(),
+                PROTOCOL_VERSION,
+                SystemClock::secs(),
+                nonce,
+                self.prober_agent_string.clone(),
+                Amount::MAX,
+                BlockAnnounce::default(),
+            )
+        } else {
+            let (ref state, _) = **self.coin_db.state().load();
+            Version::new(
+                self.mode.network_magic(),
+                PROTOCOL_VERSION,
+                SystemClock::secs(),
+                nonce,
+                self.agent_string.clone(),
+                Amount::new(self.tx_pool.read().unwrap().min_fee_rate().into()),
+                BlockAnnounce::new(state.block_hash(), state.cumulative_difficulty()),
+            )
+        })
+    }
+
+    fn send_hello(&self, connection: &Connection) {
+        let state = connection.state();
+        let mut hello = Hello::new();
+        hello.set_magic(self.mode.network_magic());
+        hello.set_version(PROTOCOL_VERSION);
+        if state == State::OutgoingWaiting && !connection.remote_endpoint().is_permissionless() {
+            hello.set_nonce(self.nonce);
+        }
+        hello.set_agent(if state == State::ProberWaiting {
+            &self.prober_agent_string
+        } else {
+            &self.agent_string
+        });
+        hello.set_fee_filter(if state == State::ProberWaiting {
+            FeeRate::MAX
+        } else {
+            self.tx_pool.read().unwrap().min_fee_rate()
+        });
+
+        connection.send_packet(&hello);
+        if state != State::ProberWaiting {
+            let (ref state, _) = **self.coin_db.state().load();
+            connection.send_packet(&BlockAnnounce::new(
+                state.block_hash(),
+                state.cumulative_difficulty(),
+            ));
+        }
+    }
+
+    pub async fn add_peer(
+        self: Arc<Self>,
+        endpoint: ContactGuard,
+        time: Milliseconds,
+        prober: bool,
+    ) {
+        let mut connection = self.connect_to(*endpoint, true, prober).await;
+        let mut t = None;
+        if let Ok((conn, buf_reader, buf_writer, recv_channel)) = connection {
+            t = Some(conn.clone());
+            conn.clone().run(buf_reader, buf_writer, recv_channel).await;
+            // try v1 if accepted without reply
+            if conn.total_bytes_read() == 0 {
+                connection = self.connect_to(*endpoint, false, prober).await;
+                if let Ok((conn, buf_reader, buf_writer, recv_channel)) = connection {
+                    t = Some(conn.clone());
+                    conn.run(buf_reader, buf_writer, recv_channel).await;
+                }
+            }
+        }
+
+        if self.is_online() {
+            let waiting = t.map(|conn| conn.state() == State::OutgoingWaiting);
+            match waiting {
+                Some(true) | None => {
+                    self.peer_table.failed(*endpoint, time);
+                }
+                Some(false) => {}
+            }
+        }
+    }
+
     async fn connector(self: Arc<Self>) {
-        todo!();
+        loop {
+            let Some(endpoint) = self.queued_peers.lock().unwrap().pop() else {
+                break;
+            };
+            let Some(endpoint) = self.peer_table.try_contact(endpoint) else {
+                continue;
+            };
+            let time = SystemClock::millis();
+            self.clone().add_peer(endpoint, time, false).await;
+        }
+
+        loop {
+            let Some(endpoint) = self.peer_table.candidate(|_, _| true) else {
+                let outgoing = self.outgoing();
+                info!(
+                    self.logger,
+                    "PeerTable has no candidates, {outgoing}/{} connections",
+                    self.config.outgoing_connections
+                );
+                sleep(Milliseconds::with_minutes(15).try_into().unwrap()).await;
+                continue;
+            };
+
+            let time = SystemClock::millis();
+            self.clone().add_peer(endpoint, time, false).await;
+
+            let x = Milliseconds::with_seconds(4) - (SystemClock::millis() - time);
+            if x > Milliseconds::ZERO {
+                // 請在繼續之前等待或延遲
+                sleep(x.try_into().unwrap()).await;
+            }
+        }
+    }
+
+    async fn prober(self: Arc<Self>) {
+        loop {
+            sleep(Milliseconds::with_minutes(4).try_into().unwrap()).await;
+
+            // Await peer endpoint announce
+            if self.peer_table.len() < self.peer_table.max_len() / 2 {
+                continue;
+            }
+
+            // Await while connectors are working
+            if self.outgoing() < self.config.outgoing_connections as usize {
+                continue;
+            }
+
+            let time = SystemClock::millis();
+            let Some(endpoint) = self
+                .peer_table
+                .candidate(|_, entry| time > entry.last_try() + Milliseconds::with_hours(4))
+            else {
+                continue;
+            };
+
+            self.clone().add_peer(endpoint, time, true).await;
+        }
     }
 
     async fn rotator(self: Arc<Self>) {
@@ -571,6 +777,28 @@ impl Node {
         }) {
             error!(self.logger, "Can't write {DATA_FILENAME}: {err}");
         }
+    }
+
+    fn load(state_dir: &Path) -> Result<Vec<Endpoint>, Box<dyn Error>> {
+        let mut file = match File::open(state_dir.join(DATA_FILENAME)) {
+            Ok(file) => std::io::BufReader::new(file),
+            Err(err) => {
+                if err.kind() == ErrorKind::NotFound {
+                    // first run or unlinked file
+                    return Ok(Vec::new());
+                } else {
+                    return Err(Box::new(err));
+                }
+            }
+        };
+        let mut version = [0u8; 4];
+        file.read_exact(&mut version)?;
+        let version = u32::from_be_bytes(version);
+        if version != DATA_VERSION {
+            return Err(format!("Unknown {DATA_FILENAME} version {version}").into());
+        }
+        let deserialized: Vec<Endpoint> = from_read(&mut file)?;
+        Ok(deserialized)
     }
 }
 
