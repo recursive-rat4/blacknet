@@ -22,7 +22,7 @@ use crate::{
     rollinghashset::RollingHashSet,
 };
 use arc_swap::ArcSwapOption;
-use blacknet_compat::{XDGDirectories, statvfs};
+use blacknet_compat::{OsString, XDGDirectories, statvfs};
 use blacknet_kernel::{
     blake2b::Hash256,
     block::{BLOCK_VERSION, Block},
@@ -69,6 +69,7 @@ pub struct BlockDB {
     pub(crate) indexes: View<Hash256, BlockIndex>,
     fjall: Arc<Fjall>,
     data_dir: PathBuf,
+    data_dir_os: OsString,
 }
 
 impl BlockDB {
@@ -106,6 +107,7 @@ impl BlockDB {
             indexes: View::new(&fjall, "indexes")?,
             fjall,
             data_dir: dirs.data().to_owned(),
+            data_dir_os: OsString::from(dirs.data()),
         }))
     }
 
@@ -316,7 +318,7 @@ impl BlockDB {
     }
 
     pub fn warnings(&self, warnings: &mut Vec<String>) {
-        match statvfs(&self.data_dir) {
+        match statvfs(&self.data_dir_os) {
             Ok(available) => {
                 if available <= MIN_DISK_SPACE {
                     warnings.push("Disk space is low!".to_owned())

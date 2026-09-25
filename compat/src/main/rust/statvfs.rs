@@ -15,22 +15,17 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::OsString;
 use core::mem::MaybeUninit;
-use std::path::Path;
 
 #[cfg(target_family = "unix")]
 use crate::errno::Errno;
-#[cfg(target_family = "unix")]
-use core::ffi::c_char;
-#[cfg(target_family = "unix")]
-use std::os::unix::ffi::OsStrExt;
 
 #[cfg(target_family = "unix")]
-pub fn statvfs(path: &Path) -> Result<u64, Errno> {
-    let path = path.as_os_str().as_bytes().as_ptr() as *const c_char;
+pub fn statvfs(path: &OsString) -> Result<u64, Errno> {
     let mut statvfs = MaybeUninit::<libc::statvfs>::uninit();
     loop {
-        let rc = unsafe { libc::statvfs(path, statvfs.as_mut_ptr()) };
+        let rc = unsafe { libc::statvfs(path.as_ptr(), statvfs.as_mut_ptr()) };
         if rc == 0 {
             let statvfs = unsafe { statvfs.assume_init() };
             let available = statvfs.f_bsize.saturating_mul(statvfs.f_bavail);
@@ -48,13 +43,10 @@ pub fn statvfs(path: &Path) -> Result<u64, Errno> {
 #[cfg(target_family = "windows")]
 use crate::{Error, Win32Error};
 #[cfg(target_family = "windows")]
-use std::os::windows::ffi::OsStrExt;
-#[cfg(target_family = "windows")]
 use windows_sys::Win32::Storage::FileSystem::GetDiskFreeSpaceExW;
 
 #[cfg(target_family = "windows")]
-pub fn statvfs(path: &Path) -> Result<u64, Error> {
-    let path: Vec<u16> = path.as_os_str().encode_wide().collect();
+pub fn statvfs(path: &OsString) -> Result<u64, Error> {
     let mut available = MaybeUninit::<u64>::uninit();
     let rc = unsafe {
         GetDiskFreeSpaceExW(
