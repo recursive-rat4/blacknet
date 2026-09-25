@@ -159,6 +159,8 @@ enum Debug {
     Blockdb,
     /// Check coin database (slow).
     Coindb,
+    /// Dump peer table (large).
+    Peertable,
     /// Check transaction pool (slow).
     Txpool,
 }
@@ -272,6 +274,7 @@ fn cli() -> Result<(), Box<dyn Error>> {
         Command::Debug(Debug::Tokio) => client.get(&["api", "debug", "tokio", "metrics"]),
         Command::Debug(Debug::Blockdb) => client.get(&["api", "v2", "blockdb", "check"]),
         Command::Debug(Debug::Coindb) => client.get(&["api", "v2", "ledger", "check"]),
+        Command::Debug(Debug::Peertable) => client.get(&["api", "v2", "peerdb", "networkstat"]),
         Command::Debug(Debug::Txpool) => client.get(&["api", "v2", "txpool", "check"]),
         Command::WalletV2(WalletV2::GenerateMnemonic { wordlist }) => {
             if let Some(wordlist) = wordlist {

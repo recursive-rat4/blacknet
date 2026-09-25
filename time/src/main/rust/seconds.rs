@@ -26,53 +26,51 @@ use serde::{Deserialize, Serialize};
 /// A timestamp or a time interval measured in seconds. The value may be negative.
 #[derive(Clone, Copy, Deserialize, Eq, NoUninit, Ord, PartialEq, PartialOrd, Serialize)]
 #[repr(transparent)]
-pub struct Seconds {
-    n: i64,
-}
+pub struct Seconds(i64);
 
 impl Seconds {
     pub const fn new(n: i64) -> Self {
-        Self { n }
+        Self(n)
     }
 
     pub const fn with_minutes(n: i64) -> Self {
-        Self { n: n * 60 }
+        Self(n * 60)
     }
 
     pub const fn with_hours(n: i64) -> Self {
-        Self { n: n * 3600 }
+        Self(n * 3600)
     }
 
     pub const fn with_days(n: i64) -> Self {
-        Self { n: n * 86400 }
+        Self(n * 86400)
     }
 
     pub const fn value(self) -> i64 {
-        self.n
+        self.0
     }
 
     pub const fn to_millis(self) -> Milliseconds {
-        Milliseconds::new(self.n * 1000)
+        Milliseconds::new(self.0 * 1000)
     }
 
     pub const fn to_be_bytes(self) -> [u8; 8] {
-        self.n.to_be_bytes()
+        self.0.to_be_bytes()
     }
 
     pub const fn to_le_bytes(self) -> [u8; 8] {
-        self.n.to_le_bytes()
+        self.0.to_le_bytes()
     }
 
     /// The maximum value that can be represented by this type.
-    pub const MAX: Self = Self { n: i64::MAX };
+    pub const MAX: Self = Self(i64::MAX);
     /// The minimum value that can be represented by this type.
-    pub const MIN: Self = Self { n: i64::MIN };
-    pub const ZERO: Self = Self { n: 0 };
+    pub const MIN: Self = Self(i64::MIN);
+    pub const ZERO: Self = Self(0);
 }
 
 impl Debug for Seconds {
     fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
-        write!(f, "{}", self.n)
+        write!(f, "{}", self.0)
     }
 }
 
@@ -85,19 +83,19 @@ impl Default for Seconds {
 
 impl Display for Seconds {
     fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
-        write!(f, "{}", self.n)
+        write!(f, "{}", self.0)
     }
 }
 
 impl From<i64> for Seconds {
     fn from(n: i64) -> Self {
-        Self { n }
+        Self(n)
     }
 }
 
 impl From<Seconds> for i64 {
     fn from(secs: Seconds) -> Self {
-        secs.n
+        secs.0
     }
 }
 
@@ -105,7 +103,7 @@ impl TryFrom<Seconds> for core::time::Duration {
     type Error = core::num::TryFromIntError;
 
     fn try_from(secs: Seconds) -> Result<Self, Self::Error> {
-        Ok(Self::from_secs(secs.n.try_into()?))
+        Ok(Self::from_secs(secs.0.try_into()?))
     }
 }
 
@@ -113,7 +111,7 @@ impl Add for Seconds {
     type Output = Self;
 
     fn add(self, rps: Self) -> Self::Output {
-        Self { n: self.n + rps.n }
+        Self(self.0 + rps.0)
     }
 }
 
@@ -128,7 +126,7 @@ impl Neg for Seconds {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
-        Self { n: -self.n }
+        Self(-self.0)
     }
 }
 
@@ -136,7 +134,7 @@ impl Sub for Seconds {
     type Output = Self;
 
     fn sub(self, rps: Self) -> Self::Output {
-        Self { n: self.n - rps.n }
+        Self(self.0 - rps.0)
     }
 }
 
@@ -151,7 +149,7 @@ impl Mul<i64> for Seconds {
     type Output = Self;
 
     fn mul(self, rps: i64) -> Self::Output {
-        Self { n: self.n * rps }
+        Self(self.0 * rps)
     }
 }
 
@@ -166,7 +164,7 @@ impl Mul<Seconds> for i64 {
     type Output = Seconds;
 
     fn mul(self, rps: Seconds) -> Self::Output {
-        Seconds { n: self * rps.n }
+        Seconds(self * rps.0)
     }
 }
 
@@ -174,7 +172,7 @@ impl Div for Seconds {
     type Output = i64;
 
     fn div(self, rps: Self) -> Self::Output {
-        self.n / rps.n
+        self.0 / rps.0
     }
 }
 
@@ -182,7 +180,7 @@ impl Div<i64> for Seconds {
     type Output = Seconds;
 
     fn div(self, rps: i64) -> Self::Output {
-        Self { n: self.n / rps }
+        Self(self.0 / rps)
     }
 }
 
@@ -197,7 +195,7 @@ impl Rem for Seconds {
     type Output = Self;
 
     fn rem(self, rps: Self) -> Self::Output {
-        Self { n: self.n % rps.n }
+        Self(self.0 % rps.0)
     }
 }
 
@@ -212,7 +210,7 @@ impl Rem<i64> for Seconds {
     type Output = Self;
 
     fn rem(self, rps: i64) -> Self::Output {
-        Self { n: self.n % rps }
+        Self(self.0 % rps)
     }
 }
 
