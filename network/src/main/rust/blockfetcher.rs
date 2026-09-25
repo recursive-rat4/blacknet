@@ -259,7 +259,7 @@ impl BlockFetcher {
             if accepted > 0 {
                 info!(self.logger, "Accepted {accepted} deferred blocks");
             }
-        } else if hashes.is_empty() {
+        } else if !hashes.is_empty() {
             //XXX Can be used somehow?
             debug!(self.logger, "Skipped {} deferred hashes", hashes.len());
         } else {
