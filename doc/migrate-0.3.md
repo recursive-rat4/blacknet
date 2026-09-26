@@ -7,6 +7,7 @@ Make sure to have a copy of everyting you need from 0.2 node before proceeding f
 ### Free Desktop
 
 Old: `$HOME/.blacknet`
+
 New:
 - `$XDG_CONFIG_HOME/Blacknet`
 - `$XDG_DATA_HOME/Blacknet`
@@ -15,6 +16,7 @@ New:
 ### Windows
 
 Old: `%USERPROFILE%\AppData\Roaming\Blacknet`
+
 New: `%USERPROFILE%\AppData\Local\Blacknet`
 
 ### macOS
@@ -44,4 +46,4 @@ although may be skipped in favour of synchronization from genesis.
 
 RPC v1 is obsolete and no longer present.
 If you need to modify your programs to use RPC v2,
-visit [website][https://blacknet.ninja/apiv1.html].
+read instructions on website: https://blacknet.ninja/apiv1.html

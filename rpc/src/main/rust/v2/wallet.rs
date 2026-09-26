@@ -28,7 +28,7 @@ use axum::{
 use blacknet_crypto::zeroize::ZeroizingString;
 use blacknet_kernel::{
     blake2b::Hash256,
-    ed25519::{Signature, to_secret_key},
+    ed25519::{PublicKey, Signature, to_secret_key},
     transaction::PaymentId,
 };
 use blacknet_network::{
@@ -37,9 +37,27 @@ use blacknet_network::{
     wallet::{Mnemonic, Wallet, sign_message, verify_message},
 };
 use blacknet_time::Seconds;
-use core::str::FromStr;
+use core::{error::Error, str::FromStr};
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, sync::Arc};
+
+fn use_wallet<T>(
+    network: &Network,
+    public_key: PublicKey,
+    f: impl FnOnce(&Wallet) -> T,
+) -> Result<T, Box<dyn Error>> {
+    let wallet_db = network.wallet_db();
+    if let Some(wallet) = wallet_db.wallets().get(&public_key) {
+        return Ok(f(wallet));
+    }
+    let wallet = Wallet::ephemeral(network.mode())?;
+    wallet.put_watch(public_key)?;
+    wallet_db.ingest(&wallet_db.address_codec().encode(public_key)?, wallet)?;
+    if let Some(wallet) = wallet_db.wallets().get(&public_key) {
+        return Ok(f(wallet));
+    }
+    Err("Failed to get or create wallet".into())
+}
 
 async fn generate_account(
     State(network): State<Arc<Network>>,
@@ -162,23 +180,19 @@ async fn out_leases(
     State(network): State<Arc<Network>>,
     address: Path<String>,
 ) -> Response<String> {
-    let wallet_db = network.wallet_db();
-    let public_key = match wallet_db.address_codec().decode(&address) {
+    let address_codec = network.wallet_db().address_codec();
+    let public_key = match address_codec.decode(&address) {
         Ok(public_key) => public_key,
         Err(err) => {
             return respond_error(format!("Invalid address: {err}"));
         }
     };
-    let wallets = wallet_db.wallets();
-    let Some(wallet) = wallets.get(&public_key) else {
-        return respond_error("Wallet not found");
-    };
-    let address_codec = wallet_db.address_codec();
-    let out_leases = match wallet.get_out_leases() {
-        Ok(out_leases) => out_leases
+    let out_leases = match use_wallet(&network, public_key, Wallet::get_out_leases) {
+        Ok(Ok(out_leases)) => out_leases
             .into_iter()
             .map(|lease| LeaseInfo::new(lease, address_codec))
             .collect::<Result<Vec<LeaseInfo>, _>>(),
+        Ok(Err(err)) => return respond_error(err.to_string()),
         Err(err) => return respond_error(err.to_string()),
     };
     match out_leases {
@@ -188,17 +202,13 @@ async fn out_leases(
 }
 
 async fn sequence(State(network): State<Arc<Network>>, address: Path<String>) -> Response<String> {
-    let wallet_db = network.wallet_db();
-    let public_key = match wallet_db.address_codec().decode(&address) {
+    let public_key = match network.wallet_db().address_codec().decode(&address) {
         Ok(public_key) => public_key,
         Err(err) => return respond_error(format!("Invalid address: {err}")),
     };
-    let wallets = wallet_db.wallets();
-    let Some(wallet) = wallets.get(&public_key) else {
-        return respond_error("Wallet not found");
-    };
-    match wallet.sequence() {
-        Ok(sequence) => respond_text(sequence.to_string()),
+    match use_wallet(&network, public_key, Wallet::sequence) {
+        Ok(Ok(sequence)) => respond_text(sequence.to_string()),
+        Ok(Err(err)) => respond_error(err.to_string()),
         Err(err) => respond_error(err.to_string()),
     }
 }
@@ -224,18 +234,13 @@ fn transaction_handler(
     hash: String,
     raw: bool,
 ) -> Response<String> {
-    let wallet_db = network.wallet_db();
-    let public_key = match wallet_db.address_codec().decode(&address) {
+    let public_key = match network.wallet_db().address_codec().decode(&address) {
         Ok(public_key) => public_key,
         Err(err) => return respond_error(format!("Invalid address: {err}")),
     };
     let hash = match Hash256::from_str(hash.as_str()) {
         Ok(hash) => hash,
         Err(err) => return respond_error(format!("Invalid hash: {err}")),
-    };
-    let wallets = wallet_db.wallets();
-    let Some(wallet) = wallets.get(&public_key) else {
-        return respond_error("Wallet not found");
     };
     todo!();
 }
@@ -255,17 +260,13 @@ async fn anchor(State(network): State<Arc<Network>>, _address: Path<String>) -> 
 }
 
 async fn tx_count(State(network): State<Arc<Network>>, address: Path<String>) -> Response<String> {
-    let wallet_db = network.wallet_db();
-    let public_key = match wallet_db.address_codec().decode(&address) {
+    let public_key = match network.wallet_db().address_codec().decode(&address) {
         Ok(public_key) => public_key,
         Err(err) => return respond_error(format!("Invalid address: {err}")),
     };
-    let wallets = wallet_db.wallets();
-    let Some(wallet) = wallets.get(&public_key) else {
-        return respond_error("Wallet not found");
-    };
-    match wallet.count_transactions() {
-        Ok(count) => respond_text(count.to_string()),
+    match use_wallet(&network, public_key, Wallet::count_transactions) {
+        Ok(Ok(count)) => respond_text(count.to_string()),
+        Ok(Err(err)) => respond_error(err.to_string()),
         Err(err) => respond_error(err.to_string()),
     }
 }
@@ -361,7 +362,7 @@ async fn import_mnemonic(
     {
         return respond_error(err.to_string());
     }
-    if let Err(err) = network.wallet_db().ingest(&request.name, &wallet) {
+    if let Err(err) = network.wallet_db().ingest(&request.name, wallet) {
         return respond_error(err.to_string());
     }
     respond_text("true")

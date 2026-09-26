@@ -45,6 +45,8 @@ fn ephemeral() {
     assert_matches!(wallet.created_at(), Ok(_));
     assert_matches!(wallet.set_created_at(created_at), Ok(()));
     assert_matches!(wallet.created_at(), Ok(x) if x == created_at);
+    assert_matches!(wallet.is_staking(), Ok(false));
+    assert_matches!(wallet.set_staking(true), Ok(()));
     assert_matches!(wallet.is_staking(), Ok(true));
     assert_matches!(wallet.sequence(), Ok(0));
 }
@@ -52,7 +54,6 @@ fn ephemeral() {
 #[test]
 fn keys() {
     let mode = Mode::regtest();
-    let wallet = Wallet::ephemeral(&mode).unwrap();
     let mnemonic = "胡 允 空 桥 料 状 纱 角 钠 灌 绝 件";
     let public_key =
         PublicKey::from_str("A65AEF3E4128031285BF0367832C38AD1366A1E8D5E395BCDC7A17C3B28BAB1D")
@@ -61,13 +62,19 @@ fn keys() {
         SecretKey::try_from("168FFB9152BE8C88F1613B54BCCEA40E5F73DBFB845CBA6CA4E5C13D8FD0D68F")
             .unwrap();
 
+    let wallet = Wallet::ephemeral(&mode).unwrap();
     assert_matches!(wallet.public_key(), Err(Error::QueryReturnedNoRows));
     assert_matches!(wallet.secret_key(), Err(Error::QueryReturnedNoRows));
+    assert_matches!(wallet.put_watch(public_key), Ok(()));
+    assert_matches!(wallet.put_watch(public_key), Err(Error::SqliteFailure(..)));
     assert_matches!(wallet.set_mnemonic(mnemonic.into()), Ok(()));
     assert_matches!(
         wallet.set_mnemonic(mnemonic.into()),
         Err(Error::SqliteFailure(..))
     );
+
+    let wallet = Wallet::ephemeral(&mode).unwrap();
+    assert_matches!(wallet.set_mnemonic(mnemonic.into()), Ok(()));
     assert_matches!(wallet.derive_account(), Ok(()));
     assert_matches!(wallet.derive_account(), Err(DeriveAccountError::Sqlite(..)));
     assert_matches!(wallet.public_key(), Ok(pk) if pk == public_key);

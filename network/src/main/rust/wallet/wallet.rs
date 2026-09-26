@@ -130,7 +130,7 @@ impl Wallet {
 
         connection.execute(
             "INSERT INTO wallet VALUES(?, ?, ?, ?);",
-            (0, created_at.value(), true, 0),
+            (0, created_at.value(), false, 0),
         )?;
 
         Ok(Self {
@@ -144,6 +144,16 @@ impl Wallet {
         connection.execute(
             "INSERT INTO keys VALUES(?, ?, ?);",
             ("master", master.as_bytes(), Option::<&[u8]>::None),
+        )?;
+        //FIXME self.set_staking(true)?;
+        Ok(())
+    }
+
+    pub fn put_watch(&self, public_key: PublicKey) -> Result<()> {
+        let connection = self.connection.lock().unwrap();
+        connection.execute(
+            "INSERT INTO keys VALUES(?, ?, ?);",
+            ("", Option::<&[u8]>::None, public_key.as_ref()),
         )?;
         Ok(())
     }
@@ -179,6 +189,13 @@ impl Wallet {
         let mut statement = connection.prepare_cached("SELECT is_staking FROM wallet;")?;
         let b: bool = statement.query_one((), |row| row.get(0))?;
         Ok(b)
+    }
+
+    pub fn set_staking(&self, staking: bool) -> Result<()> {
+        let connection = self.connection.lock().unwrap();
+        let mut statement = connection.prepare_cached("UPDATE wallet SET is_staking = ?;")?;
+        statement.execute((staking,))?;
+        Ok(())
     }
 
     pub fn public_key(&self) -> Result<PublicKey> {

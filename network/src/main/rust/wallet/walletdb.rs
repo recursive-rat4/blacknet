@@ -131,7 +131,7 @@ impl WalletDB {
         self.wallets.read().unwrap()
     }
 
-    pub fn ingest(&self, name: &str, wallet: &Wallet) -> Result<(), IngestError> {
+    pub fn ingest(&self, name: &str, wallet: Wallet) -> Result<(), IngestError> {
         let public_key = wallet.public_key()?;
         let mut wallets = self.wallets.write().unwrap();
         match wallets.entry(public_key) {
@@ -144,7 +144,10 @@ impl WalletDB {
                 //TODO rescan
                 Ok(())
             }
-            Entry::Occupied(_) => Err(IngestError::Occupied),
+            Entry::Occupied(_) => {
+                drop(wallet);
+                Err(IngestError::Occupied)
+            }
         }
     }
 
