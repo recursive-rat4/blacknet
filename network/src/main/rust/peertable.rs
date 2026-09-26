@@ -47,7 +47,7 @@ use std::{
     },
 };
 
-const MAX_SIZE: usize = 8192;
+const MAX_LEN: usize = 8192;
 const FILE_VERSION: u32 = 5;
 const FILE_NAME: &str = "peers.dat";
 
@@ -70,7 +70,7 @@ impl PeerTable {
             logger: log_manager.logger("PeerTable")?,
             config,
             data_dir: dirs.data().to_owned(),
-            peers: RwLock::new(HashMap::with_capacity(MAX_SIZE)),
+            peers: RwLock::new(HashMap::with_capacity(MAX_LEN)),
             locals: Mutex::new(HashSet::new()),
         };
         match peer_table.load() {
@@ -108,7 +108,7 @@ impl PeerTable {
     }
 
     pub const fn max_len(&self) -> usize {
-        MAX_SIZE
+        MAX_LEN
     }
 
     pub fn endpoints<R, F: Fn(Endpoint) -> R>(&self, f: F) -> Vec<R> {
@@ -225,8 +225,8 @@ impl PeerTable {
         let mut added = 0;
         {
             let mut peers = self.peers.write().unwrap();
-            let free_slots = if MAX_SIZE > peers.len() {
-                MAX_SIZE - peers.len()
+            let free_slots = if MAX_LEN > peers.len() {
+                MAX_LEN - peers.len()
             } else {
                 0
             };
@@ -262,16 +262,20 @@ impl PeerTable {
         true
     }
 
-    pub fn candidate(
-        self: &Arc<Self>,
-        predicate: impl Fn(&Endpoint, &Entry) -> bool,
-    ) -> Option<ContactGuard> {
+    pub fn candidate(self: &Arc<Self>, prober: bool) -> Option<ContactGuard> {
+        fn predicate(entry: &Entry, time: Milliseconds, prober: bool) -> bool {
+            if prober {
+                time > entry.last_try() + Milliseconds::with_hours(4)
+            } else {
+                true
+            }
+        }
         let peers = self.peers.read().unwrap();
         let mut candidates = Vec::<(&Endpoint, &Entry, f32)>::with_capacity(peers.len());
         let now = SystemClock::millis();
         for (endpoint, entry) in peers.iter() {
-            if predicate(endpoint, entry) {
-                candidates.push((endpoint, entry, entry.chance(now)));
+            if predicate(entry, now, prober) {
+                candidates.push((endpoint, entry, entry.chance(now, prober)));
             }
         }
         let mut uid = UniformIntDistribution::<usize>::default();
@@ -314,7 +318,7 @@ impl PeerTable {
         })
     }
 
-    pub(crate) async fn rotate(self: Arc<Self>) {
+    pub(super) async fn rotate(self: Arc<Self>) {
         let mut rotated = 0;
         let now = SystemClock::millis();
         {
@@ -461,15 +465,21 @@ impl Entry {
         false
     }
 
-    fn chance(&self, now: Milliseconds) -> f32 {
-        let age = now - self.last_try;
+    fn chance(&self, now: Milliseconds, prober: bool) -> f32 {
         let attempts = min(self.attempts, i32::MAX as u64) as i32;
-        let chance = 0.66_f32.powi(min(attempts, 8));
-        if age > Milliseconds::with_minutes(15) {
-            chance
-        } else {
-            chance * 0.01
+        let mut chance = 0.6666666_f32.powi(min(attempts, 8));
+
+        let age = now - self.last_try;
+        if age <= Milliseconds::with_minutes(15) {
+            chance *= 0.015;
         }
+
+        let taciturn = self.last_connected == Milliseconds::ZERO;
+        if taciturn ^ prober {
+            chance *= 0.0625;
+        }
+
+        chance
     }
 
     pub fn in_contact(&self) -> bool {

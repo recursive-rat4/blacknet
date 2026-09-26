@@ -63,7 +63,7 @@ use tokio::{
     net::tcp::{OwnedReadHalf, OwnedWriteHalf},
     runtime::{Handle, Runtime},
     sync::mpsc::UnboundedReceiver,
-    time::{Duration, sleep},
+    time::sleep,
 };
 
 pub const NETWORK_TIMEOUT: Milliseconds = Milliseconds::with_seconds(90);
@@ -695,7 +695,7 @@ impl Node {
         }
 
         loop {
-            let Some(endpoint) = self.peer_table.candidate(|_, _| true) else {
+            let Some(endpoint) = self.peer_table.candidate(false) else {
                 let outgoing = self.outgoing();
                 info!(
                     self.logger,
@@ -719,33 +719,25 @@ impl Node {
 
     async fn prober(self: Arc<Self>) {
         loop {
-            sleep(Milliseconds::with_minutes(4).try_into().unwrap()).await;
-
-            // Await peer endpoint announce
-            if self.peer_table.len() < self.peer_table.max_len() / 2 {
-                continue;
-            }
-
-            // Await while connectors are working
-            if self.outgoing() < self.config.outgoing_connections as usize {
-                continue;
-            }
-
             let time = SystemClock::millis();
-            let Some(endpoint) = self
-                .peer_table
-                .candidate(|_, entry| time > entry.last_try() + Milliseconds::with_hours(4))
-            else {
+            let Some(endpoint) = self.peer_table.candidate(true) else {
+                sleep(Milliseconds::with_hours(1).try_into().unwrap()).await;
                 continue;
             };
 
             self.clone().add_peer(endpoint, time, true).await;
+            sleep(Milliseconds::with_seconds(4).try_into().unwrap()).await;
         }
     }
 
     async fn rotator(self: Arc<Self>) {
         loop {
-            sleep(Duration::from_secs(60 * 60)).await;
+            sleep(Milliseconds::with_hours(1).try_into().unwrap()).await;
+
+            // Await peer endpoint announce
+            if self.peer_table.len() < self.peer_table.max_len() / 2 {
+                continue;
+            }
 
             // Await while node gets online
             if !self.is_online() {
