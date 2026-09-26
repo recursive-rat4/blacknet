@@ -294,11 +294,11 @@ macro_rules! impl_uring {
             }
 
             impl LeftZero for $x {
-                const LEFT_ZERO: $x = $x { n: 0 };
+                const LEFT_ZERO: $x = $x::ZERO;
             }
 
             impl RightZero for $x {
-                const RIGHT_ZERO: $x = $x { n: 0 };
+                const RIGHT_ZERO: $x = $x::ZERO;
             }
 
             impl Zero for $x {
@@ -306,11 +306,11 @@ macro_rules! impl_uring {
             }
 
             impl LeftOne for $x {
-                const LEFT_ONE: $x = $x { n: 1 };
+                const LEFT_ONE: $x = $x::ONE;
             }
 
             impl RightOne for $x {
-                const RIGHT_ONE: $x = $x { n: 1 };
+                const RIGHT_ONE: $x = $x::ONE;
             }
 
             impl One for $x {

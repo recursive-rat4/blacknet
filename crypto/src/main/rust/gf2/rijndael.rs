@@ -431,11 +431,11 @@ impl<'a> Product<&'a Self> for RijndaelField {
 }
 
 impl LeftZero for RijndaelField {
-    const LEFT_ZERO: Self = Self { coefficients: 0 };
+    const LEFT_ZERO: Self = Self::ZERO;
 }
 
 impl RightZero for RijndaelField {
-    const RIGHT_ZERO: Self = Self { coefficients: 0 };
+    const RIGHT_ZERO: Self = Self::ZERO;
 }
 
 impl Zero for RijndaelField {
@@ -443,11 +443,11 @@ impl Zero for RijndaelField {
 }
 
 impl LeftOne for RijndaelField {
-    const LEFT_ONE: Self = Self { coefficients: 1 };
+    const LEFT_ONE: Self = Self::ONE;
 }
 
 impl RightOne for RijndaelField {
-    const RIGHT_ONE: Self = Self { coefficients: 1 };
+    const RIGHT_ONE: Self = Self::ONE;
 }
 
 impl One for RijndaelField {

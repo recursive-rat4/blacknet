@@ -469,33 +469,25 @@ impl<'a> Product<&'a Self> for GHashField {
 }
 
 impl LeftZero for GHashField {
-    const LEFT_ZERO: Self = Self {
-        coefficients: [0, 0],
-    };
+    const LEFT_ZERO: Self = Self::ZERO;
 }
 
 impl RightZero for GHashField {
-    const RIGHT_ZERO: Self = Self {
-        coefficients: [0, 0],
-    };
+    const RIGHT_ZERO: Self = Self::ZERO;
 }
 
 impl Zero for GHashField {
     const ZERO: Self = Self {
-        coefficients: [0, 0],
+        coefficients: [0; 2],
     };
 }
 
 impl LeftOne for GHashField {
-    const LEFT_ONE: Self = Self {
-        coefficients: [1, 0],
-    };
+    const LEFT_ONE: Self = Self::ONE;
 }
 
 impl RightOne for GHashField {
-    const RIGHT_ONE: Self = Self {
-        coefficients: [1, 0],
-    };
+    const RIGHT_ONE: Self = Self::ONE;
 }
 
 impl One for GHashField {

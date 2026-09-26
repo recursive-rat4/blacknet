@@ -434,11 +434,11 @@ impl<'a> Product<&'a Self> for PervushinField {
 }
 
 impl LeftZero for PervushinField {
-    const LEFT_ZERO: Self = Self { n: 0 };
+    const LEFT_ZERO: Self = Self::ZERO;
 }
 
 impl RightZero for PervushinField {
-    const RIGHT_ZERO: Self = Self { n: 0 };
+    const RIGHT_ZERO: Self = Self::ZERO;
 }
 
 impl Zero for PervushinField {
@@ -446,11 +446,11 @@ impl Zero for PervushinField {
 }
 
 impl LeftOne for PervushinField {
-    const LEFT_ONE: Self = Self { n: 1 };
+    const LEFT_ONE: Self = Self::ONE;
 }
 
 impl RightOne for PervushinField {
-    const RIGHT_ONE: Self = Self { n: 1 };
+    const RIGHT_ONE: Self = Self::ONE;
 }
 
 impl One for PervushinField {

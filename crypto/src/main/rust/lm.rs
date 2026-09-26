@@ -417,11 +417,11 @@ impl<'a> Product<&'a Self> for LMField {
 }
 
 impl LeftZero for LMField {
-    const LEFT_ZERO: Self = Self { n: 0 };
+    const LEFT_ZERO: Self = Self::ZERO;
 }
 
 impl RightZero for LMField {
-    const RIGHT_ZERO: Self = Self { n: 0 };
+    const RIGHT_ZERO: Self = Self::ZERO;
 }
 
 impl Zero for LMField {
@@ -429,11 +429,11 @@ impl Zero for LMField {
 }
 
 impl LeftOne for LMField {
-    const LEFT_ONE: Self = Self { n: 1 };
+    const LEFT_ONE: Self = Self::ONE;
 }
 
 impl RightOne for LMField {
-    const RIGHT_ONE: Self = Self { n: 1 };
+    const RIGHT_ONE: Self = Self::ONE;
 }
 
 impl One for LMField {

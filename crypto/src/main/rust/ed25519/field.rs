@@ -539,11 +539,11 @@ impl<'a> Product<&'a Self> for Field25519 {
 }
 
 impl LeftZero for Field25519 {
-    const LEFT_ZERO: Self = Self { n: UInt256::ZERO };
+    const LEFT_ZERO: Self = Self::ZERO;
 }
 
 impl RightZero for Field25519 {
-    const RIGHT_ZERO: Self = Self { n: UInt256::ZERO };
+    const RIGHT_ZERO: Self = Self::ZERO;
 }
 
 impl Zero for Field25519 {
@@ -551,11 +551,11 @@ impl Zero for Field25519 {
 }
 
 impl LeftOne for Field25519 {
-    const LEFT_ONE: Self = Self { n: UInt256::ONE };
+    const LEFT_ONE: Self = Self::ONE;
 }
 
 impl RightOne for Field25519 {
-    const RIGHT_ONE: Self = Self { n: UInt256::ONE };
+    const RIGHT_ONE: Self = Self::ONE;
 }
 
 impl One for Field25519 {

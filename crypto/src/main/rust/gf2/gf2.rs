@@ -339,11 +339,11 @@ impl<'a> Product<&'a Self> for GF2 {
 }
 
 impl LeftZero for GF2 {
-    const LEFT_ZERO: Self = Self { n: false };
+    const LEFT_ZERO: Self = Self::ZERO;
 }
 
 impl RightZero for GF2 {
-    const RIGHT_ZERO: Self = Self { n: false };
+    const RIGHT_ZERO: Self = Self::ZERO;
 }
 
 impl Zero for GF2 {
@@ -351,11 +351,11 @@ impl Zero for GF2 {
 }
 
 impl LeftOne for GF2 {
-    const LEFT_ONE: Self = Self { n: true };
+    const LEFT_ONE: Self = Self::ONE;
 }
 
 impl RightOne for GF2 {
-    const RIGHT_ONE: Self = Self { n: true };
+    const RIGHT_ONE: Self = Self::ONE;
 }
 
 impl One for GF2 {

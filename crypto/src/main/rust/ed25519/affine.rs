@@ -310,17 +310,11 @@ impl<'a> Sum<&'a Self> for Edwards25519Affine {
 }
 
 impl LeftZero for Edwards25519Affine {
-    const LEFT_ZERO: Self = Self {
-        x: Field25519::ZERO,
-        y: Field25519::ONE,
-    };
+    const LEFT_ZERO: Self = Self::ZERO;
 }
 
 impl RightZero for Edwards25519Affine {
-    const RIGHT_ZERO: Self = Self {
-        x: Field25519::ZERO,
-        y: Field25519::ONE,
-    };
+    const RIGHT_ZERO: Self = Self::ZERO;
 }
 
 impl Zero for Edwards25519Affine {

@@ -564,11 +564,11 @@ impl<'a> Product<&'a Self> for Scalar25519 {
 }
 
 impl LeftZero for Scalar25519 {
-    const LEFT_ZERO: Self = Self { n: UInt256::ZERO };
+    const LEFT_ZERO: Self = Self::ZERO;
 }
 
 impl RightZero for Scalar25519 {
-    const RIGHT_ZERO: Self = Self { n: UInt256::ZERO };
+    const RIGHT_ZERO: Self = Self::ZERO;
 }
 
 impl Zero for Scalar25519 {
@@ -576,15 +576,11 @@ impl Zero for Scalar25519 {
 }
 
 impl LeftOne for Scalar25519 {
-    const LEFT_ONE: Self = Self {
-        n: UInt256::from_hex("0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEC6EF5BF4737DCF70D6EC31748D98951D"),
-    };
+    const LEFT_ONE: Self = Self::ONE;
 }
 
 impl RightOne for Scalar25519 {
-    const RIGHT_ONE: Self = Self {
-        n: UInt256::from_hex("0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEC6EF5BF4737DCF70D6EC31748D98951D"),
-    };
+    const RIGHT_ONE: Self = Self::ONE;
 }
 
 impl One for Scalar25519 {
