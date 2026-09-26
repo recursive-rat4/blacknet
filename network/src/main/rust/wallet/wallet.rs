@@ -87,50 +87,43 @@ impl Wallet {
         }
     }
 
-    fn set_magic(connection: &Connection, mode: &Mode) -> Result<()> {
+    fn init_magic(connection: &Connection, mode: &Mode) -> Result<()> {
         connection.pragma_update(None, "application_id", mode.network_magic())?;
-        connection.pragma_update(None, "user_version", 1)?;
+        connection.pragma_update(None, "user_version", 0)?;
         Ok(())
     }
 
     fn create_schema(connection: &Connection) -> Result<()> {
-        connection.execute(
-            "CREATE TABLE wallet(\
+        connection.execute_batch(
+            "BEGIN IMMEDIATE TRANSACTION;
+             CREATE TABLE wallet(\
                 id INTEGER PRIMARY KEY CHECK (id = 0),\
                 created_at INTEGER NOT NULL,\
                 is_staking INTEGER NOT NULL CHECK (is_staking IN (FALSE, TRUE)),\
                 sequence INTEGER NOT NULL\
-             ) STRICT;",
-            (),
-        )?;
-        connection.execute(
-            "CREATE TABLE keys(\
+             ) STRICT;\
+             CREATE TABLE keys(\
                  path TEXT NOT NULL UNIQUE,\
                  secret BLOB,\
                  public BLOB\
-             ) STRICT;",
-            (),
-        )?;
-        connection.execute("CREATE TABLE htlcs(id BLOB PRIMARY KEY) STRICT;", ())?;
-        connection.execute("CREATE TABLE multisigs(id BLOB PRIMARY KEY) STRICT;", ())?;
-        connection.execute(
-            "CREATE TABLE out_leases(\
+             ) STRICT;\
+             CREATE TABLE htlcs(id BLOB PRIMARY KEY) STRICT;\
+             CREATE TABLE multisigs(id BLOB PRIMARY KEY) STRICT;\
+             CREATE TABLE out_leases(\
                  public_key BLOB NOT NULL,\
                  height INTEGER NOT NULL,\
                  amount INTEGER NOT NULL\
-             ) STRICT;",
-            (),
+             ) STRICT;\
+             CREATE TABLE transactions(id BLOB PRIMARY KEY, bytes BLOB NOT NULL) STRICT;\
+             COMMIT TRANSACTION;",
         )?;
-        connection.execute(
-            "CREATE TABLE transactions(id BLOB PRIMARY KEY, bytes BLOB NOT NULL) STRICT;",
-            (),
-        )?;
+        connection.pragma_update(None, "user_version", 1)?;
         Ok(())
     }
 
     fn initialize(connection: Connection, mode: &Mode) -> Result<Self> {
         Self::configure(&connection)?;
-        Self::set_magic(&connection, mode)?;
+        Self::init_magic(&connection, mode)?;
         Self::create_schema(&connection)?;
 
         let created_at = SystemClock::secs();
