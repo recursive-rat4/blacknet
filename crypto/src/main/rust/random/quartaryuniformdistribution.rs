@@ -39,6 +39,7 @@ impl QuartaryUniformDistribution {
 }
 
 impl Default for QuartaryUniformDistribution {
+    #[inline]
     fn default() -> Self {
         Self::new()
     }

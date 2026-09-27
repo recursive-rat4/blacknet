@@ -62,6 +62,7 @@ impl WeightedDistribution {
 }
 
 impl Default for WeightedDistribution {
+    #[inline]
     fn default() -> Self {
         Self::new()
     }

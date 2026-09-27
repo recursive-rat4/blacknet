@@ -40,6 +40,7 @@ impl<F: Float<Bits: UnsignedInteger>> Float01Distribution<F> {
 }
 
 impl<F: Float<Bits: UnsignedInteger>> Default for Float01Distribution<F> {
+    #[inline]
     fn default() -> Self {
         Self::new()
     }

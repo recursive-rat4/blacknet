@@ -48,6 +48,7 @@ impl<G: AdditiveGroup, const RANK: usize, const WIDTH: usize, P: Permutation<Dom
 impl<G: AdditiveGroup, const RANK: usize, const WIDTH: usize, P: Permutation<Domain = [G; WIDTH]>>
     Default for Trunc<G, RANK, WIDTH, P>
 {
+    #[inline]
     fn default() -> Self {
         Self::new()
     }

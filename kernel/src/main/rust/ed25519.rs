@@ -66,10 +66,12 @@ impl Signature {
         &self.0
     }
 
+    #[inline]
     pub const fn as_r_bytes(&self) -> &[u8; 32] {
         &self.0.as_chunks::<32>().0[0]
     }
 
+    #[inline]
     pub const fn as_s_bytes(&self) -> &[u8; 32] {
         &self.0.as_chunks::<32>().0[1]
     }

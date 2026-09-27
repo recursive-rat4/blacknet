@@ -192,6 +192,7 @@ impl<
     P: Permutation<Domain = [S; WIDTH]>,
 > Default for Duplex<S, RATE, CAPACITY, WIDTH, P>
 {
+    #[inline]
     fn default() -> Self {
         Self::new()
     }

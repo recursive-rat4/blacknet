@@ -279,6 +279,7 @@ impl<T: Zero + Eq> SparseMatrixBuilder<T> {
 }
 
 impl<T: Zero> Default for SparseMatrixBuilder<T> {
+    #[inline]
     fn default() -> Self {
         Self::new()
     }

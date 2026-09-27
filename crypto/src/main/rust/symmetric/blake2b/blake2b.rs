@@ -147,6 +147,7 @@ impl<const BYTES: usize> Blake2b<BYTES> {
 }
 
 impl<const BYTES: usize> Default for Blake2b<BYTES> {
+    #[inline]
     fn default() -> Self {
         Self::new()
     }

@@ -39,6 +39,7 @@ impl<Z: IntegerModRing> UniformModDistribution<Z> {
 }
 
 impl<Z: IntegerModRing> Default for UniformModDistribution<Z> {
+    #[inline]
     fn default() -> Self {
         Self::new()
     }

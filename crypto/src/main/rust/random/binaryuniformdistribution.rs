@@ -41,6 +41,7 @@ impl BinaryUniformDistribution {
 }
 
 impl Default for BinaryUniformDistribution {
+    #[inline]
     fn default() -> Self {
         Self::new()
     }
