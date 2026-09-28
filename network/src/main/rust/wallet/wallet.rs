@@ -130,7 +130,7 @@ impl Wallet {
 
         connection.execute(
             "INSERT INTO wallet VALUES(?, ?, ?, ?);",
-            (0, created_at.value(), false, 0),
+            (0, created_at.value(), true, 0),
         )?;
 
         Ok(Self {
@@ -145,7 +145,6 @@ impl Wallet {
             "INSERT INTO keys VALUES(?, ?, ?);",
             ("master", master.as_bytes(), Option::<&[u8]>::None),
         )?;
-        //FIXME self.set_staking(true)?;
         Ok(())
     }
 

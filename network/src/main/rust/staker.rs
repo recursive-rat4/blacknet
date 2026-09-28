@@ -18,7 +18,7 @@
 use crate::{
     db::{BlockNotifier, CoinDB, Snapshot, State as CoinDBState},
     node::Node,
-    wallet::WalletDB,
+    wallet::{Error as WalletError, WalletDB},
 };
 use blacknet_kernel::{
     amount::Amount,
@@ -66,6 +66,8 @@ impl Staker {
                     Ok(secret_key) => {
                         staker.start_staking(public_key, Arc::new(secret_key));
                     }
+                    Err(WalletError::QueryReturnedNoRows)
+                    | Err(WalletError::InvalidColumnType(..)) => continue,
                     Err(err) => error!(staker.logger, "{err}"),
                 },
                 Ok(false) => continue,
