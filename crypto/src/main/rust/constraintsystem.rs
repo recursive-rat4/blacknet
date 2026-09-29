@@ -15,37 +15,36 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::Set;
 use core::fmt;
 
-pub trait ConstraintSystem<S: Set> {
+pub trait ConstraintSystem {
     type Assigment;
 
     fn degree(&self) -> u32;
     fn constraints(&self) -> u32;
     fn variables(&self) -> u32;
 
-    fn is_satisfied(&self, z: &Self::Assigment) -> Result<S>;
+    fn is_satisfied(&self, z: &Self::Assigment) -> Result;
 }
 
 #[derive(Debug)]
-pub enum Error<S: Set> {
-    Length(u32, u32),
-    Mismatch(u32, S, S),
+pub enum Error {
+    Variables(u32, u32),
+    Constraint(u32),
 }
 
-impl<S: Set> fmt::Display for Error<S> {
+impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Error::Length(actual, expected) => write!(
+            Error::Variables(actual, expected) => write!(
                 f,
                 "Assigned {actual} variables instead of {expected} required"
             ),
-            Error::Mismatch(idx, _, _) => write!(f, "Mismatch at position {idx}"),
+            Error::Constraint(idx) => write!(f, "Constraint {idx} not satisfied"),
         }
     }
 }
 
-impl<S: Set + fmt::Debug> core::error::Error for Error<S> {}
+impl core::error::Error for Error {}
 
-pub type Result<S> = core::result::Result<(), Error<S>>;
+pub type Result = core::result::Result<(), Error>;

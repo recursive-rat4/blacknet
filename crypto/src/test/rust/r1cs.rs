@@ -15,7 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_crypto::constraintsystem::ConstraintSystem;
+use blacknet_crypto::algebra::One;
+use blacknet_crypto::constraintsystem::{ConstraintSystem, Error};
 use blacknet_crypto::matrix::{DenseMatrix, DenseVector, SparseMatrix};
 use blacknet_crypto::r1cs::R1CS;
 use core::assert_matches;
@@ -54,4 +55,12 @@ fn satisfaction() {
     assert_eq!(r1cs.variables(), 5);
 
     assert_matches!(r1cs.is_satisfied(&z), Ok(()));
+    assert_matches!(
+        r1cs.is_satisfied(&DenseVector::default()),
+        Err(Error::Variables(0, 5))
+    );
+    assert_matches!(
+        r1cs.is_satisfied(&vec![R::ONE; 5].into()),
+        Err(Error::Constraint(0))
+    );
 }

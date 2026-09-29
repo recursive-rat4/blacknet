@@ -70,7 +70,7 @@ impl<R: UnitalRing> From<R1CS<R>> for CustomizableConstraintSystem<R> {
     }
 }
 
-impl<R: UnitalSemiring + Clone + Eq + Send + Sync> ConstraintSystem<R>
+impl<R: UnitalSemiring + Clone + Eq + Send + Sync> ConstraintSystem
     for CustomizableConstraintSystem<R>
 where
     for<'a> &'a R: SemiringOps<R>,
@@ -89,11 +89,11 @@ where
         self.variables()
     }
 
-    fn is_satisfied(&self, z: &DenseVector<R>) -> Result<R> {
+    fn is_satisfied(&self, z: &DenseVector<R>) -> Result {
         let constraints = self.constraints();
         let variables = self.variables();
         if z.dimension() != variables {
-            return Err(Error::Length(z.dimension(), variables));
+            return Err(Error::Variables(z.dimension(), variables));
         }
         let mut sigma = DenseVector::fill(constraints, R::ZERO);
         for (i, c) in self.constants.iter().enumerate() {
@@ -103,8 +103,8 @@ where
             }
             sigma += circle;
         }
-        match sigma.into_iter().enumerate().find(|(_, e)| *e != R::ZERO) {
-            Some((i, e)) => Err(Error::Mismatch(i as u32, e, R::ZERO)),
+        match sigma.into_iter().position(|e| e != R::ZERO) {
+            Some(idx) => Err(Error::Constraint(idx as u32)),
             None => Ok(()),
         }
     }

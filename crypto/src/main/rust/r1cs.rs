@@ -61,7 +61,7 @@ impl<R: UnitalSemiring> From<R1CS<R>> for (SparseMatrix<R>, SparseMatrix<R>, Spa
     }
 }
 
-impl<R: UnitalSemiring + Eq + Send + Sync> ConstraintSystem<R> for R1CS<R>
+impl<R: UnitalSemiring + Eq + Send + Sync> ConstraintSystem for R1CS<R>
 where
     for<'a> &'a R: SemiringOps<R>,
 {
@@ -79,13 +79,13 @@ where
         self.variables()
     }
 
-    fn is_satisfied(&self, z: &DenseVector<R>) -> Result<R> {
+    fn is_satisfied(&self, z: &DenseVector<R>) -> Result {
         if z.dimension() != self.variables() {
-            return Err(Error::Length(z.dimension(), self.variables()));
+            return Err(Error::Variables(z.dimension(), self.variables()));
         }
         let (az, bz, cz) = self.linearize(z);
-        match zip(az * bz, cz).enumerate().find(|(_, (a, e))| a != e) {
-            Some((i, (a, e))) => Err(Error::Mismatch(i as u32, a, e)),
+        match zip(az * bz, cz).position(|(a, e)| a != e) {
+            Some(idx) => Err(Error::Constraint(idx as u32)),
             None => Ok(()),
         }
     }
