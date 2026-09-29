@@ -17,7 +17,7 @@
 
 use crate::symmetric::{CompressionFunction, blake2b::compress};
 use bytemuck::Zeroable;
-use core::{cmp::min, mem::transmute};
+use core::{cmp::min, hint::assert_unchecked, mem::transmute};
 
 const BLOCK_SIZE: usize = 128;
 const STATE_LEN: usize = 8;
@@ -112,10 +112,9 @@ impl<const BYTES: usize> Blake2b<BYTES> {
             let process = min(input.len(), BLOCK_SIZE - self.position);
             (chunk, input) = input.split_at(process);
             unsafe {
-                self.buffer
-                    .get_unchecked_mut(self.position..self.position + process)
+                assert_unchecked(self.position < self.buffer.len());
             }
-            .copy_from_slice(chunk);
+            self.buffer[self.position..self.position + process].copy_from_slice(chunk);
             self.position += process;
         }
     }
@@ -129,7 +128,10 @@ impl<const BYTES: usize> Blake2b<BYTES> {
     /// Hash.
     pub fn finalize(mut self) -> [u8; BYTES] {
         self.counter += self.position as u128;
-        unsafe { self.buffer.get_unchecked_mut(self.position..) }.fill(0);
+        unsafe {
+            assert_unchecked(self.position <= self.buffer.len());
+        }
+        self.buffer[self.position..].fill(0);
         self.compress(true);
         let state = self.state.map(u64::to_le_bytes);
         let state: [u8; STATE_LEN * size_of::<u64>()] = unsafe { transmute(state) };

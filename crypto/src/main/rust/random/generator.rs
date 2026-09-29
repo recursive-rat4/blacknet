@@ -16,7 +16,7 @@
  */
 
 use bytemuck::Zeroable;
-use core::{iter::zip, mem::MaybeUninit};
+use core::{hint::assert_unchecked, iter::zip, mem::MaybeUninit};
 
 /// Generator of uniformly distributed values.
 pub trait UniformGenerator {
@@ -111,7 +111,10 @@ impl<G: UniformGenerator<Output = [T; N]>, T: Copy, const N: usize> UniformGener
             }
             self.position = 0;
         }
-        let output = unsafe { self.buffer.get_unchecked(self.position).assume_init_read() };
+        let output = unsafe {
+            assert_unchecked(self.position < self.buffer.len());
+            self.buffer[self.position].assume_init_read()
+        };
         self.position += 1;
         output
     }

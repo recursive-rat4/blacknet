@@ -17,7 +17,7 @@
 
 use crate::algebra::{PrimeField, RingOps};
 use crate::convolution::{Convolution, binomial};
-use core::array;
+use core::{array, hint::assert_unchecked};
 
 // https://arxiv.org/abs/2211.13546
 
@@ -43,11 +43,12 @@ where
         let mut l = 0;
         while l < N {
             j += 1;
-            let zeta = unsafe { twiddles.get_unchecked(j) };
+            unsafe { assert_unchecked(j < M) };
+            let zeta = &twiddles[j];
             i = l;
             while i < l + k {
-                let a_ik = unsafe { a.get_unchecked(i + k) };
-                let t = a_ik * zeta;
+                unsafe { assert_unchecked(i + k < N) };
+                let t = &a[i + k] * zeta;
                 a[i + k] = &a[i] - &t;
                 a[i] += t;
                 i += 1;
@@ -75,14 +76,14 @@ where
         let mut l = 0;
         while l < N {
             j -= 1;
-            let zeta = unsafe { -twiddles.get_unchecked(j) };
+            unsafe { assert_unchecked(j < M) };
+            let zeta = -&twiddles[j];
             i = l;
             while i < l + k {
-                let a_ik = unsafe { a.get_unchecked(i + k) };
+                unsafe { assert_unchecked(i + k < N) };
                 let t = a[i].clone();
-                a[i] = &a[i] + a_ik;
-                let a_ik = unsafe { a.get_unchecked(i + k) };
-                a[i + k] = t - a_ik;
+                a[i] = &a[i] + &a[i + k];
+                a[i + k] = t - &a[i + k];
                 a[i + k] *= &zeta;
                 i += 1;
             }

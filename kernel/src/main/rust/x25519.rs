@@ -28,7 +28,7 @@ use blacknet_crypto::{
     zeroize::zeroize,
 };
 use const_hex::FromHexError;
-use core::fmt;
+use core::{fmt, hint::assert_unchecked};
 
 const A: Field25519 = unsafe {
     Field25519::from_unchecked(UInt256::from_hex(
@@ -83,7 +83,9 @@ pub fn x25519(secret_key: &SecretKey, public_key: PublicKey) -> Result<SharedKey
 
     let mut swap = false;
     for i in (0..=254).rev() {
-        let byte = unsafe { sec_key.get_unchecked(i >> 3) };
+        let j = i >> 3;
+        unsafe { assert_unchecked(j < 32) };
+        let byte = sec_key[j];
         let bit = ((byte >> (i & 7)) & 1) != 0;
         swap ^= bit;
         x2.bl_swap(&mut x3, swap);
