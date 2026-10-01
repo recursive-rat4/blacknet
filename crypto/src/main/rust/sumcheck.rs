@@ -138,11 +138,10 @@ where
         proof: &Proof<A>,
         sponge: &mut S,
         exceptional_set: &mut E,
-    ) -> Result<(), Error<A>> {
+    ) -> Result<(), Error> {
         let (r, s) = Self::verify_early_stopping(polynomial, sum, proof, sponge, exceptional_set)?;
-        let eval = polynomial.point(&r);
-        if eval != s {
-            return Err(Error::PolynomialIdentity(eval, s));
+        if polynomial.point(&r) != s {
+            return Err(Error::PolynomialIdentity);
         }
         Ok(())
     }
@@ -153,7 +152,7 @@ where
         proof: &Proof<A>,
         sponge: &mut S,
         exceptional_set: &mut E,
-    ) -> Result<(P::Point, A), Error<A>> {
+    ) -> Result<(P::Point, A), Error> {
         let expected_length = polynomial.degree() * polynomial.variables();
         if proof.length() != expected_length {
             return Err(Error::Length(proof.length(), expected_length));
@@ -214,20 +213,20 @@ where
 }
 
 #[derive(Debug)]
-pub enum Error<R: UnitalRing> {
+pub enum Error {
     Length(u32, u32),
-    PolynomialIdentity(R, R),
+    PolynomialIdentity,
 }
 
-impl<R: UnitalRing> fmt::Display for Error<R> {
+impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Error::Length(actual, expected) => {
                 write!(f, "Expected length {expected} got {actual}")
             }
-            Error::PolynomialIdentity(_, _) => write!(f, "Polynomial identity check failed"),
+            Error::PolynomialIdentity => write!(f, "Polynomial identity check failed"),
         }
     }
 }
 
-impl<R: UnitalRing + fmt::Debug> core::error::Error for Error<R> {}
+impl core::error::Error for Error {}

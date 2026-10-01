@@ -70,14 +70,14 @@ fn mle() {
 
     assert_matches!(
         SC::verify(&p1, s2, &proof, &mut sponge, &mut exceptional_set),
-        Err(Error::PolynomialIdentity(_, _))
+        Err(Error::PolynomialIdentity)
     );
     sponge.reset();
     exceptional_set.reset();
 
     assert_matches!(
         SC::verify(&p2, s1, &proof, &mut sponge, &mut exceptional_set),
-        Err(Error::PolynomialIdentity(_, _))
+        Err(Error::PolynomialIdentity)
     );
     sponge.reset();
     exceptional_set.reset();
@@ -122,7 +122,7 @@ fn eq() {
 
     assert_matches!(
         SC::verify(&p1, s2, &proof, &mut sponge, &mut exceptional_set),
-        Err(Error::PolynomialIdentity(_, _))
+        Err(Error::PolynomialIdentity)
     );
     sponge.reset();
     exceptional_set.reset();
@@ -158,7 +158,7 @@ fn mask() {
 
     assert_matches!(
         SC::verify(&p1, s2, &proof, &mut sponge, &mut exceptional_set),
-        Err(Error::PolynomialIdentity(_, _))
+        Err(Error::PolynomialIdentity)
     );
     sponge.reset();
     exceptional_set.reset();
