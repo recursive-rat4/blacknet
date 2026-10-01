@@ -17,7 +17,7 @@
 
 use crate::algebra::{Dot, Double, Inv, LeftOne, LeftZero, One, RightOne, RightZero, Square, Zero};
 use crate::branchless::{BlAssign, BlEq, BlOption, BlSelect};
-use crate::symmetric::{Absorb, Duplexer, Squeeze};
+use crate::symmetric::sponge::{Absorb, Sponge, Squeeze};
 use bytemuck::Zeroable;
 use core::array;
 use core::borrow::{Borrow, BorrowMut};
@@ -725,13 +725,13 @@ impl<T: BlEq, const N: usize> BlEq for Array<T, N> {
 }
 
 impl<Msg, T: Absorb<Msg>, const N: usize> Absorb<Msg> for Array<T, N> {
-    fn absorb_into<D: Duplexer<Msg = Msg>>(self, duplex: &mut D) {
-        duplex.absorb_iter(self.values)
+    fn absorb_into<S: Sponge<Msg = Msg>>(self, sponge: &mut S) {
+        sponge.absorb_iter(self.values)
     }
 }
 
 impl<Msg, T: Squeeze<Msg>, const N: usize> Squeeze<Msg> for Array<T, N> {
-    fn squeeze_from<D: Duplexer<Msg = Msg>>(duplex: &mut D) -> Self {
-        Self::from_fn(|_| duplex.squeeze())
+    fn squeeze_from<S: Sponge<Msg = Msg>>(sponge: &mut S) -> Self {
+        Self::from_fn(|_| sponge.squeeze())
     }
 }

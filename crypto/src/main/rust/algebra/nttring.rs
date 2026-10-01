@@ -23,7 +23,7 @@ use crate::algebra::{
 use crate::branchless::BlOption;
 use crate::convolution::{Convolution, Negacyclic};
 use crate::numbertheoretictransform::{NTTConvolution, Twiddles, cooley_tukey, gentleman_sande};
-use crate::symmetric::{Absorb, Duplexer, Squeeze};
+use crate::symmetric::sponge::{Absorb, Sponge, Squeeze};
 use bytemuck::Zeroable;
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
@@ -754,15 +754,15 @@ where
 impl<Msg, Z: Twiddles<M> + Absorb<Msg>, const M: usize, const N: usize> Absorb<Msg>
     for NTTRing<Z, M, N>
 {
-    fn absorb_into<D: Duplexer<Msg = Msg>>(self, duplex: &mut D) {
-        duplex.absorb(self.spectrum)
+    fn absorb_into<S: Sponge<Msg = Msg>>(self, sponge: &mut S) {
+        sponge.absorb(self.spectrum)
     }
 }
 
 impl<Msg, Z: Twiddles<M> + Squeeze<Msg>, const M: usize, const N: usize> Squeeze<Msg>
     for NTTRing<Z, M, N>
 {
-    fn squeeze_from<D: Duplexer<Msg = Msg>>(duplex: &mut D) -> Self {
-        Self::new(Array::squeeze_from(duplex))
+    fn squeeze_from<S: Sponge<Msg = Msg>>(sponge: &mut S) -> Self {
+        Self::new(Array::squeeze_from(sponge))
     }
 }

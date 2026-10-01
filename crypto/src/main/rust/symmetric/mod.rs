@@ -20,15 +20,10 @@
 pub mod blake2b;
 pub mod chacha;
 mod compressionfunction;
-mod duplex;
 mod merkletree;
-mod permutation;
-mod trunc;
+pub mod sponge;
 
-pub use blake2b::{Blake2b256, Blake2b512, Blake2bDuplexer, Blake2xb};
+pub use blake2b::{Blake2b256, Blake2b512, Blake2bSponge, Blake2xb};
 pub use chacha::ChaCha20;
 pub use compressionfunction::CompressionFunction;
-pub use duplex::{Absorb, Duplex, Duplexer, Phase, Squeeze, SqueezeWithSize, UniformDistribution};
 pub use merkletree::MerkleTree;
-pub use permutation::Permutation;
-pub use trunc::Trunc;

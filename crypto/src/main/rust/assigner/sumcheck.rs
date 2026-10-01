@@ -20,7 +20,7 @@ use crate::assigner::assigment::Assigment;
 use crate::assigner::polynomial::UnivariatePolynomial;
 use crate::polynomial::{MultivariatePolynomial, Polynomial};
 use crate::random::Distribution;
-use crate::symmetric::{Absorb, Duplexer};
+use crate::symmetric::sponge::{Absorb, Sponge};
 use alloc::vec::Vec;
 use core::marker::PhantomData;
 
@@ -57,28 +57,28 @@ pub struct SumCheck<
     'a,
     R: UnitalRing,
     P: MultivariatePolynomial<Coefficient = R, Point: From<Vec<R>>>,
-    D: Duplexer,
-    E: Distribution<R, D>,
+    S: Sponge,
+    E: Distribution<R, S>,
 > {
     _assigment: &'a Assigment<R>,
     phantom_p: PhantomData<P>,
-    phantom_d: PhantomData<D>,
+    phantom_s: PhantomData<S>,
     phantom_e: PhantomData<E>,
 }
 
 impl<
     'a,
-    R: UnitalRing + Absorb<D::Msg> + Clone,
+    R: UnitalRing + Absorb<S::Msg> + Clone,
     P: MultivariatePolynomial<Coefficient = R, Point: From<Vec<R>>>,
-    D: Duplexer,
-    E: Distribution<R, D>,
-> SumCheck<'a, R, P, D, E>
+    S: Sponge,
+    E: Distribution<R, S>,
+> SumCheck<'a, R, P, S, E>
 {
     pub const fn new(assigment: &'a Assigment<R>) -> Self {
         Self {
             _assigment: assigment,
             phantom_p: PhantomData,
-            phantom_d: PhantomData,
+            phantom_s: PhantomData,
             phantom_e: PhantomData,
         }
     }
@@ -88,7 +88,7 @@ impl<
         polynomial: &P,
         mut sum: R,
         proof: &Proof<'a, R>,
-        duplex: &mut D,
+        sponge: &mut S,
         exceptional_set: &mut E,
     ) -> (P::Point, R)
     where
@@ -97,8 +97,8 @@ impl<
         let mut coordinates = Vec::<R>::with_capacity(polynomial.variables() as usize);
         for i in 0..polynomial.variables() {
             let claim = proof.recover(i, polynomial.degree(), &sum);
-            duplex.absorb(&claim);
-            let challenge = exceptional_set.sample(duplex);
+            sponge.absorb(&claim);
+            let challenge = exceptional_set.sample(sponge);
             sum = claim.point(&challenge);
             coordinates.push(challenge);
             exceptional_set.reset();

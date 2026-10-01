@@ -22,7 +22,7 @@ use crate::algebra::{
 };
 use crate::branchless::{BlAssign, BlEq, BlOption, BlSelect};
 use crate::gf2::GF2;
-use crate::symmetric::{Absorb, Duplexer, Squeeze};
+use crate::symmetric::sponge::{Absorb, Sponge, Squeeze};
 use bytemuck::Zeroable;
 use core::array;
 use core::fmt::{Debug, Formatter, Result};
@@ -571,15 +571,15 @@ impl BlEq for GHashField {
 }
 
 impl Absorb<u8> for GHashField {
-    fn absorb_into<D: Duplexer<Msg = u8>>(self, duplex: &mut D) {
-        duplex.absorb_iter(self.coefficients.into_iter().flat_map(u64::to_le_bytes))
+    fn absorb_into<S: Sponge<Msg = u8>>(self, sponge: &mut S) {
+        sponge.absorb_iter(self.coefficients.into_iter().flat_map(u64::to_le_bytes))
     }
 }
 
 impl Squeeze<u8> for GHashField {
-    fn squeeze_from<D: Duplexer<Msg = u8>>(duplex: &mut D) -> Self {
+    fn squeeze_from<S: Sponge<Msg = u8>>(sponge: &mut S) -> Self {
         let coefficients = array::from_fn(|_| {
-            let bytes: [u8; 8] = array::from_fn(|_| duplex.squeeze_msg());
+            let bytes: [u8; 8] = array::from_fn(|_| sponge.squeeze_msg());
             u64::from_le_bytes(bytes)
         });
         Self { coefficients }

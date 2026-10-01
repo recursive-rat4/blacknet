@@ -23,7 +23,7 @@ use crate::algebra::{
 use crate::bigint::{UInt256, UInt512};
 use crate::branchless::{BlAbs, BlAssign, BlEq, BlOption, BlOrd, BlSelect, BlSwap};
 use crate::integer::Integer;
-use crate::symmetric::{Absorb, Duplexer, Squeeze};
+use crate::symmetric::sponge::{Absorb, Sponge, Squeeze};
 use bytemuck::Zeroable;
 use core::array;
 use core::fmt;
@@ -682,16 +682,16 @@ impl BlSwap for Scalar25519 {
 }
 
 impl Absorb<u8> for Scalar25519 {
-    fn absorb_into<D: Duplexer<Msg = u8>>(self, duplex: &mut D) {
+    fn absorb_into<S: Sponge<Msg = u8>>(self, sponge: &mut S) {
         let bytes: [u8; 32] = self.canonical().to_le_bytes();
-        duplex.absorb_iter(bytes)
+        sponge.absorb_iter(bytes)
     }
 }
 
 impl Squeeze<u8> for Scalar25519 {
-    fn squeeze_from<D: Duplexer<Msg = u8>>(duplex: &mut D) -> Self {
+    fn squeeze_from<S: Sponge<Msg = u8>>(sponge: &mut S) -> Self {
         // log₂(Δ) ≈ -128
-        let bytes: [u8; 32] = array::from_fn(|_| duplex.squeeze_msg());
+        let bytes: [u8; 32] = array::from_fn(|_| sponge.squeeze_msg());
         let n = UInt256::from_le_bytes(bytes);
         Self::with_int(n)
     }

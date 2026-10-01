@@ -22,7 +22,7 @@ use crate::algebra::{
     UnitalSemiring, Zero,
 };
 use crate::branchless::BlOption;
-use crate::symmetric::{Absorb, Duplexer, Squeeze};
+use crate::symmetric::sponge::{Absorb, Sponge, Squeeze};
 use bytemuck::Zeroable;
 use core::borrow::{Borrow, BorrowMut};
 use core::fmt::{Debug, Formatter, Result};
@@ -639,13 +639,13 @@ impl<R: Semiring, const N: usize> MultiplicativeSemigroup for VectorRing<R, N> {
 impl<R: Semiring + Clone, const N: usize> Semimodule<R> for VectorRing<R, N> {}
 
 impl<Msg, R: Semiring + Absorb<Msg>, const N: usize> Absorb<Msg> for VectorRing<R, N> {
-    fn absorb_into<D: Duplexer<Msg = Msg>>(self, duplex: &mut D) {
-        duplex.absorb_iter(self.elements)
+    fn absorb_into<S: Sponge<Msg = Msg>>(self, sponge: &mut S) {
+        sponge.absorb_iter(self.elements)
     }
 }
 
 impl<Msg, R: Semiring + Squeeze<Msg>, const N: usize> Squeeze<Msg> for VectorRing<R, N> {
-    fn squeeze_from<D: Duplexer<Msg = Msg>>(duplex: &mut D) -> Self {
-        Self::new(Array::from_fn(|_| duplex.squeeze()))
+    fn squeeze_from<S: Sponge<Msg = Msg>>(sponge: &mut S) -> Self {
+        Self::new(Array::from_fn(|_| sponge.squeeze()))
     }
 }

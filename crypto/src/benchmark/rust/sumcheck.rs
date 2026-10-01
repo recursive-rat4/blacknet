@@ -22,13 +22,16 @@ use blacknet_crypto::polynomial::{
     interpolation::Interpolator,
 };
 use blacknet_crypto::sumcheck::SumCheck;
-use blacknet_crypto::symmetric::{Blake2bDuplexer, Duplexer, UniformDistribution};
+use blacknet_crypto::symmetric::{
+    Blake2bSponge,
+    sponge::{Sponge, UniformDistribution},
+};
 use criterion::{Criterion, Throughput, criterion_group, criterion_main};
 use std::hint::black_box;
 
 const VARS: u32 = 15;
 type Z = LMField;
-type D = Blake2bDuplexer;
+type S = Blake2bSponge;
 type E = UniformDistribution;
 
 fn make_bin() -> (BinarityPolynomial<Z>, Z) {
@@ -81,39 +84,39 @@ fn criterion_benchmark(crit: &mut Criterion) {
 
     let interpolator1 = Interpolator::<Z>::degree_1().unwrap();
     let interpolator2 = Interpolator::<Z>::degree_2().unwrap();
-    let mut duplex = D::new();
+    let mut sponge = S::new();
     let mut exceptional_set = E::new();
 
     let (bin, sum) = black_box(make_bin());
     grp.bench_function("prove Bin", |bench| {
-        type SC = SumCheck<Z, Z, BinarityPolynomial<Z>, D, E>;
+        type SC = SumCheck<Z, Z, BinarityPolynomial<Z>, S, E>;
         bench.iter(|| {
             let proof = SC::prove(
                 bin.clone(),
                 sum,
-                &mut duplex,
+                &mut sponge,
                 &mut exceptional_set,
                 &interpolator2,
             );
-            duplex.reset();
+            sponge.reset();
             exceptional_set.reset();
             proof
         })
     });
     grp.bench_function("verify Bin", |bench| {
-        type SC = SumCheck<Z, Z, BinarityPolynomial<Z>, D, E>;
+        type SC = SumCheck<Z, Z, BinarityPolynomial<Z>, S, E>;
         let proof = SC::prove(
             bin.clone(),
             sum,
-            &mut duplex,
+            &mut sponge,
             &mut exceptional_set,
             &interpolator2,
         );
-        duplex.reset();
+        sponge.reset();
         exceptional_set.reset();
         bench.iter(|| {
-            let result = SC::verify(&bin, sum, &proof, &mut duplex, &mut exceptional_set);
-            duplex.reset();
+            let result = SC::verify(&bin, sum, &proof, &mut sponge, &mut exceptional_set);
+            sponge.reset();
             exceptional_set.reset();
             result.unwrap()
         })
@@ -121,34 +124,34 @@ fn criterion_benchmark(crit: &mut Criterion) {
 
     let (eq, sum) = black_box(make_eq());
     grp.bench_function("prove Eq", |bench| {
-        type SC = SumCheck<Z, Z, EqExtension<Z>, D, E>;
+        type SC = SumCheck<Z, Z, EqExtension<Z>, S, E>;
         bench.iter(|| {
             let proof = SC::prove(
                 eq.clone(),
                 sum,
-                &mut duplex,
+                &mut sponge,
                 &mut exceptional_set,
                 &interpolator1,
             );
-            duplex.reset();
+            sponge.reset();
             exceptional_set.reset();
             proof
         })
     });
     grp.bench_function("verify Eq", |bench| {
-        type SC = SumCheck<Z, Z, EqExtension<Z>, D, E>;
+        type SC = SumCheck<Z, Z, EqExtension<Z>, S, E>;
         let proof = SC::prove(
             eq.clone(),
             sum,
-            &mut duplex,
+            &mut sponge,
             &mut exceptional_set,
             &interpolator1,
         );
-        duplex.reset();
+        sponge.reset();
         exceptional_set.reset();
         bench.iter(|| {
-            let result = SC::verify(&eq, sum, &proof, &mut duplex, &mut exceptional_set);
-            duplex.reset();
+            let result = SC::verify(&eq, sum, &proof, &mut sponge, &mut exceptional_set);
+            sponge.reset();
             exceptional_set.reset();
             result.unwrap()
         })
@@ -156,34 +159,34 @@ fn criterion_benchmark(crit: &mut Criterion) {
 
     let (mask, sum) = black_box(make_mask());
     grp.bench_function("prove Mask", |bench| {
-        type SC = SumCheck<Z, Z, MaskingPolynomial<Z>, D, E>;
+        type SC = SumCheck<Z, Z, MaskingPolynomial<Z>, S, E>;
         bench.iter(|| {
             let proof = SC::prove(
                 mask.clone(),
                 sum,
-                &mut duplex,
+                &mut sponge,
                 &mut exceptional_set,
                 &interpolator2,
             );
-            duplex.reset();
+            sponge.reset();
             exceptional_set.reset();
             proof
         })
     });
     grp.bench_function("verify Mask", |bench| {
-        type SC = SumCheck<Z, Z, MaskingPolynomial<Z>, D, E>;
+        type SC = SumCheck<Z, Z, MaskingPolynomial<Z>, S, E>;
         let proof = SC::prove(
             mask.clone(),
             sum,
-            &mut duplex,
+            &mut sponge,
             &mut exceptional_set,
             &interpolator2,
         );
-        duplex.reset();
+        sponge.reset();
         exceptional_set.reset();
         bench.iter(|| {
-            let result = SC::verify(&mask, sum, &proof, &mut duplex, &mut exceptional_set);
-            duplex.reset();
+            let result = SC::verify(&mask, sum, &proof, &mut sponge, &mut exceptional_set);
+            sponge.reset();
             exceptional_set.reset();
             result.unwrap()
         })
@@ -191,34 +194,34 @@ fn criterion_benchmark(crit: &mut Criterion) {
 
     let (mle, sum) = black_box(make_mle());
     grp.bench_function("prove Mle", |bench| {
-        type SC = SumCheck<Z, Z, MultilinearExtension<Z>, D, E>;
+        type SC = SumCheck<Z, Z, MultilinearExtension<Z>, S, E>;
         bench.iter(|| {
             let proof = SC::prove(
                 mle.clone(),
                 sum,
-                &mut duplex,
+                &mut sponge,
                 &mut exceptional_set,
                 &interpolator1,
             );
-            duplex.reset();
+            sponge.reset();
             exceptional_set.reset();
             proof
         })
     });
     grp.bench_function("verify Mle", |bench| {
-        type SC = SumCheck<Z, Z, MultilinearExtension<Z>, D, E>;
+        type SC = SumCheck<Z, Z, MultilinearExtension<Z>, S, E>;
         let proof = SC::prove(
             mle.clone(),
             sum,
-            &mut duplex,
+            &mut sponge,
             &mut exceptional_set,
             &interpolator1,
         );
-        duplex.reset();
+        sponge.reset();
         exceptional_set.reset();
         bench.iter(|| {
-            let result = SC::verify(&mle, sum, &proof, &mut duplex, &mut exceptional_set);
-            duplex.reset();
+            let result = SC::verify(&mle, sum, &proof, &mut sponge, &mut exceptional_set);
+            sponge.reset();
             exceptional_set.reset();
             result.unwrap()
         })

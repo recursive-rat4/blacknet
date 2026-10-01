@@ -29,18 +29,21 @@ use blacknet_crypto::polynomial::{
     interpolation::Interpolator,
 };
 use blacknet_crypto::sumcheck::{Error, Proof as ProofPlain, SumCheck as SumCheckPlain};
-use blacknet_crypto::symmetric::{Blake2bDuplexer, Duplexer, UniformDistribution};
+use blacknet_crypto::symmetric::{
+    Blake2bSponge,
+    sponge::{Sponge, UniformDistribution},
+};
 use core::assert_matches;
 
 type Z = PervushinField;
-type D = Blake2bDuplexer;
+type S = Blake2bSponge;
 type E = UniformDistribution;
 
 #[test]
 fn mle() {
     let interpolator = Interpolator::<Z>::degree_1().unwrap();
-    type SC = SumCheckPlain<Z, Z, MultilinearExtension<Z>, D, E>;
-    let mut duplex = D::default();
+    type SC = SumCheckPlain<Z, Z, MultilinearExtension<Z>, S, E>;
+    let mut sponge = S::default();
     let mut exceptional_set = E::default();
 
     let p1 = MultilinearExtension::from([7, 7, 7, 0].map(Z::from));
@@ -51,49 +54,49 @@ fn mle() {
     let proof = SC::prove(
         p1.clone(),
         s1,
-        &mut duplex,
+        &mut sponge,
         &mut exceptional_set,
         &interpolator,
     );
-    duplex.reset();
+    sponge.reset();
     exceptional_set.reset();
 
     assert_matches!(
-        SC::verify(&p1, s1, &proof, &mut duplex, &mut exceptional_set),
+        SC::verify(&p1, s1, &proof, &mut sponge, &mut exceptional_set),
         Ok(())
     );
-    duplex.reset();
+    sponge.reset();
     exceptional_set.reset();
 
     assert_matches!(
-        SC::verify(&p1, s2, &proof, &mut duplex, &mut exceptional_set),
+        SC::verify(&p1, s2, &proof, &mut sponge, &mut exceptional_set),
         Err(Error::PolynomialIdentity(_, _))
     );
-    duplex.reset();
+    sponge.reset();
     exceptional_set.reset();
 
     assert_matches!(
-        SC::verify(&p2, s1, &proof, &mut duplex, &mut exceptional_set),
+        SC::verify(&p2, s1, &proof, &mut sponge, &mut exceptional_set),
         Err(Error::PolynomialIdentity(_, _))
     );
-    duplex.reset();
+    sponge.reset();
     exceptional_set.reset();
 
     let proof3 = ProofPlain::default();
 
     assert_matches!(
-        SC::verify(&p1, s1, &proof3, &mut duplex, &mut exceptional_set),
+        SC::verify(&p1, s1, &proof3, &mut sponge, &mut exceptional_set),
         Err(Error::Length(0, 2))
     );
-    duplex.reset();
+    sponge.reset();
     exceptional_set.reset();
 }
 
 #[test]
 fn eq() {
     let interpolator = Interpolator::<Z>::degree_1().unwrap();
-    type SC = SumCheckPlain<Z, Z, EqExtension<Z>, D, E>;
-    let mut duplex = D::default();
+    type SC = SumCheckPlain<Z, Z, EqExtension<Z>, S, E>;
+    let mut sponge = S::default();
     let mut exceptional_set = E::default();
 
     let p1 = EqExtension::from([45, 46, 47, 48].map(Z::from));
@@ -103,33 +106,33 @@ fn eq() {
     let proof = SC::prove(
         p1.clone(),
         s1,
-        &mut duplex,
+        &mut sponge,
         &mut exceptional_set,
         &interpolator,
     );
-    duplex.reset();
+    sponge.reset();
     exceptional_set.reset();
 
     assert_matches!(
-        SC::verify(&p1, s1, &proof, &mut duplex, &mut exceptional_set),
+        SC::verify(&p1, s1, &proof, &mut sponge, &mut exceptional_set),
         Ok(())
     );
-    duplex.reset();
+    sponge.reset();
     exceptional_set.reset();
 
     assert_matches!(
-        SC::verify(&p1, s2, &proof, &mut duplex, &mut exceptional_set),
+        SC::verify(&p1, s2, &proof, &mut sponge, &mut exceptional_set),
         Err(Error::PolynomialIdentity(_, _))
     );
-    duplex.reset();
+    sponge.reset();
     exceptional_set.reset();
 }
 
 #[test]
 fn mask() {
     let interpolator = Interpolator::<Z>::degree_2().unwrap();
-    type SC = SumCheckPlain<Z, Z, MaskingPolynomial<Z>, D, E>;
-    let mut duplex = D::default();
+    type SC = SumCheckPlain<Z, Z, MaskingPolynomial<Z>, S, E>;
+    let mut sponge = S::default();
     let mut exceptional_set = E::default();
 
     let p1 = MaskingPolynomial::new([1, 2, 3, 4, 5, 6, 7].map(Z::from).into(), 2, 3);
@@ -139,34 +142,34 @@ fn mask() {
     let proof = SC::prove(
         p1.clone(),
         s1,
-        &mut duplex,
+        &mut sponge,
         &mut exceptional_set,
         &interpolator,
     );
-    duplex.reset();
+    sponge.reset();
     exceptional_set.reset();
 
     assert_matches!(
-        SC::verify(&p1, s1, &proof, &mut duplex, &mut exceptional_set),
+        SC::verify(&p1, s1, &proof, &mut sponge, &mut exceptional_set),
         Ok(())
     );
-    duplex.reset();
+    sponge.reset();
     exceptional_set.reset();
 
     assert_matches!(
-        SC::verify(&p1, s2, &proof, &mut duplex, &mut exceptional_set),
+        SC::verify(&p1, s2, &proof, &mut sponge, &mut exceptional_set),
         Err(Error::PolynomialIdentity(_, _))
     );
-    duplex.reset();
+    sponge.reset();
     exceptional_set.reset();
 }
 
 #[test]
 fn circuit() {
-    type DuplexPlain = TestDuplexPlain;
-    type SCPlain = SumCheckPlain<Z, Z, MultilinearExtension<Z>, DuplexPlain, E>;
+    type SpongePlain = TestSpongePlain;
+    type SCPlain = SumCheckPlain<Z, Z, MultilinearExtension<Z>, SpongePlain, E>;
     let interpolator = Interpolator::<Z>::degree_1().unwrap();
-    let mut duplex_plain = DuplexPlain::new();
+    let mut sponge_plain = SpongePlain::new();
     let mut exceptional_set_plain = E::default();
 
     let poly_plain = MultilinearExtension::from([7, 7, 7, 0].map(Z::from));
@@ -174,17 +177,17 @@ fn circuit() {
     let proof_plain = SCPlain::prove(
         poly_plain.clone(),
         sum_plain,
-        &mut duplex_plain,
+        &mut sponge_plain,
         &mut exceptional_set_plain,
         &interpolator,
     );
-    duplex_plain.reset();
+    sponge_plain.reset();
     exceptional_set_plain.reset();
     let (point_plain, state_plain) = SCPlain::verify_early_stopping(
         &poly_plain,
         sum_plain,
         &proof_plain,
-        &mut duplex_plain,
+        &mut sponge_plain,
         &mut exceptional_set_plain,
     )
     .unwrap();
@@ -198,15 +201,15 @@ fn circuit() {
         poly_plain.variables(),
         poly_plain.degree(),
     );
-    type DuplexCircuit<'a> = TestDuplexCircuit;
-    let mut duplex_circuit = DuplexCircuit::new(&circuit);
+    type SpongeCircuit<'a> = TestSpongeCircuit;
+    let mut sponge_circuit = SpongeCircuit::new(&circuit);
     type UniformDistributionCircuit<'a> = UniformDistribution;
     let mut exceptional_set_circuit = UniformDistributionCircuit::default();
     type SCCircuit<'a> = SumCheckCircuit<
         'a,
         Z,
         MultilinearExtension<Z>,
-        DuplexCircuit<'a>,
+        SpongeCircuit<'a>,
         UniformDistributionCircuit<'a>,
     >;
     let sumcheck_circuit = SCCircuit::new(&circuit);
@@ -215,7 +218,7 @@ fn circuit() {
         &poly_plain,
         sum_circuit.into(),
         &proof_circuit,
-        &mut duplex_circuit,
+        &mut sponge_circuit,
         &mut exceptional_set_circuit,
     );
     drop(scope);
@@ -227,15 +230,15 @@ fn circuit() {
 
     let proof_assigner =
         ProofAssigner::new((&proof_plain).into_iter().copied().collect::<Vec<_>>(), &z);
-    type DuplexAssigner<'a> = TestDuplexAssigner;
-    let mut duplex_assigner = DuplexAssigner::new(&z);
+    type SpongeAssigner<'a> = TestSpongeAssigner;
+    let mut sponge_assigner = SpongeAssigner::new(&z);
     type UniformDistributionAssigner<'a> = UniformDistribution;
     let mut exceptional_set_assigner = UniformDistributionAssigner::default();
     type SCAssigner<'a> = SumCheckAssigner<
         'a,
         Z,
         MultilinearExtension<Z>,
-        DuplexAssigner<'a>,
+        SpongeAssigner<'a>,
         UniformDistributionAssigner<'a>,
     >;
     let sumcheck_assigner = SCAssigner::new(&z);
@@ -244,7 +247,7 @@ fn circuit() {
         &poly_plain,
         sum_plain,
         &proof_assigner,
-        &mut duplex_assigner,
+        &mut sponge_assigner,
         &mut exceptional_set_assigner,
     );
     assert_eq!(point_assigned, point_plain);
@@ -252,17 +255,17 @@ fn circuit() {
     assert_matches!(r1cs.is_satisfied(&z.finish()), Ok(()));
 }
 
-struct TestDuplexPlain {
+struct TestSpongePlain {
     x: Z,
 }
 
-impl TestDuplexPlain {
+impl TestSpongePlain {
     const fn new() -> Self {
         Self { x: Z::ONE }
     }
 }
 
-impl Duplexer for TestDuplexPlain {
+impl Sponge for TestSpongePlain {
     type Msg = Z;
 
     fn reset(&mut self) {
@@ -279,11 +282,11 @@ impl Duplexer for TestDuplexPlain {
     }
 }
 
-struct TestDuplexCircuit {
+struct TestSpongeCircuit {
     x: LinearCombination<Z>,
 }
 
-impl<'a> TestDuplexCircuit {
+impl<'a> TestSpongeCircuit {
     fn new(_: &'a CircuitBuilder<Z>) -> Self {
         Self {
             x: Self::ONE.into(),
@@ -293,7 +296,7 @@ impl<'a> TestDuplexCircuit {
     const ONE: Constant<Z> = Constant::<Z>::ONE;
 }
 
-impl Duplexer for TestDuplexCircuit {
+impl Sponge for TestSpongeCircuit {
     type Msg = LinearCombination<Z>;
 
     fn reset(&mut self) {
@@ -310,17 +313,17 @@ impl Duplexer for TestDuplexCircuit {
     }
 }
 
-struct TestDuplexAssigner {
+struct TestSpongeAssigner {
     x: Z,
 }
 
-impl<'a> TestDuplexAssigner {
+impl<'a> TestSpongeAssigner {
     const fn new(_: &'a Assigment<Z>) -> Self {
         Self { x: Z::ONE }
     }
 }
 
-impl Duplexer for TestDuplexAssigner {
+impl Sponge for TestSpongeAssigner {
     type Msg = Z;
 
     fn reset(&mut self) {

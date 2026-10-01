@@ -21,7 +21,7 @@ use criterion::{Criterion, Throughput, criterion_group, criterion_main};
 use std::hint::black_box;
 
 type Z = blacknet_crypto::lm::LMField;
-type DRG = blacknet_crypto::symmetric::Blake2bDuplexer;
+type DRG = blacknet_crypto::symmetric::Blake2bSponge;
 
 const N: u32 = 1024;
 

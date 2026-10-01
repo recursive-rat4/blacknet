@@ -17,7 +17,7 @@
 
 use blacknet_crypto::{
     algebra::{Double, Inv, Square, Zero},
-    symmetric::{Blake2bDuplexer, Duplexer},
+    symmetric::{Blake2bSponge, sponge::Sponge},
 };
 use criterion::{Criterion, Throughput, criterion_group, criterion_main};
 use std::{any::type_name, hint::black_box};
@@ -28,7 +28,7 @@ fn name() -> &'static str {
     type_name::<F>().split("::").last().unwrap()
 }
 
-fn element(drg: &mut impl Duplexer<Msg = u8>) -> F {
+fn element(drg: &mut impl Sponge<Msg = u8>) -> F {
     loop {
         let element: F = drg.squeeze();
         if element != F::ZERO {
@@ -42,7 +42,7 @@ fn criterion_benchmark(crit: &mut Criterion) {
     let mut bench_group = crit.benchmark_group(field_name);
     bench_group.throughput(Throughput::Elements(1));
     let (a, b): (F, F) = {
-        let mut drg = Blake2bDuplexer::new();
+        let mut drg = Blake2bSponge::new();
         (element(&mut drg), element(&mut drg))
     };
 

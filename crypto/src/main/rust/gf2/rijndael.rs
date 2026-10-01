@@ -22,7 +22,7 @@ use crate::algebra::{
 };
 use crate::branchless::{BlAssign, BlEq, BlOption, BlSelect};
 use crate::gf2::GF2;
-use crate::symmetric::{Absorb, Duplexer, Squeeze};
+use crate::symmetric::sponge::{Absorb, Sponge, Squeeze};
 use bytemuck::Zeroable;
 use core::fmt::{Debug, Formatter, Result};
 use core::iter::{Product, Sum};
@@ -529,14 +529,14 @@ impl BlEq for RijndaelField {
 }
 
 impl Absorb<u8> for RijndaelField {
-    fn absorb_into<D: Duplexer<Msg = u8>>(self, duplex: &mut D) {
-        duplex.absorb_msg(self.coefficients)
+    fn absorb_into<S: Sponge<Msg = u8>>(self, sponge: &mut S) {
+        sponge.absorb_msg(self.coefficients)
     }
 }
 
 impl Squeeze<u8> for RijndaelField {
-    fn squeeze_from<D: Duplexer<Msg = u8>>(duplex: &mut D) -> Self {
-        let coefficients = duplex.squeeze_msg();
+    fn squeeze_from<S: Sponge<Msg = u8>>(sponge: &mut S) -> Self {
+        let coefficients = sponge.squeeze_msg();
         Self { coefficients }
     }
 }

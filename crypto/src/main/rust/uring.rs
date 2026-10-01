@@ -21,7 +21,7 @@ use crate::algebra::{
     RightZero, Set, Square, Zero,
 };
 use crate::branchless::{BlAbs, BlAssign, BlEq, BlSelect};
-use crate::symmetric::{Absorb, Duplexer, Squeeze};
+use crate::symmetric::sponge::{Absorb, Sponge, Squeeze};
 use bytemuck::Zeroable;
 use core::array;
 use core::fmt::{Debug, Formatter, Result};
@@ -417,15 +417,15 @@ macro_rules! impl_uring {
             }
 
             impl Absorb<u8> for $x {
-                fn absorb_into<D: Duplexer<Msg = u8>>(self, duplex: &mut D) {
-                    duplex.absorb_iter(self.n.to_le_bytes())
+                fn absorb_into<S: Sponge<Msg = u8>>(self, sponge: &mut S) {
+                    sponge.absorb_iter(self.n.to_le_bytes())
                 }
             }
 
             impl Squeeze<u8> for $x {
-                fn squeeze_from<D: Duplexer<Msg = u8>>(duplex: &mut D) -> Self {
+                fn squeeze_from<S: Sponge<Msg = u8>>(sponge: &mut S) -> Self {
                     const BYTES: usize = <$int>::BITS as usize >> 3;
-                    let bytes: [u8; BYTES] = array::from_fn(|_| duplex.squeeze_msg());
+                    let bytes: [u8; BYTES] = array::from_fn(|_| sponge.squeeze_msg());
                     let n = <$int>::from_le_bytes(bytes);
                     $x { n }
                 }

@@ -17,11 +17,5 @@
 
 pub mod blake2b;
 mod compressionfunction;
-mod duplex;
-mod permutation;
-mod trunc;
 
 pub use compressionfunction::CompressionFunction;
-pub use duplex::Duplex;
-pub use permutation::Permutation;
-pub use trunc::Trunc;

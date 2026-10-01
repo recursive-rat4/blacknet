@@ -20,7 +20,7 @@ use crate::matrix::{DenseMatrix, DenseVector};
 use crate::polynomial::{
     EqExtension, InBasis, MultivariatePolynomial, Point, Polynomial, TensorBasis,
 };
-use crate::symmetric::{Absorb, Duplexer, Squeeze, SqueezeWithSize};
+use crate::symmetric::sponge::{Absorb, Sponge, Squeeze, SqueezeWithSize};
 use alloc::borrow::{Borrow, BorrowMut};
 use alloc::vec::Vec;
 use core::iter::zip;
@@ -521,15 +521,15 @@ impl<R: UnitalRing> MulAssign<&R> for MultilinearExtension<R> {
 }
 
 impl<Msg, R: UnitalRing + Absorb<Msg>> Absorb<Msg> for MultilinearExtension<R> {
-    fn absorb_into<D: Duplexer<Msg = Msg>>(self, duplex: &mut D) {
-        duplex.absorb_iter(self.coefficients)
+    fn absorb_into<S: Sponge<Msg = Msg>>(self, sponge: &mut S) {
+        sponge.absorb_iter(self.coefficients)
     }
 }
 
 impl<Msg, R: UnitalRing + Squeeze<Msg>> SqueezeWithSize<Msg> for MultilinearExtension<R> {
-    fn squeeze_from<D: Duplexer<Msg = Msg>>(duplex: &mut D, size: usize) -> Self {
+    fn squeeze_from<S: Sponge<Msg = Msg>>(sponge: &mut S, size: usize) -> Self {
         Self {
-            coefficients: (0..size).map(|_| duplex.squeeze::<R>()).collect(),
+            coefficients: (0..size).map(|_| sponge.squeeze::<R>()).collect(),
         }
     }
 }

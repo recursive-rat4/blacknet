@@ -20,7 +20,7 @@ use crate::polynomial::{
     MultivariatePolynomial, Polynomial, UnivariatePolynomial, interpolation::*,
 };
 use crate::random::Distribution;
-use crate::symmetric::{Absorb, Duplexer};
+use crate::symmetric::sponge::{Absorb, Sponge};
 use alloc::vec::Vec;
 use core::fmt;
 use core::marker::PhantomData;
@@ -92,38 +92,38 @@ pub struct SumCheck<
     R: UnitalRing,
     A: UnitalAlgebra<R>,
     P: MultivariatePolynomial<Coefficient = A, Point: From<Vec<A>>>,
-    D: Duplexer,
-    E: Distribution<A, D>,
+    S: Sponge,
+    E: Distribution<A, S>,
 > {
     phantom_r: PhantomData<R>,
     phantom_a: PhantomData<A>,
     phantom_p: PhantomData<P>,
-    phantom_d: PhantomData<D>,
+    phantom_s: PhantomData<S>,
     phantom_e: PhantomData<E>,
 }
 
 impl<
     R: UnitalRing,
-    A: UnitalAlgebra<R> + Absorb<D::Msg> + Clone + Eq + Send + Sync,
+    A: UnitalAlgebra<R> + Absorb<S::Msg> + Clone + Eq + Send + Sync,
     P: MultivariatePolynomial<Coefficient = A, Point: From<Vec<A>>> + Send + Sync,
-    D: Duplexer,
-    E: Distribution<A, D>,
-> SumCheck<R, A, P, D, E>
+    S: Sponge,
+    E: Distribution<A, S>,
+> SumCheck<R, A, P, S, E>
 where
     for<'a> &'a A: AlgebraOps<R, A>,
 {
     pub fn prove(
         mut polynomial: P,
         mut sum: A,
-        duplex: &mut D,
+        sponge: &mut S,
         exceptional_set: &mut E,
         interpolator: &Interpolator<A>,
     ) -> Proof<A> {
         let mut proof = Proof::<A>::new(polynomial.degree(), polynomial.variables());
         for _ in 0..polynomial.variables() {
             let claim = Self::prove_round(&polynomial, sum, interpolator);
-            duplex.absorb(&claim);
-            let challenge = exceptional_set.sample(duplex);
+            sponge.absorb(&claim);
+            let challenge = exceptional_set.sample(sponge);
             polynomial.bind(&challenge);
             sum = claim.point(&challenge);
             proof.push(claim);
@@ -136,10 +136,10 @@ where
         polynomial: &P,
         sum: A,
         proof: &Proof<A>,
-        duplex: &mut D,
+        sponge: &mut S,
         exceptional_set: &mut E,
     ) -> Result<(), Error<A>> {
-        let (r, s) = Self::verify_early_stopping(polynomial, sum, proof, duplex, exceptional_set)?;
+        let (r, s) = Self::verify_early_stopping(polynomial, sum, proof, sponge, exceptional_set)?;
         let eval = polynomial.point(&r);
         if eval != s {
             return Err(Error::PolynomialIdentity(eval, s));
@@ -151,7 +151,7 @@ where
         polynomial: &P,
         mut sum: A,
         proof: &Proof<A>,
-        duplex: &mut D,
+        sponge: &mut S,
         exceptional_set: &mut E,
     ) -> Result<(P::Point, A), Error<A>> {
         let expected_length = polynomial.degree() * polynomial.variables();
@@ -162,8 +162,8 @@ where
         for i in 0..polynomial.variables() {
             let claim = proof.recover(i, polynomial.degree(), &sum);
             debug_assert!(claim.at_0_plus_1() == sum);
-            duplex.absorb(&claim);
-            let challenge = exceptional_set.sample(duplex);
+            sponge.absorb(&claim);
+            let challenge = exceptional_set.sample(sponge);
             sum = claim.point(&challenge);
             coordinates.push(challenge);
             exceptional_set.reset();

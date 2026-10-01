@@ -18,7 +18,7 @@
 use crate::algebra::{Double, SemiringOps, UnitalSemiring};
 use crate::circuit::builder::{CircuitBuilder, LinearCombination, VariableKind};
 use crate::polynomial::Polynomial;
-use crate::symmetric::{Absorb, Duplexer};
+use crate::symmetric::sponge::{Absorb, Sponge};
 use alloc::vec::Vec;
 use core::iter::{repeat_with, zip};
 use core::ops::{Add, AddAssign};
@@ -116,13 +116,13 @@ where
 }
 
 impl<'a, R: UnitalSemiring> Absorb<LinearCombination<R>> for UnivariatePolynomial<'a, R> {
-    fn absorb_into<D: Duplexer<Msg = LinearCombination<R>>>(self, duplex: &mut D) {
-        duplex.absorb_iter(self.coefficients)
+    fn absorb_into<S: Sponge<Msg = LinearCombination<R>>>(self, sponge: &mut S) {
+        sponge.absorb_iter(self.coefficients)
     }
 }
 
 impl<'a, R: UnitalSemiring + Clone> Absorb<LinearCombination<R>> for &UnivariatePolynomial<'a, R> {
-    fn absorb_into<D: Duplexer<Msg = LinearCombination<R>>>(self, duplex: &mut D) {
-        duplex.absorb_iter(self.coefficients.iter().cloned())
+    fn absorb_into<S: Sponge<Msg = LinearCombination<R>>>(self, sponge: &mut S) {
+        sponge.absorb_iter(self.coefficients.iter().cloned())
     }
 }

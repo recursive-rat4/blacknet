@@ -20,7 +20,7 @@ use crate::algebra::{
     LeftZero, MultiplicativeSemigroup, One, RightOne, RightZero, Ring, RingOps, Semimodule,
     Semiring, SemiringOps, Set, Square, UnitalSemiring, VectorRing, Zero,
 };
-use crate::symmetric::{Absorb, Duplexer, Squeeze};
+use crate::symmetric::sponge::{Absorb, Sponge, Squeeze};
 use bytemuck::Zeroable;
 use core::iter::{Product, Sum};
 use core::mem::{MaybeUninit, transmute_copy};
@@ -884,15 +884,15 @@ impl<R: Ring + Copy, const N: usize, const NN: usize> Algebra<R> for MatrixSpace
 impl<Msg, R: Semiring + Absorb<Msg>, const M: usize, const N: usize, const MN: usize> Absorb<Msg>
     for MatrixSpace<R, M, N, MN>
 {
-    fn absorb_into<D: Duplexer<Msg = Msg>>(self, duplex: &mut D) {
-        duplex.absorb(self.elements)
+    fn absorb_into<S: Sponge<Msg = Msg>>(self, sponge: &mut S) {
+        sponge.absorb(self.elements)
     }
 }
 
 impl<Msg, R: Semiring + Squeeze<Msg>, const M: usize, const N: usize, const MN: usize> Squeeze<Msg>
     for MatrixSpace<R, M, N, MN>
 {
-    fn squeeze_from<D: Duplexer<Msg = Msg>>(duplex: &mut D) -> Self {
-        Self::new(Array::squeeze_from(duplex))
+    fn squeeze_from<S: Sponge<Msg = Msg>>(sponge: &mut S) -> Self {
+        Self::new(Array::squeeze_from(sponge))
     }
 }

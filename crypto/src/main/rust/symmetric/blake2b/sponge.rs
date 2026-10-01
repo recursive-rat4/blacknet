@@ -16,11 +16,11 @@
  */
 
 use crate::random::UniformGenerator;
-use crate::symmetric::Duplexer;
 use crate::symmetric::blake2b::Blake2b512;
+use crate::symmetric::sponge::Sponge;
 
 #[derive(Clone, Copy)]
-pub struct Blake2bDuplexer {
+pub struct Blake2bSponge {
     inner: Inner,
 }
 
@@ -36,8 +36,8 @@ enum Inner {
     },
 }
 
-impl Blake2bDuplexer {
-    /// Construct new duplexer.
+impl Blake2bSponge {
+    /// Construct new sponge.
     pub const fn new() -> Self {
         Self {
             inner: Inner::Absorb {
@@ -47,18 +47,18 @@ impl Blake2bDuplexer {
     }
 
     const fn hasher() -> Blake2b512 {
-        Blake2b512::with_personalization(*b"hashchain duplex")
+        Blake2b512::with_personalization(*b"hashchain sponge")
     }
 }
 
-impl Default for Blake2bDuplexer {
+impl Default for Blake2bSponge {
     #[inline]
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl Duplexer for Blake2bDuplexer {
+impl Sponge for Blake2bSponge {
     type Msg = u8;
 
     fn reset(&mut self) {
@@ -121,7 +121,7 @@ impl Duplexer for Blake2bDuplexer {
     }
 }
 
-impl UniformGenerator for Blake2bDuplexer {
+impl UniformGenerator for Blake2bSponge {
     type Output = u8;
 
     #[inline]

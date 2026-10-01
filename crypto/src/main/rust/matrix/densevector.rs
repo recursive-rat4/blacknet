@@ -17,7 +17,7 @@
 
 use crate::algebra::{Concat, Conjugate, Dot, Double, One, Square, Tensor, Zero};
 use crate::matrix::DenseMatrix;
-use crate::symmetric::{Absorb, Duplexer};
+use crate::symmetric::sponge::{Absorb, Sponge};
 use alloc::borrow::{Borrow, BorrowMut};
 use alloc::vec;
 use alloc::vec::Vec;
@@ -707,13 +707,13 @@ impl<T: Clone> Concat for &DenseVector<T> {
 }
 
 impl<Msg, T: Absorb<Msg>> Absorb<Msg> for DenseVector<T> {
-    fn absorb_into<D: Duplexer<Msg = Msg>>(self, duplex: &mut D) {
-        duplex.absorb_iter(self.elements)
+    fn absorb_into<S: Sponge<Msg = Msg>>(self, sponge: &mut S) {
+        sponge.absorb_iter(self.elements)
     }
 }
 
 impl<Msg, T: Absorb<Msg> + Clone> Absorb<Msg> for &DenseVector<T> {
-    fn absorb_into<D: Duplexer<Msg = Msg>>(self, duplex: &mut D) {
-        duplex.absorb_iter(self.elements.iter().cloned())
+    fn absorb_into<S: Sponge<Msg = Msg>>(self, sponge: &mut S) {
+        sponge.absorb_iter(self.elements.iter().cloned())
     }
 }

@@ -20,7 +20,7 @@ use crate::circuit::builder::{CircuitBuilder, LinearCombination, VariableKind};
 use crate::circuit::polynomial::{Point, UnivariatePolynomial};
 use crate::polynomial::{MultivariatePolynomial, Polynomial};
 use crate::random::Distribution;
-use crate::symmetric::Duplexer;
+use crate::symmetric::sponge::Sponge;
 use alloc::vec::Vec;
 use core::iter::repeat_with;
 use core::marker::PhantomData;
@@ -77,12 +77,12 @@ pub struct SumCheck<
     'a,
     R: UnitalRing,
     P: MultivariatePolynomial<Coefficient = R>,
-    D: Duplexer<Msg = LinearCombination<R>>,
-    E: Distribution<LinearCombination<R>, D>,
+    S: Sponge<Msg = LinearCombination<R>>,
+    E: Distribution<LinearCombination<R>, S>,
 > {
     _circuit: &'a CircuitBuilder<R>,
     phantom_p: PhantomData<P>,
-    phantom_d: PhantomData<D>,
+    phantom_s: PhantomData<S>,
     phantom_e: PhantomData<E>,
 }
 
@@ -90,9 +90,9 @@ impl<
     'a,
     R: UnitalRing + Clone + Eq,
     P: MultivariatePolynomial<Coefficient = R>,
-    D: Duplexer<Msg = LinearCombination<R>>,
-    E: Distribution<LinearCombination<R>, D>,
-> SumCheck<'a, R, P, D, E>
+    S: Sponge<Msg = LinearCombination<R>>,
+    E: Distribution<LinearCombination<R>, S>,
+> SumCheck<'a, R, P, S, E>
 where
     for<'b> &'b R: RingOps<R>,
 {
@@ -100,7 +100,7 @@ where
         Self {
             _circuit: circuit,
             phantom_p: PhantomData,
-            phantom_d: PhantomData,
+            phantom_s: PhantomData,
             phantom_e: PhantomData,
         }
     }
@@ -110,14 +110,14 @@ where
         polynomial: &P,
         mut sum: LinearCombination<R>,
         proof: &Proof<'a, R>,
-        duplex: &mut D,
+        sponge: &mut S,
         exceptional_set: &mut E,
     ) -> (Point<R>, LinearCombination<R>) {
         let mut coordinates = Vec::with_capacity(polynomial.variables() as usize);
         for i in 0..polynomial.variables() {
             let claim = proof.recover(i, polynomial.degree(), &sum);
-            duplex.absorb(&claim);
-            let challenge = exceptional_set.sample(duplex);
+            sponge.absorb(&claim);
+            let challenge = exceptional_set.sample(sponge);
             sum = claim.point(&challenge);
             coordinates.push(challenge);
             exceptional_set.reset();

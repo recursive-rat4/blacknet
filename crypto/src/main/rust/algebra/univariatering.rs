@@ -23,7 +23,7 @@ use crate::algebra::{
 };
 use crate::branchless::BlOption;
 use crate::convolution::{Convolution, Negacyclic};
-use crate::symmetric::{Absorb, Duplexer, Squeeze};
+use crate::symmetric::sponge::{Absorb, Sponge, Squeeze};
 use bytemuck::Zeroable;
 use core::borrow::{Borrow, BorrowMut};
 use core::fmt::{Debug, Formatter, Result};
@@ -756,15 +756,15 @@ where
 impl<Msg, R: UnitalSemiring + Absorb<Msg>, const N: usize, C: Convolution<R, N>> Absorb<Msg>
     for UnivariateRing<R, N, C>
 {
-    fn absorb_into<D: Duplexer<Msg = Msg>>(self, duplex: &mut D) {
-        duplex.absorb(self.coefficients)
+    fn absorb_into<S: Sponge<Msg = Msg>>(self, sponge: &mut S) {
+        sponge.absorb(self.coefficients)
     }
 }
 
 impl<Msg, R: UnitalSemiring + Squeeze<Msg>, const N: usize, C: Convolution<R, N>> Squeeze<Msg>
     for UnivariateRing<R, N, C>
 {
-    fn squeeze_from<D: Duplexer<Msg = Msg>>(duplex: &mut D) -> Self {
-        Self::new(Array::squeeze_from(duplex))
+    fn squeeze_from<S: Sponge<Msg = Msg>>(sponge: &mut S) -> Self {
+        Self::new(Array::squeeze_from(sponge))
     }
 }

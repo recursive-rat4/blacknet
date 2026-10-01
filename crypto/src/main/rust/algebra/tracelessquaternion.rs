@@ -20,7 +20,7 @@ use crate::algebra::{
     LeftZero, QuaternionAlgebra, RightZero, RingOps, Semimodule, Set, Square, UnitalRing, Zero,
 };
 use crate::branchless::BlOption;
-use crate::symmetric::{Absorb, Duplexer, Squeeze};
+use crate::symmetric::sponge::{Absorb, Sponge, Squeeze};
 use bytemuck::Zeroable;
 use core::borrow::{Borrow, BorrowMut};
 use core::fmt::{Debug, Formatter, Result};
@@ -547,13 +547,13 @@ where
 }
 
 impl<Msg, R: UnitalRing + Absorb<Msg>> Absorb<Msg> for TracelessQuaternion<R> {
-    fn absorb_into<D: Duplexer<Msg = Msg>>(self, duplex: &mut D) {
-        duplex.absorb(self.coefficients)
+    fn absorb_into<S: Sponge<Msg = Msg>>(self, sponge: &mut S) {
+        sponge.absorb(self.coefficients)
     }
 }
 
 impl<Msg, R: UnitalRing + Squeeze<Msg>> Squeeze<Msg> for TracelessQuaternion<R> {
-    fn squeeze_from<D: Duplexer<Msg = Msg>>(duplex: &mut D) -> Self {
-        Self::new(Array::squeeze_from(duplex))
+    fn squeeze_from<S: Sponge<Msg = Msg>>(sponge: &mut S) -> Self {
+        Self::new(Array::squeeze_from(sponge))
     }
 }

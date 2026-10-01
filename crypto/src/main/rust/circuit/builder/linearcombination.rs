@@ -19,7 +19,7 @@ use crate::algebra::{Double, RingOps, SemiringOps, Square, UnitalRing, UnitalSem
 use crate::circuit::builder::{
     Constant, Expression, LinearMonoid, LinearSpan, LinearTerm, Variable,
 };
-use crate::symmetric::{Absorb, Duplexer, Squeeze};
+use crate::symmetric::sponge::{Absorb, Sponge, Squeeze};
 use alloc::vec;
 use alloc::vec::Vec;
 use core::cmp::Ordering;
@@ -764,13 +764,13 @@ where
 }
 
 impl<R: UnitalSemiring> Absorb<Self> for LinearCombination<R> {
-    fn absorb_into<D: Duplexer<Msg = Self>>(self, duplex: &mut D) {
-        duplex.absorb_msg(self)
+    fn absorb_into<S: Sponge<Msg = Self>>(self, sponge: &mut S) {
+        sponge.absorb_msg(self)
     }
 }
 
 impl<R: UnitalSemiring> Squeeze<Self> for LinearCombination<R> {
-    fn squeeze_from<D: Duplexer<Msg = Self>>(duplex: &mut D) -> Self {
-        duplex.squeeze_msg()
+    fn squeeze_from<S: Sponge<Msg = Self>>(sponge: &mut S) -> Self {
+        sponge.squeeze_msg()
     }
 }

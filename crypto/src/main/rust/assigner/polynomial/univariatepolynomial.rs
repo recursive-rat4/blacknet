@@ -18,7 +18,7 @@
 use crate::algebra::{Double, SemiringOps, UnitalSemiring};
 use crate::assigner::assigment::Assigment;
 use crate::polynomial::Polynomial;
-use crate::symmetric::{Absorb, Duplexer};
+use crate::symmetric::sponge::{Absorb, Sponge};
 use alloc::vec::Vec;
 use core::iter::zip;
 use core::ops::{Add, AddAssign, Deref};
@@ -119,15 +119,15 @@ impl<'a, R: UnitalSemiring> Double for UnivariatePolynomial<'a, R> {
 }
 
 impl<'a, Msg, R: UnitalSemiring + Absorb<Msg>> Absorb<Msg> for UnivariatePolynomial<'a, R> {
-    fn absorb_into<D: Duplexer<Msg = Msg>>(self, duplex: &mut D) {
-        duplex.absorb_iter(self.coefficients)
+    fn absorb_into<S: Sponge<Msg = Msg>>(self, sponge: &mut S) {
+        sponge.absorb_iter(self.coefficients)
     }
 }
 
 impl<'a, Msg, R: UnitalSemiring + Absorb<Msg> + Clone> Absorb<Msg>
     for &UnivariatePolynomial<'a, R>
 {
-    fn absorb_into<D: Duplexer<Msg = Msg>>(self, duplex: &mut D) {
-        duplex.absorb_iter(self.coefficients.iter().cloned())
+    fn absorb_into<S: Sponge<Msg = Msg>>(self, sponge: &mut S) {
+        sponge.absorb_iter(self.coefficients.iter().cloned())
     }
 }

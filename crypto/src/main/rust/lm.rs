@@ -24,7 +24,7 @@ use crate::branchless::{BlAbs, BlAssign, BlOption};
 use crate::convolution::{Binomial, Convolution, Negacyclic};
 use crate::gcd::gcd_inner;
 use crate::integer::Integer;
-use crate::symmetric::{Absorb, Duplexer, Squeeze};
+use crate::symmetric::sponge::{Absorb, Sponge, Squeeze};
 use bytemuck::Zeroable;
 use core::array;
 use core::fmt::{Debug, Formatter, Result};
@@ -492,27 +492,27 @@ impl BalancedRepresentative for LMField {
 }
 
 impl Absorb<Self> for LMField {
-    fn absorb_into<D: Duplexer<Msg = Self>>(self, duplex: &mut D) {
-        duplex.absorb_msg(self)
+    fn absorb_into<S: Sponge<Msg = Self>>(self, sponge: &mut S) {
+        sponge.absorb_msg(self)
     }
 }
 
 impl Squeeze<Self> for LMField {
-    fn squeeze_from<D: Duplexer<Msg = Self>>(duplex: &mut D) -> Self {
-        duplex.squeeze_msg()
+    fn squeeze_from<S: Sponge<Msg = Self>>(sponge: &mut S) -> Self {
+        sponge.squeeze_msg()
     }
 }
 
 impl Absorb<u8> for LMField {
-    fn absorb_into<D: Duplexer<Msg = u8>>(self, duplex: &mut D) {
-        duplex.absorb_iter(self.canonical().to_le_bytes())
+    fn absorb_into<S: Sponge<Msg = u8>>(self, sponge: &mut S) {
+        sponge.absorb_iter(self.canonical().to_le_bytes())
     }
 }
 
 impl Squeeze<u8> for LMField {
-    fn squeeze_from<D: Duplexer<Msg = u8>>(duplex: &mut D) -> Self {
+    fn squeeze_from<S: Sponge<Msg = u8>>(sponge: &mut S) -> Self {
         // log₂(Δ) ≈ -110
-        let bytes: [u8; 16] = array::from_fn(|_| duplex.squeeze_msg());
+        let bytes: [u8; 16] = array::from_fn(|_| sponge.squeeze_msg());
         let n = i128::from_le_bytes(bytes);
         let n = Self::reduce_128(n);
         Self { n }
