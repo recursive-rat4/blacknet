@@ -70,13 +70,11 @@ impl<R: UnitalRing> From<R1CS<R>> for CustomizableConstraintSystem<R> {
     }
 }
 
-impl<R: UnitalSemiring + Clone + Eq + Send + Sync> ConstraintSystem
+impl<R: UnitalSemiring + Clone + Eq + Send + Sync> ConstraintSystem<DenseVector<R>>
     for CustomizableConstraintSystem<R>
 where
     for<'a> &'a R: SemiringOps<R>,
 {
-    type Assigment = DenseVector<R>;
-
     fn degree(&self) -> u32 {
         self.multisets.iter().map(Vec::len).max().unwrap_or(0) as u32
     }

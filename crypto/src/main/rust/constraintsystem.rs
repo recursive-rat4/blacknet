@@ -17,14 +17,12 @@
 
 use core::fmt;
 
-pub trait ConstraintSystem {
-    type Assigment;
-
+pub trait ConstraintSystem<Assigment> {
     fn degree(&self) -> u32;
     fn constraints(&self) -> u32;
     fn variables(&self) -> u32;
 
-    fn is_satisfied(&self, z: &Self::Assigment) -> Result;
+    fn is_satisfied(&self, z: &Assigment) -> Result;
 }
 
 #[derive(Debug)]

@@ -18,7 +18,7 @@
 use crate::algebra::{SemiringOps, UnitalSemiring};
 use crate::assigner::assigment::Assigment;
 use crate::constraintsystem::{ConstraintSystem, Error, Result};
-use crate::matrix::{DenseVector, SparseMatrix};
+use crate::matrix::{DenseVector, SparseBinaryMatrix, SparseMatrix};
 use core::iter::zip;
 use serde::{Deserialize, Serialize};
 
@@ -61,12 +61,10 @@ impl<R: UnitalSemiring> From<R1CS<R>> for (SparseMatrix<R>, SparseMatrix<R>, Spa
     }
 }
 
-impl<R: UnitalSemiring + Eq + Send + Sync> ConstraintSystem for R1CS<R>
+impl<R: UnitalSemiring + Eq + Send + Sync> ConstraintSystem<DenseVector<R>> for R1CS<R>
 where
     for<'a> &'a R: SemiringOps<R>,
 {
-    type Assigment = DenseVector<R>;
-
     fn degree(&self) -> u32 {
         2
     }
@@ -84,6 +82,73 @@ where
             return Err(Error::Variables(z.dimension(), self.variables()));
         }
         let (az, bz, cz) = self.linearize(z);
+        match zip(az * bz, cz).position(|(a, e)| a != e) {
+            Some(idx) => Err(Error::Constraint(idx as u32)),
+            None => Ok(()),
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub struct BinaryR1CS {
+    a: SparseBinaryMatrix,
+    b: SparseBinaryMatrix,
+    c: SparseBinaryMatrix,
+}
+
+impl BinaryR1CS {
+    pub const fn new(a: SparseBinaryMatrix, b: SparseBinaryMatrix, c: SparseBinaryMatrix) -> Self {
+        Self { a, b, c }
+    }
+
+    const fn variables(&self) -> u32 {
+        self.a.columns()
+    }
+
+    pub fn assigment<R: UnitalSemiring>(&self) -> Assigment<R> {
+        let z = Assigment::new(self.variables());
+        z.push(R::ONE);
+        z
+    }
+
+    pub fn linearize<R: UnitalSemiring>(
+        &self,
+        z: &DenseVector<R>,
+    ) -> (DenseVector<R>, DenseVector<R>, DenseVector<R>)
+    where
+        for<'a> &'a R: SemiringOps<R>,
+    {
+        (&self.a * z, &self.b * z, &self.c * z)
+    }
+}
+
+impl From<BinaryR1CS> for (SparseBinaryMatrix, SparseBinaryMatrix, SparseBinaryMatrix) {
+    fn from(r1cs: BinaryR1CS) -> Self {
+        (r1cs.a, r1cs.b, r1cs.c)
+    }
+}
+
+impl<R: UnitalSemiring + Eq + Send + Sync> ConstraintSystem<DenseVector<R>> for BinaryR1CS
+where
+    for<'a> &'a R: SemiringOps<R>,
+{
+    fn degree(&self) -> u32 {
+        2
+    }
+
+    fn constraints(&self) -> u32 {
+        self.a.rows()
+    }
+
+    fn variables(&self) -> u32 {
+        self.variables()
+    }
+
+    fn is_satisfied(&self, z: &DenseVector<R>) -> Result {
+        if z.dimension() != self.variables() {
+            return Err(Error::Variables(z.dimension(), self.variables()));
+        }
+        let (az, bz, cz) = self.linearize::<R>(z);
         match zip(az * bz, cz).position(|(a, e)| a != e) {
             Some(idx) => Err(Error::Constraint(idx as u32)),
             None => Ok(()),

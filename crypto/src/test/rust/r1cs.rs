@@ -17,14 +17,14 @@
 
 use blacknet_crypto::algebra::One;
 use blacknet_crypto::constraintsystem::{ConstraintSystem, Error};
-use blacknet_crypto::matrix::{DenseMatrix, DenseVector, SparseMatrix};
-use blacknet_crypto::r1cs::R1CS;
+use blacknet_crypto::matrix::{DenseMatrix, DenseVector, SparseBinaryMatrix, SparseMatrix};
+use blacknet_crypto::r1cs::{BinaryR1CS, R1CS};
 use core::assert_matches;
 
-type R = blacknet_crypto::uring::U32Ring;
+type R = blacknet_crypto::uring::U16Ring;
 
 #[test]
-fn satisfaction() {
+fn r1cs() {
     #[rustfmt::skip]
     let a = DenseMatrix::new(3, 5, [
         0, 0, 1, 0, 0,
@@ -61,6 +61,32 @@ fn satisfaction() {
     );
     assert_matches!(
         r1cs.is_satisfied(&vec![R::ONE; 5].into()),
+        Err(Error::Constraint(0))
+    );
+}
+
+#[test]
+fn binary_r1cs() {
+    let a = unsafe { SparseBinaryMatrix::new(5, vec![0, 1, 2, 3], vec![2, 3, 4]) };
+    let b = unsafe { SparseBinaryMatrix::new(5, vec![0, 1, 2, 3], vec![3, 3, 4]) };
+    let c = unsafe { SparseBinaryMatrix::new(5, vec![0, 2, 3, 4], vec![0, 1, 2, 3]) };
+    let z = DenseVector::from([1, 63, 16, 4, 2].map(R::from));
+    let r1cs = BinaryR1CS::new(a, b, c);
+
+    assert_eq!(ConstraintSystem::<DenseVector<R>>::degree(&r1cs), 2);
+    assert_eq!(ConstraintSystem::<DenseVector<R>>::constraints(&r1cs), 3);
+    assert_eq!(ConstraintSystem::<DenseVector<R>>::variables(&r1cs), 5);
+
+    assert_matches!(
+        ConstraintSystem::<DenseVector<R>>::is_satisfied(&r1cs, &z),
+        Ok(())
+    );
+    assert_matches!(
+        ConstraintSystem::<DenseVector<R>>::is_satisfied(&r1cs, &DenseVector::default()),
+        Err(Error::Variables(0, 5))
+    );
+    assert_matches!(
+        ConstraintSystem::<DenseVector<R>>::is_satisfied(&r1cs, &vec![R::ONE; 5].into()),
         Err(Error::Constraint(0))
     );
 }
