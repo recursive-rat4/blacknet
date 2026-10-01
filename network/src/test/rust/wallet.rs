@@ -23,7 +23,9 @@ use blacknet_kernel::{
     ed25519::{PublicKey, SecretKey},
     transaction::{HashTimeLockContractId, MultiSignatureLockContractId},
 };
-use blacknet_network::wallet::{DeriveAccountError, Error, OpenError, Wallet};
+use blacknet_network::wallet::{
+    DeriveAccountError, Error, OpenError, TransactionData, TransactionOutputData, Wallet,
+};
 use blacknet_time::Seconds;
 use core::{assert_matches, str::FromStr};
 use rusqlite::Connection;
@@ -131,15 +133,19 @@ fn transaction() {
     let mode = Mode::regtest();
     let wallet = Wallet::ephemeral(&mode).unwrap();
     let tx_id = Hash256::ZERO;
+    let tx_time = Seconds::new(444);
+    let tx_height = None;
+    let tx_outputs = vec![TransactionOutputData::new(2, 3)];
+    let tx_data = TransactionData::new(tx_outputs, tx_time, tx_height);
     let tx_bytes: [u8; 4] = [10, 11, 12, 13];
 
     assert_matches!(wallet.count_transactions(), Ok(0));
-    assert_matches!(wallet.put_transaction(tx_id, &tx_bytes), Ok(()));
+    assert_matches!(wallet.put_transaction(tx_id, &tx_data, &tx_bytes), Ok(()));
     assert_matches!(
-        wallet.put_transaction(tx_id, &tx_bytes),
+        wallet.put_transaction(tx_id, &tx_data, &tx_bytes),
         Err(Error::SqliteFailure(..))
     );
     assert_matches!(wallet.count_transactions(), Ok(1));
-    let bytes = wallet.get_transaction(tx_id).unwrap();
-    assert_eq!(tx_bytes, *bytes);
+    assert_matches!(wallet.get_transactions_data(), Ok(x) if *x == [(tx_id, tx_data)]);
+    assert_matches!(wallet.get_transaction_bytes(tx_id), Ok(x) if *x == tx_bytes);
 }

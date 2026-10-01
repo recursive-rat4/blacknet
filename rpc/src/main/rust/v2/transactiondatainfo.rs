@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_network::wallet::{TransactionData, TransactionDataType};
+use blacknet_network::wallet::{TransactionData, TransactionOutputData};
 use blacknet_time::Seconds;
 use serde::{Deserialize, Serialize};
 
@@ -26,10 +26,10 @@ pub struct TransactionDataTypeInfo {
 }
 
 impl TransactionDataTypeInfo {
-    pub const fn new(tx_data_type: &TransactionDataType) -> Self {
+    pub const fn new(tx_output_data: &TransactionOutputData) -> Self {
         Self {
-            r#type: tx_data_type.kind(),
-            dataIndex: tx_data_type.data_index(),
+            r#type: tx_output_data.kind(),
+            dataIndex: tx_output_data.idx(),
         }
     }
 }
@@ -45,12 +45,12 @@ impl TransactionDataInfo {
     pub fn new(tx_data: &TransactionData) -> Self {
         Self {
             types: tx_data
-                .types()
+                .outputs()
                 .iter()
                 .map(TransactionDataTypeInfo::new)
                 .collect(),
             time: tx_data.time(),
-            height: tx_data.height(),
+            height: tx_data.height().unwrap_or(0),
         }
     }
 }

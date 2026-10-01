@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::wallet::{MasterSecret, Mnemonic};
+use crate::wallet::{MasterSecret, Mnemonic, TransactionData, TransactionOutputData};
 use blacknet_compat::Mode;
 use blacknet_kernel::{
     account::Lease,
@@ -26,7 +26,7 @@ use blacknet_kernel::{
 };
 use blacknet_time::{Seconds, SystemClock};
 use core::fmt;
-use rusqlite::{Connection, OpenFlags};
+use rusqlite::{Connection, OpenFlags, TransactionBehavior as SqlBehavior};
 use std::{path::Path, sync::Mutex};
 
 pub use rusqlite::Error;
@@ -64,6 +64,7 @@ impl Wallet {
     pub fn attach(connection: Connection, mode: &Mode) -> Result<Self, OpenError> {
         Self::check_magic(&connection, mode)?;
         Self::configure(&connection)?;
+        Self::migrate_schema(&connection)?;
         Ok(Self {
             connection: Mutex::new(connection),
         })
@@ -75,6 +76,7 @@ impl Wallet {
         connection.pragma_update(None, "fullfsync", "TRUE")?;
         connection.pragma_update(None, "synchronous", "FULL")?;
         connection.pragma_update(None, "journal_mode", "DELETE")?;
+        connection.pragma_update(None, "foreign_keys", "ON")?;
         Ok(())
     }
 
@@ -114,10 +116,36 @@ impl Wallet {
                  height INTEGER NOT NULL,\
                  amount INTEGER NOT NULL\
              ) STRICT;\
-             CREATE TABLE transactions(id BLOB PRIMARY KEY, bytes BLOB NOT NULL) STRICT;\
+             CREATE TABLE transactions(\
+                 id BLOB PRIMARY KEY,\
+                 time INTEGER NOT NULL,\
+                 height INTEGER,\
+                 bytes BLOB NOT NULL\
+             ) STRICT;\
+             CREATE TABLE transaction_outputs(\
+                 txid BLOB NOT NULL,\
+                 idx INTEGER NOT NULL,\
+                 kind INTEGER NOT NULL,\
+                 FOREIGN KEY(txid) REFERENCES transactions(id)\
+             ) STRICT;\
+             CREATE INDEX transaction_output_by_txid ON transaction_outputs(txid);\
              COMMIT TRANSACTION;",
         )?;
-        connection.pragma_update(None, "user_version", 1)?;
+        connection.pragma_update(None, "user_version", SCHEMA_VERSION)?;
+        Ok(())
+    }
+
+    fn migrate_schema(connection: &Connection) -> Result<(), OpenError> {
+        let mut current: u32 =
+            connection.query_one("PRAGMA user_version;", (), |row| row.get(0))?;
+        if current > SCHEMA_VERSION {
+            return Err(OpenError::Schema(current));
+        }
+        while current < SCHEMA_VERSION {
+            connection.execute_batch(SQL_MIGRATIONS[current as usize])?;
+            current += 1;
+            connection.pragma_update(None, "user_version", current)?;
+        }
         Ok(())
     }
 
@@ -129,7 +157,7 @@ impl Wallet {
         let created_at = SystemClock::secs();
 
         connection.execute(
-            "INSERT INTO wallet VALUES(?, ?, ?, ?);",
+            "INSERT INTO wallet (id, created_at, is_staking, sequence) VALUES(?, ?, ?, ?);",
             (0, created_at.value(), true, 0),
         )?;
 
@@ -142,8 +170,8 @@ impl Wallet {
         let master = MasterSecret::from(mnemonic);
         let connection = self.connection.lock().unwrap();
         connection.execute(
-            "INSERT INTO keys VALUES(?, ?, ?);",
-            ("master", master.as_bytes(), Option::<&[u8]>::None),
+            "INSERT INTO keys (path, secret) VALUES(?, ?);",
+            ("master", master.as_bytes()),
         )?;
         Ok(())
     }
@@ -151,8 +179,8 @@ impl Wallet {
     pub fn put_watch(&self, public_key: PublicKey) -> Result<()> {
         let connection = self.connection.lock().unwrap();
         connection.execute(
-            "INSERT INTO keys VALUES(?, ?, ?);",
-            ("", Option::<&[u8]>::None, public_key.as_ref()),
+            "INSERT INTO keys (path, public) VALUES(?, ?);",
+            ("", public_key.as_ref()),
         )?;
         Ok(())
     }
@@ -164,7 +192,8 @@ impl Wallet {
         let master = MasterSecret::from(master);
         let secret_key = to_secret_key(master).ok_or(DeriveAccountError::Version)?;
         let public_key = to_public_key(&secret_key);
-        let mut statement = connection.prepare_cached("INSERT INTO keys VALUES(?, ?, ?);")?;
+        let mut statement = connection
+            .prepare_cached("INSERT INTO keys (path, secret, public) VALUES(?, ?, ?);")?;
         statement.execute(("", secret_key.as_ref(), public_key.as_ref()))?;
         Ok(())
     }
@@ -218,7 +247,36 @@ impl Wallet {
         Ok(sequence)
     }
 
-    pub fn get_transaction(&self, id: Hash256) -> Result<Box<[u8]>> {
+    pub fn get_transactions_data(&self) -> Result<Vec<(Hash256, TransactionData)>> {
+        let mut connection = self.connection.lock().unwrap();
+        let sql = connection.transaction_with_behavior(SqlBehavior::Deferred)?;
+        let mut statement = sql.prepare_cached("SELECT id, time, height FROM transactions;")?;
+        let result = statement
+            .query_map((), |row| {
+                let id: [u8; 32] = row.get(0)?;
+                let time: i64 = row.get(1)?;
+                let height: Option<u32> = row.get(2)?;
+                let mut statement = sql
+                    .prepare_cached("SELECT idx, kind FROM transaction_outputs WHERE txid = ?;")?;
+                let outputs = statement
+                    .query_map((id,), |row| {
+                        let idx: u8 = row.get(0)?;
+                        let kind: u8 = row.get(1)?;
+                        Ok(TransactionOutputData::new(idx, kind))
+                    })?
+                    .collect::<Result<Vec<_>>>()?;
+                Ok((
+                    id.into(),
+                    TransactionData::new(outputs, time.into(), height),
+                ))
+            })?
+            .collect();
+        drop(statement);
+        sql.finish()?;
+        result
+    }
+
+    pub fn get_transaction_bytes(&self, id: Hash256) -> Result<Box<[u8]>> {
         let id: [u8; _] = id.into();
         let connection = self.connection.lock().unwrap();
         let mut statement =
@@ -227,11 +285,22 @@ impl Wallet {
         Ok(bytes)
     }
 
-    pub fn put_transaction(&self, id: Hash256, bytes: &[u8]) -> Result<()> {
+    pub fn put_transaction(&self, id: Hash256, data: &TransactionData, bytes: &[u8]) -> Result<()> {
         let id: [u8; _] = id.into();
-        let connection = self.connection.lock().unwrap();
-        let mut statement = connection.prepare_cached("INSERT INTO transactions VALUES(?, ?);")?;
-        statement.execute((id, bytes))?;
+        let mut connection = self.connection.lock().unwrap();
+        let sql = connection.transaction_with_behavior(SqlBehavior::Immediate)?;
+        let mut statement = sql.prepare_cached(
+            "INSERT INTO transactions (id, time, height, bytes) VALUES(?, ?, ?, ?);",
+        )?;
+        statement.execute((id, data.time().value(), data.height(), bytes))?;
+        drop(statement);
+        let mut statement = sql
+            .prepare_cached("INSERT INTO transaction_outputs (idx, kind, txid) VALUES(?, ?, ?);")?;
+        for output in data.outputs() {
+            statement.execute((output.idx(), output.kind(), id))?;
+        }
+        drop(statement);
+        sql.commit()?;
         Ok(())
     }
 
@@ -379,6 +448,7 @@ impl Wallet {
 #[derive(Debug)]
 pub enum OpenError {
     Magic(String),
+    Schema(u32),
     Sqlite(Error),
 }
 
@@ -393,6 +463,13 @@ impl fmt::Display for OpenError {
         match self {
             Self::Magic(name) => {
                 write!(f, "This SQLite database doesn't look like {name} wallet")
+            }
+            Self::Schema(version) => {
+                write!(
+                    f,
+                    "Unknown schema version {version} (max supported {})",
+                    SCHEMA_VERSION
+                )
             }
             Self::Sqlite(err) => write!(f, "{err}"),
         }
@@ -428,3 +505,41 @@ impl fmt::Display for DeriveAccountError {
 impl core::error::Error for DeriveAccountError {}
 
 pub type Result<T, E = Error> = core::result::Result<T, E>;
+
+#[rustfmt::skip]
+const SQL_MIGRATIONS: &[&str] = &[
+    "BEGIN IMMEDIATE TRANSACTION;\
+     CREATE TABLE wallet(\
+        id INTEGER PRIMARY KEY CHECK (id = 0),\
+        created_at INTEGER NOT NULL,\
+        is_staking INTEGER NOT NULL CHECK (is_staking IN (FALSE, TRUE)),\
+        sequence INTEGER NOT NULL\
+     ) STRICT;\
+     CREATE TABLE keys(\
+         path TEXT NOT NULL UNIQUE,\
+         secret BLOB,\
+         public BLOB\
+     ) STRICT;\
+     CREATE TABLE htlcs(id BLOB PRIMARY KEY) STRICT;\
+     CREATE TABLE multisigs(id BLOB PRIMARY KEY) STRICT;\
+     CREATE TABLE out_leases(\
+         public_key BLOB NOT NULL,\
+         height INTEGER NOT NULL,\
+         amount INTEGER NOT NULL\
+     ) STRICT;\
+     CREATE TABLE transactions(id BLOB PRIMARY KEY, bytes BLOB NOT NULL) STRICT;\
+     COMMIT TRANSACTION;",
+
+    "BEGIN IMMEDIATE TRANSACTION;\
+     ALTER TABLE transactions ADD COLUMN time INTEGER NOT NULL;\
+     ALTER TABLE transactions ADD COLUMN height INTEGER;\
+     CREATE TABLE transaction_outputs(\
+         txid BLOB NOT NULL,\
+         idx INTEGER NOT NULL,\
+         kind INTEGER NOT NULL,\
+         FOREIGN KEY(txid) REFERENCES transactions(id)\
+     ) STRICT;\
+     CREATE INDEX transaction_output_by_txid ON transaction_outputs(txid);\
+     COMMIT TRANSACTION;",
+];
+const SCHEMA_VERSION: u32 = SQL_MIGRATIONS.len() as u32;

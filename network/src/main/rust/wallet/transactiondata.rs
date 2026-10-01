@@ -17,50 +17,65 @@
 
 use crate::db::State;
 use blacknet_time::Seconds;
-use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize, Serialize)]
-pub struct TransactionDataType {
+#[derive(Debug, Eq, PartialEq)]
+pub struct TransactionOutputData {
+    idx: u8,
     kind: u8,
-    data_index: u8,
 }
 
-impl TransactionDataType {
+impl TransactionOutputData {
+    pub const fn new(idx: u8, kind: u8) -> Self {
+        Self { idx, kind }
+    }
+
     pub const fn kind(&self) -> u8 {
         self.kind
     }
 
-    pub const fn data_index(&self) -> u8 {
-        self.data_index
+    pub const fn idx(&self) -> u8 {
+        self.idx
     }
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct TransactionData {
-    // 交易數據類型和交易數據索引號列表
-    types: Vec<TransactionDataType>,
+    // 交易數據類型和交易輸出索引號列表
+    outputs: Vec<TransactionOutputData>,
     // 交易被接收了的時間戳
     time: Seconds,
     // 包含交易的區塊的高度
-    height: u32,
+    height: Option<u32>,
 }
 
 impl TransactionData {
-    pub const fn types(&self) -> &[TransactionDataType] {
-        self.types.as_slice()
+    pub const fn new(
+        outputs: Vec<TransactionOutputData>,
+        time: Seconds,
+        height: Option<u32>,
+    ) -> Self {
+        Self {
+            outputs,
+            time,
+            height,
+        }
+    }
+
+    pub const fn outputs(&self) -> &[TransactionOutputData] {
+        self.outputs.as_slice()
     }
 
     pub const fn time(&self) -> Seconds {
         self.time
     }
 
-    pub const fn height(&self) -> u32 {
+    pub const fn height(&self) -> Option<u32> {
         self.height
     }
 
     pub const fn confirmations(&self, state: &State) -> u32 {
-        if self.height != 0 {
-            state.height() - self.height + 1
+        if let Some(height) = self.height {
+            state.height() - height + 1
         } else {
             0
         }

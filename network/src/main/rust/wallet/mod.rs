@@ -28,7 +28,7 @@ pub use address::{AddressCodec, AddressKind};
 pub use mastersecret::MasterSecret;
 pub use message::{sign_message, verify_message};
 pub use mnemonic::Mnemonic;
-pub use transactiondata::{TransactionData, TransactionDataType};
+pub use transactiondata::{TransactionData, TransactionOutputData};
 pub use wallet::{DeriveAccountError, Error, OpenError, Wallet};
 pub use walletdb::{Notification, Notifier, Subscriber, WalletDB};
 pub use wordlist::Wordlist;

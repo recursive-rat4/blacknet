@@ -168,12 +168,25 @@ async fn verify_message_handler(
     }
 }
 
-#[expect(unused_variables)]
 async fn transactions(
     State(network): State<Arc<Network>>,
     address: Path<String>,
-) -> Json<HashMap<String, TransactionDataInfo>> {
-    todo!();
+) -> Response<String> {
+    let public_key = match network.wallet_db().address_codec().decode(&address) {
+        Ok(public_key) => public_key,
+        Err(err) => {
+            return respond_error(format!("Invalid address: {err}"));
+        }
+    };
+    let txs_data_info = match use_wallet(&network, public_key, Wallet::get_transactions_data) {
+        Ok(Ok(txs_data)) => txs_data
+            .into_iter()
+            .map(|(id, tx_data)| (id, TransactionDataInfo::new(&tx_data)))
+            .collect::<HashMap<Hash256, TransactionDataInfo>>(),
+        Ok(Err(err)) => return respond_error(err.to_string()),
+        Err(err) => return respond_error(err.to_string()),
+    };
+    respond_json(&txs_data_info)
 }
 
 async fn out_leases(
