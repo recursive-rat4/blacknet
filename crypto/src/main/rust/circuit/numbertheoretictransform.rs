@@ -42,8 +42,8 @@ pub fn cooley_tukey<Z: Twiddles<M> + Clone, const M: usize, const N: usize>(
             i = l;
             while i < l + k {
                 let t = &a[i + k] * &zeta;
-                a[i + k] = &a[i] - &t;
-                a[i] += t;
+                a[i + k] = &a[i] + &t;
+                a[i] -= t;
                 i += 1;
             }
             l = i + k;
@@ -69,12 +69,12 @@ pub fn gentleman_sande<Z: Twiddles<M> + Clone, const M: usize, const N: usize>(
         let mut l = 0;
         while l < N {
             j -= 1;
-            let zeta = Constant::new(-&Z::TWIDDLES[j]);
+            let zeta = Constant::new(Z::TWIDDLES[j].clone());
             i = l;
             while i < l + k {
                 let t = a[i].clone();
                 a[i] += a[i + k].clone();
-                a[i + k] = t - &a[i + k];
+                a[i + k] -= t;
                 a[i + k] *= &zeta;
                 i += 1;
             }
@@ -119,14 +119,14 @@ where
                         &mut c[i * k..i * k + 4],
                         &a[i * k..i * k + 4],
                         &b[i * k..i * k + 4],
-                        &Constant::new(Z::TWIDDLES[l + i].clone()),
+                        &Constant::new(-&Z::TWIDDLES[l + i]),
                     );
                     binomial::<Z, 4>(
                         scope,
                         &mut c[i * k + inertia..i * k + inertia + 4],
                         &a[i * k + inertia..i * k + inertia + 4],
                         &b[i * k + inertia..i * k + inertia + 4],
-                        &Constant::new(-&Z::TWIDDLES[l + i]),
+                        &Constant::new(Z::TWIDDLES[l + i].clone()),
                     );
                 }
                 c

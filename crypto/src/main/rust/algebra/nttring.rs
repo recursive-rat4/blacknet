@@ -716,7 +716,7 @@ where
                 let k = N - (i + 1) * Self::INERTIA;
                 let mut zeta_j = Z::TWIDDLES[M / 2 + i / 2].clone();
                 let mut zeta_k = Z::TWIDDLES[M - 1 - i / 2].clone();
-                if i & 1 == 0 {
+                if i & 1 == 1 {
                     zeta_k = -zeta_k;
                 } else {
                     zeta_j = -zeta_j;

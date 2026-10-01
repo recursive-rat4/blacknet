@@ -1,6 +1,6 @@
 #!/usr/bin/env sage
 #
-# Copyright (c) 2024-2025 Pavel Vasin
+# Copyright (c) 2024-2026 Pavel Vasin
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -44,6 +44,12 @@ def compute_bits(number):
 def compute_word_bits(number):
     bits = compute_bits(number)
     return 2**(ceil(log(bits, 2)))
+
+def compute_negation(number, modulus):
+    if number != 0:
+        return modulus - number
+    else:
+        return 0
 
 def compute_centered_representation(number, modulus):
     if number > modulus / 2:
@@ -136,6 +142,7 @@ for ring in ring_specs:
         primitive_root_of_unity = compute_primitive_root_of_unity(ring.modulus, 2 * split)
         brv = [compute_bitreversal(i, log(split, 2)) for i in range(0, split)]
         twiddles = [pow(primitive_root_of_unity, i, ring.modulus) for i in brv]
+        twiddles = [compute_negation(i, ring.modulus) for i in twiddles]
         twiddles = [compute_centered_representation(i, ring.modulus) for i in twiddles]
         inv_ntt_scale = pow(split, -1, ring.modulus)
         inv_ntt_scale = compute_centered_representation(inv_ntt_scale, ring.modulus)

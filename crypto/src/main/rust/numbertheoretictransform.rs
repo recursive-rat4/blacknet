@@ -49,8 +49,8 @@ where
             while i < l + k {
                 unsafe { assert_unchecked(i + k < N) };
                 let t = &a[i + k] * zeta;
-                a[i + k] = &a[i] - &t;
-                a[i] += t;
+                a[i + k] = &a[i] + &t;
+                a[i] -= t;
                 i += 1;
             }
             l = i + k;
@@ -77,14 +77,14 @@ where
         while l < N {
             j -= 1;
             unsafe { assert_unchecked(j < M) };
-            let zeta = -&twiddles[j];
+            let zeta = &twiddles[j];
             i = l;
             while i < l + k {
                 unsafe { assert_unchecked(i + k < N) };
                 let t = a[i].clone();
                 a[i] = &a[i] + &a[i + k];
-                a[i + k] = t - &a[i + k];
-                a[i + k] *= &zeta;
+                a[i + k] -= t;
+                a[i + k] *= zeta;
                 i += 1;
             }
             l = i + k;
@@ -119,13 +119,13 @@ where
                         &mut c[i * k..i * k + 4],
                         &a[i * k..i * k + 4],
                         &b[i * k..i * k + 4],
-                        &Z::TWIDDLES[l + i],
+                        &-&Z::TWIDDLES[l + i],
                     );
                     binomial::<Z, 4>(
                         &mut c[i * k + inertia..i * k + inertia + 4],
                         &a[i * k + inertia..i * k + inertia + 4],
                         &b[i * k + inertia..i * k + inertia + 4],
-                        &-&Z::TWIDDLES[l + i],
+                        &Z::TWIDDLES[l + i],
                     );
                 }
                 c
