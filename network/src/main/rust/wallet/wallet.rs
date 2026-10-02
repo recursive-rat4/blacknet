@@ -276,6 +276,29 @@ impl Wallet {
         result
     }
 
+    pub fn get_transaction_data(&self, id: Hash256) -> Result<TransactionData> {
+        let id: [u8; _] = id.into();
+        let mut connection = self.connection.lock().unwrap();
+        let sql = connection.transaction_with_behavior(SqlBehavior::Deferred)?;
+        let mut statement =
+            sql.prepare_cached("SELECT time, height FROM transactions WHERE id = ?;")?;
+        let (time, height): (i64, Option<u32>) =
+            statement.query_one((id,), |row| Ok((row.get(0)?, row.get(1)?)))?;
+        drop(statement);
+        let mut statement =
+            sql.prepare_cached("SELECT idx, kind FROM transaction_outputs WHERE txid = ?;")?;
+        let outputs = statement
+            .query_map((id,), |row| {
+                let idx: u8 = row.get(0)?;
+                let kind: u8 = row.get(1)?;
+                Ok(TransactionOutputData::new(idx, kind))
+            })?
+            .collect::<Result<Vec<_>>>()?;
+        drop(statement);
+        sql.finish()?;
+        Ok(TransactionData::new(outputs, time.into(), height))
+    }
+
     pub fn get_transaction_bytes(&self, id: Hash256) -> Result<Box<[u8]>> {
         let id: [u8; _] = id.into();
         let connection = self.connection.lock().unwrap();

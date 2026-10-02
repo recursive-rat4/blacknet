@@ -146,6 +146,7 @@ fn transaction() {
         Err(Error::SqliteFailure(..))
     );
     assert_matches!(wallet.count_transactions(), Ok(1));
+    assert_matches!(wallet.get_transaction_data(tx_id), Ok(x) if x == tx_data);
     assert_matches!(wallet.get_transactions_data(), Ok(x) if *x == [(tx_id, tx_data)]);
     assert_matches!(wallet.get_transaction_bytes(tx_id), Ok(x) if *x == tx_bytes);
 }

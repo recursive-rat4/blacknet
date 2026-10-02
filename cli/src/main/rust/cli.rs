@@ -192,6 +192,8 @@ enum WalletV2 {
     ListOutLeases { address: String },
     /// Get sequence number.
     Sequence { address: String },
+    /// Get number of confirmations.
+    Confirmations { address: String, txid: String },
     /// Import mnemonic of pre-quantum account.
     ImportMnemonic {
         /// Name of wallet. It must be valid as a file name.
@@ -317,6 +319,9 @@ fn cli() -> Result<(), Box<dyn Error>> {
         }
         Command::WalletV2(WalletV2::Sequence { address }) => {
             client.get(&["api", "v2", "wallet", &address, "sequence"])
+        }
+        Command::WalletV2(WalletV2::Confirmations { address, txid }) => {
+            client.get(&["api", "v2", "wallet", &address, "confirmations", &txid])
         }
         Command::WalletV2(WalletV2::ImportMnemonic {
             name,

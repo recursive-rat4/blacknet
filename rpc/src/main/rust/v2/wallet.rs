@@ -258,12 +258,26 @@ fn transaction_handler(
     todo!();
 }
 
-#[expect(unused_variables)]
 async fn confirmations(
     State(network): State<Arc<Network>>,
     Path((address, hash)): Path<(String, String)>,
 ) -> Response<String> {
-    todo!();
+    let public_key = match network.wallet_db().address_codec().decode(&address) {
+        Ok(public_key) => public_key,
+        Err(err) => return respond_error(format!("Invalid address: {err}")),
+    };
+    let hash = match Hash256::from_str(hash.as_str()) {
+        Ok(hash) => hash,
+        Err(err) => return respond_error(format!("Invalid hash: {err}")),
+    };
+    let (ref state, _) = **network.node().coin_db().state().load();
+    match use_wallet(&network, public_key, |wallet| {
+        wallet.get_transaction_data(hash)
+    }) {
+        Ok(Ok(tx_data)) => respond_text(tx_data.confirmations(state).to_string()),
+        Ok(Err(err)) => respond_error(err.to_string()),
+        Err(err) => respond_error(err.to_string()),
+    }
 }
 
 async fn anchor(State(network): State<Arc<Network>>, _address: Path<String>) -> Response<String> {
