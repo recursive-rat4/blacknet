@@ -16,7 +16,7 @@
  */
 
 use crate::v2::{
-    AddressInfo, LeaseInfo, MnemonicInfo, NewMnemonicInfo, TransactionDataInfo,
+    AddressInfo, LeaseInfo, MnemonicInfo, NewMnemonicInfo, TransactionDataInfo, TransactionInfo,
     WalletTransactionInfo, response::*,
 };
 use axum::{
@@ -29,13 +29,14 @@ use blacknet_crypto::zeroize::ZeroizingString;
 use blacknet_kernel::{
     blake2b::Hash256,
     ed25519::{PublicKey, Signature, to_secret_key},
-    transaction::PaymentId,
+    transaction::{PaymentId, Transaction},
 };
 use blacknet_network::{
     db::genesis,
     network::Network,
     wallet::{Mnemonic, Wallet, sign_message, verify_message},
 };
+use blacknet_serialization::from_bytes;
 use blacknet_time::Seconds;
 use core::{error::Error, str::FromStr};
 use serde::{Deserialize, Serialize};
@@ -230,32 +231,50 @@ async fn transaction(
     State(network): State<Arc<Network>>,
     Path((address, hash)): Path<(String, String)>,
 ) -> Response<String> {
-    transaction_handler(network, address, hash, false)
+    transaction_handler(&network, &address, &hash, false)
 }
 
 async fn transaction_raw(
     State(network): State<Arc<Network>>,
     Path((address, hash, raw)): Path<(String, String, bool)>,
 ) -> Response<String> {
-    transaction_handler(network, address, hash, raw)
+    transaction_handler(&network, &address, &hash, raw)
 }
 
-#[expect(unused_variables, clippy::needless_pass_by_value)]
 fn transaction_handler(
-    network: Arc<Network>,
-    address: String,
-    hash: String,
+    network: &Network,
+    address: &str,
+    hash: &str,
     raw: bool,
 ) -> Response<String> {
-    let public_key = match network.wallet_db().address_codec().decode(&address) {
+    let address_codec = network.wallet_db().address_codec();
+    let public_key = match address_codec.decode(address) {
         Ok(public_key) => public_key,
         Err(err) => return respond_error(format!("Invalid address: {err}")),
     };
-    let hash = match Hash256::from_str(hash.as_str()) {
+    let hash = match Hash256::from_str(hash) {
         Ok(hash) => hash,
         Err(err) => return respond_error(format!("Invalid hash: {err}")),
     };
-    todo!();
+    let bytes = match use_wallet(network, public_key, |wallet| {
+        wallet.get_transaction_bytes(hash)
+    }) {
+        Ok(Ok(bytes)) => bytes,
+        Ok(Err(err)) => return respond_error(err.to_string()),
+        Err(err) => return respond_error(err.to_string()),
+    };
+    if raw {
+        return respond_hex(&bytes);
+    }
+    let tx = match from_bytes::<Transaction>(&bytes, false) {
+        Ok(tx) => tx,
+        Err(err) => return respond_error(err.to_string()),
+    };
+    let info = match TransactionInfo::new(&tx, hash, bytes.len(), address_codec) {
+        Ok(info) => info,
+        Err(err) => return respond_error(err.to_string()),
+    };
+    respond_json(&info)
 }
 
 async fn confirmations(

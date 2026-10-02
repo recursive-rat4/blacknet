@@ -192,6 +192,12 @@ enum WalletV2 {
     ListOutLeases { address: String },
     /// Get sequence number.
     Sequence { address: String },
+    /// Get transaction.
+    Transaction {
+        address: String,
+        txid: String,
+        raw: Option<bool>,
+    },
     /// Get number of confirmations.
     Confirmations { address: String, txid: String },
     /// Import mnemonic of pre-quantum account.
@@ -319,6 +325,21 @@ fn cli() -> Result<(), Box<dyn Error>> {
         }
         Command::WalletV2(WalletV2::Sequence { address }) => {
             client.get(&["api", "v2", "wallet", &address, "sequence"])
+        }
+        Command::WalletV2(WalletV2::Transaction { address, txid, raw }) => {
+            if let Some(raw) = raw {
+                client.get(&[
+                    "api",
+                    "v2",
+                    "wallet",
+                    &address,
+                    "transaction",
+                    &txid,
+                    &raw.to_string(),
+                ])
+            } else {
+                client.get(&["api", "v2", "wallet", &address, "transaction", &txid])
+            }
         }
         Command::WalletV2(WalletV2::Confirmations { address, txid }) => {
             client.get(&["api", "v2", "wallet", &address, "confirmations", &txid])
