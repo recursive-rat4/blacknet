@@ -18,7 +18,7 @@
 use crate::db::State;
 use blacknet_time::Seconds;
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct TransactionOutputData {
     idx: u8,
     kind: u8,
@@ -38,7 +38,7 @@ impl TransactionOutputData {
     }
 }
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct TransactionData {
     // 交易數據類型和交易輸出索引號列表
     outputs: Vec<TransactionOutputData>,

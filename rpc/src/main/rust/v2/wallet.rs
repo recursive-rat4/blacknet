@@ -20,7 +20,7 @@ use crate::v2::{
     WalletTransactionInfo, response::*,
 };
 use axum::{
-    Form, Json, Router,
+    Form, Router,
     extract::{Path, State},
     response::Response,
     routing::{get, post},
@@ -317,36 +317,63 @@ async fn tx_count(State(network): State<Arc<Network>>, address: Path<String>) ->
     }
 }
 
-#[expect(unused_variables)]
 async fn list_transactions(
     State(network): State<Arc<Network>>,
-    address: Path<String>,
-) -> Json<Vec<WalletTransactionInfo>> {
-    todo!();
+    Path(address): Path<String>,
+) -> Response<String> {
+    list_transactions_handler(&network, &address, 0, 100, None)
 }
 
-#[expect(unused_variables)]
 async fn list_transactions_with_offset(
     State(network): State<Arc<Network>>,
     Path((address, offset)): Path<(String, u32)>,
-) -> Json<Vec<WalletTransactionInfo>> {
-    todo!();
+) -> Response<String> {
+    list_transactions_handler(&network, &address, offset, 100, None)
 }
 
-#[expect(unused_variables)]
 async fn list_transactions_with_offset_and_max(
     State(network): State<Arc<Network>>,
     Path((address, offset, max)): Path<(String, u32, u32)>,
-) -> Json<Vec<WalletTransactionInfo>> {
-    todo!();
+) -> Response<String> {
+    list_transactions_handler(&network, &address, offset, max, None)
 }
 
-#[expect(unused_variables)]
 async fn list_transactions_with_all(
     State(network): State<Arc<Network>>,
     Path((address, offset, max, r#type)): Path<(String, u32, u32, u8)>,
-) -> Json<Vec<WalletTransactionInfo>> {
-    todo!();
+) -> Response<String> {
+    list_transactions_handler(&network, &address, offset, max, Some(r#type))
+}
+
+fn list_transactions_handler(
+    network: &Network,
+    address: &str,
+    offset: u32,
+    max: u32,
+    kind: Option<u8>,
+) -> Response<String> {
+    let address_codec = network.wallet_db().address_codec();
+    let public_key = match address_codec.decode(address) {
+        Ok(public_key) => public_key,
+        Err(err) => return respond_error(format!("Invalid address: {err}")),
+    };
+    let txs = match use_wallet(network, public_key, |wallet| {
+        wallet.page_transactions(max, offset, kind)
+    }) {
+        Ok(Ok(txs)) => txs,
+        Ok(Err(err)) => return respond_error(err.to_string()),
+        Err(err) => return respond_error(err.to_string()),
+    };
+    let (ref state, _) = **network.node().coin_db().state().load();
+    let infos = txs
+        .into_iter()
+        .map(|(hash, data, bytes)| {
+            let tx = from_bytes::<Transaction>(&bytes, false).unwrap();
+            let tx_info = TransactionInfo::new(&tx, hash, bytes.len(), address_codec).unwrap();
+            WalletTransactionInfo::new(tx_info, data.confirmations(state), data.time())
+        })
+        .collect::<Vec<WalletTransactionInfo>>();
+    respond_json(&infos)
 }
 
 #[derive(Deserialize, Serialize)]

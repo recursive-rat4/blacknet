@@ -150,3 +150,42 @@ fn transaction() {
     assert_matches!(wallet.get_transactions_data(), Ok(x) if *x == [(tx_id, tx_data)]);
     assert_matches!(wallet.get_transaction_bytes(tx_id), Ok(x) if *x == tx_bytes);
 }
+
+#[test]
+fn page() {
+    let mode = Mode::regtest();
+    let wallet = Wallet::ephemeral(&mode).unwrap();
+    let tx1_id = Hash256::ZERO;
+    let tx1_time = Seconds::new(443);
+    let tx1_height = None;
+    let tx1_outputs = vec![TransactionOutputData::new(2, 3)];
+    let tx1_data = TransactionData::new(tx1_outputs, tx1_time, tx1_height);
+    let tx1_bytes: [u8; 4] = [10, 11, 12, 13];
+    let tx2_id = Hash256::from([1; 32]);
+    let tx2_time = Seconds::new(444);
+    let tx2_height = None;
+    let tx2_outputs = vec![TransactionOutputData::new(3, 4)];
+    let tx2_data = TransactionData::new(tx2_outputs, tx2_time, tx2_height);
+    let tx2_bytes: [u8; 6] = [20, 21, 22, 23, 24, 25];
+
+    assert_matches!(
+        wallet.put_transaction(tx1_id, &tx1_data, &tx1_bytes),
+        Ok(())
+    );
+    assert_matches!(
+        wallet.put_transaction(tx2_id, &tx2_data, &tx2_bytes),
+        Ok(())
+    );
+    assert_matches!(
+        wallet.page_transactions(1, 1, None),
+        Ok(x) if x == [(tx1_id, tx1_data.clone(), tx1_bytes.into())]
+    );
+    assert_matches!(
+        wallet.page_transactions(1, 0, None),
+        Ok(x) if x == [(tx2_id, tx2_data, tx2_bytes.into())]
+    );
+    assert_matches!(
+        wallet.page_transactions(10, 0, Some(3)),
+        Ok(x) if x == [(tx1_id, tx1_data, tx1_bytes.into())]
+    );
+}
