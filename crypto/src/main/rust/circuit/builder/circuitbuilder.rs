@@ -224,7 +224,7 @@ impl<R: UnitalSemiring + Clone + Eq> CircuitBuilder<R> {
                 VariableKind::Private => self.private_offset.get() + term.variable.number(),
                 VariableKind::Auxiliary => self.auxiliary_offset.get() + term.variable.number(),
             };
-            m.column(column, term.coefficient.value);
+            unsafe { m.column_unchecked(column, term.coefficient.value) };
         }
         m.row();
     }

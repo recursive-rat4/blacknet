@@ -28,7 +28,7 @@ pub struct UnivariatePolynomial<'a, R: UnitalSemiring> {
     coefficients: Vec<LinearCombination<R>>,
 }
 
-impl<'a, R: UnitalSemiring + Clone> UnivariatePolynomial<'a, R> {
+impl<'a, R: UnitalSemiring + Clone + Eq> UnivariatePolynomial<'a, R> {
     pub fn allocate(circuit: &'a CircuitBuilder<R>, kind: VariableKind, len: u32) -> Self {
         let scope = circuit.scope("UnivariatePolynomial::allocate");
         Self {
@@ -88,7 +88,7 @@ impl<'a, R: UnitalSemiring + Clone + Eq> Polynomial for UnivariatePolynomial<'a,
     }
 }
 
-impl<'a, R: UnitalSemiring + Clone> Add for UnivariatePolynomial<'a, R>
+impl<'a, R: UnitalSemiring + Clone + Eq> Add for UnivariatePolynomial<'a, R>
 where
     for<'b> &'b R: SemiringOps<R>,
 {
@@ -105,7 +105,7 @@ where
     }
 }
 
-impl<'a, R: UnitalSemiring + Clone> AddAssign for UnivariatePolynomial<'a, R>
+impl<'a, R: UnitalSemiring + Clone + Eq> AddAssign for UnivariatePolynomial<'a, R>
 where
     for<'b> &'b R: SemiringOps<R>,
 {

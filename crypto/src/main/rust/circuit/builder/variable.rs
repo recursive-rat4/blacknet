@@ -122,7 +122,7 @@ impl<R: UnitalSemiring> PartialOrd for Variable<R> {
     }
 }
 
-impl<R: UnitalSemiring> Add for Variable<R> {
+impl<R: UnitalSemiring + Eq> Add for Variable<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: Self) -> Self::Output {
@@ -146,7 +146,7 @@ impl<R: UnitalRing> Neg for Variable<R> {
     }
 }
 
-impl<R: UnitalRing> Sub for Variable<R> {
+impl<R: UnitalRing + Eq> Sub for Variable<R> {
     type Output = LinearCombination<R>;
 
     fn sub(self, rps: Self) -> Self::Output {
@@ -170,7 +170,7 @@ impl<R: UnitalSemiring> Square for Variable<R> {
     }
 }
 
-impl<R: UnitalSemiring> Add<Constant<R>> for Variable<R> {
+impl<R: UnitalSemiring + Eq> Add<Constant<R>> for Variable<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: Constant<R>) -> Self::Output {
@@ -181,7 +181,7 @@ impl<R: UnitalSemiring> Add<Constant<R>> for Variable<R> {
     }
 }
 
-impl<R: UnitalRing> Sub<Constant<R>> for Variable<R> {
+impl<R: UnitalRing + Eq> Sub<Constant<R>> for Variable<R> {
     type Output = LinearCombination<R>;
 
     fn sub(self, rps: Constant<R>) -> Self::Output {
@@ -200,7 +200,7 @@ impl<R: UnitalSemiring> Mul<Constant<R>> for Variable<R> {
     }
 }
 
-impl<R: UnitalSemiring> Add<LinearTerm<R>> for Variable<R> {
+impl<R: UnitalSemiring + Eq> Add<LinearTerm<R>> for Variable<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: LinearTerm<R>) -> Self::Output {
@@ -210,7 +210,7 @@ impl<R: UnitalSemiring> Add<LinearTerm<R>> for Variable<R> {
     }
 }
 
-impl<R: UnitalRing> Sub<LinearTerm<R>> for Variable<R> {
+impl<R: UnitalRing + Eq> Sub<LinearTerm<R>> for Variable<R> {
     type Output = LinearCombination<R>;
 
     fn sub(self, rps: LinearTerm<R>) -> Self::Output {
@@ -220,7 +220,7 @@ impl<R: UnitalRing> Sub<LinearTerm<R>> for Variable<R> {
     }
 }
 
-impl<R: UnitalSemiring> Mul<LinearTerm<R>> for Variable<R> {
+impl<R: UnitalSemiring + Eq> Mul<LinearTerm<R>> for Variable<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, rps: LinearTerm<R>) -> Self::Output {
@@ -228,7 +228,7 @@ impl<R: UnitalSemiring> Mul<LinearTerm<R>> for Variable<R> {
     }
 }
 
-impl<R: UnitalSemiring> Add<LinearCombination<R>> for Variable<R> {
+impl<R: UnitalSemiring + Eq> Add<LinearCombination<R>> for Variable<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, mut rps: LinearCombination<R>) -> Self::Output {
@@ -237,7 +237,7 @@ impl<R: UnitalSemiring> Add<LinearCombination<R>> for Variable<R> {
     }
 }
 
-impl<R: UnitalSemiring + Clone> Add<&LinearCombination<R>> for Variable<R> {
+impl<R: UnitalSemiring + Clone + Eq> Add<&LinearCombination<R>> for Variable<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: &LinearCombination<R>) -> Self::Output {
@@ -245,7 +245,7 @@ impl<R: UnitalSemiring + Clone> Add<&LinearCombination<R>> for Variable<R> {
     }
 }
 
-impl<R: UnitalRing> Sub<LinearCombination<R>> for Variable<R> {
+impl<R: UnitalRing + Eq> Sub<LinearCombination<R>> for Variable<R> {
     type Output = LinearCombination<R>;
 
     fn sub(self, mut rps: LinearCombination<R>) -> Self::Output {
@@ -255,7 +255,7 @@ impl<R: UnitalRing> Sub<LinearCombination<R>> for Variable<R> {
     }
 }
 
-impl<R: UnitalRing + Clone> Sub<&LinearCombination<R>> for Variable<R> {
+impl<R: UnitalRing + Clone + Eq> Sub<&LinearCombination<R>> for Variable<R> {
     type Output = LinearCombination<R>;
 
     fn sub(self, rps: &LinearCombination<R>) -> Self::Output {
@@ -263,7 +263,7 @@ impl<R: UnitalRing + Clone> Sub<&LinearCombination<R>> for Variable<R> {
     }
 }
 
-impl<R: UnitalSemiring> Mul<LinearCombination<R>> for Variable<R> {
+impl<R: UnitalSemiring + Eq> Mul<LinearCombination<R>> for Variable<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, rps: LinearCombination<R>) -> Self::Output {
@@ -271,7 +271,7 @@ impl<R: UnitalSemiring> Mul<LinearCombination<R>> for Variable<R> {
     }
 }
 
-impl<R: UnitalSemiring + Clone> Mul<&LinearCombination<R>> for Variable<R> {
+impl<R: UnitalSemiring + Clone + Eq> Mul<&LinearCombination<R>> for Variable<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, rps: &LinearCombination<R>) -> Self::Output {

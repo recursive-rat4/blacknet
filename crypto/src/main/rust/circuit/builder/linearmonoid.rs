@@ -46,7 +46,7 @@ impl<R: UnitalSemiring, const N: usize> From<[LinearCombination<R>; N]> for Line
     }
 }
 
-impl<R: UnitalSemiring> Mul<Constant<R>> for LinearMonoid<R> {
+impl<R: UnitalSemiring + Eq> Mul<Constant<R>> for LinearMonoid<R> {
     type Output = Self;
 
     fn mul(mut self, rps: Constant<R>) -> Self::Output {
@@ -55,7 +55,7 @@ impl<R: UnitalSemiring> Mul<Constant<R>> for LinearMonoid<R> {
     }
 }
 
-impl<R: UnitalSemiring> MulAssign<Constant<R>> for LinearMonoid<R> {
+impl<R: UnitalSemiring + Eq> MulAssign<Constant<R>> for LinearMonoid<R> {
     fn mul_assign(&mut self, rps: Constant<R>) {
         match self.factors.back_mut() {
             Some(factor) => *factor *= rps,
@@ -64,7 +64,7 @@ impl<R: UnitalSemiring> MulAssign<Constant<R>> for LinearMonoid<R> {
     }
 }
 
-impl<R: UnitalSemiring + Clone> Mul<Constant<R>> for &LinearMonoid<R> {
+impl<R: UnitalSemiring + Clone + Eq> Mul<Constant<R>> for &LinearMonoid<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, rps: Constant<R>) -> Self::Output {
@@ -95,7 +95,7 @@ impl<R: UnitalSemiring + Clone> Mul<Variable<R>> for &LinearMonoid<R> {
     }
 }
 
-impl<R: UnitalSemiring> Mul<LinearTerm<R>> for LinearMonoid<R> {
+impl<R: UnitalSemiring + Eq> Mul<LinearTerm<R>> for LinearMonoid<R> {
     type Output = Self;
 
     fn mul(mut self, rps: LinearTerm<R>) -> Self::Output {
@@ -104,13 +104,13 @@ impl<R: UnitalSemiring> Mul<LinearTerm<R>> for LinearMonoid<R> {
     }
 }
 
-impl<R: UnitalSemiring> MulAssign<LinearTerm<R>> for LinearMonoid<R> {
+impl<R: UnitalSemiring + Eq> MulAssign<LinearTerm<R>> for LinearMonoid<R> {
     fn mul_assign(&mut self, rps: LinearTerm<R>) {
         self.factors.push_back(rps.into())
     }
 }
 
-impl<R: UnitalSemiring + Clone> Mul<LinearTerm<R>> for &LinearMonoid<R> {
+impl<R: UnitalSemiring + Clone + Eq> Mul<LinearTerm<R>> for &LinearMonoid<R> {
     type Output = LinearMonoid<R>;
 
     fn mul(self, rps: LinearTerm<R>) -> Self::Output {

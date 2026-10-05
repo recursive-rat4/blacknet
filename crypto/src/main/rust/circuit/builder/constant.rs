@@ -38,7 +38,7 @@ impl<R: UnitalSemiring> Constant<R> {
     }
 }
 
-impl<R: UnitalSemiring> Expression<R> for Constant<R> {
+impl<R: UnitalSemiring + Eq> Expression<R> for Constant<R> {
     fn span(self) -> LinearSpan<R> {
         vec![self.into()].into()
     }
@@ -295,7 +295,7 @@ where
     }
 }
 
-impl<R: UnitalSemiring> Add<Variable<R>> for Constant<R> {
+impl<R: UnitalSemiring + Eq> Add<Variable<R>> for Constant<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: Variable<R>) -> Self::Output {
@@ -306,7 +306,7 @@ impl<R: UnitalSemiring> Add<Variable<R>> for Constant<R> {
     }
 }
 
-impl<R: UnitalSemiring + Clone> Add<Variable<R>> for &Constant<R> {
+impl<R: UnitalSemiring + Clone + Eq> Add<Variable<R>> for &Constant<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: Variable<R>) -> Self::Output {
@@ -314,7 +314,7 @@ impl<R: UnitalSemiring + Clone> Add<Variable<R>> for &Constant<R> {
     }
 }
 
-impl<R: UnitalRing> Sub<Variable<R>> for Constant<R> {
+impl<R: UnitalRing + Eq> Sub<Variable<R>> for Constant<R> {
     type Output = LinearCombination<R>;
 
     fn sub(self, rps: Variable<R>) -> Self::Output {
@@ -325,7 +325,7 @@ impl<R: UnitalRing> Sub<Variable<R>> for Constant<R> {
     }
 }
 
-impl<R: UnitalRing + Clone> Sub<Variable<R>> for &Constant<R> {
+impl<R: UnitalRing + Clone + Eq> Sub<Variable<R>> for &Constant<R> {
     type Output = LinearCombination<R>;
 
     fn sub(self, rps: Variable<R>) -> Self::Output {
@@ -349,7 +349,7 @@ impl<R: UnitalSemiring + Clone> Mul<Variable<R>> for &Constant<R> {
     }
 }
 
-impl<R: UnitalSemiring> Add<LinearTerm<R>> for Constant<R> {
+impl<R: UnitalSemiring + Eq> Add<LinearTerm<R>> for Constant<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: LinearTerm<R>) -> Self::Output {
@@ -357,7 +357,7 @@ impl<R: UnitalSemiring> Add<LinearTerm<R>> for Constant<R> {
     }
 }
 
-impl<R: UnitalSemiring + Clone> Add<LinearTerm<R>> for &Constant<R> {
+impl<R: UnitalSemiring + Clone + Eq> Add<LinearTerm<R>> for &Constant<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: LinearTerm<R>) -> Self::Output {
@@ -365,7 +365,7 @@ impl<R: UnitalSemiring + Clone> Add<LinearTerm<R>> for &Constant<R> {
     }
 }
 
-impl<R: UnitalSemiring + Clone> Add<&LinearTerm<R>> for Constant<R> {
+impl<R: UnitalSemiring + Clone + Eq> Add<&LinearTerm<R>> for Constant<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: &LinearTerm<R>) -> Self::Output {
@@ -373,7 +373,7 @@ impl<R: UnitalSemiring + Clone> Add<&LinearTerm<R>> for Constant<R> {
     }
 }
 
-impl<R: UnitalSemiring + Clone> Add<&LinearTerm<R>> for &Constant<R> {
+impl<R: UnitalSemiring + Clone + Eq> Add<&LinearTerm<R>> for &Constant<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: &LinearTerm<R>) -> Self::Output {
@@ -381,7 +381,7 @@ impl<R: UnitalSemiring + Clone> Add<&LinearTerm<R>> for &Constant<R> {
     }
 }
 
-impl<R: UnitalRing> Sub<LinearTerm<R>> for Constant<R> {
+impl<R: UnitalRing + Eq> Sub<LinearTerm<R>> for Constant<R> {
     type Output = LinearCombination<R>;
 
     fn sub(self, rps: LinearTerm<R>) -> Self::Output {
@@ -389,7 +389,7 @@ impl<R: UnitalRing> Sub<LinearTerm<R>> for Constant<R> {
     }
 }
 
-impl<R: UnitalRing + Clone> Sub<LinearTerm<R>> for &Constant<R> {
+impl<R: UnitalRing + Clone + Eq> Sub<LinearTerm<R>> for &Constant<R> {
     type Output = LinearCombination<R>;
 
     fn sub(self, rps: LinearTerm<R>) -> Self::Output {
@@ -397,7 +397,7 @@ impl<R: UnitalRing + Clone> Sub<LinearTerm<R>> for &Constant<R> {
     }
 }
 
-impl<R: UnitalRing + Clone> Sub<&LinearTerm<R>> for Constant<R> {
+impl<R: UnitalRing + Clone + Eq> Sub<&LinearTerm<R>> for Constant<R> {
     type Output = LinearCombination<R>;
 
     fn sub(self, rps: &LinearTerm<R>) -> Self::Output {
@@ -405,7 +405,7 @@ impl<R: UnitalRing + Clone> Sub<&LinearTerm<R>> for Constant<R> {
     }
 }
 
-impl<R: UnitalRing + Clone> Sub<&LinearTerm<R>> for &Constant<R> {
+impl<R: UnitalRing + Clone + Eq> Sub<&LinearTerm<R>> for &Constant<R> {
     type Output = LinearCombination<R>;
 
     fn sub(self, rps: &LinearTerm<R>) -> Self::Output {
@@ -451,7 +451,7 @@ where
     }
 }
 
-impl<R: UnitalSemiring> Add<LinearCombination<R>> for Constant<R> {
+impl<R: UnitalSemiring + Eq> Add<LinearCombination<R>> for Constant<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, mut rps: LinearCombination<R>) -> Self::Output {
@@ -460,7 +460,7 @@ impl<R: UnitalSemiring> Add<LinearCombination<R>> for Constant<R> {
     }
 }
 
-impl<R: UnitalSemiring + Clone> Add<LinearCombination<R>> for &Constant<R> {
+impl<R: UnitalSemiring + Clone + Eq> Add<LinearCombination<R>> for &Constant<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: LinearCombination<R>) -> Self::Output {
@@ -468,7 +468,7 @@ impl<R: UnitalSemiring + Clone> Add<LinearCombination<R>> for &Constant<R> {
     }
 }
 
-impl<R: UnitalSemiring + Clone> Add<&LinearCombination<R>> for Constant<R> {
+impl<R: UnitalSemiring + Clone + Eq> Add<&LinearCombination<R>> for Constant<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: &LinearCombination<R>) -> Self::Output {
@@ -476,7 +476,7 @@ impl<R: UnitalSemiring + Clone> Add<&LinearCombination<R>> for Constant<R> {
     }
 }
 
-impl<R: UnitalSemiring + Clone> Add<&LinearCombination<R>> for &Constant<R> {
+impl<R: UnitalSemiring + Clone + Eq> Add<&LinearCombination<R>> for &Constant<R> {
     type Output = LinearCombination<R>;
 
     fn add(self, rps: &LinearCombination<R>) -> Self::Output {
@@ -484,7 +484,7 @@ impl<R: UnitalSemiring + Clone> Add<&LinearCombination<R>> for &Constant<R> {
     }
 }
 
-impl<R: UnitalRing> Sub<LinearCombination<R>> for Constant<R> {
+impl<R: UnitalRing + Eq> Sub<LinearCombination<R>> for Constant<R> {
     type Output = LinearCombination<R>;
 
     fn sub(self, mut rps: LinearCombination<R>) -> Self::Output {
@@ -494,7 +494,7 @@ impl<R: UnitalRing> Sub<LinearCombination<R>> for Constant<R> {
     }
 }
 
-impl<R: UnitalRing + Clone> Sub<LinearCombination<R>> for &Constant<R> {
+impl<R: UnitalRing + Clone + Eq> Sub<LinearCombination<R>> for &Constant<R> {
     type Output = LinearCombination<R>;
 
     fn sub(self, rps: LinearCombination<R>) -> Self::Output {
@@ -502,7 +502,7 @@ impl<R: UnitalRing + Clone> Sub<LinearCombination<R>> for &Constant<R> {
     }
 }
 
-impl<R: UnitalRing + Clone> Sub<&LinearCombination<R>> for Constant<R> {
+impl<R: UnitalRing + Clone + Eq> Sub<&LinearCombination<R>> for Constant<R> {
     type Output = LinearCombination<R>;
 
     fn sub(self, rps: &LinearCombination<R>) -> Self::Output {
@@ -510,7 +510,7 @@ impl<R: UnitalRing + Clone> Sub<&LinearCombination<R>> for Constant<R> {
     }
 }
 
-impl<R: UnitalRing + Clone> Sub<&LinearCombination<R>> for &Constant<R> {
+impl<R: UnitalRing + Clone + Eq> Sub<&LinearCombination<R>> for &Constant<R> {
     type Output = LinearCombination<R>;
 
     fn sub(self, rps: &LinearCombination<R>) -> Self::Output {
@@ -564,7 +564,7 @@ where
     }
 }
 
-impl<R: UnitalSemiring + Clone> Mul<LinearMonoid<R>> for Constant<R>
+impl<R: UnitalSemiring + Clone + Eq> Mul<LinearMonoid<R>> for Constant<R>
 where
     for<'a> &'a R: SemiringOps<R>,
 {
@@ -579,7 +579,7 @@ where
     }
 }
 
-impl<R: UnitalSemiring + Clone> Mul<LinearMonoid<R>> for &Constant<R>
+impl<R: UnitalSemiring + Clone + Eq> Mul<LinearMonoid<R>> for &Constant<R>
 where
     for<'a> &'a R: SemiringOps<R>,
 {
@@ -594,7 +594,7 @@ where
     }
 }
 
-impl<R: UnitalSemiring + Clone> Mul<&LinearMonoid<R>> for Constant<R>
+impl<R: UnitalSemiring + Clone + Eq> Mul<&LinearMonoid<R>> for Constant<R>
 where
     for<'a> &'a R: SemiringOps<R>,
 {
@@ -605,7 +605,7 @@ where
     }
 }
 
-impl<R: UnitalSemiring + Clone> Mul<&LinearMonoid<R>> for &Constant<R>
+impl<R: UnitalSemiring + Clone + Eq> Mul<&LinearMonoid<R>> for &Constant<R>
 where
     for<'a> &'a R: SemiringOps<R>,
 {

@@ -153,7 +153,7 @@ macro_rules! impl_uint {
         $(
             pub type $x<'a, A> = UInt<'a, A, $n>;
 
-            impl<'a, A: UnitalAlgebra<GF2>> UInt<'a, A, $n> {
+            impl<'a, A: UnitalAlgebra<GF2> + Eq> UInt<'a, A, $n> {
                 pub fn $w(circuit: &'a CircuitBuilder<A>, int: $y) -> Self {
                     let bits = $b(int)
                         .map(GF2::from)

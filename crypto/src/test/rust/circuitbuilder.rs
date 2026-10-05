@@ -16,14 +16,16 @@
  */
 
 use blacknet_crypto::algebra::One;
-use blacknet_crypto::circuit::builder::{CircuitBuilder, Constant, VariableKind};
+use blacknet_crypto::circuit::builder::{
+    CircuitBuilder, Constant, LinearCombination, VariableKind,
+};
 use blacknet_crypto::constraintsystem::ConstraintSystem;
 use blacknet_crypto::customizableconstraintsystem::CustomizableConstraintSystem;
 use blacknet_crypto::matrix::{DenseMatrix, DenseVector, SparseMatrix};
 use blacknet_crypto::r1cs::R1CS;
 use core::assert_matches;
 
-type R = blacknet_crypto::uring::U32Ring;
+type R = blacknet_crypto::uring::U16Ring;
 
 #[test]
 fn scopelism() {
@@ -361,4 +363,14 @@ fn varietism() {
     assert!(a < d);
     assert_eq!(b.number(), 1);
     assert_eq!(b.kind(), VariableKind::Public);
+}
+
+#[test]
+fn combinationalism() {
+    let circuit = CircuitBuilder::<R>::with_shape([0, 0]);
+    let scope = circuit.scope("combinationalism");
+    let a = scope.public();
+    let b = a + a;
+    assert_eq!(a - a, LinearCombination::<R>::ZERO);
+    assert_eq!(&b - &b, LinearCombination::<R>::ZERO);
 }
