@@ -48,4 +48,4 @@ workspace = true
 name = "blacknet-cli"
 test = false
 bench = false
-path = "src/main/rust/cli.rs"
+path = "src/main/rust/bin.rs"

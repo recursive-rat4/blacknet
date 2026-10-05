@@ -35,6 +35,7 @@ blacknet-compat.workspace = true
 blacknet-log.workspace = true
 blacknet-network.workspace = true
 blacknet-rpc.workspace = true
+clap.workspace = true
 tokio.workspace = true
 
 [lints]
@@ -44,4 +45,4 @@ workspace = true
 name = "blacknet-daemon"
 test = false
 bench = false
-path = "src/main/rust/daemon.rs"
+path = "src/main/rust/bin.rs"

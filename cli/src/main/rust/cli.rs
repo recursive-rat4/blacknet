@@ -15,8 +15,6 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-mod client;
-
 use crate::client::Client;
 use blacknet_compat::{
     config::Config,
@@ -381,9 +379,9 @@ fn cli() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn main() -> ExitCode {
+pub fn main() -> ExitCode {
     match cli() {
-        Ok(..) => ExitCode::SUCCESS,
+        Ok(()) => ExitCode::SUCCESS,
         Err(msg) => {
             eprintln!("{msg}");
             ExitCode::FAILURE

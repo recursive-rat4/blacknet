@@ -15,23 +15,20 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::args::{Args, Parser};
 use blacknet_compat::{XDGDirectories, config::Config, mode};
 use blacknet_log::{LogManager, Strategy};
 use blacknet_network::network::Network;
 use blacknet_rpc::RPCServer;
 use core::error::Error;
 use std::{
-    env::args,
     process::ExitCode,
     sync::atomic::{AtomicU64, Ordering},
 };
 use tokio::{select, signal::ctrl_c, sync::mpsc::unbounded_channel};
 
 fn daemon() -> Result<(), Box<dyn Error>> {
-    if args().nth(1).is_some_and(|arg| arg == "--version") {
-        println!("Blacknet Daemon {}", env!("CARGO_PKG_VERSION"));
-        return Ok(());
-    }
+    let _ = Args::parse();
     let mode = mode()?;
     let dirs = XDGDirectories::new(mode.subdirectory())?;
     let log_manager = LogManager::new(Strategy::Daemon, dirs.state())?;
@@ -66,9 +63,9 @@ fn daemon() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn main() -> ExitCode {
+pub fn main() -> ExitCode {
     match daemon() {
-        Ok(..) => ExitCode::SUCCESS,
+        Ok(()) => ExitCode::SUCCESS,
         Err(msg) => {
             eprintln!("{msg}");
             ExitCode::FAILURE
