@@ -68,7 +68,7 @@ pub struct Network {
     pub ipv6: bool,
     pub tor: bool,
     pub i2p: bool,
-    pub natpmp: bool,
+    pub port_mapping: bool,
     pub incoming_connections: u16,
     pub outgoing_connections: u16,
     pub log_endpoint: bool,

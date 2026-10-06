@@ -18,7 +18,7 @@
 use core::{
     hash::{Hash, Hasher},
     mem::discriminant,
-    net::{Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6},
+    net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6},
     str::FromStr,
 };
 use data_encoding::Encoding;
@@ -121,6 +121,33 @@ impl Endpoint {
             Endpoint::TORv2 { port, address: _ } => *port = new_port,
             Endpoint::TORv3 { port, address: _ } => *port = new_port,
             Endpoint::I2P { port, address: _ } => *port = new_port,
+        }
+    }
+}
+
+impl From<(IpAddr, u16)> for Endpoint {
+    fn from((addr, port): (IpAddr, u16)) -> Self {
+        match addr {
+            IpAddr::V4(addr_v4) => (addr_v4, port).into(),
+            IpAddr::V6(addr_v6) => (addr_v6, port).into(),
+        }
+    }
+}
+
+impl From<(Ipv4Addr, u16)> for Endpoint {
+    fn from((addr_v4, port): (Ipv4Addr, u16)) -> Self {
+        Endpoint::IPv4 {
+            port,
+            address: addr_v4.octets(),
+        }
+    }
+}
+
+impl From<(Ipv6Addr, u16)> for Endpoint {
+    fn from((addr_v6, port): (Ipv6Addr, u16)) -> Self {
+        Endpoint::IPv6 {
+            port,
+            address: addr_v6.octets(),
         }
     }
 }

@@ -18,8 +18,8 @@
 use crate::{
     endpoint::{Endpoint, ipv4_any, ipv6_any},
     i2psam::{Error as I2PError, SAM},
-    natpmp::natpmp_forward,
     peertable::{ContactGuard, PeerTable},
+    portmapper::PortMapper,
     socks5::{Error as Socks5Error, socks5},
     torcontroller::{Error as TorError, TorController},
 };
@@ -83,7 +83,6 @@ impl Router {
     ) -> Result<(Arc<Self>, Notifier), Error> {
         // mpsc bounded channel requires buffer > 0
         let incoming_connections = max(config.incoming_connections, 1);
-
         let (subscriber, notifier) = mpsc::channel(incoming_connections as usize);
 
         let router = Arc::new(Self {
@@ -104,8 +103,8 @@ impl Router {
 
         if config.ipv6 || config.ipv4 {
             runtime.spawn(router.clone().listen_ip());
-            if config.natpmp {
-                runtime.spawn(router.clone().forward_natpmp());
+            if config.port_mapping {
+                runtime.spawn(router.clone().map_port());
             }
         }
         if config.tor {
@@ -355,12 +354,29 @@ impl Router {
         }
     }
 
-    async fn forward_natpmp(self: Arc<Self>) {
-        match natpmp_forward(self.config.port).await {
-            Ok(endpoint) => self.add_listener(endpoint),
-            Err(msg) => {
-                info!(self.logger, "NAT-PMP: {msg}");
+    async fn map_port(self: Arc<Self>) {
+        let port_mapper = match PortMapper::new().await {
+            Ok(port_mapper) => port_mapper,
+            Err(err) => {
+                info!(self.logger, "PortMapper: {err}");
+                return;
             }
+        };
+        loop {
+            let _ = port_mapper.remove_port(self.config.port).await;
+
+            let endpoint = match port_mapper.add_port(self.config.port).await {
+                Ok(endpoint) => {
+                    self.add_listener(endpoint);
+                    endpoint
+                }
+                Err(err) => {
+                    warn!(self.logger, "PortMapper: {err}");
+                    return;
+                }
+            };
+            port_mapper.sleep().await;
+            self.remove_listener(endpoint)
         }
     }
 

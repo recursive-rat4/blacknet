@@ -48,7 +48,7 @@ data-encoding-macro.workspace = true
 fjall.workspace = true
 hashbrown.workspace = true
 hashlink.workspace = true
-natpmp.workspace = true
+igd-next.workspace = true
 serde = { workspace = true, features = ["std"] }
 serde_json.workspace = true
 serde_repr.workspace = true
