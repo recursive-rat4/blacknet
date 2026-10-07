@@ -29,6 +29,7 @@ use blacknet_crypto::zeroize::ZeroizingString;
 use blacknet_kernel::{
     blake2b::Hash256,
     ed25519::{PublicKey, Signature, to_secret_key},
+    proofofstake::ROLLBACK_LIMIT,
     transaction::{PaymentId, Transaction},
 };
 use blacknet_network::{
@@ -386,7 +387,7 @@ async fn list_since_block(
     State(network): State<Arc<Network>>,
     Path(address): Path<String>,
 ) -> Response<String> {
-    list_since_block_handler(network, address, genesis::hash())
+    list_since_block_handler(&network, &address, genesis::hash())
 }
 
 async fn list_since_block_with_hash(
@@ -397,16 +398,44 @@ async fn list_since_block_with_hash(
         Ok(hash) => hash,
         Err(err) => return respond_error(format!("Invalid hash: {err}")),
     };
-    list_since_block_handler(network, address, hash)
+    list_since_block_handler(&network, &address, hash)
 }
 
-#[expect(unused_variables, clippy::needless_pass_by_value)]
-fn list_since_block_handler(
-    network: Arc<Network>,
-    address: String,
-    hash: Hash256,
-) -> Response<String> {
-    todo!();
+fn list_since_block_handler(network: &Network, address: &str, hash: Hash256) -> Response<String> {
+    let address_codec = network.wallet_db().address_codec();
+    let public_key = match address_codec.decode(address) {
+        Ok(public_key) => public_key,
+        Err(err) => return respond_error(format!("Invalid address: {err}")),
+    };
+    let node = network.node();
+    let (ref state, ref snapshot) = **node.coin_db().state().load();
+    let height = match node.block_db().index(snapshot, hash) {
+        Some(index) => index.height(),
+        None => return respond_error("Block not found"),
+    };
+    if height + ROLLBACK_LIMIT as u32 >= state.height() {
+        return respond_error("Immature block");
+    }
+    let txs = match use_wallet(network, public_key, |wallet| {
+        wallet.transactions_since(height)
+    }) {
+        Ok(Ok(txs)) => txs,
+        Ok(Err(err)) => return respond_error(err.to_string()),
+        Err(err) => return respond_error(err.to_string()),
+    };
+    let transactions = txs
+        .into_iter()
+        .map(|(hash, data, bytes)| {
+            let tx = from_bytes::<Transaction>(&bytes, false).unwrap();
+            let tx_info = TransactionInfo::new(&tx, hash, bytes.len(), address_codec).unwrap();
+            WalletTransactionInfo::new(tx_info, data.confirmations(state), data.time())
+        })
+        .collect::<Vec<WalletTransactionInfo>>();
+    let info = ListSinceBlockInfo {
+        transactions,
+        lastBlockHash: state.rolling_checkpoint(),
+    };
+    respond_json(&info)
 }
 
 #[derive(Deserialize, Serialize)]

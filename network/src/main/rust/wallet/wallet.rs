@@ -128,6 +128,7 @@ impl Wallet {
                  kind INTEGER NOT NULL,\
                  FOREIGN KEY(txid) REFERENCES transactions(id)\
              ) STRICT;\
+             CREATE INDEX transaction_by_height ON transactions(height ASC);\
              CREATE INDEX transaction_by_time ON transactions(time ASC);\
              CREATE INDEX transaction_output_by_txid ON transaction_outputs(txid);\
              COMMIT TRANSACTION;",
@@ -380,6 +381,40 @@ impl Wallet {
                 .collect::<Result<Vec<_>>>()?;
             Ok(txs)
         }
+    }
+
+    pub fn transactions_since(
+        &self,
+        height: u32,
+    ) -> Result<Vec<(Hash256, TransactionData, Box<[u8]>)>> {
+        let mut connection = self.connection.lock().unwrap();
+        let sql = connection.transaction_with_behavior(SqlBehavior::Deferred)?;
+        let mut statement = sql.prepare_cached(
+            "SELECT id, time, height, bytes FROM transactions WHERE height <= ?;",
+        )?;
+        let txs = statement
+            .query_map((height,), |row| {
+                let id: [u8; 32] = row.get(0)?;
+                let time: i64 = row.get(1)?;
+                let height: Option<u32> = row.get(2)?;
+                let bytes: Box<[u8]> = row.get(3)?;
+                let mut statement = sql
+                    .prepare_cached("SELECT idx, kind FROM transaction_outputs WHERE txid = ?;")?;
+                let outputs = statement
+                    .query_map((id,), |row| {
+                        let idx: u8 = row.get(0)?;
+                        let kind: u8 = row.get(1)?;
+                        Ok(TransactionOutputData::new(idx, kind))
+                    })?
+                    .collect::<Result<Vec<_>>>()?;
+                Ok((
+                    Hash256::from(id),
+                    TransactionData::new(outputs, Seconds::new(time), height),
+                    bytes,
+                ))
+            })?
+            .collect::<Result<Vec<_>>>()?;
+        Ok(txs)
     }
 
     pub fn put_transaction(&self, id: Hash256, data: &TransactionData, bytes: &[u8]) -> Result<()> {
@@ -640,5 +675,7 @@ const SQL_MIGRATIONS: &[&str] = &[
      COMMIT TRANSACTION;",
 
     "CREATE INDEX transaction_by_time ON transactions(time ASC);",
+
+    "CREATE INDEX transaction_by_height ON transactions(height ASC);",
 ];
 const SCHEMA_VERSION: u32 = SQL_MIGRATIONS.len() as u32;
