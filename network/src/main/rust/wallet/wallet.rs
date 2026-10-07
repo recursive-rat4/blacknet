@@ -570,6 +570,14 @@ impl Wallet {
         Ok(())
     }
 
+    pub fn rollback(&self, hash: Hash256) -> Result<()> {
+        let connection = self.connection.lock().unwrap();
+        let mut statement =
+            connection.prepare_cached("UPDATE transactions SET height = NULL WHERE id = ?;")?;
+        statement.execute((hash.as_ref(),))?;
+        Ok(())
+    }
+
     pub(super) fn vacuum_into(&self, path: &Path) -> Result<()> {
         let connection = self.connection.lock().unwrap();
         connection.execute("VACUUM main INTO ?", (path.to_str(),))?;

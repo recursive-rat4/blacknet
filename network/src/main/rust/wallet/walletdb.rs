@@ -175,25 +175,33 @@ impl WalletDB {
         }
     }
 
-    #[expect(unused_variables)]
     async fn coindb_observer(self: Arc<Self>, mut coin_notifier: CoinNotifier) {
         while let Some(notification) = coin_notifier.recv().await {
             match notification {
+                #[expect(unused_variables)]
                 CoinNotification::Transaction {
                     tx_hash,
                     tx,
                     tx_bytes,
                     time,
                     height,
-                } => todo!(),
+                } => { /*TODO*/ }
+                #[expect(unused_variables)]
                 CoinNotification::Mint {
                     hash,
                     time,
                     generator,
                     height,
                     generated,
-                } => todo!(),
-                CoinNotification::Rollback { hash } => todo!(),
+                } => { /*TODO*/ }
+                CoinNotification::Rollback { hash } => {
+                    let wallets = self.wallets.read().unwrap();
+                    for (_, wallet) in wallets.iter() {
+                        if let Err(err) = wallet.rollback(hash) {
+                            error!(self.logger, "Rollback: {err}");
+                        }
+                    }
+                }
             }
         }
     }

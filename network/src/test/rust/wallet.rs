@@ -234,3 +234,38 @@ fn since() {
         Ok(x) if x == [(tx1_id, tx1_data, tx1_bytes.into()), (tx3_id, tx3_data, tx3_bytes.into())]
     );
 }
+
+#[test]
+fn rollback() {
+    let mode = Mode::regtest();
+    let wallet = Wallet::ephemeral(&mode).unwrap();
+    let tx1_id = Hash256::ZERO;
+    let tx1_time = Seconds::new(443);
+    let tx1_height = Some(100);
+    let tx1_outputs = vec![TransactionOutputData::new(2, 3)];
+    let tx1_data = TransactionData::new(tx1_outputs, tx1_time, tx1_height);
+    let tx1_bytes: [u8; 4] = [10, 11, 12, 13];
+    let tx2_id = Hash256::from([1; 32]);
+    let tx2_time = Seconds::new(444);
+    let tx2_height = Some(100);
+    let tx2_outputs = vec![TransactionOutputData::new(3, 4)];
+    let tx2_data = TransactionData::new(tx2_outputs.clone(), tx2_time, tx2_height);
+    let tx2_bytes: [u8; 6] = [20, 21, 22, 23, 24, 25];
+    let tx3_id = Hash256::from([2; 32]);
+    let tx2_data2 = TransactionData::new(tx2_outputs, tx2_time, None);
+
+    assert_matches!(
+        wallet.put_transaction(tx1_id, &tx1_data, &tx1_bytes),
+        Ok(())
+    );
+    assert_matches!(
+        wallet.put_transaction(tx2_id, &tx2_data, &tx2_bytes),
+        Ok(())
+    );
+    assert_matches!(wallet.rollback(tx2_id), Ok(()));
+    assert_matches!(wallet.rollback(tx3_id), Ok(()));
+    assert_matches!(
+        wallet.get_transactions_data(),
+        Ok(x) if *x == [(tx1_id, tx1_data), (tx2_id, tx2_data2)]
+    );
+}
