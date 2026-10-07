@@ -25,12 +25,12 @@ use blacknet_kernel::{
     blake2b::Hash256, ed25519::PublicKey, proofofstake::guess_initial_synchronization,
     transaction::Transaction,
 };
-use blacknet_log::{LogManager, Logger, error, info};
+use blacknet_log::{LogManager, Logger, error, info, warn};
 use blacknet_time::{Milliseconds, SystemClock};
 use core::{error::Error, fmt};
 use hashbrown::{HashMap, hash_map::Entry};
 use std::{
-    fs::{DirBuilder, read_dir},
+    fs::DirBuilder,
     io::Error as IoError,
     path::PathBuf,
     sync::{Arc, OnceLock, RwLock, RwLockReadGuard},
@@ -39,6 +39,8 @@ use tokio::{runtime::Runtime, sync::mpsc};
 
 #[cfg(target_family = "unix")]
 use std::os::unix::fs::DirBuilderExt;
+
+const FILE_EXTENSION: &str = "sqlite";
 
 pub type Notification = (Transaction, Hash256, Milliseconds, u32, PublicKey);
 pub type Notifier = mpsc::UnboundedReceiver<Notification>;
@@ -67,9 +69,18 @@ impl WalletDB {
 
         let mut wallets = HashMap::new();
         let dir = Self::mkdir(dirs)?;
-        for dir_entry in read_dir(&dir)? {
+        for dir_entry in dir.read_dir()? {
             let dir_entry = dir_entry?;
-            match Wallet::open(&dir_entry.path(), &mode) {
+            let path = dir_entry.path();
+            if !(path.extension() == Some(FILE_EXTENSION.as_ref())) {
+                warn!(
+                    logger,
+                    "Ignoring file {}",
+                    dir_entry.file_name().to_string_lossy()
+                );
+                continue;
+            }
+            match Wallet::open(&path, &mode) {
                 Ok(wallet) => {
                     info!(
                         logger,
@@ -136,8 +147,9 @@ impl WalletDB {
         let mut wallets = self.wallets.write().unwrap();
         match wallets.entry(public_key) {
             Entry::Vacant(vacant) => {
-                let file_name = format!("{name}.sqlite");
-                let path = self.dir.join(file_name);
+                let mut path = self.dir.join(name);
+                path.add_extension(FILE_EXTENSION);
+
                 wallet.vacuum_into(&path)?;
                 let wallet = Wallet::open(&path, &self.mode)?;
                 vacant.insert(wallet);
