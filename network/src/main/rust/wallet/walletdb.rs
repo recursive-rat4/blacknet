@@ -18,7 +18,10 @@
 use crate::{
     db::{CoinNotification, CoinNotifier, State, genesis},
     txpool::{Notifier as TxPoolNotifier, TxPool},
-    wallet::{AddressCodec, Error as WalletError, OpenError, Wallet},
+    wallet::{
+        AddressCodec, Error as WalletError, OpenError, TransactionData, TransactionOutputData,
+        Wallet,
+    },
 };
 use blacknet_compat::{Mode, XDGDirectories};
 use blacknet_kernel::{
@@ -26,6 +29,7 @@ use blacknet_kernel::{
     transaction::Transaction,
 };
 use blacknet_log::{LogManager, Logger, error, info, warn};
+use blacknet_serialization::to_bytes;
 use blacknet_time::{Milliseconds, SystemClock};
 use core::{error::Error, fmt};
 use hashbrown::{HashMap, hash_map::Entry};
@@ -177,6 +181,7 @@ impl WalletDB {
 
     async fn coindb_observer(self: Arc<Self>, mut coin_notifier: CoinNotifier) {
         while let Some(notification) = coin_notifier.recv().await {
+            let wallets = self.wallets.read().unwrap();
             match notification {
                 #[expect(unused_variables)]
                 CoinNotification::Transaction {
@@ -186,16 +191,28 @@ impl WalletDB {
                     time,
                     height,
                 } => { /*TODO*/ }
-                #[expect(unused_variables)]
                 CoinNotification::Mint {
                     hash,
                     time,
                     generator,
                     height,
                     generated,
-                } => { /*TODO*/ }
+                } => {
+                    let Some(wallet) = wallets.get(&generator) else {
+                        continue;
+                    };
+                    let tx = Transaction::generated(generator, height, hash, generated);
+                    let data = TransactionData::new(
+                        vec![TransactionOutputData::mint()],
+                        time,
+                        Some(height),
+                    );
+                    let bytes = to_bytes(&tx).expect("Serialize generated");
+                    if let Err(err) = wallet.upsert_transaction(hash, &data, &bytes) {
+                        error!(self.logger, "Mint: {err}");
+                    }
+                }
                 CoinNotification::Rollback { hash } => {
-                    let wallets = self.wallets.read().unwrap();
                     for (_, wallet) in wallets.iter() {
                         if let Err(err) = wallet.rollback(hash) {
                             error!(self.logger, "Rollback: {err}");

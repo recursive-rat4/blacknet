@@ -16,6 +16,7 @@
  */
 
 use crate::db::State;
+use blacknet_kernel::transaction::TxKind;
 use blacknet_time::Seconds;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -27,6 +28,13 @@ pub struct TransactionOutputData {
 impl TransactionOutputData {
     pub const fn new(idx: u8, kind: u8) -> Self {
         Self { idx, kind }
+    }
+
+    pub const fn mint() -> Self {
+        Self {
+            idx: 0,
+            kind: TxKind::Generated as u8,
+        }
     }
 
     pub const fn kind(&self) -> u8 {

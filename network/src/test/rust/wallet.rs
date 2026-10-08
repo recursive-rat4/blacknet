@@ -28,7 +28,7 @@ use blacknet_network::wallet::{
 };
 use blacknet_time::Seconds;
 use core::{assert_matches, str::FromStr};
-use rusqlite::Connection;
+use rusqlite::{Connection, ErrorCode};
 
 #[test]
 fn magic() {
@@ -68,11 +68,14 @@ fn keys() {
     assert_matches!(wallet.public_key(), Err(Error::QueryReturnedNoRows));
     assert_matches!(wallet.secret_key(), Err(Error::QueryReturnedNoRows));
     assert_matches!(wallet.put_watch(public_key), Ok(()));
-    assert_matches!(wallet.put_watch(public_key), Err(Error::SqliteFailure(..)));
+    assert_matches!(
+        wallet.put_watch(public_key),
+        Err(Error::SqliteFailure(err, _)) if err.code == ErrorCode::ConstraintViolation
+    );
     assert_matches!(wallet.set_mnemonic(mnemonic.into()), Ok(()));
     assert_matches!(
         wallet.set_mnemonic(mnemonic.into()),
-        Err(Error::SqliteFailure(..))
+        Err(Error::SqliteFailure(err, _)) if err.code == ErrorCode::ConstraintViolation
     );
 
     let wallet = Wallet::ephemeral(&mode).unwrap();
@@ -134,20 +137,26 @@ fn transaction() {
     let wallet = Wallet::ephemeral(&mode).unwrap();
     let tx_id = Hash256::ZERO;
     let tx_time = Seconds::new(444);
-    let tx_height = None;
+    let tx_height1 = None;
     let tx_outputs = vec![TransactionOutputData::new(2, 3)];
-    let tx_data = TransactionData::new(tx_outputs, tx_time, tx_height);
+    let tx_data1 = TransactionData::new(tx_outputs.clone(), tx_time, tx_height1);
     let tx_bytes: [u8; 4] = [10, 11, 12, 13];
+    let tx_height2 = Some(100);
+    let tx_data2 = TransactionData::new(tx_outputs, tx_time, tx_height2);
 
     assert_matches!(wallet.count_transactions(), Ok(0));
-    assert_matches!(wallet.put_transaction(tx_id, &tx_data, &tx_bytes), Ok(()));
     assert_matches!(
-        wallet.put_transaction(tx_id, &tx_data, &tx_bytes),
-        Err(Error::SqliteFailure(..))
+        wallet.upsert_transaction(tx_id, &tx_data1, &tx_bytes),
+        Ok(())
+    );
+    assert_matches!(wallet.get_transaction_data(tx_id), Ok(x) if x == tx_data1);
+    assert_matches!(
+        wallet.upsert_transaction(tx_id, &tx_data2, &tx_bytes),
+        Ok(())
     );
     assert_matches!(wallet.count_transactions(), Ok(1));
-    assert_matches!(wallet.get_transaction_data(tx_id), Ok(x) if x == tx_data);
-    assert_matches!(wallet.get_transactions_data(), Ok(x) if *x == [(tx_id, tx_data)]);
+    assert_matches!(wallet.get_transaction_data(tx_id), Ok(x) if x == tx_data2);
+    assert_matches!(wallet.get_transactions_data(), Ok(x) if *x == [(tx_id, tx_data2)]);
     assert_matches!(wallet.get_transaction_bytes(tx_id), Ok(x) if *x == tx_bytes);
 }
 
@@ -169,11 +178,11 @@ fn page() {
     let tx2_bytes: [u8; 6] = [20, 21, 22, 23, 24, 25];
 
     assert_matches!(
-        wallet.put_transaction(tx1_id, &tx1_data, &tx1_bytes),
+        wallet.upsert_transaction(tx1_id, &tx1_data, &tx1_bytes),
         Ok(())
     );
     assert_matches!(
-        wallet.put_transaction(tx2_id, &tx2_data, &tx2_bytes),
+        wallet.upsert_transaction(tx2_id, &tx2_data, &tx2_bytes),
         Ok(())
     );
     assert_matches!(
@@ -214,15 +223,15 @@ fn since() {
     let tx3_bytes: [u8; 4] = [30, 31, 32, 33];
 
     assert_matches!(
-        wallet.put_transaction(tx1_id, &tx1_data, &tx1_bytes),
+        wallet.upsert_transaction(tx1_id, &tx1_data, &tx1_bytes),
         Ok(())
     );
     assert_matches!(
-        wallet.put_transaction(tx2_id, &tx2_data, &tx2_bytes),
+        wallet.upsert_transaction(tx2_id, &tx2_data, &tx2_bytes),
         Ok(())
     );
     assert_matches!(
-        wallet.put_transaction(tx3_id, &tx3_data, &tx3_bytes),
+        wallet.upsert_transaction(tx3_id, &tx3_data, &tx3_bytes),
         Ok(())
     );
     assert_matches!(
@@ -255,11 +264,11 @@ fn rollback() {
     let tx2_data2 = TransactionData::new(tx2_outputs, tx2_time, None);
 
     assert_matches!(
-        wallet.put_transaction(tx1_id, &tx1_data, &tx1_bytes),
+        wallet.upsert_transaction(tx1_id, &tx1_data, &tx1_bytes),
         Ok(())
     );
     assert_matches!(
-        wallet.put_transaction(tx2_id, &tx2_data, &tx2_bytes),
+        wallet.upsert_transaction(tx2_id, &tx2_data, &tx2_bytes),
         Ok(())
     );
     assert_matches!(wallet.rollback(tx2_id), Ok(()));

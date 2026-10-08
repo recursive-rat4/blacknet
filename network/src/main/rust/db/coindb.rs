@@ -387,6 +387,10 @@ impl CoinDB {
             .get(&self.block_db.indexes, hash)
             .expect("consistent index for undo");
         let undo = snapshot.get(&self.undos, hash).expect("consistent undo");
+        let (block, _) = self
+            .block_db
+            .get(snapshot, hash)
+            .expect("consistent blocks");
 
         let mut block_sizes = state.block_sizes.clone();
         block_sizes.pop_back();
@@ -444,6 +448,10 @@ impl CoinDB {
         self.state.store(Arc::new((new_state, snapshot)));
 
         let _ = self.subscriber.send(Notification::Rollback { hash });
+        for tx in block.raw_transactions() {
+            let hash = Transaction::compute_hash(tx).expect("tx hash");
+            let _ = self.subscriber.send(Notification::Rollback { hash });
+        }
 
         hash
     }

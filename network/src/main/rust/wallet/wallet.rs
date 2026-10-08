@@ -26,7 +26,7 @@ use blacknet_kernel::{
 };
 use blacknet_time::{Seconds, SystemClock};
 use core::fmt;
-use rusqlite::{Connection, OpenFlags, TransactionBehavior as SqlBehavior};
+use rusqlite::{Connection, ErrorCode, OpenFlags, TransactionBehavior as SqlBehavior};
 use std::{path::Path, sync::Mutex};
 
 pub use rusqlite::Error;
@@ -417,21 +417,36 @@ impl Wallet {
         Ok(txs)
     }
 
-    pub fn put_transaction(&self, id: Hash256, data: &TransactionData, bytes: &[u8]) -> Result<()> {
+    pub fn upsert_transaction(
+        &self,
+        id: Hash256,
+        data: &TransactionData,
+        bytes: &[u8],
+    ) -> Result<()> {
         let id: [u8; _] = id.into();
         let mut connection = self.connection.lock().unwrap();
         let sql = connection.transaction_with_behavior(SqlBehavior::Immediate)?;
         let mut statement = sql.prepare_cached(
             "INSERT INTO transactions (id, time, height, bytes) VALUES(?, ?, ?, ?);",
         )?;
-        statement.execute((id, data.time().value(), data.height(), bytes))?;
+        let res = statement.execute((id, data.time().value(), data.height(), bytes));
         drop(statement);
-        let mut statement = sql
-            .prepare_cached("INSERT INTO transaction_outputs (idx, kind, txid) VALUES(?, ?, ?);")?;
-        for output in data.outputs() {
-            statement.execute((output.idx(), output.kind(), id))?;
-        }
-        drop(statement);
+        match res {
+            Ok(_) => {
+                let mut statement = sql.prepare_cached(
+                    "INSERT INTO transaction_outputs (idx, kind, txid) VALUES(?, ?, ?);",
+                )?;
+                for output in data.outputs() {
+                    statement.execute((output.idx(), output.kind(), id))?;
+                }
+            }
+            Err(Error::SqliteFailure(err, _)) if err.code == ErrorCode::ConstraintViolation => {
+                let mut statement =
+                    sql.prepare_cached("UPDATE transactions SET height = ? WHERE id = ?;")?;
+                statement.execute((data.height(), id))?;
+            }
+            Err(err) => return Err(err),
+        };
         sql.commit()?;
         Ok(())
     }
