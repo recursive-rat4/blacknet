@@ -20,6 +20,27 @@
 #![allow(clippy::suspicious_arithmetic_impl)]
 #![allow(clippy::suspicious_op_assign_impl)]
 
+cfg_select! {
+    all(target_feature = "bmi2", target_feature = "pclmulqdq") => {
+        mod bmi2;
+        use bmi2::*;
+        mod pclmulqdq;
+        use pclmulqdq::*;
+    }
+    all(target_feature = "neon", target_arch = "aarch64") => {
+        //RUST https://github.com/rust-lang/rust/issues/111800
+        mod neon;
+        use neon::*;
+        #[expect(dead_code)]
+        mod generic;
+        use generic::{clmul128, clsqr128};
+    }
+    _ => {
+        mod generic;
+        use generic::*;
+    }
+}
+
 mod gf2;
 mod ghash;
 mod rijndael;

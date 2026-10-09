@@ -21,7 +21,7 @@ use crate::algebra::{
     Semimodule, Set, Square, Zero,
 };
 use crate::branchless::{BlAssign, BlEq, BlOption, BlSelect};
-use crate::gf2::GF2;
+use crate::gf2::{GF2, clmul128, clsqr128};
 use crate::symmetric::sponge::{Absorb, Sponge, Squeeze};
 use bytemuck::Zeroable;
 use core::array;
@@ -221,7 +221,7 @@ impl Mul for GHashField {
     type Output = Self;
 
     fn mul(self, rps: Self) -> Self::Output {
-        let coefficients = Self::reduce(clmul(self.coefficients, rps.coefficients));
+        let coefficients = Self::reduce(clmul128(self.coefficients, rps.coefficients));
         Self { coefficients }
     }
 }
@@ -271,7 +271,7 @@ impl Square for GHashField {
     type Output = Self;
 
     fn square(self) -> Self {
-        let coefficients = Self::reduce(clsqr(self.coefficients));
+        let coefficients = Self::reduce(clsqr128(self.coefficients));
         Self { coefficients }
     }
 }
@@ -583,112 +583,5 @@ impl Squeeze<u8> for GHashField {
             u64::from_le_bytes(bytes)
         });
         Self { coefficients }
-    }
-}
-
-#[inline(always)]
-fn clmul(a: [u64; 2], b: [u64; 2]) -> [u64; 4] {
-    cfg_select! {
-        target_feature = "pclmulqdq" => {
-            unsafe {
-                #[cfg(target_arch = "x86")]
-                use core::arch::x86::*;
-                #[cfg(target_arch = "x86_64")]
-                use core::arch::x86_64::*;
-
-                // Long method
-                let a = _mm_loadu_si128(a.as_ptr() as *const __m128i);
-                let b = _mm_loadu_si128(b.as_ptr() as *const __m128i);
-                let ll = _mm_clmulepi64_si128(a, b, 0);
-                let lh = _mm_clmulepi64_si128(a, b, 1);
-                let hl = _mm_clmulepi64_si128(a, b, 16);
-                let hh = _mm_clmulepi64_si128(a, b, 17);
-                let [lll, llh]: [u64; 2] = core::mem::transmute(ll);
-                let [lhl, lhh]: [u64; 2] = core::mem::transmute(lh);
-                let [hll, hlh]: [u64; 2] = core::mem::transmute(hl);
-                let [hhl, hhh]: [u64; 2] = core::mem::transmute(hh);
-                [
-                    lll,
-                    llh ^ lhl ^ hll,
-                    hhl ^ lhh ^ hlh,
-                    hhh,
-                ]
-            }
-        }
-        _ => {
-            fn clmul64(a: u64, b: u64) -> [u64; 2] {
-                let [mut l, mut h] = [0, 0];
-                let mask = (a & 1).wrapping_neg();
-                l ^= mask & b;
-                for i in 1..64 {
-                    let mask = (a >> i & 1).wrapping_neg();
-                    l ^= mask & b << i;
-                    h ^= mask & b >> (64 - i);
-                }
-                [l, h]
-            }
-
-            // Karatsuba method
-            let [al, ah] = a;
-            let [bl, bh] = b;
-            let [ta, tb] = [al ^ ah, bl ^ bh];
-            let [ll, lh] = clmul64(al, bl);
-            let [hl, hh] = clmul64(ah, bh);
-            let [tl, th] = clmul64(ta, tb);
-            [
-                ll,
-                lh ^ ll ^ hl ^ tl,
-                hl ^ lh ^ hh ^ th,
-                hh,
-            ]
-        }
-    }
-}
-
-#[inline(always)]
-fn clsqr(a: [u64; 2]) -> [u64; 4] {
-    cfg_select! {
-        target_feature = "bmi2" => {
-            unsafe {
-                #[cfg(target_arch = "x86")]
-                use core::arch::x86::*;
-                #[cfg(target_arch = "x86_64")]
-                use core::arch::x86_64::*;
-
-                let [al, ah] = a;
-                let [ll, lh, hl, hh] = [
-                    al & 0xFFFFFFFF, al >> 32,
-                    ah & 0xFFFFFFFF, ah >> 32,
-                ];
-                let ll = _pdep_u64(ll, 0x5555555555555555);
-                let lh = _pdep_u64(lh, 0x5555555555555555);
-                let hl = _pdep_u64(hl, 0x5555555555555555);
-                let hh = _pdep_u64(hh, 0x5555555555555555);
-                [ll, lh, hl, hh]
-            }
-        }
-        _ => {
-            const fn clsqr32(a: u32) -> u64 {
-                let mut c = a as u64;
-                c = (c | c << 32) & 0x00000000FFFFFFFF;
-                c = (c | c << 16) & 0x0000FFFF0000FFFF;
-                c = (c | c <<  8) & 0x00FF00FF00FF00FF;
-                c = (c | c <<  4) & 0x0F0F0F0F0F0F0F0F;
-                c = (c | c <<  2) & 0x3333333333333333;
-                c = (c | c <<  1) & 0x5555555555555555;
-                c
-            }
-
-            let [al, ah] = a;
-            let [ll, lh, hl, hh] = [
-                al as u32, (al >> 32) as u32,
-                ah as u32, (ah >> 32) as u32,
-            ];
-            let ll = clsqr32(ll);
-            let lh = clsqr32(lh);
-            let hl = clsqr32(hl);
-            let hh = clsqr32(hh);
-            [ll, lh, hl, hh]
-        }
     }
 }

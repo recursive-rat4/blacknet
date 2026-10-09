@@ -21,7 +21,7 @@ use crate::algebra::{
     Semimodule, Set, Square, Zero, square_and_multiply,
 };
 use crate::branchless::{BlAssign, BlEq, BlOption, BlSelect};
-use crate::gf2::GF2;
+use crate::gf2::{GF2, clmul8, clsqr8};
 use crate::symmetric::sponge::{Absorb, Sponge, Squeeze};
 use bytemuck::Zeroable;
 use core::fmt::{Debug, Formatter, Result};
@@ -199,7 +199,7 @@ impl Mul for RijndaelField {
     type Output = Self;
 
     fn mul(self, rps: Self) -> Self::Output {
-        let coefficients = Self::reduce(clmul(self.coefficients, rps.coefficients));
+        let coefficients = Self::reduce(clmul8(self.coefficients, rps.coefficients));
         Self { coefficients }
     }
 }
@@ -249,7 +249,7 @@ impl Square for RijndaelField {
     type Output = Self;
 
     fn square(self) -> Self {
-        let coefficients = Self::reduce(clsqr(self.coefficients));
+        let coefficients = Self::reduce(clsqr8(self.coefficients));
         Self { coefficients }
     }
 }
@@ -538,89 +538,5 @@ impl Squeeze<u8> for RijndaelField {
     fn squeeze_from<S: Sponge<Msg = u8>>(sponge: &mut S) -> Self {
         let coefficients = sponge.squeeze_msg();
         Self { coefficients }
-    }
-}
-
-#[inline(always)]
-fn clmul(a: u8, b: u8) -> u16 {
-    cfg_select! {
-        target_feature = "pclmulqdq" => {
-            unsafe {
-                #[cfg(target_arch = "x86")]
-                use core::arch::x86::*;
-                #[cfg(target_arch = "x86_64")]
-                use core::arch::x86_64::*;
-
-                let a = _mm_cvtsi32_si128(a as i32);
-                let b = _mm_cvtsi32_si128(b as i32);
-                let c = _mm_clmulepi64_si128(a, b, 0);
-                let c: u128 = core::mem::transmute(c);
-                c as u16
-            }
-        }
-        all(target_feature = "neon", target_arch = "aarch64") => {
-            //RUST https://github.com/rust-lang/rust/issues/111800
-            unsafe {
-                #[cfg(target_arch = "arm")]
-                use core::arch::arm::*;
-                #[cfg(target_arch = "aarch64")]
-                use core::arch::aarch64::*;
-
-                let a = vmov_n_p8(a);
-                let b = vmov_n_p8(b);
-                let c = vmull_p8(a, b);
-                vgetq_lane_p16(c, 0)
-            }
-        }
-        _ => {
-            let mut a = a as u16;
-            let mut b = b as u16;
-            let mut c = 0;
-            for _ in 0..u8::BITS {
-                let mask = (a & 1).wrapping_neg();
-                c ^= b & mask;
-                a >>= 1;
-                b <<= 1;
-            }
-            c
-        }
-    }
-}
-
-#[inline(always)]
-fn clsqr(a: u8) -> u16 {
-    cfg_select! {
-        target_feature = "bmi2" => {
-            unsafe {
-                #[cfg(target_arch = "x86")]
-                use core::arch::x86::*;
-                #[cfg(target_arch = "x86_64")]
-                use core::arch::x86_64::*;
-
-                let a = a as u32;
-                let c = _pdep_u32(a, 0x5555);
-                c as u16
-            }
-        }
-        all(target_feature = "neon", target_arch = "aarch64") => {
-            //RUST https://github.com/rust-lang/rust/issues/111800
-            unsafe {
-                #[cfg(target_arch = "arm")]
-                use core::arch::arm::*;
-                #[cfg(target_arch = "aarch64")]
-                use core::arch::aarch64::*;
-
-                let a = vmov_n_p8(a);
-                let c = vmull_p8(a, a);
-                vgetq_lane_p16(c, 0)
-            }
-        }
-        _ => {
-            let mut c = a as u16;
-            c = (c | c << 4) & 0x0F0F;
-            c = (c | c << 2) & 0x3333;
-            c = (c | c << 1) & 0x5555;
-            c
-        }
     }
 }
