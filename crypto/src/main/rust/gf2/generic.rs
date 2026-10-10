@@ -48,6 +48,26 @@ pub const fn clsqr128(a: [u64; 2]) -> [u64; 4] {
 }
 
 #[inline(always)]
+pub const fn clsqr192(a: [u64; 3]) -> [u64; 6] {
+    let [al, am, ah] = a;
+    let [ll, lh, ml, mh, hl, hh] = [
+        al as u32,
+        (al >> 32) as u32,
+        am as u32,
+        (am >> 32) as u32,
+        ah as u32,
+        (ah >> 32) as u32,
+    ];
+    let ll = clsqr32(ll);
+    let lh = clsqr32(lh);
+    let ml = clsqr32(ml);
+    let mh = clsqr32(mh);
+    let hl = clsqr32(hl);
+    let hh = clsqr32(hh);
+    [ll, lh, ml, mh, hl, hh]
+}
+
+#[inline(always)]
 pub const fn clmul8(a: u8, b: u8) -> u16 {
     let mut a = a as u16;
     let mut b = b as u16;
@@ -88,4 +108,31 @@ pub const fn clmul128(a: [u64; 2], b: [u64; 2]) -> [u64; 4] {
     let [hl, hh] = clmul64(ah, bh);
     let [tl, th] = clmul64(ta, tb);
     [ll, lh ^ ll ^ hl ^ tl, hl ^ lh ^ hh ^ th, hh]
+}
+
+#[inline(always)]
+pub const fn clmul192(a: [u64; 3], b: [u64; 3]) -> [u64; 6] {
+    // Karatsuba method
+    let p0 = clmul64(a[0], b[0]);
+    let p1 = clmul64(a[1], b[1]);
+    let p2 = clmul64(a[2], b[2]);
+    let p01 = clmul64(a[0] ^ a[1], b[0] ^ b[1]);
+    let p02 = clmul64(a[0] ^ a[2], b[0] ^ b[2]);
+    let p12 = clmul64(a[1] ^ a[2], b[1] ^ b[2]);
+    let t0 = p0;
+    let t1 = [p0[0] ^ p01[0] ^ p1[0], p0[1] ^ p01[1] ^ p1[1]];
+    let t2 = [
+        p0[0] ^ p1[0] ^ p2[0] ^ p02[0],
+        p0[1] ^ p1[1] ^ p2[1] ^ p02[1],
+    ];
+    let t3 = [p1[0] ^ p12[0] ^ p2[0], p1[1] ^ p12[1] ^ p2[1]];
+    let t4 = p2;
+    [
+        t0[0],
+        t0[1] ^ t1[0],
+        t1[1] ^ t2[0],
+        t2[1] ^ t3[0],
+        t3[1] ^ t4[0],
+        t4[1],
+    ]
 }

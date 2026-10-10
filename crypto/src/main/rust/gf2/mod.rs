@@ -33,7 +33,7 @@ cfg_select! {
         use neon::*;
         #[expect(dead_code)]
         mod generic;
-        use generic::{clmul128, clsqr128};
+        use generic::{clmul128, clmul192, clsqr128, clsqr192};
     }
     _ => {
         mod generic;
@@ -43,8 +43,10 @@ cfg_select! {
 
 mod gf2;
 mod ghash;
+mod lab;
 mod rijndael;
 
 pub use gf2::GF2;
 pub use ghash::GHashField;
+pub use lab::LabField;
 pub use rijndael::RijndaelField;

@@ -155,6 +155,10 @@ name = "johnsonlindenstrauss"
 path = "src/test/rust/johnsonlindenstrauss.rs"
 
 [[test]]
+name = "labfield"
+path = "src/test/rust/labfield.rs"
+
+[[test]]
 name = "latticegadget"
 path = "src/test/rust/latticegadget.rs"
 

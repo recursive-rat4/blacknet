@@ -41,3 +41,25 @@ pub fn clsqr128(a: [u64; 2]) -> [u64; 4] {
         [ll, lh, hl, hh]
     }
 }
+
+#[inline(always)]
+pub fn clsqr192(a: [u64; 3]) -> [u64; 6] {
+    unsafe {
+        let [al, am, ah] = a;
+        let [ll, lh, ml, mh, hl, hh] = [
+            al & 0xFFFFFFFF,
+            al >> 32,
+            am & 0xFFFFFFFF,
+            am >> 32,
+            ah & 0xFFFFFFFF,
+            ah >> 32,
+        ];
+        let ll = _pdep_u64(ll, 0x5555555555555555);
+        let lh = _pdep_u64(lh, 0x5555555555555555);
+        let ml = _pdep_u64(ml, 0x5555555555555555);
+        let mh = _pdep_u64(mh, 0x5555555555555555);
+        let hl = _pdep_u64(hl, 0x5555555555555555);
+        let hh = _pdep_u64(hh, 0x5555555555555555);
+        [ll, lh, ml, mh, hl, hh]
+    }
+}
