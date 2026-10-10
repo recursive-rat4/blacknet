@@ -16,7 +16,8 @@
  */
 
 use crate::{
-    db::{BlockNotifier, CoinDB, Snapshot, State as CoinDBState},
+    blockfetcher::Notifier as BlockNotifier,
+    db::{CoinDB, Snapshot, State as CoinDBState},
     node::Node,
     wallet::{Error as WalletError, WalletDB},
 };
@@ -77,7 +78,7 @@ impl Staker {
 
         runtime.spawn(Staker::block_observer(
             staker.clone(),
-            staker.node.block_db().subscribe(),
+            staker.node.block_fetcher().subscribe(),
         ));
 
         Ok(staker)
@@ -233,7 +234,6 @@ impl Staker {
 
     fn search(&self) -> Option<(Block, Arc<SecretKey>)> {
         let mut inner = self.inner.lock().unwrap();
-        inner.waiter = None;
 
         if self.node.mode().requires_network() {
             if !self.node.is_online() {

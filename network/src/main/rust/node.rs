@@ -16,7 +16,7 @@
  */
 
 use crate::{
-    blockfetcher::BlockFetcher,
+    blockfetcher::{BlockFetcher, Notifier as BlockNotifier, Source as BlockSource},
     connection::{Connection, ConnectionId, State},
     db::{BlockDB, CoinDB, CoinNotifier, DBVersion, Fjall},
     endpoint::Endpoint,
@@ -31,10 +31,7 @@ use blacknet_compat::{
     feerate::FeeRate,
     {Mode, XDGDirectories},
 };
-use blacknet_crypto::{
-    bigint::UInt256,
-    random::{Distribution, FAST_RNG, UniformIntDistribution},
-};
+use blacknet_crypto::random::{Distribution, FAST_RNG, UniformIntDistribution};
 use blacknet_io::{Write, file::replace};
 use blacknet_kernel::{
     amount::Amount,
@@ -166,6 +163,10 @@ impl Node {
             queued_peers: Mutex::new(queued_peers),
         });
 
+        runtime.spawn(Node::block_observer(
+            node.clone(),
+            node.block_fetcher().subscribe(),
+        ));
         for _ in 0..config.outgoing_connections {
             runtime.spawn(node.clone().connector());
         }
@@ -346,33 +347,28 @@ impl Node {
         }
     }
 
-    pub(super) fn announce_block(
-        &self,
-        hash: Hash256,
-        cumulative_difficulty: UInt256,
-        source: Option<ConnectionId>,
-    ) -> usize {
-        self.broadcast_packet(
-            &BlockAnnounce::new(hash, cumulative_difficulty),
-            |connection| {
-                Some(connection.id()) != source
-                    && connection.state().is_established()
-                    && connection.last_block().load().cumulative_difficulty()
-                        < cumulative_difficulty
-            },
-        )
+    async fn block_observer(self: Arc<Self>, mut block_notifier: BlockNotifier) {
+        while let Some((hash, cumulative_difficulty, source)) = block_notifier.recv().await {
+            let n = self.broadcast_packet(
+                &BlockAnnounce::new(hash, cumulative_difficulty),
+                |connection| {
+                    connection.state().is_established()
+                        && connection.last_block().load().cumulative_difficulty()
+                            < cumulative_difficulty
+                },
+            );
+            match source {
+                BlockSource::Staker if self.mode().requires_network() => {
+                    info!(self.logger, "Announced to {n} peers")
+                }
+                _ => {}
+            }
+        }
     }
 
     pub(super) async fn broadcast_block(&self, hash: Hash256, bytes: Box<[u8]>) -> bool {
         match self.block_fetcher.staked_block(hash, bytes).await {
-            Ok(()) => {
-                let (ref state, _) = **self.coin_db.state().load();
-                let n = self.announce_block(hash, state.cumulative_difficulty(), None);
-                if self.mode().requires_network() {
-                    info!(self.logger, "Announced to {n} peers");
-                }
-                true
-            }
+            Ok(()) => true,
             Err(err) => {
                 info!(self.logger, "{err}");
                 false

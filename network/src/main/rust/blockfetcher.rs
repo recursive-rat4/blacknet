@@ -31,7 +31,7 @@ use blacknet_kernel::{
 use blacknet_log::{Error as LogError, LogManager, Logger, debug, error, info};
 use blacknet_time::{Milliseconds, SystemClock};
 use core::{cmp::max, fmt};
-use std::sync::{Arc, OnceLock, RwLock, Weak};
+use std::sync::{Arc, Mutex, OnceLock, RwLock, Weak};
 use tokio::{
     runtime::Runtime,
     select,
@@ -40,12 +40,17 @@ use tokio::{
 };
 use tokio_util::sync::CancellationToken;
 
+pub type Notification = (Hash256, UInt256, Source);
+pub type Notifier = mpsc::UnboundedReceiver<Notification>;
+pub type Subscriber = mpsc::UnboundedSender<Notification>;
+
 pub struct BlockFetcher {
     logger: Logger,
     staker_sender: mpsc::UnboundedSender<(Hash256, Box<[u8]>, oneshot::Sender<Result<()>>)>,
     announces_sender: mpsc::Sender<(Weak<Connection>, BlockAnnounce)>,
     deferred_sender: mpsc::Sender<(Weak<Connection>, Blocks)>,
     request: RwLock<Option<RequestSender>>,
+    subscribers: Mutex<Vec<Subscriber>>,
     block_db: Arc<BlockDB>,
     coin_db: Arc<CoinDB>,
 }
@@ -68,9 +73,10 @@ impl BlockFetcher {
             staker_sender,
             announces_sender,
             deferred_sender,
+            request: RwLock::new(None),
+            subscribers: Mutex::new(Vec::new()),
             block_db,
             coin_db,
-            request: RwLock::new(None),
         });
 
         runtime.spawn(block_fetcher.clone().run(
@@ -80,6 +86,12 @@ impl BlockFetcher {
         ));
 
         Ok(block_fetcher)
+    }
+
+    pub fn subscribe(&self) -> Notifier {
+        let (sender, receiver) = mpsc::unbounded_channel();
+        self.subscribers.lock().unwrap().push(sender);
+        receiver
     }
 
     pub fn is_synchronizing(&self) -> bool {
@@ -176,7 +188,7 @@ impl BlockFetcher {
         mut deferred_receiver: mpsc::Receiver<(Weak<Connection>, Blocks)>,
     ) {
         loop {
-            select! {
+            let notification = select! {
                 biased;
                 Some(
                     (hash, bytes, sender)
@@ -194,6 +206,9 @@ impl BlockFetcher {
                     connection, announce
                 ).await,
                 else => break,
+            };
+            if let Some(notification) = notification {
+                self.notify(notification);
             }
         }
         info!(self.logger, "Interrupting BlockFetcher");
@@ -204,17 +219,32 @@ impl BlockFetcher {
         hash: Hash256,
         bytes: Box<[u8]>,
         sender: oneshot::Sender<Result<()>>,
-    ) {
+    ) -> Option<Notification> {
         let result = self.block_db.process(&self.coin_db, hash, bytes);
+        let notification = if result.is_ok() {
+            let (ref state, _) = **self.coin_db.state().load();
+            Some((
+                state.block_hash(),
+                state.cumulative_difficulty(),
+                Source::Staker,
+            ))
+        } else {
+            None
+        };
         let _ = sender.send(result);
+        notification
     }
 
     /// Blocks were received after timeout. During lags, processing these helps to stay in sync.
-    async fn process_deferred(&self, connection: Weak<Connection>, answer: Blocks) {
+    async fn process_deferred(
+        &self,
+        connection: Weak<Connection>,
+        answer: Blocks,
+    ) -> Option<Notification> {
         let connection = connection.upgrade();
         let (hashes, blocks) = answer.into();
+        let mut accepted = 0;
         if !blocks.is_empty() {
-            let mut accepted = 0;
             info!(
                 self.logger,
                 "Mongering {} deferred blocks from {}",
@@ -256,7 +286,7 @@ impl BlockFetcher {
                     }
                 }
             }
-            if accepted > 0 {
+            if accepted != 0 {
                 info!(self.logger, "Accepted {accepted} deferred blocks");
             }
         } else if !hashes.is_empty() {
@@ -266,25 +296,37 @@ impl BlockFetcher {
             // Should not happen
             error!(self.logger, "Invalid packet Blocks");
         }
+        if accepted != 0 {
+            let (ref state, _) = **self.coin_db.state().load();
+            Some((
+                state.block_hash(),
+                state.cumulative_difficulty(),
+                Source::Peer,
+            ))
+        } else {
+            None
+        }
     }
 
-    async fn process_announce(&self, connection: Weak<Connection>, announce: BlockAnnounce) {
-        let Some(connection) = connection.upgrade() else {
-            return;
-        };
+    async fn process_announce(
+        &self,
+        connection: Weak<Connection>,
+        announce: BlockAnnounce,
+    ) -> Option<Notification> {
+        let connection = connection.upgrade()?;
 
         if connection.requested_blocks() {
-            return;
+            return None;
         }
 
         let mut state = self.coin_db.state().load();
         if announce.cumulative_difficulty() <= state.0.cumulative_difficulty() {
-            return;
+            return None;
         }
 
         if self.block_db.is_rejected(announce.hash()) {
             connection.dos("Rejected block");
-            return;
+            return None;
         }
 
         info!(self.logger, "Fetch {}", announce.hash());
@@ -373,14 +415,16 @@ impl BlockFetcher {
         }
 
         state = self.coin_db.state().load();
-        if state.0.block_hash() != session.original_chain {
-            connection.node().announce_block(
+        let notification = if state.0.block_hash() != session.original_chain {
+            connection.set_last_block_time(connection.last_packet_time());
+            Some((
                 state.0.block_hash(),
                 state.0.cumulative_difficulty(),
-                Some(connection.id()),
-            );
-            connection.set_last_block_time(connection.last_packet_time());
-        }
+                Source::Peer,
+            ))
+        } else {
+            None
+        };
 
         if connection.is_closed() {
             info!(
@@ -399,6 +443,7 @@ impl BlockFetcher {
         }
 
         *self.request.write().unwrap() = None;
+        notification
     }
 
     fn process_blocks(
@@ -470,6 +515,19 @@ impl BlockFetcher {
             Milliseconds::new(10000)
         }
     }
+
+    fn notify(&self, notification: Notification) {
+        let subscribers = self.subscribers.lock().unwrap();
+        for subscriber in subscribers.iter() {
+            let _ = subscriber.send(notification);
+        }
+    }
+}
+
+#[derive(Clone, Copy)]
+pub enum Source {
+    Peer,
+    Staker,
 }
 
 struct RequestSender {
