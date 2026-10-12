@@ -24,7 +24,7 @@ use blacknet_kernel::{
     transaction::{HashTimeLockContractId, MultiSignatureLockContractId},
 };
 use blacknet_network::wallet::{
-    DeriveAccountError, Error, OpenError, TransactionData, TransactionOutputData, Wallet,
+    DeriveAccountError, Error, OpenError, TransactionData, TransactionOutputData, Upsert, Wallet,
 };
 use blacknet_time::Seconds;
 use core::{assert_matches, str::FromStr};
@@ -147,12 +147,12 @@ fn transaction() {
     assert_matches!(wallet.count_transactions(), Ok(0));
     assert_matches!(
         wallet.upsert_transaction(tx_id, &tx_data1, &tx_bytes),
-        Ok(())
+        Ok(Upsert::Insert)
     );
     assert_matches!(wallet.get_transaction_data(tx_id), Ok(x) if x == tx_data1);
     assert_matches!(
         wallet.upsert_transaction(tx_id, &tx_data2, &tx_bytes),
-        Ok(())
+        Ok(Upsert::Update)
     );
     assert_matches!(wallet.count_transactions(), Ok(1));
     assert_matches!(wallet.get_transaction_data(tx_id), Ok(x) if x == tx_data2);
@@ -179,11 +179,11 @@ fn page() {
 
     assert_matches!(
         wallet.upsert_transaction(tx1_id, &tx1_data, &tx1_bytes),
-        Ok(())
+        Ok(Upsert::Insert)
     );
     assert_matches!(
         wallet.upsert_transaction(tx2_id, &tx2_data, &tx2_bytes),
-        Ok(())
+        Ok(Upsert::Insert)
     );
     assert_matches!(
         wallet.page_transactions(1, 1, None),
@@ -224,15 +224,15 @@ fn since() {
 
     assert_matches!(
         wallet.upsert_transaction(tx1_id, &tx1_data, &tx1_bytes),
-        Ok(())
+        Ok(Upsert::Insert)
     );
     assert_matches!(
         wallet.upsert_transaction(tx2_id, &tx2_data, &tx2_bytes),
-        Ok(())
+        Ok(Upsert::Insert)
     );
     assert_matches!(
         wallet.upsert_transaction(tx3_id, &tx3_data, &tx3_bytes),
-        Ok(())
+        Ok(Upsert::Insert)
     );
     assert_matches!(
         wallet.transactions_since(100),
@@ -265,11 +265,11 @@ fn rollback() {
 
     assert_matches!(
         wallet.upsert_transaction(tx1_id, &tx1_data, &tx1_bytes),
-        Ok(())
+        Ok(Upsert::Insert)
     );
     assert_matches!(
         wallet.upsert_transaction(tx2_id, &tx2_data, &tx2_bytes),
-        Ok(())
+        Ok(Upsert::Insert)
     );
     assert_matches!(wallet.rollback(tx2_id), Ok(()));
     assert_matches!(wallet.rollback(tx3_id), Ok(()));

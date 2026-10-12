@@ -20,7 +20,7 @@ use crate::{
     txpool::{Notifier as TxPoolNotifier, TxPool},
     wallet::{
         AddressCodec, Error as WalletError, OpenError, TransactionData, TransactionOutputData,
-        Wallet,
+        Upsert, Wallet,
     },
 };
 use blacknet_compat::{Mode, XDGDirectories};
@@ -208,8 +208,12 @@ impl WalletDB {
                         Some(height),
                     );
                     let bytes = to_bytes(&tx).expect("Serialize generated");
-                    if let Err(err) = wallet.upsert_transaction(hash, &data, &bytes) {
-                        error!(self.logger, "Mint: {err}");
+                    match wallet.upsert_transaction(hash, &data, &bytes) {
+                        Ok(Upsert::Insert) => {
+                            self.notify((tx, hash, time.to_millis(), height, generator))
+                        }
+                        Ok(Upsert::Update) => {}
+                        Err(err) => error!(self.logger, "Mint: {err}"),
                     }
                 }
                 CoinNotification::Rollback { hash } => {
@@ -230,7 +234,6 @@ impl WalletDB {
         }
     }
 
-    #[expect(dead_code)]
     fn notify(&self, notification: Notification) {
         let Some(subscriber) = self.subscriber.get() else {
             return;

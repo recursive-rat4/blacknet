@@ -422,7 +422,7 @@ impl Wallet {
         id: Hash256,
         data: &TransactionData,
         bytes: &[u8],
-    ) -> Result<()> {
+    ) -> Result<Upsert> {
         let id: [u8; _] = id.into();
         let mut connection = self.connection.lock().unwrap();
         let sql = connection.transaction_with_behavior(SqlBehavior::Immediate)?;
@@ -431,7 +431,7 @@ impl Wallet {
         )?;
         let res = statement.execute((id, data.time().value(), data.height(), bytes));
         drop(statement);
-        match res {
+        let op = match res {
             Ok(_) => {
                 let mut statement = sql.prepare_cached(
                     "INSERT INTO transaction_outputs (idx, kind, txid) VALUES(?, ?, ?);",
@@ -439,16 +439,18 @@ impl Wallet {
                 for output in data.outputs() {
                     statement.execute((output.idx(), output.kind(), id))?;
                 }
+                Upsert::Insert
             }
             Err(Error::SqliteFailure(err, _)) if err.code == ErrorCode::ConstraintViolation => {
                 let mut statement =
                     sql.prepare_cached("UPDATE transactions SET height = ? WHERE id = ?;")?;
                 statement.execute((data.height(), id))?;
+                Upsert::Update
             }
             Err(err) => return Err(err),
         };
         sql.commit()?;
-        Ok(())
+        Ok(op)
     }
 
     pub fn count_transactions(&self) -> Result<usize> {
@@ -598,6 +600,12 @@ impl Wallet {
         connection.execute("VACUUM main INTO ?", (path.to_str(),))?;
         Ok(())
     }
+}
+
+#[derive(Debug)]
+pub enum Upsert {
+    Insert,
+    Update,
 }
 
 #[derive(Debug)]
