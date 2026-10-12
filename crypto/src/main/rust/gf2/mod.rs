@@ -27,6 +27,11 @@ cfg_select! {
         mod pclmulqdq;
         use pclmulqdq::*;
     }
+    all(target_feature = "zbkc", target_arch = "riscv64") => {
+        //RUST https://github.com/rust-lang/rust/issues/114544
+        mod zbkc;
+        use zbkc::*;
+    }
     all(target_feature = "neon", target_arch = "aarch64") => {
         //RUST https://github.com/rust-lang/rust/issues/111800
         mod neon;
