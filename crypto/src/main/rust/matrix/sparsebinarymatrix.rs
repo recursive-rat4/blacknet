@@ -17,10 +17,12 @@
 
 use crate::algebra::{One, Zero};
 use crate::matrix::{DenseVector, SparseMatrix};
+use crate::symmetric::Blake2b256;
 use alloc::vec;
 use alloc::vec::Vec;
 use core::iter::{Sum, repeat_n};
 use core::ops::Mul;
+use core::slice;
 use serde::{Deserialize, Serialize};
 
 /// A sparse matrix in CSR format over subset `{0, 1}`.
@@ -75,6 +77,44 @@ impl SparseBinaryMatrix {
     /// The column index.
     pub fn c_index(&self) -> &[u32] {
         &self.c_index
+    }
+
+    pub fn hash_to(&self, hasher: &mut Blake2b256) {
+        hasher.update(self.columns.to_le_bytes());
+        hasher.update((self.r_index.len() as u32).to_le_bytes());
+        cfg_select! {
+            target_endian = "little" => {
+                let r_index = unsafe {
+                    slice::from_raw_parts(
+                        self.r_index.as_ptr() as *const u8,
+                        self.r_index.len() * size_of::<u32>(),
+                    )
+                };
+                hasher.update(r_index);
+            }
+            _ => {
+                for i in &self.r_index {
+                    hasher.update(i.to_le_bytes());
+                }
+            }
+        }
+        hasher.update((self.c_index.len() as u32).to_le_bytes());
+        cfg_select! {
+            target_endian = "little" => {
+                let c_index = unsafe {
+                    slice::from_raw_parts(
+                        self.c_index.as_ptr() as *const u8,
+                        self.c_index.len() * size_of::<u32>(),
+                    )
+                };
+                hasher.update(c_index);
+            }
+            _ => {
+                for i in &self.c_index {
+                    hasher.update(i.to_le_bytes());
+                }
+            }
+        }
     }
 }
 

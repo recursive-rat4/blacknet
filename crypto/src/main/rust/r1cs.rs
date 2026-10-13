@@ -19,6 +19,7 @@ use crate::algebra::{SemiringOps, UnitalSemiring};
 use crate::assigner::assigment::Assigment;
 use crate::constraintsystem::{ConstraintSystem, Error, Result};
 use crate::matrix::{DenseVector, SparseBinaryMatrix, SparseMatrix};
+use crate::symmetric::Blake2b256;
 use core::iter::zip;
 use serde::{Deserialize, Serialize};
 
@@ -119,6 +120,14 @@ impl BinaryR1CS {
         for<'a> &'a R: SemiringOps<R>,
     {
         (&self.a * z, &self.b * z, &self.c * z)
+    }
+
+    pub fn digest(&self) -> [u8; 32] {
+        let mut hasher = Blake2b256::new();
+        self.a.hash_to(&mut hasher);
+        self.b.hash_to(&mut hasher);
+        self.c.hash_to(&mut hasher);
+        hasher.finalize()
     }
 }
 
