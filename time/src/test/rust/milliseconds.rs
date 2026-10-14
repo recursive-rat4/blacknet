@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_time::Milliseconds;
+use blacknet_time::{Milliseconds, Seconds};
 
 #[test]
 fn compare() {
@@ -65,4 +65,14 @@ fn literate() {
         Milliseconds::with_days(4),
         Milliseconds::from(4 * 24 * 60 * 60 * 1000)
     );
+}
+
+#[test]
+fn secs() {
+    assert_eq!(Milliseconds::from(-4000).to_secs_lossy(), Seconds::from(-4));
+    assert_eq!(Milliseconds::from(-3999).to_secs_lossy(), Seconds::from(-4));
+    assert_eq!(Milliseconds::from(-3001).to_secs_lossy(), Seconds::from(-4));
+    assert_eq!(Milliseconds::from(3001).to_secs_lossy(), Seconds::from(3));
+    assert_eq!(Milliseconds::from(3999).to_secs_lossy(), Seconds::from(3));
+    assert_eq!(Milliseconds::from(4000).to_secs_lossy(), Seconds::from(4));
 }

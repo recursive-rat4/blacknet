@@ -30,7 +30,7 @@ use blacknet_kernel::{
 };
 use blacknet_log::{LogManager, Logger, error, info, warn};
 use blacknet_serialization::to_bytes;
-use blacknet_time::{Milliseconds, SystemClock};
+use blacknet_time::{Seconds, SystemClock};
 use core::{error::Error, fmt};
 use hashbrown::{HashMap, hash_map::Entry};
 use std::{
@@ -46,7 +46,14 @@ use std::os::unix::fs::DirBuilderExt;
 
 const FILE_EXTENSION: &str = "sqlite";
 
-pub type Notification = (Transaction, Hash256, Milliseconds, u32, PublicKey);
+pub struct Notification {
+    pub hash: Hash256,
+    pub tx: Transaction,
+    pub time: Seconds,
+    pub height: u32,
+    pub wallet: PublicKey,
+    pub size: u32,
+}
 pub type Notifier = mpsc::UnboundedReceiver<Notification>;
 pub type Subscriber = mpsc::UnboundedSender<Notification>;
 
@@ -183,14 +190,13 @@ impl WalletDB {
         while let Some(notification) = coin_notifier.recv().await {
             let wallets = self.wallets.read().unwrap();
             match notification {
-                #[expect(unused_variables)]
                 CoinNotification::Transaction {
                     tx_hash,
                     tx,
                     tx_bytes,
                     time,
                     height,
-                } => { /*TODO*/ }
+                } => self.scan_tx(tx_hash, &tx, &tx_bytes, time, Some(height)),
                 CoinNotification::Mint {
                     hash,
                     time,
@@ -209,9 +215,14 @@ impl WalletDB {
                     );
                     let bytes = to_bytes(&tx).expect("Serialize generated");
                     match wallet.upsert_transaction(hash, &data, &bytes) {
-                        Ok(Upsert::Insert) => {
-                            self.notify((tx, hash, time.to_millis(), height, generator))
-                        }
+                        Ok(Upsert::Insert) => self.notify(Notification {
+                            hash,
+                            tx,
+                            time,
+                            height,
+                            wallet: generator,
+                            size: bytes.len() as u32,
+                        }),
                         Ok(Upsert::Update) => {}
                         Err(err) => error!(self.logger, "Mint: {err}"),
                     }
@@ -227,10 +238,15 @@ impl WalletDB {
         }
     }
 
-    #[expect(unused_variables)]
     async fn txpool_observer(self: Arc<Self>, mut txpool_notifier: TxPoolNotifier) {
         while let Some(notification) = txpool_notifier.recv().await {
-            todo!();
+            self.scan_tx(
+                notification.0,
+                &notification.1,
+                &notification.2,
+                notification.3.to_secs_lossy(),
+                None,
+            )
         }
     }
 
@@ -239,6 +255,18 @@ impl WalletDB {
             return;
         };
         let _ = subscriber.send(notification);
+    }
+
+    #[expect(unused_variables, clippy::missing_const_for_fn)]
+    fn scan_tx(
+        &self,
+        hash: Hash256,
+        tx: &Transaction,
+        bytes: &[u8],
+        time: Seconds,
+        height: Option<u32>,
+    ) {
+        //TODO
     }
 }
 

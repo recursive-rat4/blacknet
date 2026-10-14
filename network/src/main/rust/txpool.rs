@@ -42,7 +42,7 @@ use std::{
 };
 use tokio::{runtime::Runtime, sync::mpsc};
 
-pub type Notification = (Transaction, Hash256, Milliseconds, u32);
+pub type Notification = (Hash256, Transaction, Box<[u8]>, Milliseconds);
 pub type Notifier = mpsc::UnboundedReceiver<Arc<Notification>>;
 pub type Subscriber = mpsc::UnboundedSender<Arc<Notification>>;
 
@@ -235,7 +235,7 @@ impl TxPool {
         self.data_size += bytes.len();
         self.transactions.push(hash);
         debug!(self.logger, "Accepted {hash}");
-        self.notify((tx, hash, time, bytes_len));
+        self.notify((hash, tx, bytes.into(), time));
         Ok(fee)
     }
 

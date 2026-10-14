@@ -214,7 +214,7 @@ impl RPCServer {
                 continue;
             }
             let notification =
-                v2::TransactionNotification::new(&notification, &self.address_codec).unwrap();
+                v2::TransactionNotification::with(&notification, &self.address_codec).unwrap();
             let notification = v2::WebSocketNotification::with_transaction(notification).unwrap();
             let notification = to_string(&notification).unwrap();
             let notification = Message::Text(notification.into());
@@ -232,19 +232,17 @@ impl RPCServer {
     async fn walletdb_observer(self: Arc<Self>, mut walletdb_notifier: WalletDBNotifier) {
         while let Some(notification) = walletdb_notifier.recv().await {
             let mut subscribers = self.wallet_subscribers.lock().unwrap();
-            let Some(subscribers) = subscribers.get_mut(&notification.4) else {
+            let Some(subscribers) = subscribers.get_mut(&notification.wallet) else {
                 continue;
             };
             if subscribers.is_empty() {
                 continue;
             }
             let notification = v2::TransactionNotification::new(
-                &(
-                    notification.0,
-                    notification.1,
-                    notification.2,
-                    notification.3,
-                ),
+                notification.hash,
+                notification.time,
+                notification.size,
+                &notification.tx,
                 &self.address_codec,
             )
             .unwrap();

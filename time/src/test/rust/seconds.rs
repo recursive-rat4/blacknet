@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_time::Seconds;
+use blacknet_time::{Milliseconds, Seconds};
 
 #[test]
 fn compare() {
@@ -52,4 +52,11 @@ fn literate() {
     assert_eq!(Seconds::with_minutes(4), Seconds::from(4 * 60));
     assert_eq!(Seconds::with_hours(4), Seconds::from(4 * 60 * 60));
     assert_eq!(Seconds::with_days(4), Seconds::from(4 * 24 * 60 * 60));
+}
+
+#[test]
+fn millis() {
+    assert_eq!(Seconds::from(-4).to_millis(), Milliseconds::from(-4000));
+    assert_eq!(Seconds::from(0).to_millis(), Milliseconds::from(0));
+    assert_eq!(Seconds::from(4).to_millis(), Milliseconds::from(4000));
 }

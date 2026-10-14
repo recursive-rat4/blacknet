@@ -16,8 +16,9 @@
  */
 
 use crate::v2::{AmountInfo, PublicKeyInfo, Result, TxDataInfo};
-use blacknet_kernel::{blake2b::Hash256, ed25519::Signature};
+use blacknet_kernel::{blake2b::Hash256, ed25519::Signature, transaction::Transaction};
 use blacknet_network::{txpool::Notification, wallet::AddressCodec};
+use blacknet_time::Seconds;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]
@@ -35,20 +36,41 @@ pub struct TransactionNotification {
 }
 
 impl TransactionNotification {
-    pub fn new(notification: &Notification, address_codec: &AddressCodec) -> Result<Self> {
+    pub fn new(
+        hash: Hash256,
+        time: Seconds,
+        size: u32,
+        tx: &Transaction,
+        address_codec: &AddressCodec,
+    ) -> Result<Self> {
         Ok(Self {
-            hash: notification.1,
-            time: notification.2.into(),
-            size: notification.3,
-            signature: notification.0.signature(),
-            from: PublicKeyInfo::new(notification.0.from(), address_codec)?,
-            seq: notification.0.seq(),
-            referenceChain: notification.0.anchor(),
-            fee: notification.0.fee().into(),
-            r#type: notification.0.kind() as u8,
+            hash,
+            time: time.into(),
+            size,
+            signature: tx.signature(),
+            from: PublicKeyInfo::new(tx.from(), address_codec)?,
+            seq: tx.seq(),
+            referenceChain: tx.anchor(),
+            fee: tx.fee().into(),
+            r#type: tx.kind() as u8,
+            data: TxDataInfo::new(tx.kind(), tx.data_bytes(), address_codec)?,
+        })
+    }
+
+    pub fn with(notification: &Notification, address_codec: &AddressCodec) -> Result<Self> {
+        Ok(Self {
+            hash: notification.0,
+            time: notification.3.into(),
+            size: notification.2.len() as u32,
+            signature: notification.1.signature(),
+            from: PublicKeyInfo::new(notification.1.from(), address_codec)?,
+            seq: notification.1.seq(),
+            referenceChain: notification.1.anchor(),
+            fee: notification.1.fee().into(),
+            r#type: notification.1.kind() as u8,
             data: TxDataInfo::new(
-                notification.0.kind(),
-                notification.0.data_bytes(),
+                notification.1.kind(),
+                notification.1.data_bytes(),
                 address_codec,
             )?,
         })
