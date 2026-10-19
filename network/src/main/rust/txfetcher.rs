@@ -25,8 +25,8 @@ use blacknet_kernel::blake2b::Hash256;
 use blacknet_time::{Milliseconds, SystemClock};
 use core::cmp::min;
 use std::{
-    collections::HashMap,
-    sync::{Arc, Mutex, RwLock, Weak},
+    collections::{HashMap, hash_map::Entry},
+    sync::{Arc, Mutex, MutexGuard, RwLock, Weak},
 };
 use tokio::{
     runtime::Runtime,
@@ -61,14 +61,22 @@ impl TxFetcher {
         self.inventory_send.send((connection, inventory)).unwrap();
     }
 
-    pub fn fetched(&self, connection: &Connection, hash: Hash256) -> bool {
-        let mut requests = self.requests.lock().unwrap();
-        if let Some(&(id, _)) = requests.get(&hash)
-            && connection.id() == id
-        {
-            return requests.remove(&hash).is_some();
+    pub fn requests(&self) -> MutexGuard<'_, HashMap<Hash256, (ConnectionId, Milliseconds)>> {
+        self.requests.lock().unwrap()
+    }
+
+    pub fn fetched(
+        requests: &mut MutexGuard<HashMap<Hash256, (ConnectionId, Milliseconds)>>,
+        connection: &Connection,
+        hash: Hash256,
+    ) -> bool {
+        match requests.entry(hash) {
+            Entry::Occupied(occupied) if occupied.get().0 == connection.id() => {
+                occupied.remove_entry();
+                true
+            }
+            _ => false,
         }
-        false
     }
 
     async fn implementation(

@@ -18,6 +18,7 @@
 use crate::{
     connection::Connection,
     packet::{Packet, PacketKind},
+    txfetcher::TxFetcher,
 };
 use blacknet_kernel::{amount::Amount, blake2b::Hash256, error::Error, transaction::Transaction};
 use blacknet_log::debug;
@@ -76,7 +77,7 @@ impl Packet for Transactions {
         let time = connection.last_packet_time();
 
         let node = connection.node();
-        let tx_fetcher = node.tx_fetcher();
+        let mut requests = node.tx_fetcher().requests();
         let mut tx_pool = node.tx_pool().write().unwrap();
 
         for bytes in self.list.into_iter() {
@@ -87,7 +88,7 @@ impl Packet for Transactions {
                 continue;
             };
 
-            if !tx_fetcher.fetched(connection, hash) {
+            if !TxFetcher::fetched(&mut requests, connection, hash) {
                 connection.dos("Unrequested tx");
                 continue;
             }
