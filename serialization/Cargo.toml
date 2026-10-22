@@ -31,7 +31,7 @@ keywords.workspace = true
 categories.workspace = true
 
 [dependencies]
-blacknet-io.workspace = true
+blacknet-io = { workspace = true, default-features = false }
 serde_core.workspace = true
 
 [dev-dependencies]
