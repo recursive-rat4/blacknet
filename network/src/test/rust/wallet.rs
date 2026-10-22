@@ -51,6 +51,8 @@ fn ephemeral() {
     assert_matches!(wallet.set_staking(false), Ok(()));
     assert_matches!(wallet.is_staking(), Ok(false));
     assert_matches!(wallet.sequence(), Ok(0));
+    assert_matches!(wallet.increment_sequence(), Ok(()));
+    assert_matches!(wallet.sequence(), Ok(1));
 }
 
 #[test]
@@ -92,10 +94,12 @@ fn htlc() {
     let wallet = Wallet::ephemeral(&mode).unwrap();
     let htlc_id = HashTimeLockContractId::default();
 
-    assert_matches!(wallet.put_htlc(htlc_id), Ok(()));
+    assert_matches!(wallet.upsert_htlc(htlc_id), Ok(Upsert::Insert));
+    assert_matches!(wallet.upsert_htlc(htlc_id), Ok(Upsert::Update));
     assert_matches!(wallet.has_htlc(htlc_id), Ok(true));
-    assert_matches!(wallet.remove_htlc(htlc_id), Ok(()));
+    assert_matches!(wallet.remove_htlc(htlc_id), Ok(true));
     assert_matches!(wallet.has_htlc(htlc_id), Ok(false));
+    assert_matches!(wallet.remove_htlc(htlc_id), Ok(false));
 }
 
 #[test]
@@ -104,31 +108,50 @@ fn multisig() {
     let wallet = Wallet::ephemeral(&mode).unwrap();
     let multisig_id = MultiSignatureLockContractId::default();
 
-    assert_matches!(wallet.put_multisig(multisig_id), Ok(()));
+    assert_matches!(wallet.upsert_multisig(multisig_id), Ok(Upsert::Insert));
+    assert_matches!(wallet.upsert_multisig(multisig_id), Ok(Upsert::Update));
     assert_matches!(wallet.has_multisig(multisig_id), Ok(true));
-    assert_matches!(wallet.remove_multisig(multisig_id), Ok(()));
+    assert_matches!(wallet.remove_multisig(multisig_id), Ok(true));
     assert_matches!(wallet.has_multisig(multisig_id), Ok(false));
+    assert_matches!(wallet.remove_multisig(multisig_id), Ok(false));
 }
 
 #[test]
 fn out_lease() {
     let mode = Mode::regtest();
     let wallet = Wallet::ephemeral(&mode).unwrap();
-    let lease1 = Lease::new(PublicKey::default(), 1, Amount::new(123));
+    let txid1 = Hash256::from([1u8; 32]);
+    let tx_data1 = TransactionData::new(Vec::new(), Seconds::new(444), None);
+    let tx_bytes1: [u8; 4] = [10, 11, 12, 13];
+    let lease1 = Lease::new(PublicKey::default(), 0, Amount::new(123));
+    let lease1c = Lease::new(PublicKey::default(), 1, Amount::new(123));
+    let txid2 = Hash256::from([2u8; 32]);
     let lease2 = Lease::new(PublicKey::default(), 2, Amount::new(123));
+    let lease2w = Lease::new(PublicKey::default(), 2, Amount::new(100));
+    let txid3 = Hash256::from([3u8; 32]);
     let lease3 = Lease::new(PublicKey::default(), 2, Amount::new(100));
-    let leases = vec![lease2.clone(), lease3.clone()];
+    let leases = vec![lease1c, lease2w];
 
-    assert_matches!(wallet.put_out_lease(lease1), Ok(()));
-    assert_matches!(wallet.put_out_lease(lease2), Ok(()));
-    assert_matches!(wallet.put_out_lease(lease3), Ok(()));
-    assert_matches!(wallet.set_out_lease_height(lease1, lease2.height()), Ok(()));
+    assert_matches!(wallet.upsert_out_lease(txid1, lease1), Ok(Upsert::Insert));
+    assert_matches!(
+        wallet.upsert_transaction(txid1, &tx_data1, &tx_bytes1),
+        Ok(Upsert::Insert)
+    );
+    assert_matches!(wallet.upsert_out_lease(txid1, lease1c), Ok(Upsert::Update));
+    assert_matches!(wallet.upsert_out_lease(txid2, lease2), Ok(Upsert::Insert));
+    assert_matches!(wallet.upsert_out_lease(txid3, lease3), Ok(Upsert::Insert));
     assert_matches!(
         wallet.withdraw_from_out_lease(lease2, Amount::new(23)),
-        Ok(())
+        Ok(true)
     );
-    assert_matches!(wallet.remove_out_lease(lease3), Ok(()));
+    assert_matches!(wallet.remove_out_lease(lease3), Ok(true));
     assert_matches!(wallet.get_out_leases(), Ok(x) if x == leases);
+    assert_matches!(wallet.remove_out_lease(lease3), Ok(true));
+    assert_matches!(wallet.remove_out_lease(lease3), Ok(false));
+    assert_matches!(
+        wallet.withdraw_from_out_lease(lease3, Amount::new(1)),
+        Ok(false)
+    );
 }
 
 #[test]

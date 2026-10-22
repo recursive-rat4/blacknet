@@ -25,11 +25,17 @@ use crate::{
 };
 use blacknet_compat::{Mode, XDGDirectories};
 use blacknet_kernel::{
-    blake2b::Hash256, ed25519::PublicKey, proofofstake::guess_initial_synchronization,
-    transaction::Transaction,
+    account::Lease as OutLease,
+    blake2b::Hash256,
+    ed25519::PublicKey,
+    proofofstake::guess_initial_synchronization,
+    transaction::{
+        Batch, CancelLease, ClaimHTLC, CreateHTLC, CreateMultisig, Lease, RefundHTLC,
+        SpendMultisig, Transaction, Transfer, TxKind, WithdrawFromLease, htlc_id, multisig_id,
+    },
 };
 use blacknet_log::{LogManager, Logger, error, info, warn};
-use blacknet_serialization::to_bytes;
+use blacknet_serialization::{Error as SerializationError, from_bytes, to_bytes};
 use blacknet_time::{Seconds, SystemClock};
 use core::{error::Error, fmt};
 use hashbrown::{HashMap, hash_map::Entry};
@@ -196,7 +202,21 @@ impl WalletDB {
                     tx_bytes,
                     time,
                     height,
-                } => self.scan_tx(tx_hash, &tx, &tx_bytes, time, Some(height)),
+                } => {
+                    for (&public_key, wallet) in wallets.iter() {
+                        if let Err(err) = self.scan_tx(
+                            public_key,
+                            wallet,
+                            tx_hash,
+                            &tx,
+                            &tx_bytes,
+                            time,
+                            Some(height),
+                        ) {
+                            error!(self.logger, "Scan: {err}");
+                        }
+                    }
+                }
                 CoinNotification::Mint {
                     hash,
                     time,
@@ -240,13 +260,20 @@ impl WalletDB {
 
     async fn txpool_observer(self: Arc<Self>, mut txpool_notifier: TxPoolNotifier) {
         while let Some(notification) = txpool_notifier.recv().await {
-            self.scan_tx(
-                notification.0,
-                &notification.1,
-                &notification.2,
-                notification.3.to_secs_lossy(),
-                None,
-            )
+            let wallets = self.wallets.read().unwrap();
+            for (&public_key, wallet) in wallets.iter() {
+                if let Err(err) = self.scan_tx(
+                    public_key,
+                    wallet,
+                    notification.0,
+                    &notification.1,
+                    &notification.2,
+                    notification.3.to_secs_lossy(),
+                    None,
+                ) {
+                    error!(self.logger, "Rollback: {err}");
+                }
+            }
         }
     }
 
@@ -257,16 +284,166 @@ impl WalletDB {
         let _ = subscriber.send(notification);
     }
 
-    #[expect(unused_variables, clippy::missing_const_for_fn)]
     fn scan_tx(
         &self,
+        public_key: PublicKey,
+        wallet: &Wallet,
         hash: Hash256,
         tx: &Transaction,
         bytes: &[u8],
         time: Seconds,
         height: Option<u32>,
-    ) {
-        //TODO
+    ) -> Result<(), ScanError> {
+        let outcoming = public_key == tx.from();
+        if outcoming {
+            if tx.seq() == wallet.sequence()? {
+                wallet.increment_sequence()?;
+            } else {
+                warn!(self.logger, "Out of order sequence");
+            }
+        }
+        let outputs = if tx.kind() != TxKind::Batch {
+            if self.scan_tx_data(
+                public_key,
+                wallet,
+                hash,
+                0,
+                tx.kind(),
+                tx.data_bytes(),
+                height,
+                outcoming,
+            )? {
+                vec![TransactionOutputData::new(0, tx.kind() as u8)]
+            } else {
+                Vec::new()
+            }
+        } else {
+            let mut outputs = Vec::new();
+            let batch = from_bytes::<Batch>(bytes, false)?;
+            for (idx, data) in batch.multi_data().iter().enumerate() {
+                let index = idx as u32 + 1;
+                if self.scan_tx_data(
+                    public_key,
+                    wallet,
+                    hash,
+                    index,
+                    data.kind(),
+                    data.data_bytes(),
+                    height,
+                    outcoming,
+                )? {
+                    outputs.push(TransactionOutputData::new(index as u8, data.kind() as u8))
+                }
+            }
+            outputs
+        };
+        if !outputs.is_empty() {
+            let data = TransactionData::new(outputs, time, height);
+            match wallet.upsert_transaction(hash, &data, bytes)? {
+                Upsert::Insert => self.notify(Notification {
+                    hash,
+                    tx: tx.clone(),
+                    time,
+                    height: height.unwrap_or(0),
+                    wallet: public_key,
+                    size: bytes.len() as u32,
+                }),
+                Upsert::Update => {}
+            }
+        }
+        Ok(())
+    }
+
+    fn scan_tx_data(
+        &self,
+        public_key: PublicKey,
+        wallet: &Wallet,
+        tx_hash: Hash256,
+        index: u32,
+        kind: TxKind,
+        bytes: &[u8],
+        height: Option<u32>,
+        outcoming: bool,
+    ) -> Result<bool, ScanError> {
+        match kind {
+            TxKind::Transfer => {
+                let transfer = from_bytes::<Transfer>(bytes, false)?;
+                Ok(transfer.to() == public_key || outcoming)
+            }
+            TxKind::Burn => Ok(outcoming),
+            TxKind::Lease => {
+                let lease = from_bytes::<Lease>(bytes, false)?;
+                if outcoming {
+                    let out_lease = OutLease::new(lease.to(), height.unwrap_or(0), lease.amount());
+                    wallet.upsert_out_lease(tx_hash, out_lease)?;
+                }
+                Ok(lease.to() == public_key || outcoming)
+            }
+            TxKind::CancelLease => {
+                let cancel_lease = from_bytes::<CancelLease>(bytes, false)?;
+                if outcoming {
+                    let out_lease = OutLease::new(
+                        cancel_lease.to(),
+                        cancel_lease.height(),
+                        cancel_lease.amount(),
+                    );
+                    if !wallet.remove_out_lease(out_lease)? {
+                        warn!(self.logger, "Lease not found");
+                    }
+                }
+                Ok(cancel_lease.to() == public_key || outcoming)
+            }
+            TxKind::Blob => Ok(outcoming),
+            TxKind::CreateHTLC => {
+                let create_htlc = from_bytes::<CreateHTLC>(bytes, false)?;
+                let incoming = create_htlc.to() == public_key;
+                if incoming || outcoming {
+                    let id = htlc_id(tx_hash, index);
+                    wallet.upsert_htlc(id)?;
+                }
+                Ok(incoming || outcoming)
+            }
+            TxKind::RefundHTLC => {
+                let refund_htlc = from_bytes::<RefundHTLC>(bytes, false)?;
+                Ok(wallet.remove_htlc(refund_htlc.id())? || outcoming)
+            }
+            TxKind::CreateMultisig => {
+                let create_multisig = from_bytes::<CreateMultisig>(bytes, false)?;
+                let incoming = create_multisig
+                    .deposits()
+                    .iter()
+                    .any(|dep| dep.from() == public_key);
+                if incoming || outcoming {
+                    let id = multisig_id(tx_hash, index);
+                    wallet.upsert_multisig(id)?;
+                }
+                Ok(incoming || outcoming)
+            }
+            TxKind::SpendMultisig => {
+                let spend_multisig = from_bytes::<SpendMultisig>(bytes, false)?;
+                Ok(wallet.remove_multisig(spend_multisig.id())? || outcoming)
+            }
+            TxKind::WithdrawFromLease => {
+                let withdraw_from_lease = from_bytes::<WithdrawFromLease>(bytes, false)?;
+                if outcoming {
+                    let out_lease = OutLease::new(
+                        withdraw_from_lease.to(),
+                        withdraw_from_lease.height(),
+                        withdraw_from_lease.amount(),
+                    );
+                    if !wallet.withdraw_from_out_lease(out_lease, withdraw_from_lease.withdraw())? {
+                        warn!(self.logger, "Lease not found");
+                    }
+                }
+                Ok(withdraw_from_lease.to() == public_key || outcoming)
+            }
+            TxKind::ClaimHTLC => {
+                let claim_htlc = from_bytes::<ClaimHTLC>(bytes, false)?;
+                Ok(wallet.remove_htlc(claim_htlc.id())? || outcoming)
+            }
+            TxKind::Batch => Err(ScanError::Batch),
+            TxKind::Generated => Err(ScanError::Generated),
+        }
     }
 }
 
@@ -306,3 +483,36 @@ impl fmt::Display for IngestError {
 }
 
 impl Error for IngestError {}
+
+#[derive(Debug)]
+enum ScanError {
+    Serialization(SerializationError),
+    Wallet(WalletError),
+    Batch,
+    Generated,
+}
+
+impl From<SerializationError> for ScanError {
+    fn from(err: SerializationError) -> Self {
+        Self::Serialization(err)
+    }
+}
+
+impl From<WalletError> for ScanError {
+    fn from(err: WalletError) -> Self {
+        Self::Wallet(err)
+    }
+}
+
+impl fmt::Display for ScanError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Serialization(err) => write!(f, "{err}"),
+            Self::Wallet(err) => write!(f, "{err}"),
+            Self::Batch => f.write_str("Recursive batch tx"),
+            Self::Generated => f.write_str("Generated as individual tx"),
+        }
+    }
+}
+
+impl Error for ScanError {}

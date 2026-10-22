@@ -34,7 +34,7 @@ const HEADER_SIZE_BYTES: usize = size_of::<Signature>()
     + size_of::<Amount>()
     + size_of::<TxKind>();
 
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct Transaction {
     signature: Signature,
     from: PublicKey,

@@ -249,6 +249,14 @@ impl Wallet {
         Ok(sequence)
     }
 
+    pub fn increment_sequence(&self) -> Result<()> {
+        let connection = self.connection.lock().unwrap();
+        let mut statement =
+            connection.prepare_cached("UPDATE wallet SET sequence = sequence + 1;")?;
+        statement.execute(())?;
+        Ok(())
+    }
+
     pub fn get_transactions_data(&self) -> Result<Vec<(Hash256, TransactionData)>> {
         let mut connection = self.connection.lock().unwrap();
         let sql = connection.transaction_with_behavior(SqlBehavior::Deferred)?;
@@ -468,18 +476,25 @@ impl Wallet {
         Ok(exists)
     }
 
-    pub fn put_htlc(&self, id: HashTimeLockContractId) -> Result<()> {
+    pub fn upsert_htlc(&self, id: HashTimeLockContractId) -> Result<Upsert> {
         let connection = self.connection.lock().unwrap();
         let mut statement = connection.prepare_cached("INSERT INTO htlcs VALUES(?);")?;
-        statement.execute((id,))?;
-        Ok(())
+        let res = statement.execute((id,));
+        let op = match res {
+            Ok(_) => Upsert::Insert,
+            Err(Error::SqliteFailure(err, _)) if err.code == ErrorCode::ConstraintViolation => {
+                Upsert::Update
+            }
+            Err(err) => return Err(err),
+        };
+        Ok(op)
     }
 
-    pub fn remove_htlc(&self, id: HashTimeLockContractId) -> Result<()> {
+    pub fn remove_htlc(&self, id: HashTimeLockContractId) -> Result<bool> {
         let connection = self.connection.lock().unwrap();
         let mut statement = connection.prepare_cached("DELETE FROM htlcs WHERE id = ?;")?;
-        statement.execute((id,))?;
-        Ok(())
+        let rows = statement.execute((id,))?;
+        Ok(rows == 1)
     }
 
     pub fn has_multisig(&self, id: MultiSignatureLockContractId) -> Result<bool> {
@@ -490,18 +505,25 @@ impl Wallet {
         Ok(exists)
     }
 
-    pub fn put_multisig(&self, id: MultiSignatureLockContractId) -> Result<()> {
+    pub fn upsert_multisig(&self, id: MultiSignatureLockContractId) -> Result<Upsert> {
         let connection = self.connection.lock().unwrap();
         let mut statement = connection.prepare_cached("INSERT INTO multisigs VALUES(?);")?;
-        statement.execute((id,))?;
-        Ok(())
+        let res = statement.execute((id,));
+        let op = match res {
+            Ok(_) => Upsert::Insert,
+            Err(Error::SqliteFailure(err, _)) if err.code == ErrorCode::ConstraintViolation => {
+                Upsert::Update
+            }
+            Err(err) => return Err(err),
+        };
+        Ok(op)
     }
 
-    pub fn remove_multisig(&self, id: MultiSignatureLockContractId) -> Result<()> {
+    pub fn remove_multisig(&self, id: MultiSignatureLockContractId) -> Result<bool> {
         let connection = self.connection.lock().unwrap();
         let mut statement = connection.prepare_cached("DELETE FROM multisigs WHERE id = ?;")?;
-        statement.execute((id,))?;
-        Ok(())
+        let rows = statement.execute((id,))?;
+        Ok(rows == 1)
     }
 
     pub fn get_out_leases(&self) -> Result<Vec<Lease>> {
@@ -518,18 +540,48 @@ impl Wallet {
             .collect()
     }
 
-    pub fn put_out_lease(&self, lease: Lease) -> Result<()> {
-        let connection = self.connection.lock().unwrap();
-        let mut statement = connection.prepare_cached("INSERT INTO out_leases VALUES(?, ?, ?);")?;
-        statement.execute((
-            lease.public_key().as_ref(),
-            lease.height(),
-            lease.balance().value(),
-        ))?;
-        Ok(())
+    pub fn upsert_out_lease(&self, txid: Hash256, lease: Lease) -> Result<Upsert> {
+        let mut connection = self.connection.lock().unwrap();
+        let sql = connection.transaction_with_behavior(SqlBehavior::Immediate)?;
+        let mut statement = sql.prepare_cached("SELECT height FROM transactions WHERE id = ?;")?;
+        let res: Result<Option<u32>> = statement.query_one((txid.as_ref(),), |row| row.get(0));
+        drop(statement);
+        let op = match res {
+            Err(Error::QueryReturnedNoRows) => {
+                let mut statement =
+                    sql.prepare_cached("INSERT INTO out_leases VALUES(?, ?, ?);")?;
+                statement.execute((
+                    lease.public_key().as_ref(),
+                    lease.height(),
+                    lease.balance().value(),
+                ))?;
+                Upsert::Insert
+            }
+            Ok(height) => {
+                let mut statement = sql.prepare_cached(
+                    "UPDATE out_leases \
+                     SET height = ? \
+                     WHERE ROWID = (\
+                        SELECT ROWID FROM out_leases \
+                        WHERE public_key = ? AND height = ? AND amount = ? \
+                        LIMIT 1\
+                     );",
+                )?;
+                statement.execute((
+                    lease.height(),
+                    lease.public_key().as_ref(),
+                    height.unwrap_or(0),
+                    lease.balance().value(),
+                ))?;
+                Upsert::Update
+            }
+            Err(err) => return Err(err),
+        };
+        sql.commit()?;
+        Ok(op)
     }
 
-    pub fn remove_out_lease(&self, lease: Lease) -> Result<()> {
+    pub fn remove_out_lease(&self, lease: Lease) -> Result<bool> {
         let connection = self.connection.lock().unwrap();
         let mut statement = connection.prepare_cached(
             "DELETE FROM out_leases \
@@ -539,35 +591,15 @@ impl Wallet {
                  LIMIT 1\
              );",
         )?;
-        statement.execute((
+        let rows = statement.execute((
             lease.public_key().as_ref(),
             lease.height(),
             lease.balance().value(),
         ))?;
-        Ok(())
+        Ok(rows == 1)
     }
 
-    pub fn set_out_lease_height(&self, lease: Lease, height: u32) -> Result<()> {
-        let connection = self.connection.lock().unwrap();
-        let mut statement = connection.prepare_cached(
-            "UPDATE out_leases \
-             SET height = ? \
-             WHERE ROWID = (\
-                SELECT ROWID FROM out_leases \
-                WHERE public_key = ? AND height = ? AND amount = ? \
-                LIMIT 1\
-             );",
-        )?;
-        statement.execute((
-            height,
-            lease.public_key().as_ref(),
-            lease.height(),
-            lease.balance().value(),
-        ))?;
-        Ok(())
-    }
-
-    pub fn withdraw_from_out_lease(&self, lease: Lease, withdraw: Amount) -> Result<()> {
+    pub fn withdraw_from_out_lease(&self, lease: Lease, withdraw: Amount) -> Result<bool> {
         let connection = self.connection.lock().unwrap();
         let mut statement = connection.prepare_cached(
             "UPDATE out_leases \
@@ -578,13 +610,13 @@ impl Wallet {
                 LIMIT 1\
              );",
         )?;
-        statement.execute((
+        let rows = statement.execute((
             withdraw.value(),
             lease.public_key().as_ref(),
             lease.height(),
             lease.balance().value(),
         ))?;
-        Ok(())
+        Ok(rows == 1)
     }
 
     pub fn rollback(&self, hash: Hash256) -> Result<()> {

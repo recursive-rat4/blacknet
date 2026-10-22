@@ -30,7 +30,7 @@ use serde::{Deserialize, Serialize};
 
 pub type MultiSignatureLockContractId = [u8; 32];
 
-fn id(hash: Hash256, data_index: u32) -> MultiSignatureLockContractId {
+pub fn multisig_id(hash: Hash256, data_index: u32) -> MultiSignatureLockContractId {
     let mut hasher = Blake2b256::new();
     hasher.update(hash);
     hasher.update(data_index.to_be_bytes());
@@ -154,7 +154,7 @@ impl TxData for CreateMultisig {
             }
         }
 
-        let id = id(hash, data_index);
+        let id = multisig_id(hash, data_index);
         let multisig = Multisig::new(
             self.n,
             self.deposits

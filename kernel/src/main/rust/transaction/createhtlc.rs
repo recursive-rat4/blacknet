@@ -30,7 +30,7 @@ use serde::{Deserialize, Serialize};
 
 pub type HashTimeLockContractId = [u8; 32];
 
-fn id(hash: Hash256, data_index: u32) -> HashTimeLockContractId {
+pub fn htlc_id(hash: Hash256, data_index: u32) -> HashTimeLockContractId {
     let mut hasher = Blake2b256::new();
     hasher.update(hash);
     hasher.update(data_index.to_be_bytes());
@@ -94,7 +94,7 @@ impl TxData for CreateHTLC {
         let mut account = coin_tx.get_account(tx.from())?;
         account.credit(self.amount)?;
 
-        let id = id(hash, data_index);
+        let id = htlc_id(hash, data_index);
         let htlc = HTLC {
             height: coin_tx.height(),
             time: coin_tx.block_time(),
