@@ -22,6 +22,7 @@ members = [
     "compat",
     "crypto",
     "daemon",
+    "desktop",
     "io",
     "json-rpc",
     "kernel",
@@ -75,6 +76,8 @@ serde_json = { version = "1.0.150" }
 serde_repr = { version = "0.1.21" }
 sha2 = { version = "0.11.0", default-features = false }
 sha3 = { version = "0.12.0", default-features = false }
+slint = { version = "1.18.1" }
+slint-build = { version = "1.18.1" }
 spdlog-rs = { version = "0.5.3" }
 tokio = { version = "1.53.0", features = ["io-util", "macros", "net", "rt-multi-thread", "signal", "sync", "time"] }
 tokio-tungstenite = { version = "0.30.0", default-features = false }

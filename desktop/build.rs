@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Pavel Vasin
+ * Copyright (c) 2026 Pavel Vasin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,27 +15,6 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef BLACKNET_COMPAT_GETUID_H
-#define BLACKNET_COMPAT_GETUID_H
-
-#include "blacknet-config.h"
-
-#ifdef BLACKNET_HAVE_UNISTD
-#include <unistd.h>
-#else
-typedef int uid_t;
-#endif
-
-namespace blacknet::compat {
-
-inline uid_t getuid() noexcept {
-#ifdef BLACKNET_HAVE_UNISTD
-    return ::getuid();
-#else
-    return -1;
-#endif
+fn main() -> Result<(), slint_build::CompileError> {
+    slint_build::compile("src/resource/blacknet.slint")
 }
-
-}
-
-#endif

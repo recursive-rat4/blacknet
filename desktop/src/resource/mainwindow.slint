@@ -1,0 +1,64 @@
+/*
+ * Copyright (c) 2025-2026 Pavel Vasin
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
+import { TabWidget } from "std-widgets.slint";
+import { DashboardBox } from "dashboardbox.slint";
+import { HistoryView } from "historyview.slint";
+import { StakingBox } from "stakingbox.slint";
+import { TransferBox } from "transferbox.slint";
+
+export component MainWindow inherits Window {
+    title: "Blacknet";
+    preferred-width: 950px;
+    preferred-height: 550px;
+
+    MenuBar {
+        Menu {
+            title: "File";
+            MenuItem {
+                title: "Quit";
+                activated => { quit(); }
+                shortcut: @keys(Control + Q);
+            }
+        }
+    }
+
+    TabWidget {
+        orientation: Orientation.vertical;
+        Tab {
+            title: "Dashboard";
+            DashboardBox {}
+        }
+        Tab {
+            title: "Transfer";
+            TransferBox {}
+        }
+        Tab {
+            title: "History";
+            HistoryView {
+                width: parent.width;
+                height: parent.height;
+            }
+        }
+        Tab {
+            title: "Staking";
+            StakingBox {}
+        }
+    }
+
+    callback quit();
+}

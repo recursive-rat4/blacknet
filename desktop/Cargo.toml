@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2025 Pavel Vasin
+# Copyright (c) 2026 Pavel Vasin
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -15,26 +15,34 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 #
 
-qt = import('qt6')
+[package]
+name = "blacknet-desktop"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+description.workspace = true
+documentation.workspace = true
+readme.workspace = true
+homepage.workspace = true
+repository.workspace = true
+license.workspace = true
+keywords.workspace = true
+categories.workspace = true
 
-desktop_main_resources = qt.compile_resources(
-    sources : 'resources.qrc',
-    extra_args : '-no-compress',
-)
+[dependencies]
+blacknet-compat.workspace = true
+blacknet-json-rpc.workspace = true
+slint.workspace = true
 
-desktop_main_ui = qt.compile_ui(
-    sources : [
-        'resources/addressbookpage.ui',
-        'resources/atomicswappage.ui',
-        'resources/dashboardpage.ui',
-        'resources/historypage.ui',
-        'resources/leasingpage.ui',
-        'resources/mainwindow.ui',
-        'resources/preferencesdialog.ui',
-        'resources/stakingpage.ui',
-        'resources/transferpage.ui',
-        'resources/traymenu.ui',
-    ],
-)
+[build-dependencies]
+slint-build.workspace = true
 
-subdir('cplusplus')
+[lints]
+workspace = true
+
+[[bin]]
+name = "blacknet-desktop"
+test = false
+bench = false
+path = "src/main/rust/bin.rs"
