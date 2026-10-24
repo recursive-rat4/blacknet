@@ -15,13 +15,19 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { StandardButton } from "std-widgets.slint";
+import {
+    StandardButton,
+    TextEdit,
+} from "std-widgets.slint";
 
 export component ErrorDialog inherits Dialog {
     in property <string> message;
+    preferred-width: 540px;
+    preferred-height: 380px;
 
-    Text {
+    TextEdit {
         text: root.message;
+        read-only: true;
     }
     StandardButton {
         kind: ok;
