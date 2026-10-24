@@ -35,6 +35,6 @@ fn response() {
     assert_matches!(from_str::<Response>(success_str), Ok(x) if x == success);
     assert_matches!(from_str::<Response>(error_str), Ok(x) if x == error);
 
-    assert_matches!(from_str::<Response>(bad_1), Err(_));
-    assert_matches!(from_str::<Response>(bad_2), Err(_));
+    assert_matches!(from_str::<Response>(bad_1), Err(x) if x.is_data());
+    assert_matches!(from_str::<Response>(bad_2), Err(x) if x.is_data());
 }

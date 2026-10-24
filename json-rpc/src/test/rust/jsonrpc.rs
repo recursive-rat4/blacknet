@@ -23,5 +23,5 @@ use serde_json::{from_str, to_string};
 fn jsonrpc() {
     assert_matches!(to_string(&JsonRpc::new()).as_deref(), Ok(r#""2.0""#));
     assert_matches!(from_str::<JsonRpc>(r#""2.0""#), Ok(x) if x == JsonRpc::new());
-    assert_matches!(from_str::<JsonRpc>(r#""1.0""#), Err(_));
+    assert_matches!(from_str::<JsonRpc>(r#""1.0""#), Err(x) if x.is_data());
 }

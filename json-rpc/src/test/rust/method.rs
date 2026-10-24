@@ -25,5 +25,5 @@ fn method() {
     assert_matches!(Method::new("rpc.foo"), None);
     assert_matches!(to_string(&method).as_deref(), Ok(r#""foo""#));
     assert_matches!(from_str::<Method>(r#""foo""#), Ok(x) if x == method);
-    assert_matches!(from_str::<Method>(r#""rpc.foo""#), Err(_));
+    assert_matches!(from_str::<Method>(r#""rpc.foo""#), Err(x) if x.is_data());
 }

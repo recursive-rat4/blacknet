@@ -37,5 +37,5 @@ fn id() {
         from_str::<Id>(r#""a""#),
         Ok(Id::String(x)) if x == "a"
     );
-    assert_matches!(from_str::<Id>("true"), Err(_));
+    assert_matches!(from_str::<Id>("true"), Err(x) if x.is_data());
 }

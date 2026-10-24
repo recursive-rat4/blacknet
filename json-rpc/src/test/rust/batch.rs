@@ -39,7 +39,7 @@ fn batch_request() {
     assert_matches!(to_string(&array).as_deref(), Ok(x) if x == array_str);
     assert_matches!(from_str::<BatchRequest>(object_str), Ok(x) if x == object);
     assert_matches!(from_str::<BatchRequest>(array_str), Ok(x) if x == array);
-    assert_matches!(from_str::<BatchRequest>(bad_str), Err(_));
+    assert_matches!(from_str::<BatchRequest>(bad_str), Err(x) if x.is_data());
 }
 
 #[test]
@@ -57,5 +57,5 @@ fn batch_response() {
     assert_matches!(to_string(&array).as_deref(), Ok(x) if x == array_str);
     assert_matches!(from_str::<BatchResponse>(object_str), Ok(x) if x == object);
     assert_matches!(from_str::<BatchResponse>(array_str), Ok(x) if x == array);
-    assert_matches!(from_str::<BatchResponse>(bad_str), Err(_));
+    assert_matches!(from_str::<BatchResponse>(bad_str), Err(x) if x.is_data());
 }

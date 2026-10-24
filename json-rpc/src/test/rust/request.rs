@@ -49,6 +49,6 @@ fn request() {
     assert_matches!(from_str::<Request>(named_str), Ok(x) if x == named);
     assert_matches!(from_str::<Request>(notification_str), Ok(x) if x == notification);
 
-    assert_matches!(from_str::<Request>(bad_1), Err(_));
-    assert_matches!(from_str::<Request>(bad_2), Err(_));
+    assert_matches!(from_str::<Request>(bad_1), Err(x) if x.is_syntax());
+    assert_matches!(from_str::<Request>(bad_2), Err(x) if x.is_data());
 }

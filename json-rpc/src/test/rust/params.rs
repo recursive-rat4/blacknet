@@ -35,7 +35,7 @@ fn params() {
         from_str::<Params>(r#"{"foo":"bar"}"#),
         Ok(Params::Named(x)) if x == foo_bar
     );
-    assert_matches!(from_str::<Params>(r#""baz""#), Err(_));
+    assert_matches!(from_str::<Params>(r#""baz""#), Err(x) if x.is_data());
 
     assert_matches!(
         to_string(&Params::Positional(one_two_three)).as_deref(),

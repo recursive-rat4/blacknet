@@ -33,5 +33,5 @@ fn error() {
 
     assert_matches!(from_str::<Error>(parse_str), Ok(x) if x == parse);
     assert_matches!(from_str::<Error>(application_str), Ok(x) if x == application);
-    assert_matches!(from_str::<Error>(bad_str), Err(_));
+    assert_matches!(from_str::<Error>(bad_str), Err(x) if x.is_data());
 }
