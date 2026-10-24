@@ -17,6 +17,10 @@
 
 #![windows_subsystem = "windows"]
 
+mod ui {
+    slint::include_modules!();
+}
+
 mod desktop;
 
 use desktop::main;

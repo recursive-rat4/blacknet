@@ -15,11 +15,11 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::ui::{ErrorDialog, MainWindow, TrayIcon};
 use blacknet_compat::{XDGDirectories, config::Config, mode};
 use core::error::Error;
+use slint::ComponentHandle;
 use std::process::ExitCode;
-
-slint::include_modules!();
 
 fn desktop() -> Result<(), Box<dyn Error>> {
     let mode = mode()?;
