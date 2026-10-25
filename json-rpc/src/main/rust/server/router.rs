@@ -16,32 +16,34 @@
  */
 
 use crate::{
-    Error, Method, Request, Response,
+    Error, Id, Method, Request, Response,
     server::{ErasedHandler, Handler, RpcHandler},
 };
-use alloc::boxed::Box;
+use alloc::{
+    boxed::Box,
+    string::{String, ToString},
+};
 use core::fmt;
 use hashbrown::{HashMap, hash_map::Entry};
 use serde::de::DeserializeOwned;
+use serde_json::{Error as JsonError, error::Category, from_str, to_string};
 
 /// Router for [Request][crate::Request]s.
 #[derive(Default)]
 pub struct Router<S> {
-    table: HashMap<Method, Box<dyn ErasedHandler<S>>>,
-    state: S,
+    table: HashMap<Method, Box<dyn ErasedHandler<S> + Send + Sync>>,
 }
 
-impl<S: 'static> Router<S> {
+impl<S: Send + Sync + 'static> Router<S> {
     /// Construct an empty router.
-    pub fn new(state: S) -> Self {
+    pub fn new() -> Self {
         Self {
             table: HashMap::new(),
-            state,
         }
     }
 
     /// Register a handler for a method.
-    pub fn route<T: Handler<S> + DeserializeOwned + 'static>(
+    pub fn route<T: Handler<S> + DeserializeOwned + Send + Sync + 'static>(
         &mut self,
         method: Method,
     ) -> Result<(), OccupiedError> {
@@ -55,11 +57,11 @@ impl<S: 'static> Router<S> {
     }
 
     /// Handle a request.
-    pub fn handle(&self, request: Request) -> Option<Response> {
+    pub fn handle(&self, request: Request, state: &S) -> Option<Response> {
         match self.table.get(request.method()) {
             Some(handler) => {
                 let (params, id) = request.into_params_id();
-                let result = handler.handle(params, &self.state);
+                let result = handler.handle(params, state);
                 let id = id?;
                 match result {
                     Ok(result) => Some(Response::success(result, id)),
@@ -71,6 +73,32 @@ impl<S: 'static> Router<S> {
                 .map(|id| Response::error(Error::method_not_found(Option::<()>::None), id)),
         }
     }
+
+    /// Deserialize and handle a request, then serialize a response.
+    pub fn handle_str(&self, request: &str, state: &S) -> Result<Option<String>, JsonError> {
+        let request = match from_str::<Request>(request) {
+            Ok(request) => request,
+            Err(err) => {
+                return match err.classify() {
+                    Category::Data => response_to_string(Some(Response::error(
+                        Error::invalid_request(Some(err.to_string())),
+                        Id::Null,
+                    ))),
+                    Category::Syntax => response_to_string(Some(Response::error(
+                        Error::parse_error(Some(err.to_string())),
+                        Id::Null,
+                    ))),
+                    Category::Io | Category::Eof => Err(err),
+                };
+            }
+        };
+        let response = self.handle(request, state);
+        response_to_string(response)
+    }
+}
+
+fn response_to_string(response: Option<Response>) -> Result<Option<String>, JsonError> {
+    response.map(|response| to_string(&response)).transpose()
 }
 
 #[derive(Debug)]

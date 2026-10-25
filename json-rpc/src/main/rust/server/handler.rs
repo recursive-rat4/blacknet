@@ -42,8 +42,10 @@ pub struct RpcHandler<T, S> {
     phantom_s: PhantomData<S>,
 }
 
-impl<T: Handler<S> + DeserializeOwned + 'static, S: 'static> RpcHandler<T, S> {
-    pub fn erase() -> Box<dyn ErasedHandler<S>> {
+impl<T: Handler<S> + DeserializeOwned + Send + Sync + 'static, S: Send + Sync + 'static>
+    RpcHandler<T, S>
+{
+    pub fn erase() -> Box<dyn ErasedHandler<S> + Send + Sync> {
         Box::new(Self {
             phantom_t: PhantomData,
             phantom_s: PhantomData,

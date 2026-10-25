@@ -18,12 +18,11 @@
 #![cfg(feature = "server")]
 
 use blacknet_json_rpc::{
-    Method, Request, Response,
+    Method,
     server::{Handler, Router},
 };
 use core::{assert_matches, fmt::Display};
 use serde::Deserialize;
-use serde_json::from_str;
 
 #[derive(Deserialize)]
 struct Ping;
@@ -78,7 +77,8 @@ impl<T: Display> Handler<T> for Baz {
 
 #[test]
 fn router() {
-    let mut router = Router::new(0i32);
+    let state = 0i32;
+    let mut router = Router::new();
     router.route::<Ping>(Method::new("ping")).unwrap();
     router.route::<Subtract>(Method::new("subtract")).unwrap();
     router.route::<Sum>(Method::new("sum")).unwrap();
@@ -89,23 +89,13 @@ fn router() {
     let request_3_str = r#"{"jsonrpc": "2.0", "method": "sum", "params": [1, 2, 3, 4], "id": 3}"#;
     let request_4_str = r#"{"jsonrpc": "2.0", "method": "baz", "params": ["foo"], "id": 4}"#;
 
-    let request_1 = from_str::<Request>(request_1_str).unwrap();
-    let request_2 = from_str::<Request>(request_2_str).unwrap();
-    let request_3 = from_str::<Request>(request_3_str).unwrap();
-    let request_4 = from_str::<Request>(request_4_str).unwrap();
+    let response_1_str = r#"{"jsonrpc":"2.0","result":"pong","id":1}"#;
+    let response_2_str = r#"{"jsonrpc":"2.0","result":19,"id":2}"#;
+    let response_3_str = r#"{"jsonrpc":"2.0","result":10,"id":3}"#;
+    let response_4_str = r#"{"jsonrpc":"2.0","error":{"code":-1,"message":"Application error","data":"foobaz 0"},"id":4}"#;
 
-    let response_1_str = r#"{"jsonrpc": "2.0", "result": "pong", "id": 1}"#;
-    let response_2_str = r#"{"jsonrpc": "2.0", "result": 19, "id": 2}"#;
-    let response_3_str = r#"{"jsonrpc": "2.0", "result": 10, "id": 3}"#;
-    let response_4_str = r#"{"jsonrpc": "2.0", "error": { "code": -1, "message": "Application error", "data": "foobaz 0" }, "id": 4}"#;
-
-    let response_1 = from_str::<Response>(response_1_str).unwrap();
-    let response_2 = from_str::<Response>(response_2_str).unwrap();
-    let response_3 = from_str::<Response>(response_3_str).unwrap();
-    let response_4 = from_str::<Response>(response_4_str).unwrap();
-
-    assert_matches!(router.handle(request_1), Some(x) if x == response_1);
-    assert_matches!(router.handle(request_2), Some(x) if x == response_2);
-    assert_matches!(router.handle(request_3), Some(x) if x == response_3);
-    assert_matches!(router.handle(request_4), Some(x) if x == response_4);
+    assert_matches!(router.handle_str(request_1_str, &state), Ok(Some(x)) if x == response_1_str);
+    assert_matches!(router.handle_str(request_2_str, &state), Ok(Some(x)) if x == response_2_str);
+    assert_matches!(router.handle_str(request_3_str, &state), Ok(Some(x)) if x == response_3_str);
+    assert_matches!(router.handle_str(request_4_str, &state), Ok(Some(x)) if x == response_4_str);
 }
