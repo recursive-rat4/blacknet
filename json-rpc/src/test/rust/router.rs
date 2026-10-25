@@ -79,12 +79,10 @@ impl<T: Display> Handler<T> for Baz {
 #[test]
 fn router() {
     let mut router = Router::new(0i32);
-    router.route::<Ping>(Method::new("ping").unwrap()).unwrap();
-    router
-        .route::<Subtract>(Method::new("subtract").unwrap())
-        .unwrap();
-    router.route::<Sum>(Method::new("sum").unwrap()).unwrap();
-    router.route::<Baz>(Method::new("baz").unwrap()).unwrap();
+    router.route::<Ping>(Method::new("ping")).unwrap();
+    router.route::<Subtract>(Method::new("subtract")).unwrap();
+    router.route::<Sum>(Method::new("sum")).unwrap();
+    router.route::<Baz>(Method::new("baz")).unwrap();
 
     let request_1_str = r#"{"jsonrpc": "2.0", "method": "ping", "id": 1}"#;
     let request_2_str = r#"{"jsonrpc": "2.0", "method": "subtract", "params": {"minuend": 42, "subtrahend": 23}, "id": 2}"#;

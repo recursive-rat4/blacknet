@@ -23,20 +23,20 @@ use serde_json::{from_str, to_string};
 fn request() {
     let positional_str = r#"{"jsonrpc":"2.0","method":"subtract","params":[42,23],"id":1}"#;
     let positional = Request::new(
-        Method::new("subtract").unwrap(),
+        Method::new("subtract"),
         Some(Params::positional([42, 23])),
         Id::number(1),
     );
     let named_str =
         r#"{"jsonrpc":"2.0","method":"subtract","params":{"subtrahend":23,"minuend":42},"id":3}"#;
     let named = Request::new(
-        Method::new("subtract").unwrap(),
+        Method::new("subtract"),
         Some(Params::named([("subtrahend", 23), ("minuend", 42)])),
         Id::number(3),
     );
     let notification_str = r#"{"jsonrpc":"2.0","method":"update","params":[1,2,3,4,5]}"#;
     let notification = Request::notification(
-        Method::new("update").unwrap(),
+        Method::new("update"),
         Some(Params::positional([1, 2, 3, 4, 5])),
     );
     let bad_1 = r#"{"jsonrpc":"2.0","method":"foobar,"params":"bar","baz]"#;

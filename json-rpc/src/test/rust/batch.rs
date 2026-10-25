@@ -22,16 +22,12 @@ use serde_json::{from_str, to_string};
 #[test]
 fn batch_request() {
     let object_str = r#"{"jsonrpc":"2.0","method":"foo","id":1}"#;
-    let object = BatchRequest::Object(Request::new(
-        Method::new("foo").unwrap(),
-        None,
-        Id::number(1),
-    ));
+    let object = BatchRequest::Object(Request::new(Method::new("foo"), None, Id::number(1)));
     let array_str =
         r#"[{"jsonrpc":"2.0","method":"foo","id":1},{"jsonrpc":"2.0","method":"bar","id":2}]"#;
     let array = BatchRequest::Array(vec![
-        Request::new(Method::new("foo").unwrap(), None, Id::number(1)),
-        Request::new(Method::new("bar").unwrap(), None, Id::number(2)),
+        Request::new(Method::new("foo"), None, Id::number(1)),
+        Request::new(Method::new("bar"), None, Id::number(2)),
     ]);
     let bad_str = "[1,2,3]";
 

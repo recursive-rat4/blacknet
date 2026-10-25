@@ -21,9 +21,12 @@ use serde_json::{from_str, to_string};
 
 #[test]
 fn method() {
-    let method = Method::new("foo").unwrap();
-    assert_matches!(Method::new("rpc.foo"), None);
+    let method = Method::new("foo");
+    let reserved_method = Method::new("rpc.foo");
+    assert!(!method.is_reserved());
+    assert!(reserved_method.is_reserved());
     assert_matches!(to_string(&method).as_deref(), Ok(r#""foo""#));
+    assert_matches!(to_string(&reserved_method).as_deref(), Ok(r#""rpc.foo""#));
     assert_matches!(from_str::<Method>(r#""foo""#), Ok(x) if x == method);
-    assert_matches!(from_str::<Method>(r#""rpc.foo""#), Err(x) if x.is_data());
+    assert_matches!(from_str::<Method>(r#""rpc.foo""#), Ok(x) if x == reserved_method);
 }

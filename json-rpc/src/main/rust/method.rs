@@ -15,36 +15,23 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use alloc::{borrow::Cow, string::String};
-use serde::{Deserialize, Deserializer, Serialize, de::Error};
+use alloc::borrow::Cow;
+use serde::{Deserialize, Serialize};
 
 const RESERVED: &str = "rpc.";
 
 /// Type for the `method` field in a [Request][crate::Request].
-#[derive(Debug, Eq, Hash, PartialEq, Serialize)]
+#[derive(Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
 pub struct Method(Cow<'static, str>);
 
 impl Method {
     /// Construct a new method name.
-    ///
-    /// Returns [None] if method name is reserved.
-    pub fn new<T: Into<Cow<'static, str>>>(name: T) -> Option<Self> {
-        let name = name.into();
-        if !name.starts_with(RESERVED) {
-            Some(Self(name))
-        } else {
-            None
-        }
+    pub fn new<T: Into<Cow<'static, str>>>(name: T) -> Self {
+        Self(name.into())
     }
-}
 
-impl<'de> Deserialize<'de> for Method {
-    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-        let name = String::deserialize(deserializer)?;
-        if !name.starts_with(RESERVED) {
-            Ok(Self(Cow::Owned(name)))
-        } else {
-            Err(D::Error::custom("Reserved method name"))
-        }
+    /// Whether reserved for rpc-internal methods and extensions.
+    pub fn is_reserved(&self) -> bool {
+        self.0.starts_with(RESERVED)
     }
 }
