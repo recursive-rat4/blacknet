@@ -15,10 +15,60 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { VerticalBox } from "std-widgets.slint";
+import { GridBox, VerticalBox } from "std-widgets.slint";
+
+export struct StakingInfo {
+    status: string,
+    expected_time: string,
+    weight: string,
+    network_weight: string,
+    hash_rate: string,
+}
 
 export component StakingBox inherits VerticalBox {
-    Text {
-        text: "Status";
+    in property <StakingInfo> info;
+
+    GridBox {
+        Row {
+            Text {
+                text: "Status";
+            }
+            Text {
+                text: root.info.status;
+            }
+        }
+        Row {
+            Text {
+                text: "Expected time";
+            }
+            Text {
+                text: root.info.expected_time;
+            }
+        }
+        Row {
+            Text {
+                text: "Weight";
+            }
+            Text {
+                text: root.info.weight;
+            }
+        }
+        Row {
+            Text {
+                text: "Network weight";
+            }
+            Text {
+                text: root.info.network_weight;
+            }
+        }
+        Row {
+            Text {
+                text: "Hash rate";
+            }
+            Text {
+                text: root.info.hash_rate;
+            }
+        }
     }
+    Rectangle {}
 }

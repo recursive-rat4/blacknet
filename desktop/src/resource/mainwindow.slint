@@ -18,13 +18,15 @@
 import { TabWidget } from "std-widgets.slint";
 import { DashboardBox } from "dashboardbox.slint";
 import { HistoryView } from "historyview.slint";
-import { StakingBox } from "stakingbox.slint";
+import { StakingBox, StakingInfo } from "stakingbox.slint";
 import { TransferBox } from "transferbox.slint";
 
 export component MainWindow inherits Window {
     title: "Blacknet";
     preferred-width: 950px;
     preferred-height: 550px;
+
+    in property <StakingInfo> staking_info;
 
     MenuBar {
         Menu {
@@ -56,7 +58,9 @@ export component MainWindow inherits Window {
         }
         Tab {
             title: "Staking";
-            StakingBox {}
+            StakingBox {
+                info: root.staking_info;
+            }
         }
     }
 
