@@ -22,10 +22,10 @@ use serde_json::{from_str, to_string};
 #[test]
 fn response() {
     let success_str = r#"{"jsonrpc":"2.0","result":19,"id":1}"#;
-    let success = Response::success(19, Id::number(1));
+    let success = Response::Result(19.into(), Id::number(1));
     let error_str =
         r#"{"jsonrpc":"2.0","error":{"code":-32600,"message":"Invalid Request"},"id":null}"#;
-    let error = Response::error(Error::invalid_request(Option::<()>::None), Id::Null);
+    let error = Response::Error(Error::invalid_request(Option::<()>::None), Id::Null);
     let bad_1 = r#"{"jsonrpc":"2.0","result":19,"error":{"code":-32600,"message":"Invalid Request"},"id":1}"#;
     let bad_2 = r#"{"jsonrpc":"2.0","id":1}"#;
 

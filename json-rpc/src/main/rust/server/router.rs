@@ -65,13 +65,13 @@ impl<S: Send + Sync + 'static> Router<S> {
                 let result = handler.handle(params, state);
                 let id = id?;
                 match result {
-                    Ok(result) => Some(Response::success(result, id)),
-                    Err(error) => Some(Response::error(error, id)),
+                    Ok(result) => Some(Response::Result(result, id)),
+                    Err(error) => Some(Response::Error(error, id)),
                 }
             }
             None => request
                 .into_id()
-                .map(|id| Response::error(Error::method_not_found(Option::<()>::None), id)),
+                .map(|id| Response::Error(Error::method_not_found(Option::<()>::None), id)),
         }
     }
 
@@ -99,11 +99,11 @@ impl<S: Send + Sync + 'static> Router<S> {
             Ok(request) => request,
             Err(err) => {
                 return match err.classify() {
-                    Category::Data => response_to_string(Some(Response::error(
+                    Category::Data => response_to_string(Some(Response::Error(
                         Error::invalid_request(Some(err.to_string())),
                         Id::Null,
                     ))),
-                    Category::Syntax => response_to_string(Some(Response::error(
+                    Category::Syntax => response_to_string(Some(Response::Error(
                         Error::parse_error(Some(err.to_string())),
                         Id::Null,
                     ))),

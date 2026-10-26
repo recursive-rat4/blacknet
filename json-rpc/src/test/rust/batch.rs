@@ -41,11 +41,11 @@ fn batch_request() {
 #[test]
 fn batch_response() {
     let object_str = r#"{"jsonrpc":"2.0","result":2,"id":1}"#;
-    let object = BatchResponse::Object(Response::success(2, Id::number(1)));
+    let object = BatchResponse::Object(Response::Result(2.into(), Id::number(1)));
     let array_str = r#"[{"jsonrpc":"2.0","result":2,"id":1},{"jsonrpc":"2.0","result":3,"id":2}]"#;
     let array = BatchResponse::Array(vec![
-        Response::success(2, Id::number(1)),
-        Response::success(3, Id::number(2)),
+        Response::Result(2.into(), Id::number(1)),
+        Response::Result(3.into(), Id::number(2)),
     ]);
     let bad_str = "[1,2,3]";
 
