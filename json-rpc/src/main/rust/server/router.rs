@@ -16,12 +16,13 @@
  */
 
 use crate::{
-    Error, Id, Method, Request, Response,
+    BatchRequest, BatchResponse, Error, Id, Method, Request, Response,
     server::{ErasedHandler, Handler, RpcHandler},
 };
 use alloc::{
     boxed::Box,
     string::{String, ToString},
+    vec::Vec,
 };
 use core::fmt;
 use hashbrown::{HashMap, hash_map::Entry};
@@ -74,9 +75,27 @@ impl<S: Send + Sync + 'static> Router<S> {
         }
     }
 
-    /// Deserialize and handle a request, then serialize a response.
+    /// Handle a batch request.
+    pub fn handle_batch(&self, request: BatchRequest, state: &S) -> Option<BatchResponse> {
+        match request {
+            BatchRequest::Object(request) => self.handle(request, state).map(BatchResponse::Object),
+            BatchRequest::Array(requests) => {
+                let response: Vec<Response> = requests
+                    .into_iter()
+                    .filter_map(|request| self.handle(request, state))
+                    .collect();
+                if !response.is_empty() {
+                    Some(BatchResponse::Array(response))
+                } else {
+                    None
+                }
+            }
+        }
+    }
+
+    /// Deserialize and handle a batch request, then serialize a response.
     pub fn handle_str(&self, request: &str, state: &S) -> Result<Option<String>, JsonError> {
-        let request = match from_str::<Request>(request) {
+        let request = match from_str::<BatchRequest>(request) {
             Ok(request) => request,
             Err(err) => {
                 return match err.classify() {
@@ -92,12 +111,16 @@ impl<S: Send + Sync + 'static> Router<S> {
                 };
             }
         };
-        let response = self.handle(request, state);
-        response_to_string(response)
+        let response = self.handle_batch(request, state);
+        batch_to_string(response)
     }
 }
 
 fn response_to_string(response: Option<Response>) -> Result<Option<String>, JsonError> {
+    response.map(|response| to_string(&response)).transpose()
+}
+
+fn batch_to_string(response: Option<BatchResponse>) -> Result<Option<String>, JsonError> {
     response.map(|response| to_string(&response)).transpose()
 }
 
