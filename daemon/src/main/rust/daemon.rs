@@ -47,10 +47,10 @@ fn daemon() -> Result<(), Box<dyn Error>> {
     if config.rpc.enabled {
         let handle = runtime.handle().clone();
         let network = network.clone();
-        let rpc_server = RPCServer::new(&runtime, &network);
+        let rpc_server = RPCServer::new(&runtime, network);
         runtime.spawn(async move {
             rpc_server
-                .serve(&config.rpc, &log_manager, handle, network, shutdown_send)
+                .serve(&config.rpc, &log_manager, handle, shutdown_send)
                 .await;
         });
     }

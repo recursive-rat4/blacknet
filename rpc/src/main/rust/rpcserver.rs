@@ -49,18 +49,19 @@ pub struct RPCServer {
     block_subscribers: Mutex<Vec<Subscriber>>,
     txpool_subscribers: Mutex<Vec<Subscriber>>,
     wallet_subscribers: Mutex<HashMap<PublicKey, Vec<Subscriber>>>,
-    address_codec: AddressCodec,
+    network: Arc<Network>,
 }
 
 impl RPCServer {
-    pub fn new(runtime: &Runtime, network: &Network) -> Arc<Self> {
+    pub fn new(runtime: &Runtime, network: Arc<Network>) -> Arc<Self> {
         let rpc_server = Arc::new(Self {
             next_subscriber_id: AtomicU64::new(1),
             block_subscribers: Mutex::new(Vec::new()),
             txpool_subscribers: Mutex::new(Vec::new()),
             wallet_subscribers: Mutex::new(HashMap::new()),
-            address_codec: AddressCodec::new(network.mode()).unwrap(),
+            network,
         });
+        let network = &rpc_server.network;
         let node = network.node();
         runtime.spawn(RPCServer::block_observer(
             rpc_server.clone(),
@@ -82,7 +83,6 @@ impl RPCServer {
         config: &Config,
         log_manager: &LogManager,
         runtime: Handle,
-        network: Arc<Network>,
         shutdown_send: mpsc::UnboundedSender<()>,
     ) {
         let logger = log_manager.logger("RPCServer").unwrap();
@@ -95,7 +95,7 @@ impl RPCServer {
                     let _ = shutdown_send.send(());
                 }),
             )
-            .merge(v2::routes(network, self));
+            .merge(v2::routes(self.network.clone(), self));
 
         #[cfg(target_has_atomic = "64")]
         let router = router.merge(debug::routes(runtime));
@@ -113,8 +113,8 @@ impl RPCServer {
         }
     }
 
-    pub(super) const fn address_codec(&self) -> &AddressCodec {
-        &self.address_codec
+    pub(super) fn address_codec(&self) -> &AddressCodec {
+        self.network.wallet_db().address_codec()
     }
 
     pub(super) async fn subscribe_block(&self, subscriber: &Subscriber) {
@@ -192,7 +192,7 @@ impl RPCServer {
                 continue;
             }
             let notification =
-                v2::BlockNotification::new(&notification, &self.address_codec).unwrap();
+                v2::BlockNotification::new(&notification, self.address_codec()).unwrap();
             let notification = v2::WebSocketNotification::with_block(notification).unwrap();
             let notification = to_string(&notification).unwrap();
             let notification = Message::Text(notification.into());
@@ -214,7 +214,7 @@ impl RPCServer {
                 continue;
             }
             let notification =
-                v2::TransactionNotification::with(&notification, &self.address_codec).unwrap();
+                v2::TransactionNotification::with(&notification, self.address_codec()).unwrap();
             let notification = v2::WebSocketNotification::with_transaction(notification).unwrap();
             let notification = to_string(&notification).unwrap();
             let notification = Message::Text(notification.into());
@@ -243,7 +243,7 @@ impl RPCServer {
                 notification.time,
                 notification.size,
                 &notification.tx,
-                &self.address_codec,
+                self.address_codec(),
             )
             .unwrap();
             let notification = v2::WebSocketNotification::with_transaction(notification).unwrap();
