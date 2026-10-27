@@ -44,18 +44,18 @@ use tokio::{
 #[cfg(target_has_atomic = "64")]
 use crate::debug;
 
-pub struct RPCServer {
-    next_subscriber_id: AtomicU64,
-    block_subscribers: Mutex<Vec<Subscriber>>,
-    txpool_subscribers: Mutex<Vec<Subscriber>>,
-    wallet_subscribers: Mutex<HashMap<PublicKey, Vec<Subscriber>>>,
+pub struct RpcServer {
+    next_client_id: AtomicU64,
+    block_subscribers: Mutex<Vec<RpcClient>>,
+    txpool_subscribers: Mutex<Vec<RpcClient>>,
+    wallet_subscribers: Mutex<HashMap<PublicKey, Vec<RpcClient>>>,
     network: Arc<Network>,
 }
 
-impl RPCServer {
+impl RpcServer {
     pub fn new(runtime: &Runtime, network: Arc<Network>) -> Arc<Self> {
         let rpc_server = Arc::new(Self {
-            next_subscriber_id: AtomicU64::new(1),
+            next_client_id: AtomicU64::new(1),
             block_subscribers: Mutex::new(Vec::new()),
             txpool_subscribers: Mutex::new(Vec::new()),
             wallet_subscribers: Mutex::new(HashMap::new()),
@@ -63,15 +63,15 @@ impl RPCServer {
         });
         let network = &rpc_server.network;
         let node = network.node();
-        runtime.spawn(RPCServer::block_observer(
+        runtime.spawn(RpcServer::block_observer(
             rpc_server.clone(),
             node.block_db().subscribe(),
         ));
-        runtime.spawn(RPCServer::txpool_observer(
+        runtime.spawn(RpcServer::txpool_observer(
             rpc_server.clone(),
             node.tx_pool().read().unwrap().subscribe(),
         ));
-        runtime.spawn(RPCServer::walletdb_observer(
+        runtime.spawn(RpcServer::walletdb_observer(
             rpc_server.clone(),
             network.wallet_db().subscribe(),
         ));
@@ -85,7 +85,7 @@ impl RPCServer {
         runtime: Handle,
         shutdown_send: mpsc::UnboundedSender<()>,
     ) {
-        let logger = log_manager.logger("RPCServer").unwrap();
+        let logger = log_manager.logger("RpcServer").unwrap();
         let logger_shutdown = logger.clone();
         let router = Router::new()
             .route(
@@ -117,71 +117,71 @@ impl RPCServer {
         self.network.wallet_db().address_codec()
     }
 
-    pub(super) async fn subscribe_block(&self, subscriber: &Subscriber) {
+    pub(super) async fn subscribe_block(&self, rpc_client: &RpcClient) {
         let mut block_subscribers = self.block_subscribers.lock().unwrap();
-        block_subscribers.push(subscriber.clone());
+        block_subscribers.push(rpc_client.clone());
     }
 
-    pub(super) async fn subscribe_txpool(&self, subscriber: &Subscriber) {
+    pub(super) async fn subscribe_txpool(&self, rpc_client: &RpcClient) {
         let mut txpool_subscribers = self.txpool_subscribers.lock().unwrap();
-        txpool_subscribers.push(subscriber.clone());
+        txpool_subscribers.push(rpc_client.clone());
     }
 
-    pub(super) async fn subscribe_wallet(&self, public_key: PublicKey, subscriber: &Subscriber) {
+    pub(super) async fn subscribe_wallet(&self, public_key: PublicKey, rpc_client: &RpcClient) {
         let mut wallet_subscribers = self.wallet_subscribers.lock().unwrap();
         wallet_subscribers
             .entry(public_key)
-            .and_modify(|subscribers| subscribers.push(subscriber.clone()))
-            .or_insert(vec![subscriber.clone()]);
+            .and_modify(|subscribers| subscribers.push(rpc_client.clone()))
+            .or_insert(vec![rpc_client.clone()]);
     }
 
-    pub(super) async fn unsubscribe_block(&self, subscriber: &Subscriber) {
+    pub(super) async fn unsubscribe_block(&self, rpc_client: &RpcClient) {
         let mut block_subscribers = self.block_subscribers.lock().unwrap();
         if let Some(index) = block_subscribers
             .iter()
-            .map(Subscriber::id)
-            .position(|id| id == subscriber.id)
+            .map(RpcClient::id)
+            .position(|id| id == rpc_client.id)
         {
             block_subscribers.swap_remove(index);
         }
     }
 
-    pub(super) async fn unsubscribe_txpool(&self, subscriber: &Subscriber) {
+    pub(super) async fn unsubscribe_txpool(&self, rpc_client: &RpcClient) {
         let mut txpool_subscribers = self.txpool_subscribers.lock().unwrap();
         if let Some(index) = txpool_subscribers
             .iter()
-            .map(Subscriber::id)
-            .position(|id| id == subscriber.id)
+            .map(RpcClient::id)
+            .position(|id| id == rpc_client.id)
         {
             txpool_subscribers.swap_remove(index);
         }
     }
 
-    pub(super) async fn unsubscribe_wallet(&self, public_key: PublicKey, subscriber: &Subscriber) {
+    pub(super) async fn unsubscribe_wallet(&self, public_key: PublicKey, rpc_client: &RpcClient) {
         let mut wallet_subscribers = self.wallet_subscribers.lock().unwrap();
         wallet_subscribers
             .entry(public_key)
             .and_modify(|subscribers| {
                 if let Some(index) = subscribers
                     .iter()
-                    .map(Subscriber::id)
-                    .position(|id| id == subscriber.id)
+                    .map(RpcClient::id)
+                    .position(|id| id == rpc_client.id)
                 {
                     subscribers.swap_remove(index);
                 }
             });
     }
 
-    pub(super) fn create_subscriber(&self) -> (Subscriber, mpsc::Receiver<Message>) {
+    pub(super) fn create_client(&self) -> (RpcClient, mpsc::Receiver<Message>) {
         const BUFFER: usize = 65536;
         let (sender, receiver) = mpsc::channel(BUFFER);
-        let id = self.next_subscriber_id();
-        let subscriber = Subscriber { id, sender };
-        (subscriber, receiver)
+        let id = self.next_client_id();
+        let rpc_client = RpcClient { id, sender };
+        (rpc_client, receiver)
     }
 
-    fn next_subscriber_id(&self) -> NonZero<u64> {
-        let n = self.next_subscriber_id.fetch_add(1, Ordering::Relaxed);
+    fn next_client_id(&self) -> NonZero<u64> {
+        let n = self.next_client_id.fetch_add(1, Ordering::Relaxed);
         NonZero::<u64>::new(n).expect("64-bit id is enough")
     }
 
@@ -262,12 +262,12 @@ impl RPCServer {
 }
 
 #[derive(Clone)]
-pub(super) struct Subscriber {
+pub(super) struct RpcClient {
     id: NonZero<u64>,
     sender: mpsc::Sender<Message>,
 }
 
-impl Subscriber {
+impl RpcClient {
     const fn id(&self) -> NonZero<u64> {
         self.id
     }

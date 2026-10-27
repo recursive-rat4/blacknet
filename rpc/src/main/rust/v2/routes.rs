@@ -15,12 +15,12 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::{RPCServer, v2};
+use crate::{RpcServer, v2};
 use axum::Router;
 use blacknet_network::network::Network;
 use std::sync::Arc;
 
-pub fn routes(network: Arc<Network>, rpc_server: Arc<RPCServer>) -> Router<()> {
+pub fn routes(network: Arc<Network>, rpc_server: Arc<RpcServer>) -> Router<()> {
     Router::new()
         .merge(v2::database::routes())
         .merge(v2::node::routes())

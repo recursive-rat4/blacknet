@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::{RPCServer, Subscriber};
+use crate::{RpcClient, RpcServer};
 use axum::{
     Router,
     extract::{
@@ -34,26 +34,26 @@ use serde_json::{Map, from_str, value::Value};
 use std::sync::Arc;
 use tokio::sync::mpsc;
 
-async fn upgrade(ws: WebSocketUpgrade, State(rpc_server): State<Arc<RPCServer>>) -> Response {
+async fn upgrade(ws: WebSocketUpgrade, State(rpc_server): State<Arc<RpcServer>>) -> Response {
     ws.on_upgrade(|socket| on_socket(socket, rpc_server))
 }
 
-async fn on_socket(socket: WebSocket, rpc_server: Arc<RPCServer>) {
-    let (subscriber, eventer) = rpc_server.create_subscriber();
+async fn on_socket(socket: WebSocket, rpc_server: Arc<RpcServer>) {
+    let (rpc_client, eventer) = rpc_server.create_client();
     let (sink, stream) = socket.split();
     tokio::spawn(sender(sink, eventer));
-    tokio::spawn(receiver(stream, subscriber, rpc_server));
+    tokio::spawn(receiver(stream, rpc_client, rpc_server));
 }
 
 async fn receiver(
     mut stream: SplitStream<WebSocket>,
-    subscriber: Subscriber,
-    rpc_server: Arc<RPCServer>,
+    rpc_client: RpcClient,
+    rpc_server: Arc<RpcServer>,
 ) {
     while let Some(Ok(message)) = stream.next().await {
         match message {
             Message::Text(utf8) => {
-                if on_text(&utf8, &subscriber, &rpc_server).await.is_break() {
+                if on_text(&utf8, &rpc_client, &rpc_server).await.is_break() {
                     break;
                 }
             }
@@ -66,56 +66,56 @@ async fn receiver(
 
 async fn on_text(
     utf8: &Utf8Bytes,
-    subscriber: &Subscriber,
-    rpc_server: &RPCServer,
+    rpc_client: &RpcClient,
+    rpc_server: &RpcServer,
 ) -> ControlFlow<()> {
     match from_str::<Value>(utf8) {
-        Ok(Value::Object(object)) => on_object(&object, subscriber, rpc_server).await,
+        Ok(Value::Object(object)) => on_object(&object, rpc_client, rpc_server).await,
         _ => ControlFlow::Break(()),
     }
 }
 
 async fn on_object(
     request: &Map<String, Value>,
-    subscriber: &Subscriber,
-    rpc_server: &RPCServer,
+    rpc_client: &RpcClient,
+    rpc_server: &RpcServer,
 ) -> ControlFlow<()> {
     let Some(Value::String(command)) = request.get("command") else {
         return ControlFlow::Break(());
     };
     match command.as_str() {
-        "subscribe" => on_subscribe(request, subscriber, rpc_server).await,
-        "unsubscribe" => on_unsubscribe(request, subscriber, rpc_server).await,
+        "subscribe" => on_subscribe(request, rpc_client, rpc_server).await,
+        "unsubscribe" => on_unsubscribe(request, rpc_client, rpc_server).await,
         _ => ControlFlow::Break(()),
     }
 }
 
 async fn on_subscribe(
     request: &Map<String, Value>,
-    subscriber: &Subscriber,
-    rpc_server: &RPCServer,
+    rpc_client: &RpcClient,
+    rpc_server: &RpcServer,
 ) -> ControlFlow<()> {
     let Some(Value::String(route)) = request.get("route") else {
         return ControlFlow::Break(());
     };
     match route.as_str() {
         "block" => {
-            rpc_server.subscribe_block(subscriber).await;
+            rpc_server.subscribe_block(rpc_client).await;
             ControlFlow::Continue(())
         }
         "txpool" => {
-            rpc_server.subscribe_txpool(subscriber).await;
+            rpc_server.subscribe_txpool(rpc_client).await;
             ControlFlow::Continue(())
         }
-        "wallet" => on_subscribe_wallet(request, subscriber, rpc_server).await,
+        "wallet" => on_subscribe_wallet(request, rpc_client, rpc_server).await,
         _ => ControlFlow::Break(()),
     }
 }
 
 async fn on_subscribe_wallet(
     request: &Map<String, Value>,
-    subscriber: &Subscriber,
-    rpc_server: &RPCServer,
+    rpc_client: &RpcClient,
+    rpc_server: &RpcServer,
 ) -> ControlFlow<()> {
     let Some(Value::String(address)) = request.get("address") else {
         return ControlFlow::Break(());
@@ -123,36 +123,36 @@ async fn on_subscribe_wallet(
     let Ok(public_key) = rpc_server.address_codec().decode(address) else {
         return ControlFlow::Break(());
     };
-    rpc_server.subscribe_wallet(public_key, subscriber).await;
+    rpc_server.subscribe_wallet(public_key, rpc_client).await;
     ControlFlow::Continue(())
 }
 
 async fn on_unsubscribe(
     request: &Map<String, Value>,
-    subscriber: &Subscriber,
-    rpc_server: &RPCServer,
+    rpc_client: &RpcClient,
+    rpc_server: &RpcServer,
 ) -> ControlFlow<()> {
     let Some(Value::String(route)) = request.get("route") else {
         return ControlFlow::Break(());
     };
     match route.as_str() {
         "block" => {
-            rpc_server.unsubscribe_block(subscriber).await;
+            rpc_server.unsubscribe_block(rpc_client).await;
             ControlFlow::Continue(())
         }
         "txpool" => {
-            rpc_server.unsubscribe_txpool(subscriber).await;
+            rpc_server.unsubscribe_txpool(rpc_client).await;
             ControlFlow::Continue(())
         }
-        "wallet" => on_unsubscribe_wallet(request, subscriber, rpc_server).await,
+        "wallet" => on_unsubscribe_wallet(request, rpc_client, rpc_server).await,
         _ => ControlFlow::Break(()),
     }
 }
 
 async fn on_unsubscribe_wallet(
     request: &Map<String, Value>,
-    subscriber: &Subscriber,
-    rpc_server: &RPCServer,
+    rpc_client: &RpcClient,
+    rpc_server: &RpcServer,
 ) -> ControlFlow<()> {
     let Some(Value::String(address)) = request.get("address") else {
         return ControlFlow::Break(());
@@ -160,7 +160,7 @@ async fn on_unsubscribe_wallet(
     let Ok(public_key) = rpc_server.address_codec().decode(address) else {
         return ControlFlow::Break(());
     };
-    rpc_server.unsubscribe_wallet(public_key, subscriber).await;
+    rpc_server.unsubscribe_wallet(public_key, rpc_client).await;
     ControlFlow::Continue(())
 }
 
@@ -172,6 +172,6 @@ async fn sender(mut sink: SplitSink<WebSocket, Message>, mut receiver: mpsc::Rec
     }
 }
 
-pub fn routes() -> Router<Arc<RPCServer>> {
+pub fn routes() -> Router<Arc<RpcServer>> {
     Router::new().route("/api/v2/websocket", any(upgrade))
 }

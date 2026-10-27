@@ -19,7 +19,7 @@ use crate::args::{Args, Parser};
 use blacknet_compat::{XDGDirectories, config::Config, mode};
 use blacknet_log::{LogManager, Strategy};
 use blacknet_network::network::Network;
-use blacknet_rpc::RPCServer;
+use blacknet_rpc::RpcServer;
 use core::error::Error;
 use std::{
     process::ExitCode,
@@ -47,7 +47,7 @@ fn daemon() -> Result<(), Box<dyn Error>> {
     if config.rpc.enabled {
         let handle = runtime.handle().clone();
         let network = network.clone();
-        let rpc_server = RPCServer::new(&runtime, network);
+        let rpc_server = RpcServer::new(&runtime, network);
         runtime.spawn(async move {
             rpc_server
                 .serve(&config.rpc, &log_manager, handle, shutdown_send)
