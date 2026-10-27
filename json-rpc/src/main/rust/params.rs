@@ -20,7 +20,7 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer, de::Error};
 use serde_json::{Map, Value};
 
 /// Type for the `params` field in a [Request][crate::Request].
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Params {
     Positional(Vec<Value>),
     Named(Map<String, Value>),

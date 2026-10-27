@@ -20,7 +20,7 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer, de::Error};
 use serde_json::{Number, Value};
 
 /// Type for the `id` field in a [Request][crate::Request] or [Response][crate::Response].
-#[derive(Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub enum Id {
     #[default]
     Null,

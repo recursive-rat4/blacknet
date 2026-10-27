@@ -21,7 +21,7 @@ use serde::{Deserialize, Serialize};
 /// A JSON-RPC request that must be replied
 /// with a [Response][crate::Response] if an [Id][crate::Id] is present,
 /// otherwise it's a notification.
-#[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct Request {
     jsonrpc: JsonRpc,
     method: Method,

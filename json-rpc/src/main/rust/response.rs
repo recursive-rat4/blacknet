@@ -22,7 +22,7 @@ use serde::{
 use serde_json::Value;
 
 /// A JSON-RPC response to a [Request][crate::Request] that matches by the [Id][crate::Id].
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Response {
     Result(Value, Id),
     Error(Error, Id),

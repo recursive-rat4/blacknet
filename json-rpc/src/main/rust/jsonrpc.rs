@@ -21,7 +21,7 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer, de::Error};
 const JSON_RPC: &str = "2.0";
 
 /// Type for the `jsonrpc` field in a [Request][crate::Request] or [Response][crate::Response].
-#[derive(Default, Eq, PartialEq)]
+#[derive(Clone, Default, Eq, PartialEq)]
 pub struct JsonRpc;
 
 impl JsonRpc {

@@ -21,7 +21,7 @@ use serde::{Deserialize, Serialize};
 const RESERVED: &str = "rpc.";
 
 /// Type for the `method` field in a [Request][crate::Request].
-#[derive(Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
 pub struct Method(Cow<'static, str>);
 
 impl Method {

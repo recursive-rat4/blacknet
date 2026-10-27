@@ -20,7 +20,7 @@ use alloc::vec::Vec;
 use serde::{Deserialize, Serialize};
 
 /// A batch of [Request][crate::Request]s.
-#[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(untagged)]
 pub enum BatchRequest {
     Object(Request),
@@ -28,7 +28,7 @@ pub enum BatchRequest {
 }
 
 /// A batch of [Response][crate::Response]s.
-#[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(untagged)]
 pub enum BatchResponse {
     Object(Response),
