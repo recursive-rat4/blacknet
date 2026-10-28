@@ -26,7 +26,9 @@ export component MainWindow inherits Window {
     preferred-width: 950px;
     preferred-height: 550px;
 
-    in property <StakingInfo> staking_info;
+    in property <StakingInfo> staking-info;
+    in property <[string]> wallets;
+    in-out property <int> current-wallet: -1;
 
     MenuBar {
         Menu {
@@ -35,6 +37,24 @@ export component MainWindow inherits Window {
                 title: "Quit";
                 activated => { quit(); }
                 shortcut: @keys(Control + Q);
+            }
+        }
+        Menu {
+            title: "Wallet";
+            MenuItem {
+                title: "Create";
+                activated => { create-wallet(); }
+            }
+            MenuSeparator {}
+            for wallet[index] in root.wallets : MenuItem {
+                title: wallet;
+                checked: index == root.current-wallet;
+                activated => {
+                    if index != root.current-wallet {
+                        root.current-wallet = index;
+                        switch-wallet(wallet);
+                    }
+                }
             }
         }
     }
@@ -59,10 +79,12 @@ export component MainWindow inherits Window {
         Tab {
             title: "Staking";
             StakingBox {
-                info: root.staking_info;
+                info: root.staking-info;
             }
         }
     }
 
+    callback create-wallet();
+    callback switch-wallet(string);
     callback quit();
 }
