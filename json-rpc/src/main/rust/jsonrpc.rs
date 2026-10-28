@@ -16,7 +16,10 @@
  */
 
 use core::{fmt, str};
-use serde::{Deserialize, Deserializer, Serialize, Serializer, de::Error};
+use serde::{
+    Deserialize, Deserializer, Serialize, Serializer,
+    de::{Error, Unexpected, Visitor},
+};
 
 const JSON_RPC: &str = "2.0";
 
@@ -45,10 +48,28 @@ impl Serialize for JsonRpc {
 
 impl<'de> Deserialize<'de> for JsonRpc {
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-        if <&str>::deserialize(deserializer)? == JSON_RPC {
-            Ok(Self)
+        deserializer.deserialize_str(JsonRpcVisitor)
+    }
+}
+
+struct JsonRpcVisitor;
+
+impl<'de> Visitor<'de> for JsonRpcVisitor {
+    type Value = JsonRpc;
+
+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        write!(formatter, "string \"{JSON_RPC}\"")
+    }
+
+    fn visit_char<E: Error>(self, v: char) -> Result<Self::Value, E> {
+        Err(Error::invalid_type(Unexpected::Char(v), &self))
+    }
+
+    fn visit_str<E: Error>(self, s: &str) -> Result<Self::Value, E> {
+        if s == JSON_RPC {
+            Ok(JsonRpc)
         } else {
-            Err(D::Error::custom("Unsupported JSON-RPC version"))
+            Err(Error::invalid_value(Unexpected::Str(s), &self))
         }
     }
 }
