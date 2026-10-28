@@ -271,7 +271,7 @@ impl WalletDB {
                     notification.3.to_secs_lossy(),
                     None,
                 ) {
-                    error!(self.logger, "Rollback: {err}");
+                    error!(self.logger, "Scan: {err}");
                 }
             }
         }
