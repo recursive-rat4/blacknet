@@ -28,6 +28,12 @@ fn desktop() -> Result<(), Box<dyn Error>> {
     let config = Config::load(dirs.config())?;
 
     let main_window = MainWindow::new()?;
+    main_window.on_connect_peer(|addr, port| {
+        println!("on_connect_peer({addr}, {port})");
+    });
+    main_window.on_disconnect_peer(|idx| {
+        println!("on_disconnect_peer({idx})");
+    });
     main_window.on_quit(|| {
         let _ = slint::quit_event_loop();
     });

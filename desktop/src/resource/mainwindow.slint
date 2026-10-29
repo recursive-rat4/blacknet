@@ -18,6 +18,7 @@
 import { TabWidget } from "std-widgets.slint";
 import { DashboardBox } from "dashboardbox.slint";
 import { HistoryView } from "historyview.slint";
+import { PeersBox } from "peersbox.slint";
 import { StakingBox, StakingInfo } from "stakingbox.slint";
 import { TransferBox } from "transferbox.slint";
 
@@ -29,6 +30,7 @@ export component MainWindow inherits Window {
     in property <StakingInfo> staking-info;
     in property <[string]> wallets;
     in-out property <int> current-wallet: -1;
+    in property <[[StandardListViewItem]]> peers;
 
     MenuBar {
         Menu {
@@ -82,9 +84,19 @@ export component MainWindow inherits Window {
                 info: root.staking-info;
             }
         }
+        Tab {
+            title: @tr("Peers");
+            PeersBox {
+                peers: root.peers;
+                connect-peer(addr, port) => root.connect-peer(addr, port);
+                disconnect-peer(idx) => root.disconnect-peer(idx);
+            }
+        }
     }
 
     callback create-wallet();
     callback switch-wallet(string);
+    callback connect-peer(string, int);
+    callback disconnect-peer(int);
     callback quit();
 }

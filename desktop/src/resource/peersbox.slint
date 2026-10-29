@@ -1,0 +1,76 @@
+/*
+ * Copyright (c) 2026 Pavel Vasin
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
+import {
+    Button,
+    HorizontalBox,
+    LineEdit,
+    StandardTableView,
+    VerticalBox,
+} from "std-widgets.slint";
+
+export component PeersBox inherits VerticalBox {
+    in property <[[StandardListViewItem]]> peers;
+
+    table := StandardTableView {
+        columns: [
+            { title: @tr("Endpoint") },
+            { title: @tr("User agent") },
+            { title: @tr("Ping") },
+            { title: @tr("Direction") },
+            { title: @tr("Read") },
+            { title: @tr("Written") },
+        ];
+        rows: parent.peers;
+    }
+    Rectangle {}
+    VerticalBox {
+        HorizontalBox {
+            addr := LineEdit {
+                Tooltip {
+                    text: @markdown("Address");
+                }
+            }
+            port := LineEdit {
+                horizontal-stretch: 0;
+                placeholder-text: "28453";
+                input-type: number;
+                Tooltip {
+                    text: @markdown("Port");
+                }
+            }
+            Button {
+                horizontal-stretch: 0;
+                text: @tr("Connect");
+                enabled: !addr.text.is-empty;
+                clicked => {
+                    root.connect-peer(addr.text, port.text.to-float());
+                }
+            }
+        }
+        Button {
+            text: @tr("Disconnect selected peer");
+            enabled: table.current-row != -1;
+            clicked => {
+                root.disconnect-peer(table.current-row);
+            }
+        }
+    }
+
+    callback connect-peer(string, int);
+    callback disconnect-peer(int);
+}
