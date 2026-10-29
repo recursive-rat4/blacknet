@@ -21,9 +21,11 @@ import {
 } from "std-widgets.slint";
 
 export component ErrorDialog inherits Dialog {
-    in property <string> message;
+    title: "Error";
     preferred-width: 540px;
     preferred-height: 380px;
+
+    in property <string> message;
 
     TextEdit {
         text: root.message;
