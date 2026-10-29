@@ -27,7 +27,7 @@ export component TransferBox inherits VerticalBox {
     GridBox {
         Row {
             Text {
-                text: "Address";
+                text: @tr("Address");
             }
             LineEdit {
                 placeholder-text: "blacknet1...";
@@ -35,14 +35,14 @@ export component TransferBox inherits VerticalBox {
         }
         Row {
             Text {
-                text: "Amount";
+                text: @tr("Amount");
             }
             LineEdit {
             }
         }
         Row {
             Text {
-                text: "Fee";
+                text: @tr("Fee");
             }
             LineEdit {
             }
@@ -51,7 +51,7 @@ export component TransferBox inherits VerticalBox {
     HorizontalBox {
         Rectangle {}
         Button {
-            text: "Send";
+            text: @tr("Send");
         }
     }
     Rectangle {}

@@ -17,12 +17,12 @@
 
 export component TrayIcon inherits SystemTrayIcon {
     icon: @image-url("logo.png");
-    title: "Blacknet";
-    tooltip: "Blacknet";
+    title: @tr("Blacknet");
+    tooltip: @tr("Blacknet");
 
     Menu {
         MenuItem {
-            title: "Quit";
+            title: @tr("Quit");
             activated => { quit(); }
         }
     }

@@ -22,7 +22,7 @@ import { StakingBox, StakingInfo } from "stakingbox.slint";
 import { TransferBox } from "transferbox.slint";
 
 export component MainWindow inherits Window {
-    title: "Blacknet";
+    title: @tr("Blacknet");
     preferred-width: 950px;
     preferred-height: 550px;
 
@@ -32,17 +32,17 @@ export component MainWindow inherits Window {
 
     MenuBar {
         Menu {
-            title: "File";
+            title: @tr("File");
             MenuItem {
-                title: "Quit";
+                title: @tr("Quit");
                 activated => { quit(); }
                 shortcut: @keys(Control + Q);
             }
         }
         Menu {
-            title: "Wallet";
+            title: @tr("Wallet");
             MenuItem {
-                title: "Create";
+                title: @tr("Create");
                 activated => { create-wallet(); }
             }
             MenuSeparator {}
@@ -62,22 +62,22 @@ export component MainWindow inherits Window {
     TabWidget {
         orientation: Orientation.vertical;
         Tab {
-            title: "Dashboard";
+            title: @tr("Dashboard");
             DashboardBox {}
         }
         Tab {
-            title: "Transfer";
+            title: @tr("Transfer");
             TransferBox {}
         }
         Tab {
-            title: "History";
+            title: @tr("History");
             HistoryView {
                 width: parent.width;
                 height: parent.height;
             }
         }
         Tab {
-            title: "Staking";
+            title: @tr("Staking");
             StakingBox {
                 info: root.staking-info;
             }

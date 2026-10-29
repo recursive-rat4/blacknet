@@ -31,7 +31,7 @@ export component StakingBox inherits VerticalBox {
     GridBox {
         Row {
             Text {
-                text: "Status";
+                text: @tr("Status");
             }
             Text {
                 text: root.info.status;
@@ -39,7 +39,7 @@ export component StakingBox inherits VerticalBox {
         }
         Row {
             Text {
-                text: "Expected time";
+                text: @tr("Expected time");
             }
             Text {
                 text: root.info.expected_time;
@@ -47,7 +47,7 @@ export component StakingBox inherits VerticalBox {
         }
         Row {
             Text {
-                text: "Weight";
+                text: @tr("Weight");
             }
             Text {
                 text: root.info.weight;
@@ -55,7 +55,7 @@ export component StakingBox inherits VerticalBox {
         }
         Row {
             Text {
-                text: "Network weight";
+                text: @tr("Network weight");
             }
             Text {
                 text: root.info.network_weight;
@@ -63,7 +63,7 @@ export component StakingBox inherits VerticalBox {
         }
         Row {
             Text {
-                text: "Hash rate";
+                text: @tr("Hash rate");
             }
             Text {
                 text: root.info.hash_rate;
