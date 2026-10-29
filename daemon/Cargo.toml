@@ -34,7 +34,7 @@ categories.workspace = true
 blacknet-compat.workspace = true
 blacknet-log.workspace = true
 blacknet-network.workspace = true
-blacknet-rpc.workspace = true
+blacknet-rpc = { workspace = true, features = ["v2"] }
 clap.workspace = true
 tokio.workspace = true
 

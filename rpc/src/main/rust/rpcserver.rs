@@ -15,16 +15,15 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::v2;
 use axum::{Router, extract::ws::Message, routing::get};
 use blacknet_compat::config::RPC as Config;
 use blacknet_kernel::ed25519::PublicKey;
 use blacknet_log::{LogManager, error, info};
 use blacknet_network::{
-    db::BlockNotifier,
+    db::{BlockNotification, BlockNotifier},
     network::Network,
-    txpool::Notifier as TxPoolNotifier,
-    wallet::{AddressCodec, Notifier as WalletDBNotifier},
+    txpool::{Notification as TxPoolNotification, Notifier as TxPoolNotifier},
+    wallet::{AddressCodec, Notification as WalletDBNotification, Notifier as WalletDBNotifier},
 };
 use core::num::NonZero;
 use serde_json::to_string;
@@ -40,6 +39,9 @@ use tokio::{
     runtime::{Handle, Runtime},
     sync::mpsc,
 };
+
+#[cfg(feature = "v2")]
+use crate::v2;
 
 #[cfg(target_has_atomic = "64")]
 use crate::debug;
@@ -87,15 +89,16 @@ impl RpcServer {
     ) {
         let logger = log_manager.logger("RpcServer").unwrap();
         let logger_shutdown = logger.clone();
-        let router = Router::new()
-            .route(
-                "/api/shutdown",
-                get(|| async move {
-                    info!(logger_shutdown, "Shutdown requested");
-                    let _ = shutdown_send.send(());
-                }),
-            )
-            .merge(v2::routes(self.network.clone(), self));
+        let router = Router::new().route(
+            "/api/shutdown",
+            get(|| async move {
+                info!(logger_shutdown, "Shutdown requested");
+                let _ = shutdown_send.send(());
+            }),
+        );
+
+        #[cfg(feature = "v2")]
+        let router = router.merge(v2::routes(self.network.clone(), self));
 
         #[cfg(target_has_atomic = "64")]
         let router = router.merge(debug::routes(runtime));
@@ -187,75 +190,92 @@ impl RpcServer {
 
     async fn block_observer(self: Arc<Self>, mut block_notifier: BlockNotifier) {
         while let Some(notification) = block_notifier.recv().await {
-            let mut subscribers = self.block_subscribers.lock().unwrap();
-            if subscribers.is_empty() {
-                continue;
-            }
-            let notification =
-                v2::BlockNotification::new(&notification, self.address_codec()).unwrap();
-            let notification = v2::WebSocketNotification::with_block(notification).unwrap();
-            let notification = to_string(&notification).unwrap();
-            let notification = Message::Text(notification.into());
-            let mut i = 0;
-            while i < subscribers.len() {
-                if subscribers[i].sender.try_send(notification.clone()).is_ok() {
-                    i += 1;
-                } else {
-                    subscribers.swap_remove(i);
-                }
+            #[cfg(feature = "v2")]
+            self.ontify_block_v2(&notification);
+        }
+    }
+
+    #[cfg(feature = "v2")]
+    fn ontify_block_v2(&self, notification: &BlockNotification) {
+        let mut subscribers = self.block_subscribers.lock().unwrap();
+        if subscribers.is_empty() {
+            return;
+        }
+        let notification = v2::BlockNotification::new(notification, self.address_codec()).unwrap();
+        let notification = v2::WebSocketNotification::with_block(notification).unwrap();
+        let notification = to_string(&notification).unwrap();
+        let notification = Message::Text(notification.into());
+        let mut i = 0;
+        while i < subscribers.len() {
+            if subscribers[i].sender.try_send(notification.clone()).is_ok() {
+                i += 1;
+            } else {
+                subscribers.swap_remove(i);
             }
         }
     }
 
     async fn txpool_observer(self: Arc<Self>, mut txpool_notifier: TxPoolNotifier) {
         while let Some(notification) = txpool_notifier.recv().await {
-            let mut subscribers = self.txpool_subscribers.lock().unwrap();
-            if subscribers.is_empty() {
-                continue;
-            }
-            let notification =
-                v2::TransactionNotification::with(&notification, self.address_codec()).unwrap();
-            let notification = v2::WebSocketNotification::with_transaction(notification).unwrap();
-            let notification = to_string(&notification).unwrap();
-            let notification = Message::Text(notification.into());
-            let mut i = 0;
-            while i < subscribers.len() {
-                if subscribers[i].sender.try_send(notification.clone()).is_ok() {
-                    i += 1;
-                } else {
-                    subscribers.swap_remove(i);
-                }
+            #[cfg(feature = "v2")]
+            self.ontify_txpool_v2(&notification);
+        }
+    }
+
+    #[cfg(feature = "v2")]
+    fn ontify_txpool_v2(&self, notification: &TxPoolNotification) {
+        let mut subscribers = self.txpool_subscribers.lock().unwrap();
+        if subscribers.is_empty() {
+            return;
+        }
+        let notification =
+            v2::TransactionNotification::with(notification, self.address_codec()).unwrap();
+        let notification = v2::WebSocketNotification::with_transaction(notification).unwrap();
+        let notification = to_string(&notification).unwrap();
+        let notification = Message::Text(notification.into());
+        let mut i = 0;
+        while i < subscribers.len() {
+            if subscribers[i].sender.try_send(notification.clone()).is_ok() {
+                i += 1;
+            } else {
+                subscribers.swap_remove(i);
             }
         }
     }
 
     async fn walletdb_observer(self: Arc<Self>, mut walletdb_notifier: WalletDBNotifier) {
         while let Some(notification) = walletdb_notifier.recv().await {
-            let mut subscribers = self.wallet_subscribers.lock().unwrap();
-            let Some(subscribers) = subscribers.get_mut(&notification.wallet) else {
-                continue;
-            };
-            if subscribers.is_empty() {
-                continue;
-            }
-            let notification = v2::TransactionNotification::new(
-                notification.hash,
-                notification.time,
-                notification.size,
-                &notification.tx,
-                self.address_codec(),
-            )
-            .unwrap();
-            let notification = v2::WebSocketNotification::with_transaction(notification).unwrap();
-            let notification = to_string(&notification).unwrap();
-            let notification = Message::Text(notification.into());
-            let mut i = 0;
-            while i < subscribers.len() {
-                if subscribers[i].sender.try_send(notification.clone()).is_ok() {
-                    i += 1;
-                } else {
-                    subscribers.swap_remove(i);
-                }
+            #[cfg(feature = "v2")]
+            self.ontify_walletdb_v2(&notification);
+        }
+    }
+
+    #[cfg(feature = "v2")]
+    fn ontify_walletdb_v2(&self, notification: &WalletDBNotification) {
+        let mut subscribers = self.wallet_subscribers.lock().unwrap();
+        let Some(subscribers) = subscribers.get_mut(&notification.wallet) else {
+            return;
+        };
+        if subscribers.is_empty() {
+            return;
+        }
+        let notification = v2::TransactionNotification::new(
+            notification.hash,
+            notification.time,
+            notification.size,
+            &notification.tx,
+            self.address_codec(),
+        )
+        .unwrap();
+        let notification = v2::WebSocketNotification::with_transaction(notification).unwrap();
+        let notification = to_string(&notification).unwrap();
+        let notification = Message::Text(notification.into());
+        let mut i = 0;
+        while i < subscribers.len() {
+            if subscribers[i].sender.try_send(notification.clone()).is_ok() {
+                i += 1;
+            } else {
+                subscribers.swap_remove(i);
             }
         }
     }

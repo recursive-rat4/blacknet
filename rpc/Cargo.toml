@@ -47,6 +47,10 @@ serde_json.workspace = true
 spdlog-rs.workspace = true
 tokio.workspace = true
 
+[features]
+default = []
+v2 = []
+
 [lints]
 workspace = true
 

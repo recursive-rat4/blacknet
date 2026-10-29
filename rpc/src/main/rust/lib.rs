@@ -18,6 +18,7 @@
 #[cfg(target_has_atomic = "64")]
 pub mod debug;
 mod rpcserver;
+#[cfg(feature = "v2")]
 pub mod v2;
 
 pub use rpcserver::*;
