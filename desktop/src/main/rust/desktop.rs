@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::ui::{ErrorDialog, MainWindow, TrayIcon};
+use crate::ui::{AboutDialog, ErrorDialog, MainWindow, TrayIcon};
 use blacknet_compat::{XDGDirectories, config::Config, mode};
 use core::error::Error;
 use slint::ComponentHandle;
@@ -33,6 +33,12 @@ fn desktop() -> Result<(), Box<dyn Error>> {
     });
     main_window.on_disconnect_peer(|idx| {
         println!("on_disconnect_peer({idx})");
+    });
+    main_window.on_about(|| {
+        let _ = AboutDialog::new().and_then(|ui| {
+            ui.set_version(env!("CARGO_PKG_VERSION").into());
+            ui.show()
+        });
     });
     main_window.on_quit(|| {
         let _ = slint::quit_event_loop();

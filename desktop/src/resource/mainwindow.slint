@@ -59,6 +59,13 @@ export component MainWindow inherits Window {
                 }
             }
         }
+        Menu {
+            title: @tr("Help");
+            MenuItem {
+                title: @tr("About");
+                activated => { about(); }
+            }
+        }
     }
 
     TabWidget {
@@ -98,5 +105,6 @@ export component MainWindow inherits Window {
     callback switch-wallet(string);
     callback connect-peer(string, int);
     callback disconnect-peer(int);
+    callback about();
     callback quit();
 }

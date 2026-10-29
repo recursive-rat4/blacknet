@@ -1,0 +1,74 @@
+/*
+ * Copyright (c) 2026 Pavel Vasin
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
+import {
+    AboutSlint,
+    HorizontalBox,
+    TabWidget,
+    StandardButton,
+    VerticalBox,
+} from "std-widgets.slint";
+
+export component AboutDialog inherits Dialog {
+    title: @tr("About");
+    preferred-width: 780px;
+    preferred-height: 400px;
+
+    in property <string> version;
+
+    TabWidget {
+        Tab {
+            title: @tr("Blacknet");
+            HorizontalBox {
+                alignment: start;
+                cross-axis-alignment: start;
+                Image {
+                    source: @image-url("logo.png");
+                    image-fit: preserve;
+                }
+                VerticalBox {
+                    alignment: start;
+                    StyledText {
+                        text: @markdown("**Blacknet**");
+                    }
+                    Text {
+                        text: @tr("Version {}", version);
+                    }
+                    Text {
+                        text: @tr("Blacknet is a decentralized peer-to-peer network with the proof of stake cryptographic consensus.");
+                    }
+                    StyledText {
+                        text: @markdown("Visit [https://blacknet.ninja](https://blacknet.ninja) for further information.");
+                        link-clicked(link) => {
+                            Platform.open-url(link);
+                        }
+                    }
+                }
+            }
+        }
+        Tab {
+            title: @tr("GUI");
+            AboutSlint {}
+        }
+    }
+    StandardButton {
+        kind: close;
+        clicked => {
+            root.close();
+        }
+    }
+}

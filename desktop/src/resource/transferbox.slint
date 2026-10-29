@@ -24,6 +24,7 @@ import {
 } from "std-widgets.slint";
 
 export component TransferBox inherits VerticalBox {
+    alignment: start;
     GridBox {
         Row {
             Text {
@@ -49,10 +50,9 @@ export component TransferBox inherits VerticalBox {
         }
     }
     HorizontalBox {
-        Rectangle {}
+        alignment: end;
         Button {
             text: @tr("Send");
         }
     }
-    Rectangle {}
 }
