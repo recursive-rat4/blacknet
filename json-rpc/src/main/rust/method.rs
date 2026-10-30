@@ -16,6 +16,7 @@
  */
 
 use alloc::borrow::Cow;
+use core::fmt;
 use serde::{Deserialize, Serialize};
 
 const RESERVED: &str = "rpc.";
@@ -33,5 +34,11 @@ impl Method {
     /// Whether reserved for rpc-internal methods and extensions.
     pub fn is_reserved(&self) -> bool {
         self.0.starts_with(RESERVED)
+    }
+}
+
+impl fmt::Display for Method {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(&self.0)
     }
 }

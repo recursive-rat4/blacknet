@@ -53,8 +53,22 @@ impl<S: Send + Sync + 'static> Router<S> {
                 vacant.insert(RpcHandler::<T, S>::erase());
                 Ok(())
             }
-            Entry::Occupied(_) => Err(OccupiedError),
+            Entry::Occupied(occupied) => Err(OccupiedError(occupied.key().clone())),
         }
+    }
+
+    /// Merge methods and handlers of other router into self.
+    pub fn merge(&mut self, other: Self) -> Result<(), OccupiedError> {
+        self.table.reserve(other.table.len());
+        for (method, handler) in other.table {
+            match self.table.entry(method) {
+                Entry::Vacant(vacant) => {
+                    vacant.insert(handler);
+                }
+                Entry::Occupied(occupied) => return Err(OccupiedError(occupied.key().clone())),
+            }
+        }
+        Ok(())
     }
 
     /// Handle a request.
@@ -125,11 +139,11 @@ fn batch_to_string(response: Option<BatchResponse>) -> Result<Option<String>, Js
 }
 
 #[derive(Debug)]
-pub struct OccupiedError;
+pub struct OccupiedError(Method);
 
 impl fmt::Display for OccupiedError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str("Method already has a handler")
+        write!(f, "Method {} already has a handler", self.0)
     }
 }
 
