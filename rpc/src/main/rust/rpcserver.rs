@@ -120,6 +120,10 @@ impl RpcServer {
         self.network.wallet_db().address_codec()
     }
 
+    pub(super) fn network(&self) -> &Network {
+        &self.network
+    }
+
     pub(super) async fn subscribe_block(&self, rpc_client: &RpcClient) {
         let mut block_subscribers = self.block_subscribers.lock().unwrap();
         block_subscribers.push(rpc_client.clone());

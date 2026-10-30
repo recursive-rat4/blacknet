@@ -702,6 +702,7 @@ version = "0.3.0"
 dependencies = [
  "blacknet-compat",
  "blacknet-json-rpc",
+ "blacknet-rpc",
  "slint",
  "slint-build",
 ]

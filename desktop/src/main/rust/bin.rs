@@ -22,5 +22,7 @@ mod ui {
 }
 
 mod desktop;
+mod peertablemodel;
 
 use desktop::main;
+use peertablemodel::PeerTableModel;

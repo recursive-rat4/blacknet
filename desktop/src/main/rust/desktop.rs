@@ -15,7 +15,10 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::ui::{AboutDialog, ErrorDialog, MainWindow, TrayIcon};
+use crate::{
+    PeerTableModel,
+    ui::{AboutDialog, ErrorDialog, MainWindow, TrayIcon},
+};
 use blacknet_compat::{XDGDirectories, config::Config, mode};
 use core::error::Error;
 use slint::ComponentHandle;
@@ -27,7 +30,10 @@ fn desktop() -> Result<(), Box<dyn Error>> {
     #[expect(unused_variables)]
     let config = Config::load(dirs.config())?;
 
+    let peers = PeerTableModel::new();
+
     let main_window = MainWindow::new()?;
+    main_window.set_peers(peers.as_model_rc());
     main_window.on_connect_peer(|addr, port| {
         println!("on_connect_peer({addr}, {port})");
     });

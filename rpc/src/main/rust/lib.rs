@@ -21,6 +21,7 @@ pub mod debug;
 mod rpcserver;
 #[cfg(feature = "v2")]
 pub mod v2;
+pub mod v3;
 
 #[cfg(feature = "server")]
 pub use rpcserver::*;

@@ -38,7 +38,7 @@ blacknet-kernel = { workspace = true, optional = true }
 blacknet-log = { workspace = true, optional = true }
 blacknet-network = { workspace = true, optional = true }
 blacknet-serialization = { workspace = true, optional = true }
-blacknet-time = { workspace = true, optional = true }
+blacknet-time.workspace = true
 axum = { workspace = true, optional = true }
 const-hex = { workspace = true, optional = true }
 futures-util = { workspace = true, optional = true }
@@ -53,7 +53,6 @@ v2 = [
     "server",
     "dep:blacknet-crypto",
     "dep:blacknet-serialization",
-    "dep:blacknet-time",
     "dep:const-hex",
     "dep:futures-util",
 ]
