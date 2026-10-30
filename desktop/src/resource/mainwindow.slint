@@ -71,6 +71,7 @@ export component MainWindow inherits Window {
 
     TabWidget {
         orientation: Orientation.vertical;
+        changed current-index => { root.switch-tab(self.current-index); };
         Tab {
             title: @tr("Dashboard");
             DashboardBox {}
@@ -109,6 +110,7 @@ export component MainWindow inherits Window {
 
     callback create-wallet();
     callback switch-wallet(string);
+    callback switch-tab(int);
     callback connect-peer(string, int);
     callback disconnect-peer(int);
     callback sort-history-ascending(int);
