@@ -30,6 +30,7 @@ export component MainWindow inherits Window {
     in property <StakingInfo> staking-info;
     in property <[string]> wallets;
     in-out property <int> current-wallet: -1;
+    in property <[[StandardListViewItem]]> history;
     in property <[[StandardListViewItem]]> peers;
 
     MenuBar {
@@ -83,6 +84,9 @@ export component MainWindow inherits Window {
             HistoryView {
                 width: parent.width;
                 height: parent.height;
+                rows: root.history;
+                sort-ascending(column) => root.sort-history-ascending(column);
+                sort-descending(column) => root.sort-history-descending(column);
             }
         }
         Tab {
@@ -97,6 +101,8 @@ export component MainWindow inherits Window {
                 peers: root.peers;
                 connect-peer(addr, port) => root.connect-peer(addr, port);
                 disconnect-peer(idx) => root.disconnect-peer(idx);
+                sort-ascending(column) => root.sort-peers-ascending(column);
+                sort-descending(column) => root.sort-peers-descending(column);
             }
         }
     }
@@ -105,6 +111,10 @@ export component MainWindow inherits Window {
     callback switch-wallet(string);
     callback connect-peer(string, int);
     callback disconnect-peer(int);
+    callback sort-history-ascending(int);
+    callback sort-history-descending(int);
+    callback sort-peers-ascending(int);
+    callback sort-peers-descending(int);
     callback about();
     callback quit();
 }
