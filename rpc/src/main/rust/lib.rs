@@ -15,10 +15,12 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#[cfg(target_has_atomic = "64")]
+#[cfg(all(feature = "server", target_has_atomic = "64"))]
 pub mod debug;
+#[cfg(feature = "server")]
 mod rpcserver;
 #[cfg(feature = "v2")]
 pub mod v2;
 
+#[cfg(feature = "server")]
 pub use rpcserver::*;

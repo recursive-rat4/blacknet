@@ -31,25 +31,43 @@ keywords.workspace = true
 categories.workspace = true
 
 [dependencies]
-blacknet-compat.workspace = true
-blacknet-crypto.workspace = true
-blacknet-json-rpc = { workspace = true, features = ["server"] }
-blacknet-kernel.workspace = true
-blacknet-log.workspace = true
-blacknet-network.workspace = true
-blacknet-serialization.workspace = true
-blacknet-time.workspace = true
-axum.workspace = true
-const-hex.workspace = true
-futures-util.workspace = true
+blacknet-compat = { workspace = true, optional = true }
+blacknet-crypto = { workspace = true, optional = true }
+blacknet-json-rpc = { workspace = true, optional = true }
+blacknet-kernel = { workspace = true, optional = true }
+blacknet-log = { workspace = true, optional = true }
+blacknet-network = { workspace = true, optional = true }
+blacknet-serialization = { workspace = true, optional = true }
+blacknet-time = { workspace = true, optional = true }
+axum = { workspace = true, optional = true }
+const-hex = { workspace = true, optional = true }
+futures-util = { workspace = true, optional = true }
 serde.workspace = true
-serde_json.workspace = true
-spdlog-rs.workspace = true
-tokio.workspace = true
+serde_json = { workspace = true, optional = true }
+spdlog-rs = { workspace = true, optional = true }
+tokio = { workspace = true, optional = true }
 
 [features]
 default = []
-v2 = []
+v2 = [
+    "server",
+    "dep:blacknet-crypto",
+    "dep:blacknet-serialization",
+    "dep:blacknet-time",
+    "dep:const-hex",
+    "dep:futures-util",
+]
+server = [
+    "dep:blacknet-compat",
+    "blacknet-json-rpc/server",
+    "dep:blacknet-kernel",
+    "dep:blacknet-log",
+    "dep:blacknet-network",
+    "dep:axum",
+    "dep:serde_json",
+    "dep:spdlog-rs",
+    "dep:tokio",
+]
 
 [lints]
 workspace = true
