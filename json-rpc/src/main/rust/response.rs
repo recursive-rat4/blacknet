@@ -19,7 +19,7 @@ use crate::{Error, Id, JsonRpc};
 use serde::{
     Deserialize, Deserializer, Serialize, Serializer, de::Error as _, ser::SerializeStruct,
 };
-use serde_json::Value;
+use serde_json::{Value, from_value};
 
 /// A JSON-RPC response to a [Request][crate::Request] that matches by the [Id][crate::Id].
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -49,21 +49,37 @@ impl Serialize for Response {
 
 impl<'de> Deserialize<'de> for Response {
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-        let deser = Deser::deserialize(deserializer)?;
-        match (deser.result, deser.error) {
-            (Some(result), None) => Ok(Self::Result(result, deser.id)),
-            (None, Some(error)) => Ok(Self::Error(error, deser.id)),
+        let value = Value::deserialize(deserializer)?;
+        let Value::Object(mut object) = value else {
+            return Err(D::Error::custom("Response is not an object"));
+        };
+
+        let Some(jsonrpc) = object.remove("jsonrpc") else {
+            return Err(D::Error::missing_field("jsonrpc"));
+        };
+        let result = object.remove("result");
+        let error = object.remove("error");
+        let Some(id) = object.remove("id") else {
+            return Err(D::Error::missing_field("id"));
+        };
+        if let Some(field) = object.keys().next() {
+            return Err(D::Error::unknown_field(
+                field,
+                &["jsonrpc", "result", "error", "id"],
+            ));
+        }
+
+        let _jsonrpc = from_value::<JsonRpc>(jsonrpc).map_err(D::Error::custom)?;
+        let id = from_value::<Id>(id).map_err(D::Error::custom)?;
+
+        match (result, error) {
+            (Some(result), None) => Ok(Self::Result(result, id)),
+            (None, Some(error)) => Ok(Self::Error(
+                from_value::<Error>(error).map_err(D::Error::custom)?,
+                id,
+            )),
             (Some(_), Some(_)) => Err(D::Error::custom("Response is both result and error")),
             (None, None) => Err(D::Error::custom("Response is neither result nor error")),
         }
     }
-}
-
-#[derive(Deserialize)]
-struct Deser {
-    #[allow(dead_code)]
-    jsonrpc: JsonRpc,
-    result: Option<Value>,
-    error: Option<Error>,
-    id: Id,
 }

@@ -17,7 +17,7 @@
 
 use blacknet_json_rpc::{Error, Id, Response};
 use core::assert_matches;
-use serde_json::{from_str, to_string};
+use serde_json::{Value, from_str, to_string};
 
 #[test]
 fn response() {
@@ -26,14 +26,18 @@ fn response() {
     let error_str =
         r#"{"jsonrpc":"2.0","error":{"code":-32600,"message":"Invalid Request"},"id":null}"#;
     let error = Response::Error(Error::invalid_request(Option::<()>::None), Id::Null);
+    let nulless_str = r#"{"jsonrpc":"2.0","result":null,"id":null}"#;
+    let nulless = Response::Result(Value::Null, Id::Null);
     let bad_1 = r#"{"jsonrpc":"2.0","result":19,"error":{"code":-32600,"message":"Invalid Request"},"id":1}"#;
     let bad_2 = r#"{"jsonrpc":"2.0","id":1}"#;
 
     assert_matches!(to_string(&success).as_deref(), Ok(x) if x == success_str);
     assert_matches!(to_string(&error).as_deref(), Ok(x) if x == error_str);
+    assert_matches!(to_string(&nulless).as_deref(), Ok(x) if x == nulless_str);
 
     assert_matches!(from_str::<Response>(success_str), Ok(x) if x == success);
     assert_matches!(from_str::<Response>(error_str), Ok(x) if x == error);
+    assert_matches!(from_str::<Response>(nulless_str), Ok(x) if x == nulless);
 
     assert_matches!(from_str::<Response>(bad_1), Err(x) if x.is_data());
     assert_matches!(from_str::<Response>(bad_2), Err(x) if x.is_data());
