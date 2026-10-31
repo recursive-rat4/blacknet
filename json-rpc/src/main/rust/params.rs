@@ -16,8 +16,11 @@
  */
 
 use alloc::{string::String, vec::Vec};
-use serde::{Deserialize, Deserializer, Serialize, Serializer, de::Error};
-use serde_json::{Map, Value};
+use serde::{
+    Deserialize, Deserializer, Serialize, Serializer,
+    de::{DeserializeOwned, Error as _},
+};
+use serde_json::{Error, Map, Value, from_value, to_value};
 
 /// Type for the `params` field in a [Request][crate::Request].
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -61,5 +64,26 @@ impl<'de> Deserialize<'de> for Params {
             Value::Object(params) => Ok(Self::Named(params)),
             _ => Err(D::Error::custom("Params are neither array nor object")),
         }
+    }
+}
+
+/// Convert params to a struct.
+pub fn from_params<T: DeserializeOwned>(params: Option<Params>) -> Result<T, Error> {
+    from_value::<T>(match params {
+        Some(Params::Positional(params)) => Value::Array(params),
+        Some(Params::Named(params)) => Value::Object(params),
+        None => Value::Null,
+    })
+}
+
+/// Convert a struct to params.
+pub fn to_params<T: Serialize>(t: T) -> Result<Option<Params>, Error> {
+    match to_value(t)? {
+        Value::Null => Ok(None),
+        Value::Array(params) => Ok(Some(Params::Positional(params))),
+        Value::Object(params) => Ok(Some(Params::Named(params))),
+        _ => Err(Error::custom(
+            "Present parameters are neither array nor object",
+        )),
     }
 }

@@ -15,12 +15,13 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_json_rpc::Params;
+use blacknet_json_rpc::{Params, from_params, to_params};
 use core::assert_matches;
+use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value, from_str, to_string};
 
 #[test]
-fn params() {
+fn serialization() {
     let one_two_three: Vec<Value> = [1, 2, 3].into_iter().map(Into::into).collect();
     let foo_bar: Map<String, Value> = [("foo", "bar")]
         .into_iter()
@@ -45,4 +46,47 @@ fn params() {
         to_string(&Params::Named(foo_bar)).as_deref(),
         Ok(r#"{"foo":"bar"}"#)
     );
+}
+
+#[test]
+fn conversion() {
+    #[derive(Debug, Deserialize, Serialize)]
+    struct Foo {
+        foo: String,
+    }
+    #[derive(Debug, Deserialize, Serialize)]
+    struct Bar(Vec<u16>);
+    #[derive(Debug, Deserialize, Serialize)]
+    struct Yay;
+
+    let one_two_three: Vec<Value> = [1, 2, 3].into_iter().map(Into::into).collect();
+    let foo_bar: Map<String, Value> = [("foo", "bar")]
+        .into_iter()
+        .map(|(k, v)| (k.into(), v.into()))
+        .collect();
+    let foo = Foo {
+        foo: "bar".to_string(),
+    };
+    let bar = Bar(vec![1, 2, 3]);
+    let yay = Yay;
+
+    assert_matches!(
+        from_params::<Foo>(Some(Params::Named(foo_bar.clone()))),
+        Ok(Foo { foo }) if foo == "bar"
+    );
+    assert_matches!(
+        from_params::<Bar>(Some(Params::Positional(one_two_three.clone()))),
+        Ok(Bar(x)) if x == [1, 2, 3]
+    );
+    assert_matches!(from_params::<Yay>(None), Ok(Yay));
+
+    assert_matches!(
+        to_params(foo),
+        Ok(Some(Params::Named(x))) if x == foo_bar
+    );
+    assert_matches!(
+        to_params(bar),
+        Ok(Some(Params::Positional(x))) if x == one_two_three
+    );
+    assert_matches!(to_params(yay), Ok(None));
 }

@@ -15,11 +15,11 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::{Error, Params};
+use crate::{Error, Params, from_params};
 use alloc::{boxed::Box, string::ToString};
 use core::marker::PhantomData;
 use serde::{Serialize, de::DeserializeOwned};
-use serde_json::{Value, from_value, to_value};
+use serde_json::{Value, to_value};
 
 /// A handler for a JSON-RPC request.
 pub trait Handler<S> {
@@ -55,12 +55,7 @@ impl<T: Handler<S> + DeserializeOwned + Send + Sync + 'static, S: Send + Sync + 
 
 impl<T: Handler<S> + DeserializeOwned, S> ErasedHandler<S> for RpcHandler<T, S> {
     fn handle(&self, params: Option<Params>, state: &S) -> Result<Value, Error> {
-        let params = match params {
-            Some(Params::Positional(params)) => Value::Array(params),
-            Some(Params::Named(params)) => Value::Object(params),
-            None => Value::Null,
-        };
-        let result = match from_value::<T>(params) {
+        let result = match from_params::<T>(params) {
             Ok(handler) => handler.handle(state),
             Err(err) => return Err(Error::invalid_params(Some(err.to_string()))),
         };

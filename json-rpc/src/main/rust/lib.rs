@@ -37,6 +37,6 @@ pub use error::Error;
 pub use id::Id;
 pub use jsonrpc::JsonRpc;
 pub use method::Method;
-pub use params::Params;
+pub use params::{Params, from_params, to_params};
 pub use request::Request;
 pub use response::Response;
