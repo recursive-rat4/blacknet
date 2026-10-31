@@ -195,12 +195,12 @@ impl RpcServer {
     async fn block_observer(self: Arc<Self>, mut block_notifier: BlockNotifier) {
         while let Some(notification) = block_notifier.recv().await {
             #[cfg(feature = "v2")]
-            self.ontify_block_v2(&notification);
+            self.notify_block_v2(&notification);
         }
     }
 
     #[cfg(feature = "v2")]
-    fn ontify_block_v2(&self, notification: &BlockNotification) {
+    fn notify_block_v2(&self, notification: &BlockNotification) {
         let mut subscribers = self.block_subscribers.lock().unwrap();
         if subscribers.is_empty() {
             return;
@@ -222,12 +222,12 @@ impl RpcServer {
     async fn txpool_observer(self: Arc<Self>, mut txpool_notifier: TxPoolNotifier) {
         while let Some(notification) = txpool_notifier.recv().await {
             #[cfg(feature = "v2")]
-            self.ontify_txpool_v2(&notification);
+            self.notify_txpool_v2(&notification);
         }
     }
 
     #[cfg(feature = "v2")]
-    fn ontify_txpool_v2(&self, notification: &TxPoolNotification) {
+    fn notify_txpool_v2(&self, notification: &TxPoolNotification) {
         let mut subscribers = self.txpool_subscribers.lock().unwrap();
         if subscribers.is_empty() {
             return;
@@ -250,12 +250,12 @@ impl RpcServer {
     async fn walletdb_observer(self: Arc<Self>, mut walletdb_notifier: WalletDBNotifier) {
         while let Some(notification) = walletdb_notifier.recv().await {
             #[cfg(feature = "v2")]
-            self.ontify_walletdb_v2(&notification);
+            self.notify_walletdb_v2(&notification);
         }
     }
 
     #[cfg(feature = "v2")]
-    fn ontify_walletdb_v2(&self, notification: &WalletDBNotification) {
+    fn notify_walletdb_v2(&self, notification: &WalletDBNotification) {
         let mut subscribers = self.wallet_subscribers.lock().unwrap();
         let Some(subscribers) = subscribers.get_mut(&notification.wallet) else {
             return;
