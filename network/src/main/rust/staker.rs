@@ -110,7 +110,7 @@ impl Staker {
 
         if inner.holders.is_empty() {
             inner.worker = Some(self.runtime.spawn(self.clone().run()));
-            inner.set_state(State::Started);
+            inner.set_status(Status::Started);
         }
         inner.holders.push(holder);
         true
@@ -134,7 +134,7 @@ impl Staker {
             inner.worker.as_ref().expect("worker").abort();
             inner.worker = None;
             inner.waiter = None;
-            inner.set_state(State::Stopped);
+            inner.set_status(Status::Stopped);
         }
         true
     }
@@ -157,11 +157,13 @@ impl Staker {
                 .iter()
                 .find(|holder| holder.public_key == *public_key)
             {
+                stats.status = inner.status;
                 stats.staking_accounts = 1;
                 stats.hash_rate += holder.hash_rate();
                 stats.weight += holder.stake;
             }
         } else {
+            stats.status = inner.status;
             stats.staking_accounts = inner.holders.len() as u32;
             for holder in &inner.holders {
                 stats.hash_rate += holder.hash_rate();
@@ -237,16 +239,16 @@ impl Staker {
 
         if self.node.mode().requires_network() {
             if !self.node.is_online() {
-                inner.set_state(State::AwaitingOnline);
+                inner.set_status(Status::AwaitingOnline);
                 return None;
             }
             if self.node.is_initial_synchronization() {
-                inner.set_state(State::AwaitingSync);
+                inner.set_status(Status::AwaitingSync);
                 return None;
             }
         }
 
-        inner.set_state(State::Staking);
+        inner.set_status(Status::Staking);
 
         let (ref state, ref snapshot) = **self.node.coin_db().state().load();
         let curr_time = SystemClock::secs();
@@ -294,12 +296,12 @@ impl Staker {
 impl Drop for Staker {
     fn drop(&mut self) {
         let mut inner = self.inner.lock().unwrap();
-        inner.set_state(State::Terminating);
+        inner.set_status(Status::Terminating);
     }
 }
 
 #[derive(Clone, Copy, Eq, PartialEq)]
-enum State {
+pub enum Status {
     Initializing,
     Terminating,
     AwaitingOnline,
@@ -309,23 +311,23 @@ enum State {
     Stopped,
 }
 
-impl fmt::Display for State {
+impl fmt::Display for Status {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            State::Initializing => f.write_str("Initializing staker"),
-            State::Terminating => f.write_str("Terminating staker"),
-            State::AwaitingOnline => f.write_str("Awaiting to get online"),
-            State::AwaitingSync => f.write_str("Awaiting to get synchronized"),
-            State::Staking => f.write_str("Staking"),
-            State::Started => f.write_str("Started staker"),
-            State::Stopped => f.write_str("Stopped staker"),
+            Self::Initializing => f.write_str("Initializing staker"),
+            Self::Terminating => f.write_str("Terminating staker"),
+            Self::AwaitingOnline => f.write_str("Awaiting to get online"),
+            Self::AwaitingSync => f.write_str("Awaiting to get synchronized"),
+            Self::Staking => f.write_str("Staking"),
+            Self::Started => f.write_str("Started staker"),
+            Self::Stopped => f.write_str("Stopped staker"),
         }
     }
 }
 
 struct Inner {
     logger: Logger,
-    state: State,
+    status: Status,
     holders: Vec<Holder>,
     waiter: Option<AbortHandle>,
     worker: Option<JoinHandle<()>>,
@@ -335,19 +337,19 @@ impl Inner {
     const fn new(logger: Logger) -> Self {
         Self {
             logger,
-            state: State::Initializing,
+            status: Status::Initializing,
             holders: Vec::new(),
             waiter: None,
             worker: None,
         }
     }
 
-    fn set_state(&mut self, state: State) {
-        if self.state == state {
+    fn set_status(&mut self, status: Status) {
+        if self.status == status {
             return;
         }
-        self.state = state;
-        info!(self.logger, "{state}");
+        self.status = status;
+        info!(self.logger, "{status}");
     }
 }
 
@@ -391,6 +393,7 @@ impl Holder {
 }
 
 pub struct StakerStats {
+    status: Status,
     staking_accounts: u32,
     hash_rate: f64,
     weight: Amount,
@@ -401,12 +404,17 @@ pub struct StakerStats {
 impl StakerStats {
     const fn new() -> Self {
         Self {
+            status: Status::Initializing,
             staking_accounts: 0,
             hash_rate: 0.0,
             weight: Amount::ZERO,
             network_weight: Amount::ZERO,
             expected_time: Seconds::ZERO,
         }
+    }
+
+    pub const fn status(&self) -> Status {
+        self.status
     }
 
     pub const fn staking_accounts(&self) -> u32 {
