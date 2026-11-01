@@ -1,0 +1,528 @@
+/*
+ * Copyright (c) 2026 Pavel Vasin
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
+use crate::server::v2::{
+    AddressInfo, LeaseInfo, MnemonicInfo, NewMnemonicInfo, TransactionDataInfo, TransactionInfo,
+    WalletTransactionInfo, response::*,
+};
+use axum::{
+    Form, Router,
+    extract::{Path, State},
+    response::Response,
+    routing::{get, post},
+};
+use blacknet_crypto::zeroize::ZeroizingString;
+use blacknet_kernel::{
+    blake2b::Hash256,
+    ed25519::{PublicKey, Signature, to_secret_key},
+    proofofstake::ROLLBACK_LIMIT,
+    transaction::{PaymentId, Transaction},
+};
+use blacknet_network::{
+    db::genesis,
+    network::Network,
+    wallet::{Mnemonic, Wallet, sign_message, verify_message},
+};
+use blacknet_serialization::from_bytes;
+use blacknet_time::Seconds;
+use core::{error::Error, str::FromStr};
+use serde::{Deserialize, Serialize};
+use std::{collections::HashMap, sync::Arc};
+
+fn use_wallet<T>(
+    network: &Network,
+    public_key: PublicKey,
+    f: impl FnOnce(&Wallet) -> T,
+) -> Result<T, Box<dyn Error>> {
+    let wallet_db = network.wallet_db();
+    if let Some(wallet) = wallet_db.wallets().get(&public_key) {
+        return Ok(f(wallet));
+    }
+    let wallet = Wallet::ephemeral(network.mode())?;
+    wallet.put_watch(public_key)?;
+    wallet_db.ingest(&wallet_db.address_codec().encode(public_key)?, wallet)?;
+    if let Some(wallet) = wallet_db.wallets().get(&public_key) {
+        return Ok(f(wallet));
+    }
+    Err("Failed to get or create wallet".into())
+}
+
+async fn generate_account(
+    State(network): State<Arc<Network>>,
+    wordlist: Option<Path<String>>,
+) -> Response<String> {
+    let address_codec = network.wallet_db().address_codec();
+    let wordlist: &str = match &wordlist {
+        Some(name) => name.as_str(),
+        None => "english",
+    };
+    let mnemonic = match Mnemonic::generate_v1(wordlist) {
+        Ok(mnemonic) => mnemonic,
+        Err(err) => return respond_error(format!("Generation error: {err}")),
+    };
+    let info = match NewMnemonicInfo::new(mnemonic, address_codec) {
+        Ok(info) => info,
+        Err(err) => return respond_error(format!("Internal error: {err}")),
+    };
+    respond_json(&info)
+}
+
+async fn address(State(network): State<Arc<Network>>, address: Path<String>) -> Response<String> {
+    let address_codec = network.wallet_db().address_codec();
+    match AddressInfo::new(&address, address_codec) {
+        Ok(info) => respond_json(&info),
+        Err(err) => respond_error(err.to_string()),
+    }
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct MnemonicRequest {
+    pub mnemonic: ZeroizingString,
+}
+
+async fn mnemonic(
+    State(network): State<Arc<Network>>,
+    Form(request): Form<MnemonicRequest>,
+) -> Response<String> {
+    let address_codec = network.wallet_db().address_codec();
+    match MnemonicInfo::new(&request.mnemonic, address_codec) {
+        Ok(info) => respond_json(&info),
+        Err(err) => respond_error(err.to_string()),
+    }
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct DecryptPaymentIdRequest {
+    pub mnemonic: ZeroizingString,
+    pub from: String,
+    pub message: String,
+}
+
+async fn decrypt_payment_id(
+    State(network): State<Arc<Network>>,
+    Form(request): Form<DecryptPaymentIdRequest>,
+) -> Response<String> {
+    let Some(secret_key) = to_secret_key(&request.mnemonic) else {
+        return respond_error("Invalid mnemonic");
+    };
+    let from = match network.wallet_db().address_codec().decode(&request.from) {
+        Ok(from) => from,
+        Err(err) => {
+            return respond_error(format!("Invalid from: {err}"));
+        }
+    };
+    match PaymentId::decrypt(&secret_key, from, &request.message) {
+        Ok(decrypted) => respond_text(decrypted),
+        Err(err) => respond_error(format!("Decryption failed: {err}")),
+    }
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct SignMessageRequest {
+    pub mnemonic: ZeroizingString,
+    pub message: String,
+}
+
+async fn sign_message_handler(
+    State(network): State<Arc<Network>>,
+    Form(request): Form<SignMessageRequest>,
+) -> Response<String> {
+    let Some(secret_key) = to_secret_key(&request.mnemonic) else {
+        return respond_error("Invalid mnemonic");
+    };
+    let signature = sign_message(network.mode(), &secret_key, &request.message);
+    respond_text(format!("{signature:?}"))
+}
+
+async fn verify_message_handler(
+    State(network): State<Arc<Network>>,
+    Path((from, signature, message)): Path<(String, String, String)>,
+) -> Response<String> {
+    let from = match network.wallet_db().address_codec().decode(&from) {
+        Ok(from) => from,
+        Err(err) => {
+            return respond_error(format!("Invalid from: {err}"));
+        }
+    };
+    let signature = match Signature::from_str(&signature) {
+        Ok(signature) => signature,
+        Err(err) => {
+            return respond_error(format!("Invalid signature: {err}"));
+        }
+    };
+    match verify_message(network.mode(), from, signature, &message) {
+        Ok(()) => respond_text("true"),
+        Err(err) => respond_error(format!("Verification failed: {err}")),
+    }
+}
+
+async fn transactions(
+    State(network): State<Arc<Network>>,
+    address: Path<String>,
+) -> Response<String> {
+    let public_key = match network.wallet_db().address_codec().decode(&address) {
+        Ok(public_key) => public_key,
+        Err(err) => {
+            return respond_error(format!("Invalid address: {err}"));
+        }
+    };
+    let txs_data_info = match use_wallet(&network, public_key, Wallet::get_transactions_data) {
+        Ok(Ok(txs_data)) => txs_data
+            .into_iter()
+            .map(|(id, tx_data)| (id, TransactionDataInfo::new(&tx_data)))
+            .collect::<HashMap<Hash256, TransactionDataInfo>>(),
+        Ok(Err(err)) => return respond_error(err.to_string()),
+        Err(err) => return respond_error(err.to_string()),
+    };
+    respond_json(&txs_data_info)
+}
+
+async fn out_leases(
+    State(network): State<Arc<Network>>,
+    address: Path<String>,
+) -> Response<String> {
+    let address_codec = network.wallet_db().address_codec();
+    let public_key = match address_codec.decode(&address) {
+        Ok(public_key) => public_key,
+        Err(err) => {
+            return respond_error(format!("Invalid address: {err}"));
+        }
+    };
+    let out_leases = match use_wallet(&network, public_key, Wallet::get_out_leases) {
+        Ok(Ok(out_leases)) => out_leases
+            .into_iter()
+            .map(|lease| LeaseInfo::new(lease, address_codec))
+            .collect::<Result<Vec<LeaseInfo>, _>>(),
+        Ok(Err(err)) => return respond_error(err.to_string()),
+        Err(err) => return respond_error(err.to_string()),
+    };
+    match out_leases {
+        Ok(out_leases) => respond_json(&out_leases),
+        Err(err) => respond_error(err.to_string()),
+    }
+}
+
+async fn sequence(State(network): State<Arc<Network>>, address: Path<String>) -> Response<String> {
+    let public_key = match network.wallet_db().address_codec().decode(&address) {
+        Ok(public_key) => public_key,
+        Err(err) => return respond_error(format!("Invalid address: {err}")),
+    };
+    match use_wallet(&network, public_key, Wallet::sequence) {
+        Ok(Ok(sequence)) => respond_text(sequence.to_string()),
+        Ok(Err(err)) => respond_error(err.to_string()),
+        Err(err) => respond_error(err.to_string()),
+    }
+}
+
+async fn transaction(
+    State(network): State<Arc<Network>>,
+    Path((address, hash)): Path<(String, String)>,
+) -> Response<String> {
+    transaction_handler(&network, &address, &hash, false)
+}
+
+async fn transaction_raw(
+    State(network): State<Arc<Network>>,
+    Path((address, hash, raw)): Path<(String, String, bool)>,
+) -> Response<String> {
+    transaction_handler(&network, &address, &hash, raw)
+}
+
+fn transaction_handler(
+    network: &Network,
+    address: &str,
+    hash: &str,
+    raw: bool,
+) -> Response<String> {
+    let address_codec = network.wallet_db().address_codec();
+    let public_key = match address_codec.decode(address) {
+        Ok(public_key) => public_key,
+        Err(err) => return respond_error(format!("Invalid address: {err}")),
+    };
+    let hash = match Hash256::from_str(hash) {
+        Ok(hash) => hash,
+        Err(err) => return respond_error(format!("Invalid hash: {err}")),
+    };
+    let bytes = match use_wallet(network, public_key, |wallet| {
+        wallet.get_transaction_bytes(hash)
+    }) {
+        Ok(Ok(bytes)) => bytes,
+        Ok(Err(err)) => return respond_error(err.to_string()),
+        Err(err) => return respond_error(err.to_string()),
+    };
+    if raw {
+        return respond_hex(&bytes);
+    }
+    let tx = match from_bytes::<Transaction>(&bytes, false) {
+        Ok(tx) => tx,
+        Err(err) => return respond_error(err.to_string()),
+    };
+    let info = match TransactionInfo::new(&tx, hash, bytes.len(), address_codec) {
+        Ok(info) => info,
+        Err(err) => return respond_error(err.to_string()),
+    };
+    respond_json(&info)
+}
+
+async fn confirmations(
+    State(network): State<Arc<Network>>,
+    Path((address, hash)): Path<(String, String)>,
+) -> Response<String> {
+    let public_key = match network.wallet_db().address_codec().decode(&address) {
+        Ok(public_key) => public_key,
+        Err(err) => return respond_error(format!("Invalid address: {err}")),
+    };
+    let hash = match Hash256::from_str(hash.as_str()) {
+        Ok(hash) => hash,
+        Err(err) => return respond_error(format!("Invalid hash: {err}")),
+    };
+    let (ref state, _) = **network.node().coin_db().state().load();
+    match use_wallet(&network, public_key, |wallet| {
+        wallet.get_transaction_data(hash)
+    }) {
+        Ok(Ok(tx_data)) => respond_text(tx_data.confirmations(state).to_string()),
+        Ok(Err(err)) => respond_error(err.to_string()),
+        Err(err) => respond_error(err.to_string()),
+    }
+}
+
+async fn anchor(State(network): State<Arc<Network>>, _address: Path<String>) -> Response<String> {
+    let (ref state, _) = **network.node().coin_db().state().load();
+    let anchor = network.wallet_db().anchor(state);
+    respond_text(anchor.to_string())
+}
+
+async fn tx_count(State(network): State<Arc<Network>>, address: Path<String>) -> Response<String> {
+    let public_key = match network.wallet_db().address_codec().decode(&address) {
+        Ok(public_key) => public_key,
+        Err(err) => return respond_error(format!("Invalid address: {err}")),
+    };
+    match use_wallet(&network, public_key, Wallet::count_transactions) {
+        Ok(Ok(count)) => respond_text(count.to_string()),
+        Ok(Err(err)) => respond_error(err.to_string()),
+        Err(err) => respond_error(err.to_string()),
+    }
+}
+
+async fn list_transactions(
+    State(network): State<Arc<Network>>,
+    Path(address): Path<String>,
+) -> Response<String> {
+    list_transactions_handler(&network, &address, 0, 100, None)
+}
+
+async fn list_transactions_with_offset(
+    State(network): State<Arc<Network>>,
+    Path((address, offset)): Path<(String, u32)>,
+) -> Response<String> {
+    list_transactions_handler(&network, &address, offset, 100, None)
+}
+
+async fn list_transactions_with_offset_and_max(
+    State(network): State<Arc<Network>>,
+    Path((address, offset, max)): Path<(String, u32, u32)>,
+) -> Response<String> {
+    list_transactions_handler(&network, &address, offset, max, None)
+}
+
+async fn list_transactions_with_all(
+    State(network): State<Arc<Network>>,
+    Path((address, offset, max, r#type)): Path<(String, u32, u32, u8)>,
+) -> Response<String> {
+    list_transactions_handler(&network, &address, offset, max, Some(r#type))
+}
+
+fn list_transactions_handler(
+    network: &Network,
+    address: &str,
+    offset: u32,
+    max: u32,
+    kind: Option<u8>,
+) -> Response<String> {
+    let address_codec = network.wallet_db().address_codec();
+    let public_key = match address_codec.decode(address) {
+        Ok(public_key) => public_key,
+        Err(err) => return respond_error(format!("Invalid address: {err}")),
+    };
+    let txs = match use_wallet(network, public_key, |wallet| {
+        wallet.page_transactions(max, offset, kind)
+    }) {
+        Ok(Ok(txs)) => txs,
+        Ok(Err(err)) => return respond_error(err.to_string()),
+        Err(err) => return respond_error(err.to_string()),
+    };
+    let (ref state, _) = **network.node().coin_db().state().load();
+    let infos = txs
+        .into_iter()
+        .map(|(hash, data, bytes)| {
+            let tx = from_bytes::<Transaction>(&bytes, false).unwrap();
+            let tx_info = TransactionInfo::new(&tx, hash, bytes.len(), address_codec).unwrap();
+            WalletTransactionInfo::new(tx_info, data.confirmations(state), data.time())
+        })
+        .collect::<Vec<WalletTransactionInfo>>();
+    respond_json(&infos)
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct ListSinceBlockInfo {
+    pub transactions: Vec<WalletTransactionInfo>,
+    pub lastBlockHash: Hash256,
+}
+
+async fn list_since_block(
+    State(network): State<Arc<Network>>,
+    Path(address): Path<String>,
+) -> Response<String> {
+    list_since_block_handler(&network, &address, genesis::hash())
+}
+
+async fn list_since_block_with_hash(
+    State(network): State<Arc<Network>>,
+    Path((address, hash)): Path<(String, String)>,
+) -> Response<String> {
+    let hash = match Hash256::from_str(hash.as_str()) {
+        Ok(hash) => hash,
+        Err(err) => return respond_error(format!("Invalid hash: {err}")),
+    };
+    list_since_block_handler(&network, &address, hash)
+}
+
+fn list_since_block_handler(network: &Network, address: &str, hash: Hash256) -> Response<String> {
+    let address_codec = network.wallet_db().address_codec();
+    let public_key = match address_codec.decode(address) {
+        Ok(public_key) => public_key,
+        Err(err) => return respond_error(format!("Invalid address: {err}")),
+    };
+    let node = network.node();
+    let (ref state, ref snapshot) = **node.coin_db().state().load();
+    let height = match node.block_db().index(snapshot, hash) {
+        Some(index) => index.height(),
+        None => return respond_error("Block not found"),
+    };
+    if height + ROLLBACK_LIMIT as u32 >= state.height() {
+        return respond_error("Immature block");
+    }
+    let txs = match use_wallet(network, public_key, |wallet| {
+        wallet.transactions_since(height)
+    }) {
+        Ok(Ok(txs)) => txs,
+        Ok(Err(err)) => return respond_error(err.to_string()),
+        Err(err) => return respond_error(err.to_string()),
+    };
+    let transactions = txs
+        .into_iter()
+        .map(|(hash, data, bytes)| {
+            let tx = from_bytes::<Transaction>(&bytes, false).unwrap();
+            let tx_info = TransactionInfo::new(&tx, hash, bytes.len(), address_codec).unwrap();
+            WalletTransactionInfo::new(tx_info, data.confirmations(state), data.time())
+        })
+        .collect::<Vec<WalletTransactionInfo>>();
+    let info = ListSinceBlockInfo {
+        transactions,
+        lastBlockHash: state.rolling_checkpoint(),
+    };
+    respond_json(&info)
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct ImportMnemonic {
+    pub name: String,
+    pub mnemonic: ZeroizingString,
+    pub created_at: Option<i64>,
+}
+
+async fn import_mnemonic(
+    State(network): State<Arc<Network>>,
+    Form(request): Form<ImportMnemonic>,
+) -> Response<String> {
+    let wallet = match Wallet::ephemeral(network.mode()) {
+        Ok(wallet) => wallet,
+        Err(err) => return respond_error(err.to_string()),
+    };
+    if let Err(err) = wallet.set_mnemonic(Mnemonic::new(request.mnemonic)) {
+        return respond_error(err.to_string());
+    }
+    if let Err(err) = wallet.derive_account() {
+        return respond_error(err.to_string());
+    }
+    if let Some(created_at) = request.created_at
+        && let Err(err) = wallet.set_created_at(Seconds::new(created_at))
+    {
+        return respond_error(err.to_string());
+    }
+    if let Err(err) = network.wallet_db().ingest(&request.name, wallet) {
+        return respond_error(err.to_string());
+    }
+    respond_text("true")
+}
+
+pub fn routes() -> Router<Arc<Network>> {
+    Router::new()
+        .route("/api/v2/generateaccount", get(generate_account))
+        .route("/api/v2/generateaccount/{wordlist}", get(generate_account))
+        .route("/api/v2/address/{address}", get(address))
+        .route("/api/v2/mnemonic", post(mnemonic))
+        .route("/api/v2/decryptpaymentid", post(decrypt_payment_id))
+        .route("/api/v2/decryptmessage", post(decrypt_payment_id))
+        .route("/api/v2/signmessage", post(sign_message_handler))
+        .route(
+            "/api/v2/verifymessage/{from}/{signature}/{message}",
+            get(verify_message_handler),
+        )
+        .route("/api/v2/wallet/{address}/transactions", get(transactions))
+        .route("/api/v2/wallet/{address}/outleases", get(out_leases))
+        .route("/api/v2/wallet/{address}/sequence", get(sequence))
+        .route(
+            "/api/v2/wallet/{address}/transaction/{hash}",
+            get(transaction),
+        )
+        .route(
+            "/api/v2/wallet/{address}/transaction/{hash}/{raw}",
+            get(transaction_raw),
+        )
+        .route(
+            "/api/v2/wallet/{address}/confirmations/{hash}",
+            get(confirmations),
+        )
+        .route("/api/v2/wallet/{address}/referencechain", get(anchor))
+        .route("/api/v2/wallet/{address}/txcount", get(tx_count))
+        .route(
+            "/api/v2/wallet/{address}/listtransactions",
+            get(list_transactions),
+        )
+        .route(
+            "/api/v2/wallet/{address}/listtransactions/{offset}",
+            get(list_transactions_with_offset),
+        )
+        .route(
+            "/api/v2/wallet/{address}/listtransactions/{offset}/{max}",
+            get(list_transactions_with_offset_and_max),
+        )
+        .route(
+            "/api/v2/wallet/{address}/listtransactions/{offset}/{max}/{type}",
+            get(list_transactions_with_all),
+        )
+        .route(
+            "/api/v2/wallet/{address}/listsinceblock",
+            get(list_since_block),
+        )
+        .route(
+            "/api/v2/wallet/{address}/listsinceblock/{hash}",
+            get(list_since_block_with_hash),
+        )
+        .route("/api/v2/importmnemonic", post(import_mnemonic))
+}

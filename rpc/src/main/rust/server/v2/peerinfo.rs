@@ -1,0 +1,118 @@
+/*
+ * Copyright (c) 2018-2026 Pavel Vasin
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
+use crate::server::v2::{AmountInfo, BigIntegerInfo, EndpointInfo};
+use blacknet_kernel::blake2b::Hash256;
+use blacknet_network::{
+    connection::{Connection, ConnectionId},
+    db::{BlockDB, Snapshot, genesis},
+    packet::BlockAnnounce,
+};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+
+#[derive(Deserialize, Serialize)]
+pub struct PeerInfo {
+    peerId: ConnectionId,
+    remoteAddress: EndpointInfo,
+    localAddress: EndpointInfo,
+    timeOffset: i64,
+    ping: i64,
+    protocolVersion: u32,
+    agent: String,
+    outgoing: bool,
+    banScore: u8,
+    feeFilter: AmountInfo,
+    connectedAt: i64,
+    lastChain: ChainInfo,
+    requestedBlocks: bool,
+    totalBytesRead: u64,
+    totalBytesWritten: u64,
+}
+
+impl PeerInfo {
+    pub fn new(
+        connection: &Connection,
+        cache: &mut ForkCache,
+        block_db: &BlockDB,
+        snapshot: &Snapshot,
+    ) -> Self {
+        Self {
+            peerId: connection.id(),
+            remoteAddress: connection.remote_endpoint().into(),
+            localAddress: connection.local_endpoint().into(),
+            timeOffset: connection.time_offset().into(),
+            ping: connection.ping().into(),
+            protocolVersion: connection.version(),
+            agent: connection.agent().load().to_string(),
+            outgoing: connection.state().is_outgoing(),
+            banScore: connection.dos_score(),
+            feeFilter: u64::from(connection.fee_filter()).into(),
+            connectedAt: Into::<i64>::into(connection.connected_at()) / 1000,
+            lastChain: ChainInfo::new(
+                connection.last_block().load().as_ref(),
+                cache,
+                block_db,
+                snapshot,
+            ),
+            requestedBlocks: connection.requested_blocks(),
+            totalBytesRead: connection.total_bytes_read(),
+            totalBytesWritten: connection.total_bytes_written(),
+        }
+    }
+}
+
+#[derive(Deserialize, Serialize)]
+struct ChainInfo {
+    chain: Hash256,
+    cumulativeDifficulty: BigIntegerInfo,
+    fork: bool,
+}
+
+impl ChainInfo {
+    pub fn new(
+        block_announce: &BlockAnnounce,
+        cache: &mut ForkCache,
+        block_db: &BlockDB,
+        snapshot: &Snapshot,
+    ) -> Self {
+        Self {
+            chain: block_announce.hash(),
+            cumulativeDifficulty: BigIntegerInfo::from(block_announce.cumulative_difficulty()),
+            fork: fork_cache_get_or_compute(cache, block_announce.hash(), block_db, snapshot),
+        }
+    }
+}
+
+pub(crate) type ForkCache = HashMap<Hash256, bool>;
+
+pub(crate) fn fork_cache_new() -> ForkCache {
+    let mut cache = HashMap::new();
+    cache.insert(genesis::hash(), false);
+    cache
+}
+
+fn fork_cache_get_or_compute(
+    cache: &mut ForkCache,
+    hash: Hash256,
+    block_db: &BlockDB,
+    snapshot: &Snapshot,
+) -> bool {
+    *cache
+        .entry(hash)
+        .or_insert_with(|| !block_db.contains(snapshot, hash))
+}

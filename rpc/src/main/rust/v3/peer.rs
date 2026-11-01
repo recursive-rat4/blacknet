@@ -19,18 +19,6 @@ use blacknet_time::{Milliseconds, Seconds};
 use core::num::NonZero;
 use serde::{Deserialize, Serialize};
 
-#[cfg(feature = "server")]
-use crate::RpcServer;
-#[cfg(feature = "server")]
-use blacknet_json_rpc::{
-    Method,
-    server::{Handler, OccupiedError, Router},
-};
-#[cfg(feature = "server")]
-use blacknet_network::connection::Connection;
-#[cfg(feature = "server")]
-use core::ops::Deref;
-
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[non_exhaustive]
 pub struct PeerInfo {
@@ -48,26 +36,6 @@ pub struct PeerInfo {
     pub total_bytes_written: u64,
 }
 
-impl PeerInfo {
-    #[cfg(feature = "server")]
-    fn with(connection: &Connection) -> Self {
-        Self {
-            id: connection.id(),
-            remote_endpoint: connection.remote_endpoint().to_log(true),
-            local_endpoint: connection.remote_endpoint().to_log(true),
-            time_offset: connection.time_offset(),
-            ping: connection.ping(),
-            protocol_version: connection.version(),
-            agent: connection.agent().to_string(),
-            outgoing: connection.state().is_outgoing(),
-            dos_score: connection.dos_score(),
-            connected_at: connection.connected_at(),
-            total_bytes_read: connection.total_bytes_read(),
-            total_bytes_written: connection.total_bytes_written(),
-        }
-    }
-}
-
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct PeerListResult(pub Vec<PeerInfo>);
 
@@ -76,26 +44,3 @@ pub struct PeerListError;
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct PeerListParams;
-
-#[cfg(feature = "server")]
-impl Handler<RpcServer> for PeerListParams {
-    type Ok = PeerListResult;
-    type Error = PeerListError;
-
-    fn handle(self, rpc_server: &RpcServer) -> Result<Self::Ok, Self::Error> {
-        let connections = rpc_server.network().node().connections().read().unwrap();
-        let list = connections
-            .iter()
-            .map(Deref::deref)
-            .map(PeerInfo::with)
-            .collect();
-        Ok(PeerListResult(list))
-    }
-}
-
-#[cfg(feature = "server")]
-pub fn routes() -> Result<Router<RpcServer>, OccupiedError> {
-    let mut router = Router::new();
-    router.route::<PeerListParams>(Method::new("peer.v1.list"))?;
-    Ok(router)
-}

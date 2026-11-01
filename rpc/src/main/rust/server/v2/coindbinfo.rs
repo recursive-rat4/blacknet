@@ -1,0 +1,50 @@
+/*
+ * Copyright (c) 2018-2026 Pavel Vasin
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
+use crate::server::v2::{AmountInfo, BigIntegerInfo};
+use blacknet_kernel::blake2b::Hash256;
+use blacknet_network::db::State;
+use serde::{Deserialize, Serialize};
+
+#[derive(Deserialize, Serialize)]
+pub struct CoinDBInfo {
+    height: u32,
+    blockHash: Hash256,
+    blockTime: i64,
+    rollingCheckpoint: Hash256,
+    difficulty: BigIntegerInfo,
+    cumulativeDifficulty: BigIntegerInfo,
+    supply: AmountInfo,
+    maxBlockSize: u32,
+    nxtrng: Hash256,
+}
+
+impl CoinDBInfo {
+    pub fn new(state: &State) -> Self {
+        Self {
+            height: state.height(),
+            blockHash: state.block_hash(),
+            blockTime: state.block_time().into(),
+            rollingCheckpoint: state.rolling_checkpoint(),
+            difficulty: state.difficulty().into(),
+            cumulativeDifficulty: state.cumulative_difficulty().into(),
+            supply: state.supply().into(),
+            maxBlockSize: state.max_block_size(),
+            nxtrng: state.nxtrng(),
+        }
+    }
+}
