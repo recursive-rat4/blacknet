@@ -15,8 +15,9 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::server::authenticator::Authenticator;
 use axum::{Router, extract::ws::Message, routing::get};
-use blacknet_compat::config::RPC as Config;
+use blacknet_compat::{XDGDirectories, config::RPC as Config};
 use blacknet_kernel::ed25519::PublicKey;
 use blacknet_log::{LogManager, error, info};
 use blacknet_network::{
@@ -29,6 +30,7 @@ use core::num::NonZero;
 use serde_json::to_string;
 use std::{
     collections::HashMap,
+    io::Error as IoError,
     sync::{
         Arc, Mutex,
         atomic::{AtomicU64, Ordering},
@@ -51,16 +53,23 @@ pub struct RpcServer {
     block_subscribers: Mutex<Vec<RpcClient>>,
     txpool_subscribers: Mutex<Vec<RpcClient>>,
     wallet_subscribers: Mutex<HashMap<PublicKey, Vec<RpcClient>>>,
+    #[expect(dead_code)]
+    authenticator: Arc<Authenticator>,
     network: Arc<Network>,
 }
 
 impl RpcServer {
-    pub fn new(runtime: &Runtime, network: Arc<Network>) -> Arc<Self> {
+    pub fn new(
+        dirs: &XDGDirectories,
+        runtime: &Runtime,
+        network: Arc<Network>,
+    ) -> Result<Arc<Self>, IoError> {
         let rpc_server = Arc::new(Self {
             next_client_id: AtomicU64::new(1),
             block_subscribers: Mutex::new(Vec::new()),
             txpool_subscribers: Mutex::new(Vec::new()),
             wallet_subscribers: Mutex::new(HashMap::new()),
+            authenticator: Arc::new(Authenticator::new(dirs)?),
             network,
         });
         let network = &rpc_server.network;
@@ -77,7 +86,7 @@ impl RpcServer {
             rpc_server.clone(),
             network.wallet_db().subscribe(),
         ));
-        rpc_server
+        Ok(rpc_server)
     }
 
     pub async fn serve(

@@ -15,6 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#[expect(dead_code)]
+mod authenticator;
 #[cfg(target_has_atomic = "64")]
 mod debug;
 mod rpcserver;

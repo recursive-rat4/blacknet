@@ -33,6 +33,7 @@ categories.workspace = true
 [dependencies]
 blacknet-compat = { workspace = true, optional = true }
 blacknet-crypto = { workspace = true, optional = true }
+blacknet-io = { workspace = true, optional = true }
 blacknet-json-rpc = { workspace = true, optional = true }
 blacknet-kernel = { workspace = true, optional = true }
 blacknet-log = { workspace = true, optional = true }
@@ -40,24 +41,31 @@ blacknet-network = { workspace = true, optional = true }
 blacknet-serialization = { workspace = true, optional = true }
 blacknet-time.workspace = true
 axum = { workspace = true, optional = true }
-const-hex = { workspace = true, optional = true }
+const-hex = { workspace = true, features = ["serde"] }
 futures-util = { workspace = true, optional = true }
 serde.workspace = true
 serde_json = { workspace = true, optional = true }
 spdlog-rs = { workspace = true, optional = true }
 tokio = { workspace = true, optional = true }
 
+[dev-dependencies]
+blacknet-kernel.workspace = true
+serde_json.workspace = true
+
 [features]
 default = []
+client = [
+    "dep:blacknet-compat",
+]
 v2 = [
     "server",
-    "dep:blacknet-crypto",
     "dep:blacknet-serialization",
-    "dep:const-hex",
     "dep:futures-util",
 ]
 server = [
     "dep:blacknet-compat",
+    "dep:blacknet-crypto",
+    "dep:blacknet-io",
     "blacknet-json-rpc/server",
     "dep:blacknet-kernel",
     "dep:blacknet-log",
@@ -74,6 +82,10 @@ workspace = true
 [lib]
 doctest = false
 path = "src/main/rust/lib.rs"
+
+[[test]]
+name = "cookieauthparams"
+path = "src/test/rust/cookieauthparams.rs"
 
 [[test]]
 name = "hash256"

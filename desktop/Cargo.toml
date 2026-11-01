@@ -33,7 +33,7 @@ categories.workspace = true
 [dependencies]
 blacknet-compat.workspace = true
 blacknet-json-rpc = { workspace = true, features = ["client"] }
-blacknet-rpc.workspace = true
+blacknet-rpc = { workspace = true, features = ["client"] }
 slint.workspace = true
 
 [build-dependencies]

@@ -788,6 +788,7 @@ dependencies = [
  "axum",
  "blacknet-compat",
  "blacknet-crypto",
+ "blacknet-io",
  "blacknet-json-rpc",
  "blacknet-kernel",
  "blacknet-log",
