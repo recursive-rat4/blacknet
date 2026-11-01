@@ -31,7 +31,7 @@ use blacknet_network::connection::Connection;
 #[cfg(feature = "server")]
 use core::ops::Deref;
 
-#[derive(Clone, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[non_exhaustive]
 pub struct PeerInfo {
     pub id: NonZero<u64>,
@@ -68,16 +68,19 @@ impl PeerInfo {
     }
 }
 
-#[derive(Clone, Deserialize, Serialize)]
-pub struct PeerListResponse(pub Vec<PeerInfo>);
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+pub struct PeerListResult(pub Vec<PeerInfo>);
 
-#[derive(Clone, Deserialize, Serialize)]
-pub struct PeerListRequest;
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+pub struct PeerListError;
+
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+pub struct PeerListParams;
 
 #[cfg(feature = "server")]
-impl Handler<RpcServer> for PeerListRequest {
-    type Ok = PeerListResponse;
-    type Error = ();
+impl Handler<RpcServer> for PeerListParams {
+    type Ok = PeerListResult;
+    type Error = PeerListError;
 
     fn handle(self, rpc_server: &RpcServer) -> Result<Self::Ok, Self::Error> {
         let connections = rpc_server.network().node().connections().read().unwrap();
@@ -86,13 +89,13 @@ impl Handler<RpcServer> for PeerListRequest {
             .map(Deref::deref)
             .map(PeerInfo::with)
             .collect();
-        Ok(PeerListResponse(list))
+        Ok(PeerListResult(list))
     }
 }
 
 #[cfg(feature = "server")]
 pub fn routes() -> Result<Router<RpcServer>, OccupiedError> {
     let mut router = Router::new();
-    router.route::<PeerListRequest>(Method::new("peer.v1.list"))?;
+    router.route::<PeerListParams>(Method::new("peer.v1.list"))?;
     Ok(router)
 }
