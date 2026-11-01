@@ -19,20 +19,23 @@ use crate::Id;
 use serde_json::Number;
 
 /// Generator of [Id][crate::Id]s for requests.
+///
+/// It is not thread-safe and has a period of 2³².
 #[derive(Default)]
 pub struct IdGenerator {
-    state: u32,
+    next: u32,
 }
 
 impl IdGenerator {
     /// Construct new generator.
     pub const fn new() -> Self {
-        Self { state: 0 }
+        Self { next: 0 }
     }
 
     /// Generate a next id.
     pub fn generate(&mut self) -> Id {
-        self.state += 1;
-        Id::Number(Number::from(self.state))
+        let n = self.next;
+        self.next = n.wrapping_add(1);
+        Id::Number(Number::from(n))
     }
 }
