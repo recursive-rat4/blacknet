@@ -15,16 +15,15 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::{
-    RpcServer,
-    v3::peer::{PeerInfo, PeerListError, PeerListParams, PeerListResult},
-};
+use crate::{RpcServer, v3::peer::*};
 use blacknet_json_rpc::{
     Method,
     server::{Handler, OccupiedError, Router},
 };
-use blacknet_network::connection::Connection;
+use blacknet_network::{connection::Connection, endpoint::Endpoint};
+use blacknet_time::SystemClock;
 use core::ops::Deref;
+use std::borrow::Cow;
 
 impl PeerInfo {
     fn with(connection: &Connection) -> Self {
@@ -45,6 +44,18 @@ impl PeerInfo {
     }
 }
 
+impl From<&'static str> for PeerConnectError {
+    fn from(s: &'static str) -> Self {
+        Self(Cow::Borrowed(s))
+    }
+}
+
+impl From<&'static str> for PeerDisconnectError {
+    fn from(s: &'static str) -> Self {
+        Self(Cow::Borrowed(s))
+    }
+}
+
 impl Handler<RpcServer> for PeerListParams {
     type Ok = PeerListResult;
     type Error = PeerListError;
@@ -60,9 +71,47 @@ impl Handler<RpcServer> for PeerListParams {
     }
 }
 
+impl Handler<RpcServer> for PeerConnectParams {
+    type Ok = PeerConnectResult;
+    type Error = PeerConnectError;
+
+    fn handle(self, rpc_server: &RpcServer) -> Result<Self::Ok, Self::Error> {
+        let endpoint = Endpoint::parse(&self.address, self.port).ok_or("Invalid endpoint")?;
+        let node = rpc_server.network().node();
+        let guard = node
+            .peer_table()
+            .try_contact(endpoint)
+            .ok_or("Already in contact")?;
+        let time = SystemClock::millis();
+        node.runtime()
+            .spawn(node.clone().add_peer(guard, time, false));
+        Ok(PeerConnectResult)
+    }
+}
+
+impl Handler<RpcServer> for PeerDisconnectParams {
+    type Ok = PeerDisconnectResult;
+    type Error = PeerDisconnectError;
+
+    fn handle(self, rpc_server: &RpcServer) -> Result<Self::Ok, Self::Error> {
+        let connections = rpc_server.network().node().connections().read().unwrap();
+        if let Some(connection) = connections
+            .iter()
+            .find(|connection| connection.id() == self.id)
+        {
+            connection.close();
+            Ok(PeerDisconnectResult)
+        } else {
+            Err("Peer not found")?
+        }
+    }
+}
+
 #[expect(dead_code)]
 pub fn routes() -> Result<Router<RpcServer>, OccupiedError> {
     let mut router = Router::new();
     router.route::<PeerListParams>(Method::new("peer.v1.list"))?;
+    router.route::<PeerConnectParams>(Method::new("peer.v1.connect"))?;
+    router.route::<PeerDisconnectParams>(Method::new("peer.v1.disconnect"))?;
     Ok(router)
 }

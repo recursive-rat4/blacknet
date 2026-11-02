@@ -18,6 +18,7 @@
 use blacknet_time::{Milliseconds, Seconds};
 use core::num::NonZero;
 use serde::{Deserialize, Serialize};
+use std::borrow::Cow;
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[non_exhaustive]
@@ -44,3 +45,26 @@ pub struct PeerListError;
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct PeerListParams;
+
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+pub struct PeerConnectResult;
+
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+pub struct PeerConnectError(pub Cow<'static, str>);
+
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+pub struct PeerConnectParams {
+    pub address: String,
+    pub port: u16,
+}
+
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+pub struct PeerDisconnectResult;
+
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+pub struct PeerDisconnectError(pub Cow<'static, str>);
+
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+pub struct PeerDisconnectParams {
+    pub id: NonZero<u64>,
+}
