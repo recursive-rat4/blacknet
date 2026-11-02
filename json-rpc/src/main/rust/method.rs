@@ -27,7 +27,12 @@ pub struct Method(Cow<'static, str>);
 
 impl Method {
     /// Construct a new method name.
-    pub fn new<T: Into<Cow<'static, str>>>(name: T) -> Self {
+    pub const fn new(name: &'static str) -> Self {
+        Self(Cow::Borrowed(name))
+    }
+
+    /// Construct a new method name.
+    pub fn cow<T: Into<Cow<'static, str>>>(name: T) -> Self {
         Self(name.into())
     }
 

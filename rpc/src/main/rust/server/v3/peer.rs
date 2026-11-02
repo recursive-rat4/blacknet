@@ -16,10 +16,7 @@
  */
 
 use crate::{RpcServer, v3::peer::*};
-use blacknet_json_rpc::{
-    Method,
-    server::{Handler, OccupiedError, Router},
-};
+use blacknet_json_rpc::server::{Handler, OccupiedError, Router};
 use blacknet_network::{connection::Connection, endpoint::Endpoint};
 use blacknet_time::SystemClock;
 use core::ops::Deref;
@@ -110,8 +107,8 @@ impl Handler<RpcServer> for PeerDisconnectParams {
 #[expect(dead_code)]
 pub fn routes() -> Result<Router<RpcServer>, OccupiedError> {
     let mut router = Router::new();
-    router.route::<PeerListParams>(Method::new("peer.v1.list"))?;
-    router.route::<PeerConnectParams>(Method::new("peer.v1.connect"))?;
-    router.route::<PeerDisconnectParams>(Method::new("peer.v1.disconnect"))?;
+    router.route::<PeerListParams>()?;
+    router.route::<PeerConnectParams>()?;
+    router.route::<PeerDisconnectParams>()?;
     Ok(router)
 }

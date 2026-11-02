@@ -20,6 +20,9 @@ use core::num::NonZero;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
+#[cfg(any(feature = "client", feature = "server"))]
+use blacknet_json_rpc::{Method, peer::Route};
+
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[non_exhaustive]
 pub struct PeerInfo {
@@ -46,6 +49,11 @@ pub struct PeerListError;
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct PeerListParams;
 
+#[cfg(any(feature = "client", feature = "server"))]
+impl Route for PeerListParams {
+    const METHOD: Method = Method::new("peer.v1.list");
+}
+
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct PeerConnectResult;
 
@@ -58,6 +66,11 @@ pub struct PeerConnectParams {
     pub port: u16,
 }
 
+#[cfg(any(feature = "client", feature = "server"))]
+impl Route for PeerConnectParams {
+    const METHOD: Method = Method::new("peer.v1.connect");
+}
+
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct PeerDisconnectResult;
 
@@ -67,4 +80,9 @@ pub struct PeerDisconnectError(pub Cow<'static, str>);
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct PeerDisconnectParams {
     pub id: NonZero<u64>,
+}
+
+#[cfg(any(feature = "client", feature = "server"))]
+impl Route for PeerDisconnectParams {
+    const METHOD: Method = Method::new("peer.v1.disconnect");
 }

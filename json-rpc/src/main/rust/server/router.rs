@@ -17,6 +17,7 @@
 
 use crate::{
     BatchRequest, BatchResponse, Error, Id, Method, Request, Response,
+    peer::Route,
     server::{ErasedHandler, Handler, RpcHandler},
 };
 use alloc::{
@@ -44,11 +45,10 @@ impl<S: Send + Sync + 'static> Router<S> {
     }
 
     /// Register a handler for a method.
-    pub fn route<T: Handler<S> + DeserializeOwned + Send + Sync + 'static>(
+    pub fn route<T: Route + Handler<S> + DeserializeOwned + Send + Sync + 'static>(
         &mut self,
-        method: Method,
     ) -> Result<(), OccupiedError> {
-        match self.table.entry(method) {
+        match self.table.entry(T::METHOD) {
             Entry::Vacant(vacant) => {
                 vacant.insert(RpcHandler::<T, S>::erase());
                 Ok(())

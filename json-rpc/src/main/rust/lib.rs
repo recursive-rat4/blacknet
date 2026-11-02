@@ -27,6 +27,8 @@ mod id;
 mod jsonrpc;
 mod method;
 mod params;
+#[cfg(any(feature = "client", feature = "server"))]
+pub mod peer;
 mod request;
 mod response;
 #[cfg(feature = "server")]

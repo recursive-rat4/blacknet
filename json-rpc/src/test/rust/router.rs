@@ -19,6 +19,7 @@
 
 use blacknet_json_rpc::{
     Method,
+    peer::Route,
     server::{Handler, Router},
 };
 use core::{assert_matches, fmt::Display};
@@ -36,6 +37,10 @@ impl<T> Handler<T> for Ping {
     }
 }
 
+impl Route for Ping {
+    const METHOD: Method = Method::new("ping");
+}
+
 #[derive(Deserialize)]
 struct Subtract {
     minuend: i32,
@@ -51,6 +56,10 @@ impl<T> Handler<T> for Subtract {
     }
 }
 
+impl Route for Subtract {
+    const METHOD: Method = Method::new("subtract");
+}
+
 #[derive(Deserialize)]
 struct Sum(Vec<i32>);
 
@@ -61,6 +70,10 @@ impl<T> Handler<T> for Sum {
     fn handle(self, _: &T) -> Result<Self::Ok, Self::Error> {
         Ok(self.0.into_iter().sum())
     }
+}
+
+impl Route for Sum {
+    const METHOD: Method = Method::new("sum");
 }
 
 #[derive(Deserialize)]
@@ -75,15 +88,19 @@ impl<T: Display> Handler<T> for Baz {
     }
 }
 
+impl Route for Baz {
+    const METHOD: Method = Method::new("baz");
+}
+
 #[test]
 fn router() {
     let state = 0i32;
     let mut router = Router::new();
-    router.route::<Ping>(Method::new("ping")).unwrap();
-    router.route::<Subtract>(Method::new("subtract")).unwrap();
-    router.route::<Sum>(Method::new("sum")).unwrap();
-    router.route::<Baz>(Method::new("baz")).unwrap();
-    assert!(router.route::<Baz>(Method::new("baz")).is_err());
+    router.route::<Ping>().unwrap();
+    router.route::<Subtract>().unwrap();
+    router.route::<Sum>().unwrap();
+    router.route::<Baz>().unwrap();
+    assert!(router.route::<Baz>().is_err());
 
     let request_1_str = r#"{"jsonrpc": "2.0", "method": "ping", "id": 1}"#;
     let request_2_str = r#"{"jsonrpc": "2.0", "method": "subtract", "params": {"minuend": 42, "subtrahend": 23}, "id": 2}"#;
