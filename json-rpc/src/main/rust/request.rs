@@ -16,12 +16,13 @@
  */
 
 use crate::{Id, JsonRpc, Method, Params};
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize, de::Error as _};
+use serde_json::{Value, from_value};
 
 /// A JSON-RPC request that must be replied
 /// with a [Response][crate::Response] if an [Id][crate::Id] is present,
 /// otherwise it's a notification.
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize)]
 pub struct Request {
     jsonrpc: JsonRpc,
     method: Method,
@@ -73,5 +74,45 @@ impl Request {
 
     pub fn into_id(self) -> Option<Id> {
         self.id
+    }
+}
+
+impl<'de> Deserialize<'de> for Request {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = Value::deserialize(deserializer)?;
+        let Value::Object(mut object) = value else {
+            return Err(D::Error::custom("Request is not an object"));
+        };
+
+        let Some(jsonrpc) = object.remove("jsonrpc") else {
+            return Err(D::Error::missing_field("jsonrpc"));
+        };
+        let Some(method) = object.remove("method") else {
+            return Err(D::Error::missing_field("method"));
+        };
+        let params = object.remove("params");
+        let id = object.remove("id");
+        if let Some(field) = object.keys().next() {
+            return Err(D::Error::unknown_field(
+                field,
+                &["jsonrpc", "method", "params", "id"],
+            ));
+        }
+
+        let jsonrpc = from_value::<JsonRpc>(jsonrpc).map_err(D::Error::custom)?;
+        let method = from_value::<Method>(method).map_err(D::Error::custom)?;
+        let params = params
+            .map(|params| from_value::<Params>(params).map_err(D::Error::custom))
+            .transpose()?;
+        let id = id
+            .map(|id| from_value::<Id>(id).map_err(D::Error::custom))
+            .transpose()?;
+
+        Ok(Self {
+            jsonrpc,
+            method,
+            params,
+            id,
+        })
     }
 }

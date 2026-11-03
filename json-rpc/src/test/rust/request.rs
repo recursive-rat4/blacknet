@@ -39,15 +39,19 @@ fn request() {
         Method::new("update"),
         Some(Params::positional([1, 2, 3, 4, 5])),
     );
+    let nulless_str = r#"{"jsonrpc":"2.0","method":"","id":null}"#;
+    let nulless = Request::new(Method::new(""), None, Id::Null);
     let bad_1 = r#"{"jsonrpc":"2.0","method":"foobar,"params":"bar","baz]"#;
     let bad_2 = r#"{"jsonrpc":"2.0","method":1,"params":"bar"}"#;
 
     assert_matches!(to_string(&positional).as_deref(), Ok(x) if x == positional_str);
     assert_matches!(to_string(&notification).as_deref(), Ok(x) if x == notification_str);
+    assert_matches!(to_string(&nulless).as_deref(), Ok(x) if x == nulless_str);
 
     assert_matches!(from_str::<Request>(positional_str), Ok(x) if x == positional);
     assert_matches!(from_str::<Request>(named_str), Ok(x) if x == named);
     assert_matches!(from_str::<Request>(notification_str), Ok(x) if x == notification);
+    assert_matches!(from_str::<Request>(nulless_str), Ok(x) if x == nulless);
 
     assert_matches!(from_str::<Request>(bad_1), Err(x) if x.is_syntax());
     assert_matches!(from_str::<Request>(bad_2), Err(x) if x.is_data());
