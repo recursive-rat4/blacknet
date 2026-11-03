@@ -57,6 +57,11 @@ impl Request {
         &self.method
     }
 
+    /// Id of request, or none if notification.
+    pub const fn id(&self) -> Option<&Id> {
+        self.id.as_ref()
+    }
+
     /// Whether this request is a notification.
     pub const fn is_notification(&self) -> bool {
         self.id.is_none()
