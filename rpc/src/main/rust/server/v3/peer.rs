@@ -16,7 +16,7 @@
  */
 
 use crate::{RpcServer, v3::peer::*};
-use blacknet_json_rpc::server::{Handler, OccupiedError, Router};
+use blacknet_json_rpc::server::{OccupiedError, Router};
 use blacknet_network::{connection::Connection, endpoint::Endpoint};
 use blacknet_time::SystemClock;
 use core::ops::Deref;
@@ -53,62 +53,55 @@ impl From<&'static str> for PeerDisconnectError {
     }
 }
 
-impl Handler<RpcServer> for PeerListParams {
-    type Ok = PeerListResult;
-    type Error = PeerListError;
-
-    fn handle(self, rpc_server: &RpcServer) -> Result<Self::Ok, Self::Error> {
-        let connections = rpc_server.network().node().connections().read().unwrap();
-        let list = connections
-            .iter()
-            .map(Deref::deref)
-            .map(PeerInfo::with)
-            .collect();
-        Ok(PeerListResult(list))
-    }
+fn peer_list(_: PeerListParams, rpc_server: &RpcServer) -> Result<PeerListResult, PeerListError> {
+    let connections = rpc_server.network().node().connections().read().unwrap();
+    let list = connections
+        .iter()
+        .map(Deref::deref)
+        .map(PeerInfo::with)
+        .collect();
+    Ok(PeerListResult(list))
 }
 
-impl Handler<RpcServer> for PeerConnectParams {
-    type Ok = PeerConnectResult;
-    type Error = PeerConnectError;
-
-    fn handle(self, rpc_server: &RpcServer) -> Result<Self::Ok, Self::Error> {
-        let endpoint = Endpoint::parse(&self.address, self.port).ok_or("Invalid endpoint")?;
-        let node = rpc_server.network().node();
-        let guard = node
-            .peer_table()
-            .try_contact(endpoint)
-            .ok_or("Already in contact")?;
-        let time = SystemClock::millis();
-        node.runtime()
-            .spawn(node.clone().add_peer(guard, time, false));
-        Ok(PeerConnectResult)
-    }
+#[allow(clippy::needless_pass_by_value)]
+fn peer_connect(
+    this: PeerConnectParams,
+    rpc_server: &RpcServer,
+) -> Result<PeerConnectResult, PeerConnectError> {
+    let endpoint = Endpoint::parse(&this.address, this.port).ok_or("Invalid endpoint")?;
+    let node = rpc_server.network().node();
+    let guard = node
+        .peer_table()
+        .try_contact(endpoint)
+        .ok_or("Already in contact")?;
+    let time = SystemClock::millis();
+    node.runtime()
+        .spawn(node.clone().add_peer(guard, time, false));
+    Ok(PeerConnectResult)
 }
 
-impl Handler<RpcServer> for PeerDisconnectParams {
-    type Ok = PeerDisconnectResult;
-    type Error = PeerDisconnectError;
-
-    fn handle(self, rpc_server: &RpcServer) -> Result<Self::Ok, Self::Error> {
-        let connections = rpc_server.network().node().connections().read().unwrap();
-        if let Some(connection) = connections
-            .iter()
-            .find(|connection| connection.id() == self.id)
-        {
-            connection.close();
-            Ok(PeerDisconnectResult)
-        } else {
-            Err("Peer not found")?
-        }
+#[allow(clippy::needless_pass_by_value)]
+fn peer_disconnect(
+    this: PeerDisconnectParams,
+    rpc_server: &RpcServer,
+) -> Result<PeerDisconnectResult, PeerDisconnectError> {
+    let connections = rpc_server.network().node().connections().read().unwrap();
+    if let Some(connection) = connections
+        .iter()
+        .find(|connection| connection.id() == this.id)
+    {
+        connection.close();
+        Ok(PeerDisconnectResult)
+    } else {
+        Err("Peer not found")?
     }
 }
 
 #[expect(dead_code)]
 pub fn routes() -> Result<Router<RpcServer>, OccupiedError> {
     let mut router = Router::new();
-    router.route::<PeerListParams>()?;
-    router.route::<PeerConnectParams>()?;
-    router.route::<PeerDisconnectParams>()?;
+    router.route::<PeerListParams>(peer_list)?;
+    router.route::<PeerConnectParams>(peer_connect)?;
+    router.route::<PeerDisconnectParams>(peer_disconnect)?;
     Ok(router)
 }

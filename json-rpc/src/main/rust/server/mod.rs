@@ -18,7 +18,6 @@
 mod handler;
 mod router;
 
-use handler::{ErasedHandler, RpcHandler};
+use handler::erase_handler;
 
-pub use handler::Handler;
 pub use router::{OccupiedError, Router};

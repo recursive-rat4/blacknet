@@ -16,9 +16,8 @@
  */
 
 use crate::{
-    BatchRequest, BatchResponse, Error, Id, Method, Request, Response,
-    peer::Route,
-    server::{ErasedHandler, Handler, RpcHandler},
+    BatchRequest, BatchResponse, Error, Id, Method, Params, Request, Response, peer::Route,
+    server::erase_handler,
 };
 use alloc::{
     boxed::Box,
@@ -27,13 +26,13 @@ use alloc::{
 };
 use core::fmt;
 use hashbrown::{HashMap, hash_map::Entry};
-use serde::de::DeserializeOwned;
-use serde_json::{Error as JsonError, error::Category, from_str, to_string};
+use serde::{Serialize, de::DeserializeOwned};
+use serde_json::{Error as JsonError, Value, error::Category, from_str, to_string};
 
 /// Router for [Request][crate::Request]s.
 #[derive(Default)]
 pub struct Router<S> {
-    table: HashMap<Method, Box<dyn ErasedHandler<S> + Send + Sync>>,
+    table: HashMap<Method, Box<dyn Fn(Option<Params>, &S) -> Result<Value, Error> + Send + Sync>>,
 }
 
 impl<S: Send + Sync + 'static> Router<S> {
@@ -45,12 +44,15 @@ impl<S: Send + Sync + 'static> Router<S> {
     }
 
     /// Register a handler for a method.
-    pub fn route<T: Route + Handler<S> + DeserializeOwned + Send + Sync + 'static>(
+    ///
+    /// If the request is a notification then the response will be dropped.
+    pub fn route<T: Route<Result: Serialize, Error: Serialize> + DeserializeOwned>(
         &mut self,
+        handler: impl Fn(T, &S) -> Result<T::Result, T::Error> + Send + Sync + 'static,
     ) -> Result<(), OccupiedError> {
         match self.table.entry(T::METHOD) {
             Entry::Vacant(vacant) => {
-                vacant.insert(RpcHandler::<T, S>::erase());
+                vacant.insert(erase_handler::<T, S>(handler));
                 Ok(())
             }
             Entry::Occupied(occupied) => Err(OccupiedError(occupied.key().clone())),
@@ -76,7 +78,7 @@ impl<S: Send + Sync + 'static> Router<S> {
         match self.table.get(request.method()) {
             Some(handler) => {
                 let (params, id) = request.into_params_id();
-                let result = handler.handle(params, state);
+                let result = handler(params, state);
                 let id = id?;
                 match result {
                     Ok(result) => Some(Response::Result(result, id)),

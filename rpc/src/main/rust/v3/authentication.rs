@@ -18,6 +18,15 @@
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
+#[cfg(any(feature = "client", feature = "server"))]
+use blacknet_json_rpc::{Method, peer::Route};
+
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+pub struct CookieAuthResult;
+
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+pub struct CookieAuthError(pub Cow<'static, str>);
+
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct CookieAuthParams {
     #[serde(
@@ -27,8 +36,10 @@ pub struct CookieAuthParams {
     pub cookie: [u8; 32],
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
-pub struct CookieAuthResult;
+#[cfg(any(feature = "client", feature = "server"))]
+impl Route for CookieAuthParams {
+    type Result = CookieAuthResult;
+    type Error = CookieAuthError;
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
-pub struct CookieAuthError(pub Cow<'static, str>);
+    const METHOD: Method = Method::new("auth.v1.cookie");
+}

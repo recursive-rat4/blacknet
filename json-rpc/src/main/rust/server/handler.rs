@@ -15,48 +15,17 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::{Error, Params, from_params};
+use crate::{Error, Params, from_params, peer::Route};
 use alloc::{boxed::Box, string::ToString};
-use core::marker::PhantomData;
 use serde::{Serialize, de::DeserializeOwned};
 use serde_json::{Value, to_value};
 
-/// A handler for a JSON-RPC request.
-pub trait Handler<S> {
-    /// Success type.
-    type Ok: Serialize;
-    /// Error type.
-    type Error: Serialize;
-
-    /// Handle a JSON-RPC request and return a result to respond.
-    /// If the request is a notification then the result will be dropped.
-    fn handle(self, state: &S) -> Result<Self::Ok, Self::Error>;
-}
-
-pub trait ErasedHandler<S> {
-    fn handle(&self, params: Option<Params>, state: &S) -> Result<Value, Error>;
-}
-
-pub struct RpcHandler<T, S> {
-    phantom_t: PhantomData<T>,
-    phantom_s: PhantomData<S>,
-}
-
-impl<T: Handler<S> + DeserializeOwned + Send + Sync + 'static, S: Send + Sync + 'static>
-    RpcHandler<T, S>
-{
-    pub fn erase() -> Box<dyn ErasedHandler<S> + Send + Sync> {
-        Box::new(Self {
-            phantom_t: PhantomData,
-            phantom_s: PhantomData,
-        })
-    }
-}
-
-impl<T: Handler<S> + DeserializeOwned, S> ErasedHandler<S> for RpcHandler<T, S> {
-    fn handle(&self, params: Option<Params>, state: &S) -> Result<Value, Error> {
+pub fn erase_handler<T: Route<Result: Serialize, Error: Serialize> + DeserializeOwned, S>(
+    handler: impl Fn(T, &S) -> Result<T::Result, T::Error> + Send + Sync + 'static,
+) -> Box<dyn Fn(Option<Params>, &S) -> Result<Value, Error> + Send + Sync> {
+    Box::new(move |params, state| {
         let result = match from_params::<T>(params) {
-            Ok(handler) => handler.handle(state),
+            Ok(params) => handler(params, state),
             Err(err) => return Err(Error::invalid_params(Some(err.to_string()))),
         };
         match result {
@@ -66,5 +35,5 @@ impl<T: Handler<S> + DeserializeOwned, S> ErasedHandler<S> for RpcHandler<T, S> 
                 Err(err) => Error::internal_error(Some(err.to_string())),
             }),
         }
-    }
+    })
 }

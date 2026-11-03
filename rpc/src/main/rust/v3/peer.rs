@@ -51,6 +51,9 @@ pub struct PeerListParams;
 
 #[cfg(any(feature = "client", feature = "server"))]
 impl Route for PeerListParams {
+    type Result = PeerListResult;
+    type Error = PeerListError;
+
     const METHOD: Method = Method::new("peer.v1.list");
 }
 
@@ -68,6 +71,9 @@ pub struct PeerConnectParams {
 
 #[cfg(any(feature = "client", feature = "server"))]
 impl Route for PeerConnectParams {
+    type Result = PeerConnectResult;
+    type Error = PeerConnectError;
+
     const METHOD: Method = Method::new("peer.v1.connect");
 }
 
@@ -84,5 +90,8 @@ pub struct PeerDisconnectParams {
 
 #[cfg(any(feature = "client", feature = "server"))]
 impl Route for PeerDisconnectParams {
+    type Result = PeerDisconnectResult;
+    type Error = PeerDisconnectError;
+
     const METHOD: Method = Method::new("peer.v1.disconnect");
 }
