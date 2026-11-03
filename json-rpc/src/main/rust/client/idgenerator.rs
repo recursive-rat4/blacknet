@@ -16,26 +16,28 @@
  */
 
 use crate::Id;
+use core::sync::atomic::{AtomicU32, Ordering};
 use serde_json::Number;
 
 /// Generator of [Id][crate::Id]s for requests.
 ///
-/// It is not thread-safe and has a period of 2³².
+/// It has a period of 2³².
 #[derive(Default)]
 pub struct IdGenerator {
-    next: u32,
+    next: AtomicU32,
 }
 
 impl IdGenerator {
     /// Construct new generator.
     pub const fn new() -> Self {
-        Self { next: 0 }
+        Self {
+            next: AtomicU32::new(0),
+        }
     }
 
     /// Generate a next id.
-    pub fn generate(&mut self) -> Id {
-        let n = self.next;
-        self.next = n.wrapping_add(1);
+    pub fn generate(&self) -> Id {
+        let n = self.next.fetch_add(1, Ordering::Relaxed);
         Id::Number(Number::from(n))
     }
 }

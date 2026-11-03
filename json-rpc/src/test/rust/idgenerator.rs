@@ -21,7 +21,7 @@ use blacknet_json_rpc::client::IdGenerator;
 
 #[test]
 fn id_generator() {
-    let mut generator = IdGenerator::new();
+    let generator = IdGenerator::new();
     let id1 = generator.generate();
     let id2 = generator.generate();
     assert_ne!(id1, id2);
