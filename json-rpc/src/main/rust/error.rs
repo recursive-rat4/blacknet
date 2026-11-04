@@ -16,6 +16,7 @@
  */
 
 use alloc::borrow::Cow;
+use core::fmt;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -84,5 +85,11 @@ impl Error {
     /// Whether an application error.
     pub fn is_application(&self) -> bool {
         !self.is_server()
+    }
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{} (code {})", self.message, self.code)
     }
 }
