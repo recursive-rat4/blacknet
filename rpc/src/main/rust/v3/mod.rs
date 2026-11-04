@@ -17,3 +17,4 @@
 
 pub mod authentication;
 pub mod peer;
+pub mod wallet;

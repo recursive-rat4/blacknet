@@ -21,7 +21,7 @@ mod authenticator;
 mod debug;
 mod rpcserver;
 #[cfg(feature = "v2")]
-pub mod v2;
-pub mod v3;
+mod v2;
+mod v3;
 
 pub use rpcserver::*;
