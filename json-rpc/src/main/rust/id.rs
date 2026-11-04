@@ -16,6 +16,7 @@
  */
 
 use alloc::string::String;
+use core::fmt;
 use serde::{Deserialize, Deserializer, Serialize, Serializer, de::Error};
 use serde_json::{Number, Value};
 
@@ -42,6 +43,16 @@ impl Id {
     /// Create a new string id.
     pub fn string<T: Into<String>>(s: T) -> Self {
         Self::String(s.into())
+    }
+}
+
+impl fmt::Display for Id {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Null => f.write_str("null"),
+            Self::Number(number) => write!(f, "{number}"),
+            Self::String(string) => write!(f, "\"{string}\""),
+        }
     }
 }
 

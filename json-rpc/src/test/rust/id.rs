@@ -20,7 +20,7 @@ use core::assert_matches;
 use serde_json::{Number, from_str, to_string};
 
 #[test]
-fn id() {
+fn serialization() {
     assert_matches!(to_string(&Id::Null).as_deref(), Ok("null"));
     assert_matches!(to_string(&Id::Number(Number::from(1))).as_deref(), Ok("1"));
     assert_matches!(
@@ -38,4 +38,11 @@ fn id() {
         Ok(Id::String(x)) if x == "a"
     );
     assert_matches!(from_str::<Id>("true"), Err(x) if x.is_data());
+}
+
+#[test]
+fn display() {
+    assert_eq!(Id::Null.to_string(), "null");
+    assert_eq!(Id::Number(Number::from(0)).to_string(), "0");
+    assert_eq!(Id::String(String::from("0")).to_string(), r#""0""#);
 }
