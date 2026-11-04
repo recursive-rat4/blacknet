@@ -20,7 +20,7 @@ use core::assert_matches;
 use serde_json::{from_str, to_string};
 
 #[test]
-fn error() {
+fn serialization() {
     let parse_str = r#"{"code":-32700,"message":"Parse error"}"#;
     let application_str =
         r#"{"code":-1,"message":"Application error","data":"Something went wrong"}"#;
@@ -34,4 +34,15 @@ fn error() {
     assert_matches!(from_str::<Error>(parse_str), Ok(x) if x == parse);
     assert_matches!(from_str::<Error>(application_str), Ok(x) if x == application);
     assert_matches!(from_str::<Error>(bad_str), Err(x) if x.is_data());
+}
+
+#[test]
+fn code() {
+    let server = Error::custom(-32000, "Busy", Option::<()>::None);
+    let application = Error::application_error(Some("Something went wrong"));
+
+    assert!(server.is_server());
+    assert!(!server.is_application());
+    assert!(application.is_application());
+    assert!(!application.is_server());
 }

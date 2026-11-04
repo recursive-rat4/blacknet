@@ -75,4 +75,14 @@ impl Error {
     pub fn application_error<T: Into<Value>>(data: Option<T>) -> Self {
         Self::custom(-1, "Application error", data.map(Into::into))
     }
+
+    /// Whether a server error.
+    pub fn is_server(&self) -> bool {
+        (-32768..=-32000).contains(&self.code)
+    }
+
+    /// Whether an application error.
+    pub fn is_application(&self) -> bool {
+        !self.is_server()
+    }
 }
