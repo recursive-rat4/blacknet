@@ -28,6 +28,16 @@ pub enum Response {
     Error(Error, Id),
 }
 
+impl Response {
+    /// Id of response.
+    pub const fn id(&self) -> &Id {
+        match self {
+            Self::Result(_, id) => id,
+            Self::Error(_, id) => id,
+        }
+    }
+}
+
 impl Serialize for Response {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut s = serializer.serialize_struct("Response", 3)?;
