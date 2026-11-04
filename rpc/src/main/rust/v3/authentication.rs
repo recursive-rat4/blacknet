@@ -15,6 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use core::fmt;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
@@ -26,6 +27,14 @@ pub struct CookieAuthResult;
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct CookieAuthError(pub Cow<'static, str>);
+
+impl fmt::Display for CookieAuthError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(&self.0)
+    }
+}
+
+impl core::error::Error for CookieAuthError {}
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct CookieAuthParams {

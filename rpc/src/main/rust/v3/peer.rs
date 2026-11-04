@@ -16,7 +16,7 @@
  */
 
 use blacknet_time::{Milliseconds, Seconds};
-use core::num::NonZero;
+use core::{fmt, num::NonZero};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
@@ -44,7 +44,15 @@ pub struct PeerInfo {
 pub struct PeerListResult(pub Vec<PeerInfo>);
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
-pub struct PeerListError;
+pub enum PeerListError {}
+
+impl fmt::Display for PeerListError {
+    fn fmt(&self, _: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match *self {}
+    }
+}
+
+impl core::error::Error for PeerListError {}
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct PeerListParams;
@@ -62,6 +70,14 @@ pub struct PeerConnectResult;
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct PeerConnectError(pub Cow<'static, str>);
+
+impl fmt::Display for PeerConnectError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(&self.0)
+    }
+}
+
+impl core::error::Error for PeerConnectError {}
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct PeerConnectParams {
@@ -82,6 +98,14 @@ pub struct PeerDisconnectResult;
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct PeerDisconnectError(pub Cow<'static, str>);
+
+impl fmt::Display for PeerDisconnectError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(&self.0)
+    }
+}
+
+impl core::error::Error for PeerDisconnectError {}
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct PeerDisconnectParams {
