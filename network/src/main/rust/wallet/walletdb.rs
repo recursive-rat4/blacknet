@@ -66,7 +66,7 @@ pub type Subscriber = mpsc::UnboundedSender<Notification>;
 pub struct WalletDB {
     logger: Logger,
     address_codec: AddressCodec,
-    wallets: RwLock<HashMap<PublicKey, Wallet>>,
+    wallets: RwLock<HashMap<String, Wallet>>,
     subscriber: OnceLock<Subscriber>,
     mode: Arc<Mode>,
     dir: PathBuf,
@@ -97,22 +97,21 @@ impl WalletDB {
                 );
                 continue;
             }
+            let Some(wallet_name) = path.file_stem().map(|s| s.to_string_lossy()) else {
+                warn!(
+                    logger,
+                    "Ignoring file {}",
+                    dir_entry.file_name().to_string_lossy()
+                );
+                continue;
+            };
             match Wallet::open(&path, &mode) {
                 Ok(wallet) => {
-                    info!(
-                        logger,
-                        "Loaded wallet {}",
-                        dir_entry.file_name().to_string_lossy()
-                    );
-                    wallets.insert(wallet.public_key()?, wallet);
+                    info!(logger, "Loaded wallet {wallet_name}",);
+                    wallets.insert(wallet_name.to_string(), wallet);
                 }
                 Err(err) => {
-                    error!(
-                        logger,
-                        "Wallet {} error: {}",
-                        dir_entry.file_name().to_string_lossy(),
-                        err
-                    );
+                    error!(logger, "Wallet {wallet_name} error: {err}",);
                 }
             }
         }
@@ -155,18 +154,17 @@ impl WalletDB {
         &self.address_codec
     }
 
-    pub fn wallets(&self) -> RwLockReadGuard<'_, HashMap<PublicKey, Wallet>> {
+    pub fn wallets(&self) -> RwLockReadGuard<'_, HashMap<String, Wallet>> {
         self.wallets.read().unwrap()
     }
 
-    pub fn ingest(&self, name: &str, wallet: Wallet) -> Result<(), IngestError> {
-        let public_key = wallet.public_key()?;
-        let mut wallets = self.wallets.write().unwrap();
-        match wallets.entry(public_key) {
-            Entry::Vacant(vacant) => {
-                let mut path = self.dir.join(name);
-                path.add_extension(FILE_EXTENSION);
+    pub fn ingest(&self, name: String, wallet: Wallet) -> Result<(), IngestError> {
+        let mut path = self.dir.join(&name);
+        path.add_extension(FILE_EXTENSION);
 
+        let mut wallets = self.wallets.write().unwrap();
+        match wallets.entry(name) {
+            Entry::Vacant(vacant) => {
                 wallet.vacuum_into(&path)?;
                 let wallet = Wallet::open(&path, &self.mode)?;
                 vacant.insert(wallet);
@@ -203,7 +201,10 @@ impl WalletDB {
                     time,
                     height,
                 } => {
-                    for (&public_key, wallet) in wallets.iter() {
+                    for (name, wallet) in wallets.iter() {
+                        let Some(public_key) = wallet.public_key() else {
+                            continue;
+                        };
                         if let Err(err) = self.scan_tx(
                             public_key,
                             wallet,
@@ -213,7 +214,7 @@ impl WalletDB {
                             time,
                             Some(height),
                         ) {
-                            error!(self.logger, "Scan: {err}");
+                            error!(self.logger, "{name} scan: {err}");
                         }
                     }
                 }
@@ -224,7 +225,10 @@ impl WalletDB {
                     height,
                     generated,
                 } => {
-                    let Some(wallet) = wallets.get(&generator) else {
+                    let Some((name, wallet)) = wallets
+                        .iter()
+                        .find(|(_, wallet)| wallet.public_key() == Some(generator))
+                    else {
                         continue;
                     };
                     let tx = Transaction::generated(generator, height, hash, generated);
@@ -244,13 +248,13 @@ impl WalletDB {
                             size: bytes.len() as u32,
                         }),
                         Ok(Upsert::Update) => {}
-                        Err(err) => error!(self.logger, "Mint: {err}"),
+                        Err(err) => error!(self.logger, "{name} mint: {err}"),
                     }
                 }
                 CoinNotification::Rollback { hash } => {
-                    for (_, wallet) in wallets.iter() {
+                    for (name, wallet) in wallets.iter() {
                         if let Err(err) = wallet.rollback(hash) {
-                            error!(self.logger, "Rollback: {err}");
+                            error!(self.logger, "{name} rollback: {err}");
                         }
                     }
                 }
@@ -261,7 +265,10 @@ impl WalletDB {
     async fn txpool_observer(self: Arc<Self>, mut txpool_notifier: TxPoolNotifier) {
         while let Some(notification) = txpool_notifier.recv().await {
             let wallets = self.wallets.read().unwrap();
-            for (&public_key, wallet) in wallets.iter() {
+            for (name, wallet) in wallets.iter() {
+                let Some(public_key) = wallet.public_key() else {
+                    continue;
+                };
                 if let Err(err) = self.scan_tx(
                     public_key,
                     wallet,
@@ -271,7 +278,7 @@ impl WalletDB {
                     notification.3.to_secs_lossy(),
                     None,
                 ) {
-                    error!(self.logger, "Scan: {err}");
+                    error!(self.logger, "{name} scan: {err}");
                 }
             }
         }

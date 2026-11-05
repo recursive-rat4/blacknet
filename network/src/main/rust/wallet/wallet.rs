@@ -26,13 +26,16 @@ use blacknet_kernel::{
 };
 use blacknet_time::{Seconds, SystemClock};
 use core::fmt;
-use rusqlite::{Connection, ErrorCode, OpenFlags, TransactionBehavior as SqlBehavior};
+use rusqlite::{
+    Connection, ErrorCode, OpenFlags, OptionalExtension, TransactionBehavior as SqlBehavior,
+};
 use std::{path::Path, sync::Mutex};
 
 pub use rusqlite::Error;
 
 #[derive(Debug)]
 pub struct Wallet {
+    public_key: Option<PublicKey>,
     connection: Mutex<Connection>,
 }
 
@@ -66,6 +69,7 @@ impl Wallet {
         Self::configure(&connection)?;
         Self::migrate_schema(&connection)?;
         Ok(Self {
+            public_key: Self::select_public_key(&connection)?,
             connection: Mutex::new(connection),
         })
     }
@@ -164,6 +168,7 @@ impl Wallet {
         )?;
 
         Ok(Self {
+            public_key: None,
             connection: Mutex::new(connection),
         })
     }
@@ -187,7 +192,7 @@ impl Wallet {
         Ok(())
     }
 
-    pub fn derive_account(&self) -> Result<(), DeriveAccountError> {
+    pub fn derive_account(&mut self) -> Result<(), DeriveAccountError> {
         let connection = self.connection.lock().unwrap();
         let mut statement = connection.prepare_cached("SELECT secret FROM keys WHERE path = ?;")?;
         let master: Vec<u8> = statement.query_one(("master",), |row| row.get(0))?;
@@ -197,6 +202,7 @@ impl Wallet {
         let mut statement = connection
             .prepare_cached("INSERT INTO keys (path, secret, public) VALUES(?, ?, ?);")?;
         statement.execute(("", secret_key.as_ref(), public_key.as_ref()))?;
+        self.public_key = Some(public_key);
         Ok(())
     }
 
@@ -228,11 +234,14 @@ impl Wallet {
         Ok(())
     }
 
-    pub fn public_key(&self) -> Result<PublicKey> {
-        let connection = self.connection.lock().unwrap();
+    pub const fn public_key(&self) -> Option<PublicKey> {
+        self.public_key
+    }
+
+    fn select_public_key(connection: &Connection) -> Result<Option<PublicKey>> {
         let mut statement = connection.prepare_cached("SELECT public FROM keys WHERE path = ?;")?;
-        let bytes: [u8; 32] = statement.query_one(("",), |row| row.get(0))?;
-        Ok(PublicKey::from(bytes))
+        let bytes: Option<[u8; 32]> = statement.query_one(("",), |row| row.get(0)).optional()?;
+        Ok(bytes.map(PublicKey::from))
     }
 
     pub fn secret_key(&self) -> Result<SecretKey> {

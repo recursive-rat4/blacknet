@@ -77,7 +77,10 @@ async fn bundle(
     };
     let from = to_public_key(&secret_key);
     let wallets = network.wallet_db().wallets();
-    let Some(wallet) = wallets.get(&from) else {
+    let Some((_, wallet)) = wallets
+        .iter()
+        .find(|(_, wallet)| wallet.public_key() == Some(from))
+    else {
         return respond_error("Wallet not found");
     };
     let seq = match wallet.sequence() {
@@ -158,7 +161,10 @@ async fn burn(
     };
     let from = to_public_key(&secret_key);
     let wallets = network.wallet_db().wallets();
-    let Some(wallet) = wallets.get(&from) else {
+    let Some((_, wallet)) = wallets
+        .iter()
+        .find(|(_, wallet)| wallet.public_key() == Some(from))
+    else {
         return respond_error("Wallet not found");
     };
     let seq = match wallet.sequence() {
@@ -220,7 +226,10 @@ async fn cancel_lease(
         Err(err) => return respond_error(format!("Invalid amount: {err}")),
     };
     let wallets = network.wallet_db().wallets();
-    let Some(wallet) = wallets.get(&from) else {
+    let Some((_, wallet)) = wallets
+        .iter()
+        .find(|(_, wallet)| wallet.public_key() == Some(from))
+    else {
         return respond_error("Wallet not found");
     };
     let seq = match wallet.sequence() {
@@ -289,7 +298,10 @@ async fn claim_swap(
     };
     let from = to_public_key(&secret_key);
     let wallets = network.wallet_db().wallets();
-    let Some(wallet) = wallets.get(&from) else {
+    let Some((_, wallet)) = wallets
+        .iter()
+        .find(|(_, wallet)| wallet.public_key() == Some(from))
+    else {
         return respond_error("Wallet not found");
     };
     let seq = match wallet.sequence() {
@@ -374,7 +386,10 @@ async fn create_swap(
     };
     let from = to_public_key(&secret_key);
     let wallets = network.wallet_db().wallets();
-    let Some(wallet) = wallets.get(&from) else {
+    let Some((_, wallet)) = wallets
+        .iter()
+        .find(|(_, wallet)| wallet.public_key() == Some(from))
+    else {
         return respond_error("Wallet not found");
     };
     let seq = match wallet.sequence() {
@@ -443,7 +458,10 @@ async fn lease(
     };
     let from = to_public_key(&secret_key);
     let wallets = network.wallet_db().wallets();
-    let Some(wallet) = wallets.get(&from) else {
+    let Some((_, wallet)) = wallets
+        .iter()
+        .find(|(_, wallet)| wallet.public_key() == Some(from))
+    else {
         return respond_error("Wallet not found");
     };
     let seq = match wallet.sequence() {
@@ -505,7 +523,10 @@ async fn refund_swap(
     };
     let from = to_public_key(&secret_key);
     let wallets = network.wallet_db().wallets();
-    let Some(wallet) = wallets.get(&from) else {
+    let Some((_, wallet)) = wallets
+        .iter()
+        .find(|(_, wallet)| wallet.public_key() == Some(from))
+    else {
         return respond_error("Wallet not found");
     };
     let seq = match wallet.sequence() {
@@ -582,7 +603,10 @@ async fn transfer(
     };
     let from = to_public_key(&secret_key);
     let wallets = network.wallet_db().wallets();
-    let Some(wallet) = wallets.get(&from) else {
+    let Some((_, wallet)) = wallets
+        .iter()
+        .find(|(_, wallet)| wallet.public_key() == Some(from))
+    else {
         return respond_error("Wallet not found");
     };
     let seq = match wallet.sequence() {
@@ -662,7 +686,10 @@ async fn withdraw_from_lease(
     };
     let from = to_public_key(&secret_key);
     let wallets = network.wallet_db().wallets();
-    let Some(wallet) = wallets.get(&from) else {
+    let Some((_, wallet)) = wallets
+        .iter()
+        .find(|(_, wallet)| wallet.public_key() == Some(from))
+    else {
         return respond_error("Wallet not found");
     };
     let seq = match wallet.sequence() {

@@ -49,13 +49,21 @@ fn use_wallet<T>(
     f: impl FnOnce(&Wallet) -> T,
 ) -> Result<T, Box<dyn Error>> {
     let wallet_db = network.wallet_db();
-    if let Some(wallet) = wallet_db.wallets().get(&public_key) {
+    if let Some((_, wallet)) = wallet_db
+        .wallets()
+        .iter()
+        .find(|(_, wallet)| wallet.public_key() == Some(public_key))
+    {
         return Ok(f(wallet));
     }
     let wallet = Wallet::ephemeral(network.mode())?;
     wallet.put_watch(public_key)?;
-    wallet_db.ingest(&wallet_db.address_codec().encode(public_key)?, wallet)?;
-    if let Some(wallet) = wallet_db.wallets().get(&public_key) {
+    wallet_db.ingest(wallet_db.address_codec().encode(public_key)?, wallet)?;
+    if let Some((_, wallet)) = wallet_db
+        .wallets()
+        .iter()
+        .find(|(_, wallet)| wallet.public_key() == Some(public_key))
+    {
         return Ok(f(wallet));
     }
     Err("Failed to get or create wallet".into())
@@ -449,7 +457,7 @@ async fn import_mnemonic(
     State(network): State<Arc<Network>>,
     Form(request): Form<ImportMnemonic>,
 ) -> Response<String> {
-    let wallet = match Wallet::ephemeral(network.mode()) {
+    let mut wallet = match Wallet::ephemeral(network.mode()) {
         Ok(wallet) => wallet,
         Err(err) => return respond_error(err.to_string()),
     };
@@ -464,7 +472,7 @@ async fn import_mnemonic(
     {
         return respond_error(err.to_string());
     }
-    if let Err(err) = network.wallet_db().ingest(&request.name, wallet) {
+    if let Err(err) = network.wallet_db().ingest(request.name, wallet) {
         return respond_error(err.to_string());
     }
     respond_text("true")

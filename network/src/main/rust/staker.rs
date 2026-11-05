@@ -61,18 +61,22 @@ impl Staker {
         });
 
         let wallets = wallet_db.wallets();
-        for (public_key, wallet) in wallets.iter() {
+        for (name, wallet) in wallets.iter() {
             match wallet.is_staking() {
-                Ok(true) => match wallet.secret_key() {
-                    Ok(secret_key) => {
-                        staker.start_staking(public_key, Arc::new(secret_key));
+                Ok(true) => match (wallet.public_key(), wallet.secret_key()) {
+                    (Some(public_key), Ok(secret_key)) => {
+                        staker.start_staking(&public_key, Arc::new(secret_key));
                     }
-                    Err(WalletError::QueryReturnedNoRows)
-                    | Err(WalletError::InvalidColumnType(..)) => continue,
-                    Err(err) => error!(staker.logger, "{err}"),
+                    (
+                        _,
+                        Err(WalletError::QueryReturnedNoRows)
+                        | Err(WalletError::InvalidColumnType(..)),
+                    ) => continue,
+                    (_, Err(err)) => error!(staker.logger, "{name} {err}"),
+                    (None, Ok(_)) => error!(staker.logger, "{name} missing public key"),
                 },
                 Ok(false) => continue,
-                Err(err) => error!(staker.logger, "{err}"),
+                Err(err) => error!(staker.logger, "{name} {err}"),
             }
         }
 

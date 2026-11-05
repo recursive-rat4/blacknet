@@ -67,7 +67,7 @@ fn keys() {
             .unwrap();
 
     let wallet = Wallet::ephemeral(&mode).unwrap();
-    assert_matches!(wallet.public_key(), Err(Error::QueryReturnedNoRows));
+    assert_matches!(wallet.public_key(), None);
     assert_matches!(wallet.secret_key(), Err(Error::QueryReturnedNoRows));
     assert_matches!(wallet.put_watch(public_key), Ok(()));
     assert_matches!(
@@ -80,11 +80,11 @@ fn keys() {
         Err(Error::SqliteFailure(err, _)) if err.code == ErrorCode::ConstraintViolation
     );
 
-    let wallet = Wallet::ephemeral(&mode).unwrap();
+    let mut wallet = Wallet::ephemeral(&mode).unwrap();
     assert_matches!(wallet.set_mnemonic(mnemonic.into()), Ok(()));
     assert_matches!(wallet.derive_account(), Ok(()));
     assert_matches!(wallet.derive_account(), Err(DeriveAccountError::Sqlite(..)));
-    assert_matches!(wallet.public_key(), Ok(pk) if pk == public_key);
+    assert_matches!(wallet.public_key(), Some(pk) if pk == public_key);
     assert_matches!(wallet.secret_key(), Ok(sk) if sk.as_ref() == secret_key.as_ref());
 }
 
