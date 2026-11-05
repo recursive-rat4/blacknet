@@ -35,7 +35,7 @@ pub struct Router<S> {
     table: HashMap<Method, Box<dyn Fn(Option<Params>, &S) -> Result<Value, Error> + Send + Sync>>,
 }
 
-impl<S: Send + Sync + 'static> Router<S> {
+impl<S> Router<S> {
     /// Construct an empty router.
     pub fn new() -> Self {
         Self {
