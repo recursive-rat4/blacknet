@@ -35,7 +35,7 @@ export component PeersBox inherits VerticalBox {
             { title: @tr("Read") },
             { title: @tr("Written") },
         ];
-        rows: parent.peers;
+        rows: root.peers;
         sort-ascending(column) => root.sort-ascending(column);
         sort-descending(column) => root.sort-descending(column);
     }

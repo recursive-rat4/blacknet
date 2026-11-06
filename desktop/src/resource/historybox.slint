@@ -15,14 +15,27 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { StandardTableView } from "std-widgets.slint";
+import {
+    StandardTableView,
+    VerticalBox,
+} from "std-widgets.slint";
 
-export component HistoryView inherits StandardTableView {
-    columns: [
-        { title: @tr("#") },
-        { title: @tr("Date") },
-        { title: @tr("Type") },
-        { title: @tr("Amount") },
-        { title: @tr("Fingerprint") },
-    ];
+export component HistoryBox inherits VerticalBox {
+    in property <[[StandardListViewItem]]> history;
+
+    StandardTableView {
+        columns: [
+            { title: @tr("#") },
+            { title: @tr("Date") },
+            { title: @tr("Type") },
+            { title: @tr("Amount") },
+            { title: @tr("Fingerprint") },
+        ];
+        rows: root.history;
+        sort-ascending(column) => root.sort-ascending(column);
+        sort-descending(column) => root.sort-descending(column);
+    }
+
+    callback sort-ascending(int);
+    callback sort-descending(int);
 }

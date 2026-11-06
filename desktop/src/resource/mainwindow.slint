@@ -17,7 +17,7 @@
 
 import { TabWidget } from "std-widgets.slint";
 import { DashboardBox } from "dashboardbox.slint";
-import { HistoryView } from "historyview.slint";
+import { HistoryBox } from "historybox.slint";
 import { PeersBox } from "peersbox.slint";
 import { StakingBox, StakingInfo } from "stakingbox.slint";
 import { TransferBox } from "transferbox.slint";
@@ -82,10 +82,8 @@ export component MainWindow inherits Window {
         }
         Tab {
             title: @tr("History");
-            HistoryView {
-                width: parent.width;
-                height: parent.height;
-                rows: root.history;
+            HistoryBox {
+                history: root.history;
                 sort-ascending(column) => root.sort-history-ascending(column);
                 sort-descending(column) => root.sort-history-descending(column);
             }
