@@ -17,7 +17,12 @@
 
 use blacknet_compat::size::Size;
 use blacknet_rpc::v3::peer::PeerInfo;
-use core::{any::Any, cell::RefCell, cmp::Ordering, num::NonZero};
+use core::{
+    any::Any,
+    cell::{Cell, RefCell},
+    cmp::Ordering,
+    num::NonZero,
+};
 use slint::{
     Model, ModelNotify, ModelRc, ModelTracker, SharedString, language::StandardListViewItem,
 };
@@ -36,8 +41,8 @@ impl PeerModel {
         })
     }
 
-    pub fn into_model_rc(self: Rc<Self>) -> ModelRc<StandardListViewItem> {
-        ModelRc::from(self)
+    pub fn as_model_rc(self: &Rc<Self>) -> ModelRc<StandardListViewItem> {
+        ModelRc::from(self.clone())
     }
 }
 
@@ -82,7 +87,8 @@ impl Model for PeerModel {
 }
 
 pub struct PeerTableModel {
-    data: RefCell<Vec<PeerInfo>>,
+    data: RefCell<Vec<Rc<PeerModel>>>,
+    sort: Cell<Option<(i32, bool)>>,
     notify: ModelNotify,
 }
 
@@ -91,6 +97,7 @@ impl PeerTableModel {
     pub fn new() -> Rc<Self> {
         Rc::new(Self {
             data: RefCell::new(Vec::new()),
+            sort: Cell::new(None),
             notify: ModelNotify::default(),
         })
     }
@@ -100,8 +107,8 @@ impl PeerTableModel {
     }
 
     pub fn sort(&self, column: i32, ascending: bool) {
-        let mut data = self.data.borrow_mut();
-        data.sort_by(|a, b| {
+        self.data.borrow_mut().sort_by(|a, b| {
+            let (a, b) = (&a.info, &b.info);
             let ord = match column {
                 0 => a.remote_endpoint.cmp(&b.remote_endpoint),
                 1 => a.agent.cmp(&b.agent),
@@ -113,16 +120,24 @@ impl PeerTableModel {
             };
             if ascending { ord } else { ord.reverse() }
         });
+        self.sort.set(Some((column, ascending)));
         self.notify.reset();
     }
 
-    pub fn assign(&self, data: Vec<PeerInfo>) {
-        *self.data.borrow_mut() = data;
-        self.notify.reset();
+    pub fn set_data(&self, data: Vec<PeerInfo>) {
+        *self.data.borrow_mut() = data.into_iter().map(PeerModel::new).collect();
+        if let Some((column, ascending)) = self.sort.get() {
+            self.sort(column, ascending);
+        } else {
+            self.notify.reset();
+        }
     }
 
     pub fn peer_id(&self, row: i32) -> Option<NonZero<u64>> {
-        self.data.borrow().get(row as usize).map(|info| info.id)
+        self.data
+            .borrow()
+            .get(row as usize)
+            .map(|model| model.info.id)
     }
 }
 
@@ -134,12 +149,7 @@ impl Model for PeerTableModel {
     }
 
     fn row_data(&self, row: usize) -> Option<Self::Data> {
-        self.data
-            .borrow()
-            .get(row)
-            .cloned()
-            .map(PeerModel::new)
-            .map(PeerModel::into_model_rc)
+        self.data.borrow().get(row).map(PeerModel::as_model_rc)
     }
 
     fn model_tracker(&self) -> &dyn ModelTracker {
