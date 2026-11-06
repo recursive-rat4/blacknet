@@ -18,7 +18,7 @@
 use crate::algebra::{
     AdditiveCommutativeMagma, AdditiveSemigroup, Algebra, Array, Commutator, Double, LeftOne,
     LeftZero, MultiplicativeSemigroup, One, RightOne, RightZero, Ring, RingOps, Semimodule,
-    Semiring, SemiringOps, Set, Square, UnitalSemiring, VectorRing, Zero,
+    Semiring, SemiringOps, Set, Square, Trace, UnitalSemiring, VectorRing, Zero,
 };
 use crate::symmetric::sponge::{Absorb, Sponge, Squeeze};
 use bytemuck::Zeroable;
@@ -100,11 +100,6 @@ impl<R: Semiring, const N: usize, const NN: usize> MatrixSpace<R, N, N, NN> {
         }
         let elements = Array::new(elements);
         Self { elements }
-    }
-
-    /// Compute the trace.
-    pub fn trace(&self) -> R {
-        (0..N).map(|i| &self[(i, i)]).sum()
     }
 }
 
@@ -715,6 +710,14 @@ where
         VectorRing::<R, N>::new(Array::from_fn(|j| {
             (0..M).map(|i| &self[i] * &rps[(i, j)]).sum()
         }))
+    }
+}
+
+impl<R: Semiring, const N: usize, const NN: usize> Trace for &MatrixSpace<R, N, N, NN> {
+    type Output = R;
+
+    fn trace(self) -> Self::Output {
+        (0..N).map(|i| &self[(i, i)]).sum()
     }
 }
 

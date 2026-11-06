@@ -15,10 +15,9 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::Double;
+use crate::algebra::{Double, Trace};
 use crate::matrix::{DenseMatrix, DenseVector};
-use alloc::vec;
-use alloc::vec::Vec;
+use alloc::{vec, vec::Vec};
 use core::iter::{Sum, zip};
 use core::ops::{Add, AddAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign};
 use serde::{Deserialize, Serialize};
@@ -59,13 +58,6 @@ impl<T> SymmetricMatrix<T> {
     /// The number of columns.
     pub const fn columns(&self) -> u32 {
         self.dimension
-    }
-
-    pub fn trace(&self) -> T
-    where
-        T: for<'a> Sum<&'a T>,
-    {
-        (0..self.dimension).map(|i| &self[(i, i)]).sum()
     }
 
     pub const fn transpose(&self) -> &Self {
@@ -418,5 +410,16 @@ where
         (0..rps.columns())
             .map(|j| (0..rps.rows()).map(|i| &self[i] * &rps[(i, j)]).sum())
             .collect()
+    }
+}
+
+impl<T> Trace for &SymmetricMatrix<T>
+where
+    T: for<'a> Sum<&'a T>,
+{
+    type Output = T;
+
+    fn trace(self) -> Self::Output {
+        (0..self.dimension).map(|i| &self[(i, i)]).sum()
     }
 }

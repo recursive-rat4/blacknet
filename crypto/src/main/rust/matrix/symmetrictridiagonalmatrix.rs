@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{Double, Zero};
+use crate::algebra::{Double, Trace, Zero};
 use crate::matrix::{DenseMatrix, DenseVector};
 use alloc::vec::Vec;
 use core::iter::{Sum, zip};
@@ -43,13 +43,6 @@ impl<T: Zero> SymmetricTridiagonalMatrix<T> {
     /// The number of columns.
     pub const fn columns(&self) -> u32 {
         ((self.elements.len() + 1) >> 1) as u32
-    }
-
-    pub fn trace(&self) -> T
-    where
-        T: for<'a> Sum<&'a T>,
-    {
-        self.elements[0..self.columns() as usize].iter().sum()
     }
 
     pub const fn transpose(&self) -> &Self {
@@ -381,5 +374,16 @@ where
         (0..rps.columns())
             .map(|j| (0..rps.rows()).map(|i| &self[i] * rps.index(i, j)).sum())
             .collect()
+    }
+}
+
+impl<T: Zero> Trace for &SymmetricTridiagonalMatrix<T>
+where
+    T: for<'a> Sum<&'a T>,
+{
+    type Output = T;
+
+    fn trace(self) -> Self::Output {
+        self.elements[0..self.columns() as usize].iter().sum()
     }
 }

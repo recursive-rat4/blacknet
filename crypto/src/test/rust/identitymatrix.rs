@@ -33,14 +33,6 @@ fn tensor() {
 }
 
 #[test]
-fn trace() {
-    let a = IdentityMatrix::new(4);
-    let b = R::from(4);
-    let c: R = a.trace();
-    assert_eq!(c, b);
-}
-
-#[test]
 #[rustfmt::skip]
 fn into() {
     let a = IdentityMatrix::new(3);

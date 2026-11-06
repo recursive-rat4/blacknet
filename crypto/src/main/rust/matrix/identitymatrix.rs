@@ -18,7 +18,6 @@
 use crate::algebra::{One, Tensor, Zero};
 use crate::matrix::{DenseMatrix, ScalarMatrix};
 use alloc::vec;
-use core::iter::Sum;
 use serde::{Deserialize, Serialize};
 
 /// The `n × n` matrix with ones on the leading diagonal and zeros otherwise.
@@ -41,10 +40,6 @@ impl IdentityMatrix {
     /// The number of columns.
     pub const fn columns(&self) -> u32 {
         self.dimension
-    }
-
-    pub fn trace<T: One + Sum<T>>(&self) -> T {
-        (0..self.dimension).map(|_| T::ONE).sum()
     }
 }
 

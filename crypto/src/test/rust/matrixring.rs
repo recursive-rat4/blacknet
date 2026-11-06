@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_crypto::algebra::{Commutator, MatrixRing, One, VectorRing};
+use blacknet_crypto::algebra::{Commutator, MatrixRing, One, Trace, VectorRing};
 use blacknet_crypto::norm::{LInf, Norm};
 
 type Z = blacknet_crypto::pervushin::PervushinField;

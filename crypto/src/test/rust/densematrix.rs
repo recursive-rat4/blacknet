@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_crypto::algebra::{Concat, Double, Inv, One, Square, Tensor, Zero};
+use blacknet_crypto::algebra::{Concat, Double, Inv, One, Square, Tensor, Trace, Zero};
 use blacknet_crypto::matrix::{DenseMatrix, DenseVector};
 use blacknet_crypto::norm::{LInf, Norm};
 use core::iter::{successors, zip};

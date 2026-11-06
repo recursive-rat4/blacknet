@@ -15,6 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+use blacknet_crypto::algebra::Trace;
 use blacknet_crypto::matrix::{DenseMatrix, DenseVector, ScalarMatrix};
 
 type R = blacknet_crypto::uring::U32Ring;

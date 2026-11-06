@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_crypto::algebra::Double;
+use blacknet_crypto::algebra::{Double, Trace};
 use blacknet_crypto::matrix::{DenseMatrix, DenseVector, SymmetricTridiagonalMatrix};
 
 type R = blacknet_crypto::uring::U32Ring;

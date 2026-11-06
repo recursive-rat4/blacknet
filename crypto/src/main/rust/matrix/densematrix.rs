@@ -15,7 +15,9 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::{Concat, Double, Inv, One, SemifieldOps, Square, Tensor, UnitalRing, Zero};
+use crate::algebra::{
+    Concat, Double, Inv, One, SemifieldOps, Square, Tensor, Trace, UnitalRing, Zero,
+};
 use crate::matrix::{DenseVector, IdentityMatrix};
 use alloc::vec;
 use alloc::vec::Vec;
@@ -165,14 +167,6 @@ impl<T> DenseMatrix<T> {
     #[inline]
     pub fn vectorize(self) -> DenseVector<T> {
         self.elements.into()
-    }
-
-    pub fn trace(&self) -> T
-    where
-        T: for<'a> Sum<&'a T>,
-    {
-        debug_assert!(self.rows == self.columns);
-        self.iter_row().enumerate().map(|(i, row)| &row[i]).sum()
     }
 
     pub fn transpose(&self) -> Self
@@ -833,6 +827,18 @@ where
 
     fn inv(self) -> Self::Output {
         self.clone().inv()
+    }
+}
+
+impl<T> Trace for &DenseMatrix<T>
+where
+    T: for<'a> Sum<&'a T>,
+{
+    type Output = T;
+
+    fn trace(self) -> Self::Output {
+        debug_assert!(self.rows == self.columns);
+        self.iter_row().enumerate().map(|(i, row)| &row[i]).sum()
     }
 }
 

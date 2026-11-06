@@ -15,10 +15,9 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::algebra::Zero;
+use crate::algebra::{Trace, Zero};
 use crate::matrix::{DenseMatrix, DenseVector};
-use alloc::vec;
-use alloc::vec::Vec;
+use alloc::{vec, vec::Vec};
 use core::iter::{Sum, repeat_n, zip};
 use core::ops::Mul;
 use serde::{Deserialize, Serialize};
@@ -51,13 +50,6 @@ impl<T> ScalarMatrix<T> {
     /// A number of columns.
     pub const fn columns(&self) -> u32 {
         self.dimension
-    }
-
-    pub fn trace(&self) -> T
-    where
-        T: for<'a> Sum<&'a T>,
-    {
-        repeat_n(&self.scalar, self.dimension as usize).sum()
     }
 }
 
@@ -132,5 +124,16 @@ where
                     .map(move |row| zip(row, rps).map(|(l, r)| l * r).sum())
             })
             .collect()
+    }
+}
+
+impl<T> Trace for &ScalarMatrix<T>
+where
+    T: for<'a> Sum<&'a T>,
+{
+    type Output = T;
+
+    fn trace(self) -> Self::Output {
+        repeat_n(&self.scalar, self.dimension as usize).sum()
     }
 }

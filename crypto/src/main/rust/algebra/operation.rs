@@ -65,6 +65,16 @@ pub trait Conjugate {
     fn conjugate(self) -> Self::Output;
 }
 
+/// The linear operator `tr`.
+pub trait Trace {
+    /// Result type.
+    type Output;
+
+    /// Perform the unary operation.
+    #[must_use = "returns a new value"]
+    fn trace(self) -> Self::Output;
+}
+
 /// The dot product operator `⋅`.
 pub trait Dot<Rps = Self> {
     /// Result type.
