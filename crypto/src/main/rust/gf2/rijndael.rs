@@ -18,7 +18,7 @@
 use crate::algebra::{
     AdditiveCommutativeMagma, AdditiveSemigroup, Algebra, Double, Inv, LeftOne, LeftZero,
     MultiplicativeCommutativeMagma, MultiplicativeSemigroup, One, RightOne, RightZero, Semifield,
-    Semimodule, Set, Square, Zero, square_and_multiply,
+    Semimodule, Set, Square, Trace, Zero, square_and_multiply,
 };
 use crate::branchless::{BlAssign, BlEq, BlOption, BlSelect};
 use crate::gf2::{GF2, clmul8, clsqr8};
@@ -401,6 +401,24 @@ impl<'a> Div<&'a GF2> for &RijndaelField {
     #[inline]
     fn div(self, rps: &'a GF2) -> Self::Output {
         *self / *rps
+    }
+}
+
+impl Trace for RijndaelField {
+    type Output = GF2;
+
+    fn trace(self) -> Self::Output {
+        let n = (self.coefficients & 0x80 != 0) ^ (self.coefficients & 0x20 != 0);
+        GF2::from(n)
+    }
+}
+
+impl Trace for &RijndaelField {
+    type Output = GF2;
+
+    #[inline]
+    fn trace(self) -> Self::Output {
+        (*self).trace()
     }
 }
 

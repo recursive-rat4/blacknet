@@ -18,7 +18,7 @@
 use crate::algebra::{
     AdditiveCommutativeMagma, AdditiveSemigroup, Algebra, Double, Inv, LeftOne, LeftZero,
     MultiplicativeCommutativeMagma, MultiplicativeSemigroup, One, RightOne, RightZero, Semifield,
-    Semimodule, Set, Square, Zero,
+    Semimodule, Set, Square, Trace, Zero,
 };
 use crate::branchless::{BlAssign, BlEq, BlOption, BlSelect};
 use crate::gf2::{GF2, clmul128, clsqr128};
@@ -439,6 +439,25 @@ impl<'a> Div<&'a GF2> for &GHashField {
     #[inline]
     fn div(self, rps: &'a GF2) -> Self::Output {
         *self / *rps
+    }
+}
+
+impl Trace for GHashField {
+    type Output = GF2;
+
+    fn trace(self) -> Self::Output {
+        let n = (self.coefficients[1] & 0x8000000000000000 != 0)
+            ^ (self.coefficients[1] & 0x200000000000000 != 0);
+        GF2::from(n)
+    }
+}
+
+impl Trace for &GHashField {
+    type Output = GF2;
+
+    #[inline]
+    fn trace(self) -> Self::Output {
+        (*self).trace()
     }
 }
 

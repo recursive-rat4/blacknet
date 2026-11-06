@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use blacknet_crypto::algebra::{Double, Inv, One, Square, Zero};
+use blacknet_crypto::algebra::{Double, Inv, One, Square, Trace, Zero};
 use blacknet_crypto::gf2::GF2;
 
 type F = blacknet_crypto::gf2::LabField;
@@ -114,4 +114,12 @@ fn div() {
     assert_eq!((b / a).unwrap(), d);
     assert_eq!((-F::ONE / -F::ONE).unwrap(), F::ONE);
     assert!((F::ONE / F::ZERO).is_none());
+}
+
+#[test]
+fn trace() {
+    let a = F::new([0x07871AE1B0A5F44A, 0x489BC78A68E1D1C9, 0x05998198D]).unwrap();
+    let b = F::new([0x0E2118A613A16AF4, 0xA7CB659014264242, 0x2BD21843A]).unwrap();
+    assert_eq!(a.trace(), GF2::ZERO);
+    assert_eq!(b.trace(), GF2::ONE);
 }
