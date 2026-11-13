@@ -22,7 +22,7 @@ use crate::algebra::{
     UnivariateRing, VectorRing, Zero,
 };
 use crate::convolution::Convolution;
-use crate::float::Cast;
+use crate::float::CastFloat;
 use crate::matrix::{DenseMatrix, DenseVector, SparseMatrix, SparseVector};
 
 /// ℓ₂ space.
@@ -41,15 +41,15 @@ pub trait Norm<Lp> {
     fn norm(&self) -> Self::Length;
 }
 
-impl<Z: IntegerModRing<Int: Cast<f64>>> Norm<L2> for Z {
+impl<Z: IntegerModRing<Int: CastFloat<f64>>> Norm<L2> for Z {
     type Length = f64;
 
     fn check_norm(&self, bound: &f64) -> bool {
-        self.absolute().cast() < *bound
+        self.absolute().cast_float() < *bound
     }
 
     fn norm(&self) -> f64 {
-        self.absolute().cast()
+        self.absolute().cast_float()
     }
 }
 

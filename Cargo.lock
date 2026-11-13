@@ -823,9 +823,6 @@ dependencies = [
 [[package]]
 name = "blacknet-vm"
 version = "0.3.0"
-dependencies = [
- "blacknet-crypto",
-]
 
 [[package]]
 name = "block-buffer"

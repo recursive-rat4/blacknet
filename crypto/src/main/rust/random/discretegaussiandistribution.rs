@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::float::Cast;
+use crate::float::CastFloat;
 use crate::integer::Integer;
 use crate::random::{
     Distribution, Float01Distribution, UniformBitGenerator, UniformIntDistribution,
@@ -33,7 +33,7 @@ pub struct DiscreteGaussianDistribution<I: Integer> {
 
 impl<I: Integer> DiscreteGaussianDistribution<I>
 where
-    f64: Cast<I>,
+    f64: CastFloat<I>,
 {
     /// Construct a new distribution.
     pub fn new(mu: f64, sigma: f64) -> Self {
@@ -53,14 +53,14 @@ where
             assert!(Self::N.count_ones() == 1);
         }
         let t = Self::N.trailing_zeros() as f64;
-        libm::floor(mu - sigma * t).cast()
+        libm::floor(mu - sigma * t).cast_float()
     }
     fn max(mu: f64, sigma: f64) -> I {
         const {
             assert!(Self::N.count_ones() == 1);
         }
         let t = Self::N.trailing_zeros() as f64;
-        libm::ceil(mu + sigma * t).cast()
+        libm::ceil(mu + sigma * t).cast_float()
     }
 }
 
@@ -72,13 +72,13 @@ impl<I: Integer> DiscreteGaussianDistribution<I> {
     }
 }
 
-impl<I: Integer + Cast<f64>, G: UniformBitGenerator> Distribution<I, G>
+impl<I: Integer + CastFloat<f64>, G: UniformBitGenerator> Distribution<I, G>
     for DiscreteGaussianDistribution<I>
 {
     fn sample(&mut self, generator: &mut G) -> I {
         loop {
             let xi: I = self.uid.sample(generator);
-            let xf: f64 = xi.cast();
+            let xf: f64 = xi.cast_float();
             let ps = libm::exp(-(xf - self.mu) * (xf - self.mu) / (2.0 * self.sigma * self.sigma));
             if self.f01.sample(generator) > ps {
                 continue;

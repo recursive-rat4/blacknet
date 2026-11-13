@@ -114,9 +114,12 @@ impl<const N: usize> BigInt<N> {
     }
 
     fn square_impl<const NN: usize>(self) -> BigInt<NN> {
+        const {
+            assert!(N + N == NN);
+        };
         let mut c: u64 = 0;
         let mut n = BigInt::<NN>::ZERO;
-        let mut j = N * 2;
+        let mut j = NN;
         for i in (0..N).rev() {
             let p = self.limbs[i] as u128 * self.limbs[i] as u128;
             j -= 1;
@@ -147,7 +150,8 @@ impl<const N: usize> BigInt<N> {
         }
 
         c = self.limbs[0] << (u64::BITS - 1);
-        for i in 0..N * 2 {
+        #[allow(clippy::needless_range_loop)]
+        for i in 0..NN {
             let d = n.limbs[i];
             n.limbs[i] = d << 1 | c >> (u64::BITS - 1);
             c = d;
@@ -609,6 +613,7 @@ impl<const N: usize> Shl<u64> for BigInt<N> {
         let (j, k) = (rps / u64::BITS as u64, rps % u64::BITS as u64);
         let mut limbs = [0; N];
         let mut c = 0;
+        #[allow(clippy::needless_range_loop)]
         for i in 0..N {
             let ij = i + j as usize;
             if ij < N {

@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::float::{Cast, Float};
+use crate::float::{CastFloat, Float};
 use crate::integer::{Integer, UnsignedInteger};
 use crate::random::{Distribution, UniformBitGenerator, UniformIntDistribution};
 
@@ -46,12 +46,12 @@ impl<F: Float<Bits: UnsignedInteger>> Default for Float01Distribution<F> {
     }
 }
 
-impl<F: Float<Bits: UnsignedInteger + Cast<F>>, G: UniformBitGenerator> Distribution<F, G>
+impl<F: Float<Bits: UnsignedInteger + CastFloat<F>>, G: UniformBitGenerator> Distribution<F, G>
     for Float01Distribution<F>
 {
     fn sample(&mut self, generator: &mut G) -> F {
-        let s: F = (F::Bits::ONE << F::MANTISSA_DIGITS).cast().recip();
-        let m: F = self.uid.sample(generator).cast();
+        let s: F = (F::Bits::ONE << F::MANTISSA_DIGITS).cast_float().recip();
+        let m: F = self.uid.sample(generator).cast_float();
         s * m
     }
 

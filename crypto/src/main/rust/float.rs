@@ -72,22 +72,22 @@ impl Float for f64 {
     const MANTISSA_DIGITS: u32 = Self::MANTISSA_DIGITS;
 }
 
-pub trait Cast<T> {
-    fn cast(self) -> T;
+pub trait CastFloat<T> {
+    fn cast_float(self) -> T;
 }
 
-macro_rules! impl_cast {
+macro_rules! impl_cast_float {
     ( $x:ty, $($y:ty),+ ) => {
         $(
-            impl Cast<$x> for $y {
+            impl CastFloat<$x> for $y {
                 #[inline(always)]
-                fn cast(self) -> $x {
+                fn cast_float(self) -> $x {
                     self as $x
                 }
             }
-            impl Cast<$y> for $x {
+            impl CastFloat<$y> for $x {
                 #[inline(always)]
-                fn cast(self) -> $y {
+                fn cast_float(self) -> $y {
                     self as $y
                 }
             }
@@ -95,5 +95,5 @@ macro_rules! impl_cast {
     };
 }
 
-impl_cast!(f32, i8, i16, i32, i64, u8, u16, u32, u64);
-impl_cast!(f64, i8, i16, i32, i64, u8, u16, u32, u64);
+impl_cast_float!(f32, i8, i16, i32, i64, u8, u16, u32, u64);
+impl_cast_float!(f64, i8, i16, i32, i64, u8, u16, u32, u64);
