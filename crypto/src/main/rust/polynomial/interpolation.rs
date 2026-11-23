@@ -17,7 +17,7 @@
 
 //! Univariate interpolation.
 
-use crate::algebra::{Inv, SemifieldOps, SemiringOps, UnitalRing};
+use crate::algebra::{DivisionSemiringOps, Inv, SemiringOps, UnitalRing};
 use crate::matrix::DenseMatrix;
 use crate::polynomial::UnivariatePolynomial;
 use alloc::vec::Vec;
@@ -28,7 +28,7 @@ pub struct Interpolator<R: UnitalRing> {
 
 impl<R: UnitalRing + From<i8> + Clone> Interpolator<R>
 where
-    for<'a> &'a R: SemifieldOps<R>,
+    for<'a> &'a R: DivisionSemiringOps<R>,
 {
     pub fn degree_1() -> Option<Self> {
         Self::sequential(R::from(0), 2)
@@ -53,7 +53,7 @@ where
 
 impl<R: UnitalRing + Clone> Interpolator<R>
 where
-    for<'a> &'a R: SemifieldOps<R>,
+    for<'a> &'a R: DivisionSemiringOps<R>,
 {
     pub fn sequential(start: R, length: u32) -> Option<Self> {
         debug_assert!(length >= 1);

@@ -16,7 +16,7 @@
  */
 
 use crate::algebra::{
-    Concat, Double, Inv, One, SemifieldOps, Square, Tensor, Trace, UnitalRing, Zero,
+    Concat, DivisionSemiringOps, Double, Inv, One, Square, Tensor, Trace, UnitalRing, Zero,
 };
 use crate::matrix::{DenseVector, IdentityMatrix};
 use alloc::vec;
@@ -773,7 +773,7 @@ where
 
 impl<R: UnitalRing + Clone> Inv for DenseMatrix<R>
 where
-    for<'a> &'a R: SemifieldOps<R>,
+    for<'a> &'a R: DivisionSemiringOps<R>,
 {
     type Output = Option<DenseMatrix<R>>;
 
@@ -821,7 +821,7 @@ where
 
 impl<R: UnitalRing + Clone> Inv for &DenseMatrix<R>
 where
-    for<'a> &'a R: SemifieldOps<R>,
+    for<'a> &'a R: DivisionSemiringOps<R>,
 {
     type Output = Option<DenseMatrix<R>>;
 

@@ -16,9 +16,10 @@
  */
 
 use crate::algebra::{
-    AdditiveCommutativeMagma, AdditiveSemigroup, BalancedRepresentative, Double, IntegerModRing,
-    Inv, LeftOne, LeftZero, MultiplicativeCommutativeMagma, MultiplicativeSemigroup, NTTRing, One,
-    PolynomialRing, RightOne, RightZero, Semifield, Set, Square, UnivariateRing, Zero,
+    AdditiveCommutativeMagma, AdditiveSemigroup, BalancedRepresentative, DivisionSemiring, Double,
+    IntegerModRing, Inv, LeftOne, LeftZero, MultiplicativeCommutativeMagma,
+    MultiplicativeSemigroup, NTTRing, One, PolynomialRing, RightOne, RightZero, Set, Square,
+    UnivariateRing, Zero,
 };
 use crate::branchless::{BlAbs, BlAssign, BlOption};
 use crate::convolution::{Binomial, Convolution, Negacyclic};
@@ -450,7 +451,7 @@ impl MultiplicativeCommutativeMagma for LMField {}
 
 impl MultiplicativeSemigroup for LMField {}
 
-impl Semifield for LMField {}
+impl DivisionSemiring for LMField {}
 
 impl IntegerModRing for LMField {
     type Int = i64;
@@ -572,7 +573,7 @@ impl Div<&Self> for LMField2 {
     }
 }
 
-impl Semifield for LMField2 {}
+impl DivisionSemiring for LMField2 {}
 
 // (2⁶⁰ + 2⁵ + 1) / (x⁴ - ³²√1)
 
@@ -640,7 +641,7 @@ impl Div<&Self> for LMField4 {
     }
 }
 
-impl Semifield for LMField4 {}
+impl DivisionSemiring for LMField4 {}
 
 // (2⁶⁰ + 2⁵ + 1) / (x⁶⁴ + 1)
 

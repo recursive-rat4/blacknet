@@ -35,7 +35,7 @@ impl<R, T
 > SemiringOps<R> for T {}
 
 #[rustfmt::skip]
-pub trait SemifieldOps<R>
+pub trait DivisionSemiringOps<R>
     : SemiringOps<R>
     + Inv<Output = BlOption<R>>
 {
@@ -45,7 +45,7 @@ pub trait SemifieldOps<R>
 impl<R, T
     : SemiringOps<R>
     + Inv<Output = BlOption<R>>
-> SemifieldOps<R> for T {}
+> DivisionSemiringOps<R> for T {}
 
 /// A generalization of [nonunital ring][`crate::algebra::Ring`]
 /// that doesn't require subtraction.
@@ -99,9 +99,9 @@ impl<R
 /// A generalization of [division ring][`crate::algebra::DivisionRing`]
 /// that doesn't require subtraction.
 #[rustfmt::skip]
-pub trait Semifield
+pub trait DivisionSemiring
     : Semiring
-    + SemifieldOps<Self>
+    + DivisionSemiringOps<Self>
 {
 }
 
@@ -110,9 +110,12 @@ pub trait Semifield
 /// Either the some is returned and the output contains inverses,
 /// or the none is returned and the output contains unspecified values.
 #[must_use]
-pub fn batched_inv<R: Semifield + Clone, const N: usize>(a: &[R; N], b: &mut [R; N]) -> BlOption<()>
+pub fn batched_inv<R: DivisionSemiring + Clone, const N: usize>(
+    a: &[R; N],
+    b: &mut [R; N],
+) -> BlOption<()>
 where
-    for<'a> &'a R: SemifieldOps<R>,
+    for<'a> &'a R: DivisionSemiringOps<R>,
 {
     // Montgomery trick
     const {

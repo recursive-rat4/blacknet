@@ -17,8 +17,8 @@
 
 use crate::algebra::{
     AdditiveAbelianGroup, AdditiveCyclicGroup, AdditiveGroupOps, CommutativeAlgebra,
-    CommutativeSemiring, Conjugate, MultiplicativeMagmaOps, Semifield, SemifieldOps, Semiring,
-    UnitalAlgebra, UnitalSemiring,
+    CommutativeSemiring, Conjugate, DivisionSemiring, DivisionSemiringOps, MultiplicativeMagmaOps,
+    Semiring, UnitalAlgebra, UnitalSemiring,
 };
 use crate::integer::{Integer, SignedInteger};
 use core::borrow::{Borrow, BorrowMut};
@@ -40,14 +40,14 @@ impl<R, T
 #[rustfmt::skip]
 pub trait DivisionRingOps<R>
     : RingOps<R>
-    + SemifieldOps<R>
+    + DivisionSemiringOps<R>
 {
 }
 
 #[rustfmt::skip]
 impl<R, T
     : RingOps<R>
-    + SemifieldOps<R>
+    + DivisionSemiringOps<R>
 > DivisionRingOps<R> for T {}
 
 #[rustfmt::skip]
@@ -98,14 +98,14 @@ impl<R
 #[rustfmt::skip]
 pub trait DivisionRing
     : Ring
-    + Semifield
+    + DivisionSemiring
 {
 }
 
 #[rustfmt::skip]
 impl<R
     : Ring
-    + Semifield
+    + DivisionSemiring
 > DivisionRing for R {}
 
 /// A ring `ℤ/q` where `q` is an integer number.

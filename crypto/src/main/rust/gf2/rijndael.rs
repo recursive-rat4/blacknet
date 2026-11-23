@@ -16,8 +16,8 @@
  */
 
 use crate::algebra::{
-    AdditiveCommutativeMagma, AdditiveSemigroup, Algebra, Double, Inv, LeftOne, LeftZero,
-    MultiplicativeCommutativeMagma, MultiplicativeSemigroup, One, RightOne, RightZero, Semifield,
+    AdditiveCommutativeMagma, AdditiveSemigroup, Algebra, DivisionSemiring, Double, Inv, LeftOne,
+    LeftZero, MultiplicativeCommutativeMagma, MultiplicativeSemigroup, One, RightOne, RightZero,
     Semimodule, Set, Square, Trace, Zero, square_and_multiply,
 };
 use crate::branchless::{BlAssign, BlEq, BlOption, BlSelect};
@@ -482,7 +482,7 @@ impl MultiplicativeCommutativeMagma for RijndaelField {}
 
 impl MultiplicativeSemigroup for RijndaelField {}
 
-impl Semifield for RijndaelField {}
+impl DivisionSemiring for RijndaelField {}
 
 impl Semimodule<GF2> for RijndaelField {}
 

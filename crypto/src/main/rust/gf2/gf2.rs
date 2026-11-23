@@ -16,9 +16,9 @@
  */
 
 use crate::algebra::{
-    AdditiveCommutativeMagma, AdditiveSemigroup, BalancedRepresentative, Double, IntegerModRing,
-    Inv, LeftOne, LeftZero, MultiplicativeCommutativeMagma, MultiplicativeSemigroup, One, RightOne,
-    RightZero, Semifield, Set, Sqrt, Square, Zero,
+    AdditiveCommutativeMagma, AdditiveSemigroup, BalancedRepresentative, DivisionSemiring, Double,
+    IntegerModRing, Inv, LeftOne, LeftZero, MultiplicativeCommutativeMagma,
+    MultiplicativeSemigroup, One, RightOne, RightZero, Set, Sqrt, Square, Zero,
 };
 use crate::branchless::{BlAssign, BlEq, BlOption, BlSelect};
 use crate::integer::Integer;
@@ -372,7 +372,7 @@ impl MultiplicativeCommutativeMagma for GF2 {}
 
 impl MultiplicativeSemigroup for GF2 {}
 
-impl Semifield for GF2 {}
+impl DivisionSemiring for GF2 {}
 
 impl IntegerModRing for GF2 {
     type Int = i8;

@@ -16,9 +16,9 @@
  */
 
 use crate::algebra::{
-    AdditiveCommutativeMagma, AdditiveSemigroup, Array, CommutativeSemiring, Dot, Double, Inv,
-    LeftOne, LeftZero, MultiplicativeCommutativeMagma, MultiplicativeSemigroup, One, RightOne,
-    RightZero, Ring, RingOps, SemifieldOps, Semimodule, Semiring, SemiringOps, Set, Square,
+    AdditiveCommutativeMagma, AdditiveSemigroup, Array, CommutativeSemiring, DivisionSemiringOps,
+    Dot, Double, Inv, LeftOne, LeftZero, MultiplicativeCommutativeMagma, MultiplicativeSemigroup,
+    One, RightOne, RightZero, Ring, RingOps, Semimodule, Semiring, SemiringOps, Set, Square,
     UnitalSemiring, Zero,
 };
 use crate::branchless::BlOption;
@@ -520,7 +520,7 @@ where
 
 impl<R: Semiring, const N: usize> Div<&R> for &VectorRing<R, N>
 where
-    for<'a> &'a R: SemifieldOps<R>,
+    for<'a> &'a R: DivisionSemiringOps<R>,
 {
     type Output = BlOption<VectorRing<R, N>>;
 

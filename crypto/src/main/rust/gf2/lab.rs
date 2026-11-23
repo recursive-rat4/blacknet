@@ -16,8 +16,8 @@
  */
 
 use crate::algebra::{
-    AdditiveCommutativeMagma, AdditiveSemigroup, Algebra, Double, Inv, LeftOne, LeftZero,
-    MultiplicativeCommutativeMagma, MultiplicativeSemigroup, One, RightOne, RightZero, Semifield,
+    AdditiveCommutativeMagma, AdditiveSemigroup, Algebra, DivisionSemiring, Double, Inv, LeftOne,
+    LeftZero, MultiplicativeCommutativeMagma, MultiplicativeSemigroup, One, RightOne, RightZero,
     Semimodule, Set, Square, Trace, Zero,
 };
 use crate::branchless::{BlAssign, BlEq, BlOption, BlSelect};
@@ -530,7 +530,7 @@ impl MultiplicativeCommutativeMagma for LabField {}
 
 impl MultiplicativeSemigroup for LabField {}
 
-impl Semifield for LabField {}
+impl DivisionSemiring for LabField {}
 
 impl Semimodule<GF2> for LabField {}
 
